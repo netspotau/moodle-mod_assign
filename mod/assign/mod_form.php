@@ -12,7 +12,7 @@ class mod_assign_mod_form extends moodleform_mod {
         global $CFG, $DB;
         $mform =& $this->_form;
 
-//-------------------------------------------------------------------------------
+        //-------------------------------------------------------------------------------
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
         $mform->addElement('text', 'name', get_string('assignmentname', 'assignment'), array('size'=>'64'));
@@ -25,6 +25,9 @@ class mod_assign_mod_form extends moodleform_mod {
 
         $this->add_intro_editor(true, get_string('description', 'assignment'));
 
+        assign_base::add_settings($mform);
+        
+        /*
         $mform->addElement('date_time_selector', 'timeavailable', get_string('availabledate', 'assignment'), array('optional'=>true));
         $mform->setDefault('timeavailable', time());
         $mform->addElement('date_time_selector', 'timedue', get_string('duedate', 'assignment'), array('optional'=>true));
@@ -39,7 +42,9 @@ class mod_assign_mod_form extends moodleform_mod {
         $this->standard_grading_coursemodule_elements();
 
         $mform->addElement('header', 'typedesc', get_string('pluginname', 'assign'));
+        */
 
+        $this->standard_grading_coursemodule_elements();
         $this->standard_coursemodule_elements();
 
         $this->add_action_buttons();
@@ -50,6 +55,7 @@ class mod_assign_mod_form extends moodleform_mod {
         return ($this->_instance != NULL);
     }
 
+    /*
     // Needed by plugin assignment types if they include a filemanager element in the settings form
     function get_context() {
         return $this->context;
@@ -68,5 +74,6 @@ class mod_assign_mod_form extends moodleform_mod {
         //$errors = array_merge($errors, $this->get_assignment_instance()->form_validation($data, $files));
         return $errors;
     }
+      */
 }
 
