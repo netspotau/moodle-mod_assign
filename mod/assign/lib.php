@@ -17,11 +17,9 @@
 
 class assign_base {
 
-    /** @var object */
-    var $context;
-
- 
     // list of configuration options for the assignment base type
+
+    var $data;
     /** @var date */
     var $timeavailable;
     /** @var date */
@@ -47,31 +45,27 @@ class assign_base {
     /** @var boolean */
     var $allowfeedbacktext;
 
+    var $id;
+
     function hide_config_setting_hook($name) {
         return false;
-    }
-
-    /**
-     * Configure all this assignment instance settings from
-     * the submitted form data
-     */
-    function configure_from_form($form_data) {
     }
 
     /**
      * Constructor for the base assign class
      *
      */
-    function assign_base($context, $form_data = null) {
+    function assign_base($context, & $form_data = null) {
         if (!$context) {
             print_error('invalidcontext');
             die();
         }
 
         if ($form_data) {
-            $this->configure_from_form($form_data);
+            $this->data = $form_data;
         
             // get the course id from the course context
+            
         } else {
             // get the course module id from the course module context
         }
@@ -126,18 +120,52 @@ class assign_base {
         // show offline marking interface (download all assignments for offline marking - upload marked assignments)
         // plagiarism links
     }
+
+    function pre_add_instance_hook() {
+    }
     
+    function post_add_instance_hook() {
+    }
+
+    function validate(& $err) {
+        // check all the settings 
+        if (false) {
+            $err = get_string('notvalidblah', 'assign');
+            return FALSE;
+        }
+        return TRUE;
+    }
 
     /**
      * Add this instance to the database
      */
     function add_instance() {
+        global $DB;
+
         // call pre_create hook (for subtypes)
+        $this->pre_add_instance_hook();
+
         // validation check
+        $err = '';
+        if (!$this->validate($err)) {
+            print_error($err);
+            // show add instance page?
+            die();
+        } 
+
         // add the database record
+        $this->data->timemodified = time();
+        $this->data->courseid = $this->data->course;
+
+        $returnid = $DB->insert_record("assign", $this->data);
+        $this->data->id = $returnid;
+
         // add event to the calendar
         // add the item in the gradebook
         // call post_create hook (for subtypes)
+        $this->post_add_instance_hook();
+
+        return $this->data->id;
     }
     
     /**
@@ -213,7 +241,18 @@ class assign_base {
             $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
             $choices[0] = get_string('courseuploadlimit') . ' ('.display_size($COURSE->maxbytes).')';
             $mform->addElement('select', 'maxsubmissionsizebytes', get_string('maximumsubmissionsize', 'assign'), $choices);
-            $mform->setDefault('maxsubmissionsizebytes', $CFG->assign_maxsubmissionsizebytes);
+ //           $mform->setDefault('maxsubmissionsizebytes', $CFG->assign_maxsubmissionsizebytes);
         }
     }
+}
+
+/**
+ * Adds an assignment instance
+ *
+ * This is done by calling the add_instance() method of the assignment type class
+ */
+function assign_add_instance($form_data) {
+    $context = get_context_instance(CONTEXT_COURSE,$form_data->course);
+    $ass = new assign_base($context, $form_data);
+    return $ass->add_instance();
 }

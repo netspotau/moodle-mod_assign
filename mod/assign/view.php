@@ -7,6 +7,6 @@ $a  = optional_param('a', 0, PARAM_INT);   // Assignment ID
 
 $url = new moodle_url('/mod/assign/view.php');
 $PAGE->set_url($url);
-require_login($course, true, $cm);
+//require_login($course, true, $cm);
 
 echo "View";
