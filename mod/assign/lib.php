@@ -72,13 +72,15 @@ class assign_base {
 
     }
     
+    
+    
     /**
      * Display the assignment, used by view.php
      *
      * The assignment is displayed differently depending on your role, 
      * the settings for the assignment and the status of the assignment.
      */
-    function view_main() {
+    function view() {
         // check view permissions
             // show no permission error 
             // return
@@ -197,6 +199,7 @@ class assign_base {
      * Add settings to edit form (called statically)
      *
      * Add the list of assignment specific settings to the edit form
+     * static
      */
     function add_settings(& $mform) {
         global $CFG, $COURSE;
@@ -242,6 +245,7 @@ class assign_base {
             $choices[0] = get_string('courseuploadlimit') . ' ('.display_size($COURSE->maxbytes).')';
             $mform->addElement('select', 'maxsubmissionsizebytes', get_string('maximumsubmissionsize', 'assign'), $choices);
  //           $mform->setDefault('maxsubmissionsizebytes', $CFG->assign_maxsubmissionsizebytes);
+
         }
     }
 }
