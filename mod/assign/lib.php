@@ -23,29 +23,27 @@ class assign_base {
  
     // list of configuration options for the assignment base type
     /** @var date */
-    var $config_due_date
+    var $config_due_date;
     /** @var date */
-    var $config_final_submissions_date
+    var $config_final_submissions_date;
     /** @var boolean */
-    var $config_allow_late_submissions
+    var $config_allow_late_submissions;
     /** @var boolean */
-    var $config_allow_online_text_submission
+    var $config_allow_online_text_submission;
     /** @var boolean */
-    var $config_require_online_text_submission
+    var $config_require_online_text_submission;
     /** @var int */
-    var $config_max_upload_file_submissions
+    var $config_max_upload_file_submissions;
     /** @var int */
-    var $config_min_required_upload_file_submissions
-    /** @var boolean */
-    var $config_require_online_text_submission
+    var $config_min_required_upload_file_submissions;
     /** @var int */
-    var $config_max_submission_file_size
+    var $config_max_submission_file_size;
     /** @var int */
-    var $config_max_feedback_file_size
+    var $config_max_feedback_file_size;
     /** @var boolean */
-    var $config_allow_feedback_files
+    var $config_allow_feedback_files;
     /** @var boolean */
-    var $config_allow_feedback_text
+    var $config_allow_feedback_text;
 
     /**
      * Configure all this assignment instance settings from
