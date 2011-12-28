@@ -23,27 +23,33 @@ class assign_base {
  
     // list of configuration options for the assignment base type
     /** @var date */
-    var $config_due_date;
+    var $timeavailable;
     /** @var date */
-    var $config_final_submissions_date;
+    var $timedue;
+    /** @var date */
+    var $timefinal;
     /** @var boolean */
-    var $config_allow_late_submissions;
+    var $preventlate;
     /** @var boolean */
-    var $config_allow_online_text_submission;
+    var $allowonlinetextsubmission;
     /** @var boolean */
-    var $config_require_online_text_submission;
+    var $requireonlinetextsubmission;
     /** @var int */
-    var $config_max_upload_file_submissions;
+    var $allowmaxfiles;
     /** @var int */
-    var $config_min_required_upload_file_submissions;
+    var $allowminfiles;
     /** @var int */
-    var $config_max_submission_file_size;
+    var $maxsubmissionsizebytes;
     /** @var int */
-    var $config_max_feedback_file_size;
+    var $maxfeedbacksizebytes;
     /** @var boolean */
-    var $config_allow_feedback_files;
+    var $allowfeedbackfiles;
     /** @var boolean */
-    var $config_allow_feedback_text;
+    var $allowfeedbacktext;
+
+    function hide_config_setting_hook($name) {
+        return false;
+    }
 
     /**
      * Configure all this assignment instance settings from
@@ -157,5 +163,57 @@ class assign_base {
         // update the database record
         // update all the calendar events 
         // call post_update hook (for subtypes)
+    }
+
+    /**
+     * Add settings to edit form (called statically)
+     *
+     * Add the list of assignment specific settings to the edit form
+     */
+    function add_settings(& $mform) {
+        global $CFG, $COURSE;
+        if (!assign_base::hide_config_setting_hook('timeavailable')) {
+            $mform->addElement('date_time_selector', 'timeavailable', get_string('availabledate', 'assign'), array('optional'=>true));
+            $mform->setDefault('timeavailable', time());
+        }
+        if (!assign_base::hide_config_setting_hook('timedue')) {
+            $mform->addElement('date_time_selector', 'timedue', get_string('duedate', 'assign'), array('optional'=>true));
+            $mform->setDefault('timedue', time()+7*24*3600);
+        }
+        $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
+        if (!assign_base::hide_config_setting_hook('preventlate')) {
+            $mform->addElement('select', 'preventlate', get_string('preventlate', 'assign'), $ynoptions);
+            $mform->setDefault('preventlate', 0);
+        }
+        if (!assign_base::hide_config_setting_hook('allowonlinetextsubmission')) {
+            $mform->addElement('select', 'allowonlinetextsubmission', get_string('allowonlinetextsubmission', 'assign'), $ynoptions);
+            $mform->setDefault('allowonlinetextsubmission', 0);
+        }
+        if (!assign_base::hide_config_setting_hook('requireonlinetextsubmission')) {
+            $mform->addElement('select', 'requireonlinetextsubmission', get_string('requireonlinetextsubmission', 'assign'), $ynoptions);
+            $mform->setDefault('requireonlinetextsubmission', 0);
+        }
+        if (!assign_base::hide_config_setting_hook('allowmaxfiles')) {
+            $options = array();
+            for($i = 1; $i <= 20; $i++) {
+                $options[$i] = $i;
+            }
+            $mform->addElement('select', 'allowmaxfiles', get_string('allowmaxfiles', 'assign'), $options);
+            $mform->setDefault('allowmaxfiles', 3);
+        }
+        if (!assign_base::hide_config_setting_hook('allowminfiles')) {
+            $options = array();
+            for($i = 1; $i <= 20; $i++) {
+                $options[$i] = $i;
+            }
+            $mform->addElement('select', 'allowminfiles', get_string('allowminfiles', 'assign'), $options);
+            $mform->setDefault('allowminfiles', 3);
+        }
+        if (!assign_base::hide_config_setting_hook('maxsubmissionsizebytes')) {
+            $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
+            $choices[0] = get_string('courseuploadlimit') . ' ('.display_size($COURSE->maxbytes).')';
+            $mform->addElement('select', 'maxsubmissionsizebytes', get_string('maximumsubmissionsize', 'assign'), $choices);
+            $mform->setDefault('maxsubmissionsizebytes', $CFG->assign_maxsubmissionsizebytes);
+        }
     }
 }
