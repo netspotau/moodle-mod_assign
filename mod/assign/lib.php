@@ -45,7 +45,8 @@ class assign_base {
     /** @var boolean */
     var $allowfeedbacktext;
 
-    var $id;
+    // context cache
+    protected $context;
 
     function hide_config_setting_hook($name) {
         return false;
@@ -55,19 +56,16 @@ class assign_base {
      * Constructor for the base assign class
      *
      */
-    function assign_base($context, & $form_data = null) {
+    function assign_base(& $context, & $form_data = null) {
         if (!$context) {
             print_error('invalidcontext');
             die();
         }
 
+        $this->context = & $context;
+
         if ($form_data) {
             $this->data = $form_data;
-        
-            // get the course id from the course context
-            
-        } else {
-            // get the course module id from the course module context
         }
 
     }
@@ -90,9 +88,12 @@ class assign_base {
         // check can grade
             // display link to grading interface
         // check can submit
+        if (has_capability('mod/assign:submit', $this->context)) {
             // display current submission status
             // check submissions open
             // display submit interface
+            $this->view_submit();
+        }
     }
     
     /**
@@ -100,6 +101,7 @@ class assign_base {
      *
      */
     function view_submit() {
+        echo "View Submit";
         // check view permissions
         // check submissions open
         // check submit permissions
