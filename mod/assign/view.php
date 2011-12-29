@@ -28,6 +28,7 @@ $url->param('id', $id);
 
 require_login($course, true, $cm);
 $PAGE->set_url($url);
+$PAGE->requires->js('/mod/assign/assign.js');
 
 
 $context = get_context_instance(CONTEXT_MODULE,$cm->id);
