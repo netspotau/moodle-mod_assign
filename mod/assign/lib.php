@@ -29,6 +29,9 @@ class assign_base {
 
     // context cache
     protected $context;
+    // cached current course and module
+    protected $course;
+    protected $coursemodule;
 
     function hide_config_setting_hook($name) {
         return false;
@@ -38,18 +41,16 @@ class assign_base {
      * Constructor for the base assign class
      *
      */
-    function assign_base(& $context, & $form_data = null) {
+    function assign_base(& $context, & $data = null, & $coursemodule = null, & $course = null) {
         if (!$context) {
             print_error('invalidcontext');
             die();
         }
 
         $this->context = & $context;
-
-        if ($form_data) {
-            $this->data = $form_data;
-        }
-
+        $this->data = & $data;
+        $this->coursemodule = & $coursemodule; 
+        $this->course = & $course; 
     }
 
     private function get_course_context() {
@@ -59,8 +60,39 @@ class assign_base {
             return $this->context->get_parent_context();
         } 
     }
+
+    private function get_course_module() {
+        if ($this->coursemodule) {
+            return $this->coursemodule;
+        }
+    }
+
+    private function get_course() {
+        if ($this->course) {
+            return $this->course;
+        }
+    }
     
+    function view_header($subpage='') {
+        global $CFG, $PAGE, $OUTPUT, $COURSE;
+
+        if ($subpage) {
+            $PAGE->navbar->add($subpage);
+        }
+
+        $PAGE->set_title($this->pagetitle);
+        $PAGE->set_heading($COURSE->fullname);
+
+        echo $OUTPUT->header();
+
+        groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id);
+        
+    }
     
+    function view_footer() {
+        global $OUTPUT;
+        echo $OUTPUT->footer();
+    }
     
     /**
      * Display the assignment, used by view.php
@@ -69,6 +101,7 @@ class assign_base {
      * the settings for the assignment and the status of the assignment.
      */
     function view() {
+        $this->view_header();
         // check view permissions
             // show no permission error 
             // return
@@ -80,10 +113,12 @@ class assign_base {
         // check can submit
         if (has_capability('mod/assign:submit', $this->context)) {
             // display current submission status
+            $this->view_submission_status();
             // check submissions open
             // display submit interface
             $this->view_submit();
         }
+        $this->view_footer();
     }
 
     /**
@@ -154,7 +189,6 @@ class assign_base {
      *
      */
     function view_online_text_submit_form() {
-        echo "Hi";
     }
     
     /**
@@ -168,7 +202,6 @@ class assign_base {
 
         if ($this->submissions_open()) {
             // if online text allowed
-            var_dump($this->data);
             if ($this->data->onlinetextsubmission) {
                 // show online text submission form
                 $this->view_online_text_submit_form();
@@ -180,6 +213,16 @@ class assign_base {
 
         // plagiarism?
     }
+
+    function view_submission_status() {
+        $time = time();
+        if ($this->data->allowsubmissionsfromdate) {
+            if ($time <= $this->data->allowsubmissionsfromdate) {
+                echo "You are not allowed to submit to this assignment before " . $this->data->allowsubmissionsfromdate;
+            }    
+        }
+    }
+    
 
     function view_grading() {
         // check view permissions
@@ -196,6 +239,12 @@ class assign_base {
     }
     
     function post_add_instance_hook() {
+    }
+
+    function pre_update_instance_hook() {
+    }
+    
+    function post_update_instance_hook() {
     }
 
     function validate(& $err) {
@@ -258,10 +307,21 @@ class assign_base {
      *
      */
     function update_instance() {
+        global $DB;
+        
+        $this->data->id = $this->data->instance;
+        $this->data->timemodified = time();
+
         // call pre_update hook (for subtypes)
+        $this->pre_update_instance_hook();
         // update the database record
+
+        $result = $DB->update_record('assign', $this->data);
+        
         // update all the calendar events 
         // call post_update hook (for subtypes)
+        $this->post_update_instance_hook();
+        return $result;
     }
 
     /**
@@ -360,6 +420,17 @@ function assign_add_instance($form_data) {
     $context = get_context_instance(CONTEXT_COURSE,$form_data->course);
     $ass = new assign_base($context, $form_data);
     return $ass->add_instance();
+}
+
+/**
+ * Update an assignment instance
+ *
+ * This is done by calling the update_instance() method of the assignment type class
+ */
+function assign_update_instance($form_data) {
+    $context = get_context_instance(CONTEXT_MODULE,$form_data->coursemodule);
+    $ass = new assign_base($context, $form_data);
+    return $ass->update_instance();
 }
 
 /**

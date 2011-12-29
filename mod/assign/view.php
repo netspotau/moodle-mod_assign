@@ -24,14 +24,14 @@ if (!$course = $DB->get_record("course", array("id" => $assignment->course))) {
     print_error('coursemisconf', 'assign');
 }
 $url->param('id', $id);
-$PAGE->set_url($url);
 
 
 require_login($course, true, $cm);
+$PAGE->set_url($url);
 
 
 $context = get_context_instance(CONTEXT_MODULE,$cm->id);
    
 
-$ass = new assign_base($context,$assignment);
+$ass = new assign_base($context,$assignment,$cm,$course);
 $ass->view();
