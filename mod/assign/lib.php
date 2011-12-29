@@ -80,7 +80,7 @@ class assign_base {
             $PAGE->navbar->add($subpage);
         }
 
-        $PAGE->set_title($this->pagetitle);
+        $PAGE->set_title(get_string('pluginname', 'assign'));
         $PAGE->set_heading($COURSE->fullname);
 
         echo $OUTPUT->header();
@@ -191,6 +191,13 @@ class assign_base {
     function view_online_text_submit_form() {
     }
     
+    function view_files_submit_form() {
+        global $OUTPUT, $USER;
+        echo $OUTPUT->box_start('generalbox feedbackbox', 'uploadfiles');
+        echo $OUTPUT->heading(get_string('uploadfiles', 'assign'), 3);
+        echo $OUTPUT->box_end();
+    }
+    
     /**
      * Show the screen for creating an assignment submission
      *
@@ -207,7 +214,10 @@ class assign_base {
                 $this->view_online_text_submit_form();
             }
             // if upload files allowed
+            if ($this->data->maxfilessubmission >= 1) {
                 // show upload files submission form
+                $this->view_files_submit_form();
+            }
             // call view_submit_hook() for subtypes   
         }
 
@@ -215,12 +225,34 @@ class assign_base {
     }
 
     function view_submission_status() {
-        $time = time();
-        if ($this->data->allowsubmissionsfromdate) {
-            if ($time <= $this->data->allowsubmissionsfromdate) {
-                echo "You are not allowed to submit to this assignment before " . $this->data->allowsubmissionsfromdate;
-            }    
+        global $OUTPUT, $USER;
+        
+        if (!is_enrolled($this->get_course_context(), $USER)) {
+            return;
         }
+
+        echo $OUTPUT->box_start('generalbox informationbox', 'submissionstatus');
+        echo $OUTPUT->heading(get_string('submissionstatusheading', 'assign'), 3);
+        $time = time();
+        if ($this->data->maxfilessubmission < 1 && !$this->data->onlinetextsubmission) {
+            echo get_string('noonlinesubmissions', 'assign');
+        } else {
+            if ($this->data->allowsubmissionsfromdate) {
+                if ($time <= $this->data->allowsubmissionsfromdate) {
+                    echo get_string('allowsubmissionsfromdatesummary', 'assign', userdate($this->data->allowsubmissionsfromdate));
+                }    
+            } else {
+                $submission = $this->get_submission($USER->id);
+                if ($submission) {
+                    var_dump($submission);
+        
+                } else {
+                    // no submission
+                    echo get_string('nosubmission', 'assign');
+                }
+            }
+        }
+        echo $OUTPUT->box_end();
     }
     
 
