@@ -27,23 +27,6 @@ class mod_assign_mod_form extends moodleform_mod {
 
         assign_base::add_settings($mform);
         
-        /*
-        $mform->addElement('date_time_selector', 'timeavailable', get_string('availabledate', 'assignment'), array('optional'=>true));
-        $mform->setDefault('timeavailable', time());
-        $mform->addElement('date_time_selector', 'timedue', get_string('duedate', 'assignment'), array('optional'=>true));
-        $mform->setDefault('timedue', time()+7*24*3600);
-
-        $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
-
-        $mform->addElement('select', 'preventlate', get_string('preventlate', 'assignment'), $ynoptions);
-        $mform->setDefault('preventlate', 0);
-
-        // hack to support pluggable assignment type titles
-        $this->standard_grading_coursemodule_elements();
-
-        $mform->addElement('header', 'typedesc', get_string('pluginname', 'assign'));
-        */
-
         $this->standard_grading_coursemodule_elements();
         $this->standard_coursemodule_elements();
 

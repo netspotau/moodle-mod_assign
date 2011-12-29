@@ -15,35 +15,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+define('ASSIGN_SUBMISSION_STATUS_SUBMITTED', 'submitted'); // student thinks it is finished
+define('ASSIGN_SUBMISSION_STATUS_GRADER_CLOSED', 'closed'); // teacher prevents more submissions
+
+require_once($CFG->libdir.'/accesslib.php');
+
 class assign_base {
 
     // list of configuration options for the assignment base type
 
-    var $data;
-    /** @var date */
-    var $timeavailable;
-    /** @var date */
-    var $timedue;
-    /** @var date */
-    var $timefinal;
-    /** @var boolean */
-    var $preventlate;
-    /** @var boolean */
-    var $allowonlinetextsubmission;
-    /** @var boolean */
-    var $requireonlinetextsubmission;
-    /** @var int */
-    var $allowmaxfiles;
-    /** @var int */
-    var $allowminfiles;
-    /** @var int */
-    var $maxsubmissionsizebytes;
-    /** @var int */
-    var $maxfeedbacksizebytes;
-    /** @var boolean */
-    var $allowfeedbackfiles;
-    /** @var boolean */
-    var $allowfeedbacktext;
+    // list of all settings
+    protected $data;
 
     // context cache
     protected $context;
@@ -68,6 +50,14 @@ class assign_base {
             $this->data = $form_data;
         }
 
+    }
+
+    private function get_course_context() {
+        if ($this->context->contextlevel == CONTEXT_COURSE) {
+            return $this->context;
+        } else if ($this->context->contextlevel == CONTEXT_MODULE) {
+            return $this->context->get_parent_context();
+        } 
     }
     
     
@@ -95,21 +85,98 @@ class assign_base {
             $this->view_submit();
         }
     }
+
+    /**
+     * Load the submission object for a particular user
+     *
+     * @global object
+     * @global object
+     * @param $userid int The id of the user whose submission we want or 0 in which case USER->id is used
+     * @param $createnew boolean optional Defaults to false. If set to true a new submission object will be created in the database
+     * @param bool $teachermodified student submission set if false
+     * @return object The submission
+     */
+    function get_submission($userid) {
+        global $DB;
+
+        $submission = $DB->get_record('assign_submissions', array('assignment'=>$this->data->id, 'userid'=>$userid));
+
+        if ($submission) {
+            return $submission;
+        }
+        return FALSE;
+    }
+    
+
+    /**
+     * Is this assignment open for submissions?
+     *
+     * Check the due date, 
+     * prevent late submissions, 
+     * has this person already submitted, 
+     * is the assignment locked?
+     */
+    function submissions_open() {
+        global $USER;
+
+        $time = time();
+        $date_open = TRUE;
+        if ($this->data->preventlatesubmissions && $this->data->duedate) {
+            $date_open = ($this->data->allowsubmissionsfromdate <= $time && $time <= $this->data->duedate);
+        } else {
+            $date_open = ($this->data->allowsubmissionsfromdate <= $time);
+        }
+
+        if (!$date_open) {
+            return FALSE;
+        }
+
+        // now check if this user has already submitted etc.
+        if (!is_enrolled($this->get_course_context(), $USER)) {
+            return FALSE;
+        }
+        if ($submission = $this->get_submission($USER->id)) {
+            if ($this->data->submissiondrafts && $submission->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
+                // drafts are tracked and the student has submitted the assignment
+                return FALSE;
+            }
+            if ($submission->status == ASSIGN_SUBMISSION_STATUS_GRADER_CLOSED) {
+                // the marker has prevented any more submissions
+                return FALSE;
+            }
+        }
+
+        return TRUE;
+    }
+    
+    /**
+     * Show the form for creating an online text submission
+     *
+     */
+    function view_online_text_submit_form() {
+        echo "Hi";
+    }
     
     /**
      * Show the screen for creating an assignment submission
      *
      */
     function view_submit() {
-        echo "View Submit";
         // check view permissions
-        // check submissions open
         // check submit permissions
-        // if online text allowed
-            // show online text submission form
-        // if upload files allowed
-            // show upload files submission form
-        // call view_submit_hook() for subtypes   
+        // check submissions open
+
+        if ($this->submissions_open()) {
+            // if online text allowed
+            var_dump($this->data);
+            if ($this->data->onlinetextsubmission) {
+                // show online text submission form
+                $this->view_online_text_submit_form();
+            }
+            // if upload files allowed
+                // show upload files submission form
+            // call view_submit_hook() for subtypes   
+        }
 
         // plagiarism?
     }
@@ -205,42 +272,67 @@ class assign_base {
      */
     function add_settings(& $mform) {
         global $CFG, $COURSE;
-        if (!assign_base::hide_config_setting_hook('timeavailable')) {
-            $mform->addElement('date_time_selector', 'timeavailable', get_string('availabledate', 'assign'), array('optional'=>true));
-            $mform->setDefault('timeavailable', time());
-        }
-        if (!assign_base::hide_config_setting_hook('timedue')) {
-            $mform->addElement('date_time_selector', 'timedue', get_string('duedate', 'assign'), array('optional'=>true));
-            $mform->setDefault('timedue', time()+7*24*3600);
-        }
         $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
-        if (!assign_base::hide_config_setting_hook('preventlate')) {
-            $mform->addElement('select', 'preventlate', get_string('preventlate', 'assign'), $ynoptions);
-            $mform->setDefault('preventlate', 0);
+        if (!assign_base::hide_config_setting_hook('allowsubmissionsfromdate') ||
+            !assign_base::hide_config_setting_hook('alwaysshowdescription') ||
+            !assign_base::hide_config_setting_hook('duedate')) {
+            $mform->addElement('header', 'general', get_string('availability', 'assign'));
         }
-        if (!assign_base::hide_config_setting_hook('allowonlinetextsubmission')) {
-            $mform->addElement('select', 'allowonlinetextsubmission', get_string('allowonlinetextsubmission', 'assign'), $ynoptions);
-            $mform->setDefault('allowonlinetextsubmission', 0);
+        if (!assign_base::hide_config_setting_hook('allowsubmissionsfromdate')) {
+            $mform->addElement('date_time_selector', 'allowsubmissionsfromdate', get_string('allowsubmissionsfromdate', 'assign'), array('optional'=>true));
+            $mform->setDefault('allowsubmissionsfromdate', time());
         }
-        if (!assign_base::hide_config_setting_hook('requireonlinetextsubmission')) {
-            $mform->addElement('select', 'requireonlinetextsubmission', get_string('requireonlinetextsubmission', 'assign'), $ynoptions);
-            $mform->setDefault('requireonlinetextsubmission', 0);
+        if (!assign_base::hide_config_setting_hook('duedate')) {
+            $mform->addElement('date_time_selector', 'duedate', get_string('duedate', 'assign'), array('optional'=>true));
+            $mform->setDefault('duedate', time()+7*24*3600);
         }
-        if (!assign_base::hide_config_setting_hook('allowmaxfiles')) {
+        if (!assign_base::hide_config_setting_hook('alwaysshowdescription')) {
+            $mform->addElement('select', 'alwaysshowdescription', get_string('alwaysshowdescription', 'assign'), $ynoptions);
+            $mform->setDefault('alwaysshowdescription', 1);
+        }
+        if (!assign_base::hide_config_setting_hook('preventlatesubmissions')) {
+            $mform->addElement('select', 'preventlatesubmissions', get_string('preventlatesubmissions', 'assign'), $ynoptions);
+            $mform->setDefault('preventlatesubmissions', 0);
+        }
+        if (!assign_base::hide_config_setting_hook('submissiondrafts') ||
+            !assign_base::hide_config_setting_hook('submissionnotes')) {
+            $mform->addElement('header', 'general', get_string('submissions', 'assign'));
+        }
+        if (!assign_base::hide_config_setting_hook('submissiondrafts')) {
+            $mform->addElement('select', 'submissiondrafts', get_string('submissiondrafts', 'assign'), $ynoptions);
+            $mform->setDefault('submissiondrafts', 0);
+        }
+        if (!assign_base::hide_config_setting_hook('submissionnotes')) {
+            $mform->addElement('select', 'submissionnotes', get_string('submissionnotes', 'assign'), $ynoptions);
+            $mform->setDefault('submissionnotes', 0);
+        }
+        if (!assign_base::hide_config_setting_hook('onlinetextsubmission')) {
+            $mform->addElement('header', 'general', get_string('onlinesubmissions', 'assign'));
+        }
+        if (!assign_base::hide_config_setting_hook('onlinetextsubmission')) {
+            $mform->addElement('select', 'onlinetextsubmission', get_string('onlinetextsubmission', 'assign'), $ynoptions);
+            $mform->setDefault('onlinetextsubmission', 0);
+        }
+        if (!assign_base::hide_config_setting_hook('maxfilessubmission') ||
+            !assign_base::hide_config_setting_hook('minfilessubmission') ||
+            !assign_base::hide_config_setting_hook('maxsubmissionsizebytes')) {
+            $mform->addElement('header', 'general', get_string('filesubmissions', 'assign'));
+        }
+        if (!assign_base::hide_config_setting_hook('maxfilessubmission')) {
             $options = array();
-            for($i = 1; $i <= 20; $i++) {
+            for($i = 0; $i <= 20; $i++) {
                 $options[$i] = $i;
             }
-            $mform->addElement('select', 'allowmaxfiles', get_string('allowmaxfiles', 'assign'), $options);
-            $mform->setDefault('allowmaxfiles', 3);
+            $mform->addElement('select', 'maxfilessubmission', get_string('maxfilessubmission', 'assign'), $options);
+            $mform->setDefault('maxfilessubmission', 3);
         }
-        if (!assign_base::hide_config_setting_hook('allowminfiles')) {
+        if (!assign_base::hide_config_setting_hook('minfilessubmission')) {
             $options = array();
-            for($i = 1; $i <= 20; $i++) {
+            for($i = 0; $i <= 20; $i++) {
                 $options[$i] = $i;
             }
-            $mform->addElement('select', 'allowminfiles', get_string('allowminfiles', 'assign'), $options);
-            $mform->setDefault('allowminfiles', 3);
+            $mform->addElement('select', 'minfilessubmission', get_string('minfilessubmission', 'assign'), $options);
+            $mform->setDefault('minfilessubmission', 3);
         }
         if (!assign_base::hide_config_setting_hook('maxsubmissionsizebytes')) {
             $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
@@ -248,6 +340,13 @@ class assign_base {
             $mform->addElement('select', 'maxsubmissionsizebytes', get_string('maximumsubmissionsize', 'assign'), $choices);
  //           $mform->setDefault('maxsubmissionsizebytes', $CFG->assign_maxsubmissionsizebytes);
 
+        }
+        if (!assign_base::hide_config_setting_hook('sendnotifications')) {
+            $mform->addElement('header', 'general', get_string('notifications', 'assign'));
+        }
+        if (!assign_base::hide_config_setting_hook('sendnotifications')) {
+            $mform->addElement('select', 'sendnotifications', get_string('sendnotifications', 'assign'), $ynoptions);
+            $mform->setDefault('sendnotifications', 1);
         }
     }
 }
@@ -261,4 +360,25 @@ function assign_add_instance($form_data) {
     $context = get_context_instance(CONTEXT_COURSE,$form_data->course);
     $ass = new assign_base($context, $form_data);
     return $ass->add_instance();
+}
+
+/**
+ * @param string $feature FEATURE_xx constant for requested feature
+ * @return mixed True if module supports feature, null if doesn't know
+ */
+function assign_supports($feature) {
+    switch($feature) {
+        case FEATURE_GROUPS:                  return true;
+        case FEATURE_GROUPINGS:               return true;
+        case FEATURE_GROUPMEMBERSONLY:        return true;
+        case FEATURE_MOD_INTRO:               return true;
+        case FEATURE_COMPLETION_TRACKS_VIEWS: return true;
+        case FEATURE_GRADE_HAS_GRADE:         return true;
+        case FEATURE_GRADE_OUTCOMES:          return true;
+        case FEATURE_GRADE_HAS_GRADE:         return true;
+        case FEATURE_BACKUP_MOODLE2:          return true;
+        case FEATURE_SHOW_DESCRIPTION:        return true;
+
+        default: return null;
+    }
 }
