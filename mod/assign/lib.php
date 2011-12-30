@@ -437,10 +437,15 @@ class assign_base {
                         $row = new html_table_row();
                         $cell1 = new html_table_cell(get_string('timeremaining', 'assign'));
                         if ($this->data->duedate - $time <= 0) {
-                            if ($submission->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
+                            if ($submission->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED &&
+                                $submission->status != ASSIGN_SUBMISSION_STATUS_LOCKED) {
                                 $cell2 = new html_table_cell(get_string('overdue', 'assign', format_time($time - $this->data->duedate)));
                             } else {
-                                $cell2 = new html_table_cell(get_string('assignmentclosed', 'assign'));
+                                if ($submission->timemodified > $this->data->duedate) {
+                                    $cell2 = new html_table_cell(get_string('submittedlate', 'assign', format_time($submission->timemodified - $this->data->duedate)));
+                                } else {
+                                    $cell2 = new html_table_cell(get_string('submittedearly', 'assign', format_time($submission->timemodified - $this->data->duedate)));
+                                }
                             }
                         } else {
                             $cell2 = new html_table_cell(format_time($this->data->duedate - $time));
