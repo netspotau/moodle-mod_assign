@@ -5,7 +5,7 @@ require_once('lib.php');
 
 $id = required_param('id', PARAM_INT);  // Course Module ID
 
-$url = new moodle_url('/mod/assign/view.php');
+$url = new moodle_url('/mod/assign/grading.php');
 
 
 $cm = null;
@@ -35,4 +35,4 @@ $PAGE->requires->css('/mod/assign/style.css');
 $context = get_context_instance(CONTEXT_MODULE,$cm->id);
    
 $ass = new assign_base($context,$assignment,$cm,$course);
-$ass->view();
+$ass->view_grading(optional_param('action', '', PARAM_TEXT));

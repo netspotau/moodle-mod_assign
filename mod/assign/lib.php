@@ -19,9 +19,13 @@ define('ASSIGN_SUBMISSION_STATUS_DRAFT', 'draft'); // student thinks it is finis
 define('ASSIGN_SUBMISSION_STATUS_SUBMITTED', 'submitted'); // student thinks it is finished
 define('ASSIGN_SUBMISSION_STATUS_LOCKED', 'locked'); // teacher prevents more submissions
 
+define('ASSIGN_FILTER_SUBMITTED', 'submitted');
+define('ASSIGN_FILTER_REQUIRE_GRADING', 'require_grading');
+
 require_once($CFG->libdir.'/accesslib.php');
 require_once($CFG->libdir.'/formslib.php');
 require_once($CFG->libdir . '/plagiarismlib.php');
+require_once($CFG->dirroot . '/repository/lib.php');
 
 class assign_base {
 
@@ -113,6 +117,249 @@ class assign_base {
         global $OUTPUT;
         echo $OUTPUT->footer();
     }
+
+    function & list_enrolled_users_with_capability($permission) {
+        $users = & get_enrolled_users($this->context, $permission, 0, 'u.id');
+        return $users;
+    }
+
+    function count_enrolled_users_with_capability($permission) {
+        // the 0 is for groupid - which we will have to support
+        $users = & get_enrolled_users($this->context, $permission, 0, 'u.id');
+        return count($users);
+    }
+
+    function count_submissions_with_status($status) {
+        global $DB;
+        return $DB->count_records_sql("SELECT COUNT('x')
+                                     FROM {assign_submissions}
+                                    WHERE assignment = ? AND
+                                          status = ?", array($this->get_course_module()->instance, $status));
+    }
+    
+    function view_grading_summary() {
+        global $OUTPUT;
+        echo $OUTPUT->container_start('gradingsummary');
+        echo $OUTPUT->heading(get_string('gradingsummary', 'assign'), 3);
+        echo $OUTPUT->box_start('boxaligncenter', 'intro');
+        $t = new html_table();
+
+        // status
+        $row = new html_table_row();
+        $cell1 = new html_table_cell(get_string('numberofparticipants', 'assign'));
+        $cell2 = new html_table_cell($this->count_enrolled_users_with_capability('mod/assign:submit'));
+        $row->cells = array($cell1, $cell2);
+        $t->data[] = $row;
+
+        // drafts
+        if ($this->data->submissiondrafts) {
+            $row = new html_table_row();
+            $cell1 = new html_table_cell(get_string('numberofdraftsubmissions', 'assign'));
+            $cell2 = new html_table_cell($this->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_DRAFT));
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+        }
+
+        $row = new html_table_row();
+        $cell1 = new html_table_cell(get_string('numberofsubmittedassignments', 'assign'));
+        $cell2 = new html_table_cell($this->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_SUBMITTED));
+        $row->cells = array($cell1, $cell2);
+        $t->data[] = $row;
+
+        $time = time();
+        if ($this->data->duedate) {
+            $row = new html_table_row();
+            $cell1 = new html_table_cell(get_string('duedate', 'assign'));
+            $cell2 = new html_table_cell(userdate($this->data->duedate));
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+
+            $row = new html_table_row();
+            $cell1 = new html_table_cell(get_string('timeremaining', 'assign'));
+            if ($this->data->duedate - $time <= 0) {
+                $cell2 = new html_table_cell(get_string('assignmentisdue', 'assign'));
+            } else {
+                $cell2 = new html_table_cell(format_time($this->data->duedate - $time));
+            }
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+        
+        }
+
+        echo html_writer::table($t);
+        echo $OUTPUT->box_end();
+        
+        echo $OUTPUT->single_button(new moodle_url('/mod/assign/grading.php',
+            array('id' => $this->get_course_module()->id)), get_string('viewgrading', 'assign'), 'get');
+
+
+        echo $OUTPUT->container_end();
+        echo $OUTPUT->spacer(array('height'=>30));
+    }
+
+    function & load_submissions_table($perpage=10,$filter=null) {
+        global $CFG, $DB, $OUTPUT;
+
+        $tablecolumns = array('picture', 'fullname', 'grade', 'submissioncomment', 'timemodified', 'timemarked', 'status', 'finalgrade');
+
+        $tableheaders = array('',
+                              get_string('fullnameuser'),
+                              get_string('grade'),
+                              get_string('comment', 'assign'),
+                              get_string('lastmodified').' ('.get_string('submission', 'assign').')',
+                              get_string('lastmodified').' ('.get_string('grade').')',
+                              get_string('status'),
+                              get_string('finalgrade', 'grades'));
+
+        // more efficient to load this here
+        require_once($CFG->libdir.'/tablelib.php');
+        $table = new flexible_table('mod-assign-submissions');
+
+        $table->define_columns($tablecolumns);
+        $table->define_headers($tableheaders);
+        $table->define_baseurl($CFG->wwwroot.'/mod/assign/grading.php?id='.$this->get_course_module()->id);
+
+        $table->sortable(true, 'lastname');//sorted by lastname by default
+        $table->collapsible(true);
+        $table->initialbars(true);
+
+        $table->column_suppress('picture');
+        $table->column_suppress('fullname');
+
+        $table->column_class('picture', 'picture');
+        $table->column_class('fullname', 'fullname');
+        $table->column_class('grade', 'grade');
+        $table->column_class('submissioncomment', 'comment');
+        $table->column_class('timemodified', 'timemodified');
+        $table->column_class('timemarked', 'timemarked');
+        $table->column_class('status', 'status');
+        $table->column_class('finalgrade', 'finalgrade');
+
+        $table->set_attribute('cellspacing', '0');
+        $table->set_attribute('id', 'attempts');
+        $table->set_attribute('class', 'submissions');
+        $table->set_attribute('width', '100%');
+
+        $table->no_sorting('finalgrade');
+        $table->no_sorting('outcome');
+
+        $table->setup();
+
+        list($where, $params) = $table->get_sql_where();
+        if ($where) {
+            $where .= ' AND ';
+        }
+
+        if ($sort = $table->get_sql_sort()) {
+            $sort = ' ORDER BY '.$sort;
+        }
+
+        $users = array_keys( $this->list_enrolled_users_with_capability("mod/assign:submit"));
+
+        $ufields = user_picture::fields('u');
+        if (!empty($users)) {
+            $select = "SELECT $ufields,
+                              s.id AS submissionid, s.grade, s.submissioncomment, s.status,
+                              s.timemodified, s.timemarked ";
+            $sql = 'FROM {user} u '.
+                   'LEFT JOIN {assign_submissions} s ON u.id = s.userid
+                    AND s.assignment = '.$this->data->id.' '.
+                   'WHERE '.$where.'u.id IN ('.implode(',',$users).') ';
+
+            if ($filter != null) {
+                if ($filter == ASSIGN_FILTER_REQUIRE_GRADING) {
+                    $sql .= ' AND s.timemarked < s.timemodified '; 
+                } else if ($filter == ASSIGN_FILTER_SUBMITTED) {
+                    $sql .= ' AND s.timemodified > 0 '; 
+                }
+            }
+            
+            $count = $DB->count_records_sql("SELECT COUNT(*) AS X ".$sql, $params);
+
+            $table->pagesize($perpage, $count);
+            
+            $ausers = $DB->get_records_sql($select.$sql.$sort, $params, $table->get_page_start(), $table->get_page_size());
+
+            //$table->pagesize($perpage, count($ausers));
+            if ($ausers !== false) {
+                $grading_info = grade_get_grades($this->get_course()->id, 'mod', 'assign', $this->data->id, array_keys($ausers));
+                foreach ($ausers as $auser) {
+
+                    $picture = $OUTPUT->user_picture($auser);
+
+                    $userlink = '<a href="' . $CFG->wwwroot . '/user/view.php?id=' . $auser->id . '&amp;course=' . $this->get_course()->id . '">' . fullname($auser, has_capability('moodle/site:viewfullnames', $this->context)) . '</a>';
+
+                    $grade = $auser->grade;
+                    $comment = format_text($auser->submissioncomment);
+                    $studentmodified = '-';
+                    if ($auser->timemodified) {
+                        $studentmodified = userdate($auser->timemodified);
+                    }
+                    $teachermodified = '-';
+                    if ($auser->timemarked) {
+                        $teachermodified = userdate($auser->timemarked);
+                    }
+                    $status = get_string('submissionstatus_' . $auser->status, 'assign');
+                    $finalgrade = '-';
+                    if (isset($grading_info->items[0]) && $grading_info->items[0]->grades[$auser->id]) {
+                        $finalgrade = print_r($grading_info->items[0]->grades[$auser->id], true);
+                    }
+
+                    $row = array($picture, $userlink, $grade, $comment, $studentmodified, $teachermodified, $status, $finalgrade);
+                    $table->add_data($row);
+                }
+            }
+        }
+
+        return $table;
+
+    }
+    
+    function view_grading($action='') {
+        global $OUTPUT, $CFG, $USER;
+
+        if ($action == 'saveoptions') {
+            $this->process_save_grading_options();
+        }
+        
+        // only load this if it is 
+        require_once($CFG->libdir.'/gradelib.php');
+
+        $this->view_header(get_string('grading', 'assign'));
+        
+        // check view permissions
+        // check grading permissions
+        // show a paginated table with all student who can participate in this assignment (honour group mode)
+        // for each row show:
+        //      student identifier (may be anonymised), submission status, links to the submission, feedback comments, feedback files, grade, outcomes, rubrics, optional column for subtypes
+        // need to explore options for online grading interface - currently quickgrade or popup. 
+        // show offline marking interface (download all assignments for offline marking - upload marked assignments)
+        // plagiarism links
+    
+        // load and print the table of submissions
+        $perpage = get_user_preferences('assign_perpage', 10);
+        $filter = get_user_preferences('assign_filter', '');
+
+        $table = & $this->load_submissions_table($perpage, $filter);
+        $table->print_html();
+        echo $OUTPUT->spacer(array('height'=>30));
+
+        // print options for for changing the filter and changing the number of results per page
+        $mform = new mod_assign_grading_options_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'userid'=>$USER->id), 'post', '', array('id'=>'gradingoptionsform'));
+
+
+        $data = new stdClass();
+        $data->perpage = $perpage;
+        $data->filter = $filter;
+        $mform->set_data($data);
+        
+        $mform->display();
+        
+        echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
+            array('id' => $this->get_course_module()->id)), get_string('backtoassignment', 'assign'), 'get');
+
+        $this->view_footer();
+    }
     
     /**
      * Display the assignment, used by view.php
@@ -139,6 +386,9 @@ class assign_base {
             // show hidden assignment page
             // return
         // check can grade
+        if (has_capability('mod/assign:grade', $this->context)) {
+            $this->view_grading_summary();
+        }
             // display link to grading interface
         // check can submit
         if (has_capability('mod/assign:submit', $this->context)) {
@@ -272,6 +522,17 @@ class assign_base {
         $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
 
         $this->update_submission($submission);
+    }
+    
+    function process_save_grading_options() {
+        global $USER;
+
+        $mform = new mod_assign_grading_options_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'userid'=>$USER->id));
+        
+        if ($formdata = $mform->get_data()) {
+            set_user_preference('assign_perpage', $formdata->perpage);
+            set_user_preference('assign_filter', $formdata->filter);
+        }
     }
     
     function process_submission_comments() {
@@ -508,17 +769,6 @@ class assign_base {
         echo $OUTPUT->spacer(array('height'=>30));
     }
     
-
-    function view_grading() {
-        // check view permissions
-        // check grading permissions
-        // show a paginated table with all student who can participate in this assignment (honour group mode)
-        // for each row show:
-        //      student identifier (may be anonymised), submission status, links to the submission, feedback comments, feedback files, grade, outcomes, rubrics, optional column for subtypes
-        // need to explore options for online grading interface - currently quickgrade or popup. 
-        // show offline marking interface (download all assignments for offline marking - upload marked assignments)
-        // plagiarism links
-    }
 
     function pre_add_instance_hook() {
     }
@@ -784,5 +1034,40 @@ class mod_assign_submission_comments_form extends moodleform {
 
         // buttons
         $this->add_action_buttons(false, get_string('savecomments', 'assign'));
+    }
+}
+
+/**
+ * @package   mod-assign
+ * @copyright 2010 Dongsheng Cai <dongsheng@moodle.com>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class mod_assign_grading_options_form extends moodleform {
+    function definition() {
+        $mform = $this->_form;
+        $instance = $this->_customdata;
+
+        $mform->addElement('header', 'general', get_string('gradingoptions', 'assign'));
+        // visible elements
+        $options = array(-1=>'All',10=>'10', 20=>'20', 50=>'50', 100=>'100');
+        $autosubmit = array('onchange'=>'form.submit();');
+        $mform->addElement('select', 'perpage', get_string('assignmentsperpage', 'assign'), $options, $autosubmit);
+        $options = array(''=>get_string('filternone', 'assign'), ASSIGN_FILTER_SUBMITTED=>get_string('filtersubmitted', 'assign'), ASSIGN_FILTER_REQUIRE_GRADING=>get_string('filterrequiregrading', 'assign'));
+        $mform->addElement('select', 'filter', get_string('filter', 'assign'), $options, $autosubmit);
+    
+ //       $mform->_attributes['id'] = 'gradingoptions';
+
+        // hidden params
+        $mform->addElement('hidden', 'contextid', $instance['contextid']);
+        $mform->setType('contextid', PARAM_INT);
+        $mform->addElement('hidden', 'id', $instance['cm']);
+        $mform->setType('id', PARAM_INT);
+        $mform->addElement('hidden', 'userid', $instance['userid']);
+        $mform->setType('userid', PARAM_INT);
+        $mform->addElement('hidden', 'action', 'saveoptions');
+        $mform->setType('action', PARAM_ALPHA);
+
+        // buttons
+        $this->add_action_buttons(false, get_string('update', 'assign'));
     }
 }
