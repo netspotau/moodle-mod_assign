@@ -406,12 +406,11 @@ class assign_base {
             echo get_string('noonlinesubmissions', 'assign');
             echo $OUTPUT->box_end();
         } else {
-            if ($this->data->allowsubmissionsfromdate) {
-                if ($time <= $this->data->allowsubmissionsfromdate) {
-                    echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
-                    echo get_string('allowsubmissionsfromdatesummary', 'assign', userdate($this->data->allowsubmissionsfromdate));
-                    echo $OUTPUT->box_end();
-                }    
+            if ($this->data->allowsubmissionsfromdate &&
+                    $time <= $this->data->allowsubmissionsfromdate) {
+                echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
+                echo get_string('allowsubmissionsfromdatesummary', 'assign', userdate($this->data->allowsubmissionsfromdate));
+                echo $OUTPUT->box_end();
             } else {
                 $submission = $this->get_submission($USER->id);
                 if ($submission) {
