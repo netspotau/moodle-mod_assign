@@ -15,13 +15,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-define('ASSIGN_SUBMISSION_STATUS_NEW', 'new'); // new submission
 define('ASSIGN_SUBMISSION_STATUS_DRAFT', 'draft'); // student thinks it is finished
 define('ASSIGN_SUBMISSION_STATUS_SUBMITTED', 'submitted'); // student thinks it is finished
 define('ASSIGN_SUBMISSION_STATUS_LOCKED', 'locked'); // teacher prevents more submissions
 
 require_once($CFG->libdir.'/accesslib.php');
 require_once($CFG->libdir.'/formslib.php');
+require_once($CFG->libdir . '/plagiarismlib.php');
 
 class assign_base {
 
@@ -84,12 +84,29 @@ class assign_base {
         }
 
         $PAGE->set_title(get_string('pluginname', 'assign'));
-        $PAGE->set_heading($COURSE->fullname);
+        $PAGE->set_heading($this->data->name);
 
         echo $OUTPUT->header();
+        echo $OUTPUT->heading($this->data->name);
 
         groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id);
         
+    }
+
+    /**
+     * Display the assignment intro
+     *
+     * This will most likely be extended by assignment type plug-ins
+     * The default implementation prints the assignment description in a box
+     */
+    function view_intro() {
+        global $OUTPUT;
+        if ($this->data->alwaysshowdescription || time() > $this->data->allowsubmissionsfromdate) {
+            echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
+            echo format_module_intro('assign', $this->data, $this->get_course_module()->id);
+            echo $OUTPUT->box_end();
+        }
+        plagiarism_print_disclosure($this->get_course_module()->id);
     }
     
     function view_footer() {
@@ -103,14 +120,18 @@ class assign_base {
      * The assignment is displayed differently depending on your role, 
      * the settings for the assignment and the status of the assignment.
      */
-    function view() {
+    function view($subpage='', $action='') {
         // handle custom actions first
-        $action = optional_param('action', '', PARAM_TEXT);
         if ($action == "uploadfile") {
             $this->process_file_upload();
+        } else if ($action == "savecomments") {
+            $this->process_submission_comments();
+        } else if ($action == "submit") {
+            $this->process_submit_assignment();
         }
         
-        $this->view_header();
+        $this->view_header($subpage);
+        $this->view_intro();
         // check view permissions
             // show no permission error 
             // return
@@ -122,10 +143,14 @@ class assign_base {
         // check can submit
         if (has_capability('mod/assign:submit', $this->context)) {
             // display current submission status
-            $this->view_submission_status();
+            if ($action != 'editsubmission') {
+                $this->view_submission_status();
+            }
             // check submissions open
             // display submit interface
-            $this->view_submit();
+            if ($action == 'editsubmission') {
+                $this->view_submit();
+            }
         }
         $this->view_footer();
     }
@@ -155,7 +180,11 @@ class assign_base {
             $submission->timecreated = time();
             $submission->timemodified = $submission->timecreated;
             $submission->submissioncomment = '';
-            $submission->status = ASSIGN_SUBMISSION_STATUS_NEW;
+            if ($this->data->submissiondrafts) {
+                $submission->status = ASSIGN_SUBMISSION_STATUS_DRAFT;
+            } else {
+                $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+            }
             $sid = $DB->insert_record('assign_submissions', $submission);
             $submission->id = $sid;
             return $submission;
@@ -236,6 +265,28 @@ class assign_base {
         return $renderer->assign_files($this->context, $userid, 'submission');
         
     }
+    
+    function process_submit_assignment() {
+        global $USER;
+        $submission = $this->get_submission($USER->id, true);
+        $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+
+        $this->update_submission($submission);
+    }
+    
+    function process_submission_comments() {
+        global $USER;
+
+        $mform = new mod_assign_submission_comments_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'userid'=>$USER->id));
+        
+        if ($formdata = $mform->get_data()) {
+            $submission = $this->get_submission($USER->id, true);
+            $submission->submissioncomment = $formdata->submissioncomment;
+
+            $this->update_submission($submission);
+        
+        }
+    }
 
     function process_file_upload() {
         global $USER;
@@ -247,10 +298,6 @@ class assign_base {
                                         'return_types'=>FILE_INTERNAL);
 
         $mform = new mod_assign_upload_form(null, array('cm'=>$this->get_course_module()->id, 'options'=>$options, 'contextid'=>$this->context->id, 'userid'=>$USER->id));
-        //$data = new stdClass();
-        //$data = file_prepare_standard_filemanager($data, 'files', $options, $this->context, 'mod_assign', 'submission', $USER->id);
-        // set file manager itemid, so it will find the files in draft area
-        //$mform->set_data($data);
     
         if ($formdata = $mform->get_data()) {
             $fs = get_file_storage();
@@ -259,22 +306,34 @@ class assign_base {
 
             $submission = $this->get_submission($USER->id, true);
 
-            if ($this->data->submissiondrafts) {
-                $submission->status = ASSIGN_SUBMISSION_STATUS_DRAFT;
-            } else {
-                $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
-            }
             $this->update_submission($submission);
             redirect('view.php?id='.$this->get_course_module()->id);
             die();
         }
         
     }
+    
+    function view_submission_notes_form() {
+        global $OUTPUT, $USER;
+        echo $OUTPUT->heading(get_string('submissioncomment', 'assign'), 3);
+        echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
+        
+        $mform = new mod_assign_submission_comments_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'userid'=>$USER->id));
+        $submission = $this->get_submission($USER->id);
+        if ($submission) {
+            $data = new stdClass();
+            $data->submissioncomment = $submission->submissioncomment;
+            $mform->set_data($data);
+        }
+        $mform->display();
+        echo $OUTPUT->box_end();
+        echo $OUTPUT->spacer(array('height'=>30));
+    }
 
     function view_files_submit_form() {
         global $OUTPUT, $USER;
-        echo $OUTPUT->container_start('uploadfiles');
         echo $OUTPUT->heading(get_string('uploadfiles', 'assign'), 3);
+        echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
 
         
         // move submission files to user draft area
@@ -290,13 +349,12 @@ class assign_base {
         // set file manager itemid, so it will find the files in draft area
         $mform->set_data($data);
         
-        echo get_string('descriptionmaxfiles', 'assign', $this->data->maxfilessubmission);
 
 
         // show upload form
         $mform->display();
         
-        echo $OUTPUT->container_end();
+        echo $OUTPUT->box_end();
         echo $OUTPUT->spacer(array('height'=>30));
     }
     
@@ -305,6 +363,7 @@ class assign_base {
      *
      */
     function view_submit() {
+        global $OUTPUT;
         // check view permissions
         // check submit permissions
         // check submissions open
@@ -320,8 +379,13 @@ class assign_base {
                 // show upload files submission form
                 $this->view_files_submit_form();
             }
+            if ($this->data->submissionnotes) {
+                $this->view_submission_notes_form();
+            }
             // call view_submit_hook() for subtypes   
         }
+        echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
+            array('id' => $this->get_course_module()->id)), get_string('backtoassignment', 'assign'), 'get');
 
         // plagiarism?
     }
@@ -332,34 +396,76 @@ class assign_base {
         if (!is_enrolled($this->get_course_context(), $USER)) {
             return;
         }
+        $submission = null;
 
         echo $OUTPUT->container_start('submissionstatus');
         echo $OUTPUT->heading(get_string('submissionstatusheading', 'assign'), 3);
         $time = time();
         if ($this->data->maxfilessubmission < 1 && !$this->data->onlinetextsubmission) {
+            echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
             echo get_string('noonlinesubmissions', 'assign');
+            echo $OUTPUT->box_end();
         } else {
             if ($this->data->allowsubmissionsfromdate) {
                 if ($time <= $this->data->allowsubmissionsfromdate) {
+                    echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
                     echo get_string('allowsubmissionsfromdatesummary', 'assign', userdate($this->data->allowsubmissionsfromdate));
+                    echo $OUTPUT->box_end();
                 }    
             } else {
                 $submission = $this->get_submission($USER->id);
                 if ($submission) {
+                    echo $OUTPUT->box_start('boxaligncenter', 'intro');
                     $t = new html_table();
 
+                    // status
                     $row = new html_table_row();
                     $cell1 = new html_table_cell(get_string('submissionstatus', 'assign'));
                     $cell2 = new html_table_cell(get_string('submissionstatus_' . $submission->status, 'assign'));
                     $row->cells = array($cell1, $cell2);
                     $t->data[] = $row;
+                    
+                    if ($this->data->duedate >= 1) {
+                        // due date
+                        $row = new html_table_row();
+                        $cell1 = new html_table_cell(get_string('duedate', 'assign'));
+                        $cell2 = new html_table_cell(userdate($this->data->duedate));
+                        $row->cells = array($cell1, $cell2);
+                        $t->data[] = $row;
+                        
+                        // time remaining
+                        $row = new html_table_row();
+                        $cell1 = new html_table_cell(get_string('timeremaining', 'assign'));
+                        if ($this->data->duedate - $time <= 0) {
+                            if ($submission->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
+                                $cell2 = new html_table_cell(get_string('overdue', 'assign', format_time($time - $this->data->duedate)));
+                            } else {
+                                $cell2 = new html_table_cell(get_string('assignmentclosed', 'assign'));
+                            }
+                        } else {
+                            $cell2 = new html_table_cell(format_time($this->data->duedate - $time));
+                        }
+                        $row->cells = array($cell1, $cell2);
+                        $t->data[] = $row;
+                    } 
 
+                    // last modified 
                     $row = new html_table_row();
                     $cell1 = new html_table_cell(get_string('timemodified', 'assign'));
                     $cell2 = new html_table_cell(userdate($submission->timemodified));
                     $row->cells = array($cell1, $cell2);
                     $t->data[] = $row;
 
+                    // notes 
+                    if ($this->data->submissionnotes) {
+                        $row = new html_table_row();
+                        $cell1 = new html_table_cell(get_string('submissioncomment', 'assign'));
+                        $cell2 = new html_table_cell(format_text($submission->submissioncomment));
+                        $row->cells = array($cell1, $cell2);
+                        $t->data[] = $row;
+                    } 
+
+                    // files 
                     if ($this->data->maxfilessubmission >= 1) {
                         $row = new html_table_row();
                         $cell1 = new html_table_cell(get_string('responsefiles', 'assign'));
@@ -367,10 +473,30 @@ class assign_base {
                         $row->cells = array($cell1, $cell2);
                         $t->data[] = $row;
                     } 
+
+                    // online text assignment submission
+
                     echo html_writer::table($t);
+                    echo $OUTPUT->box_end();
                 } else {
                     // no submission
+                    echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
                     echo get_string('nosubmission', 'assign');
+                    echo $OUTPUT->box_end();
+                }
+            }
+        }
+        if (has_capability('mod/assign:submit', $this->context) &&
+            $this->submissions_open() && ($this->data->maxfilessubmission >= 1 || $this->data->onlinetextsubmission)) {
+            echo $OUTPUT->single_button(new moodle_url('/mod/assign/submission.php',
+                array('id' => $this->get_course_module()->id)), get_string('editsubmission', 'assign'), 'get');
+            if ($submission) {
+                if ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT) {
+                    echo $OUTPUT->single_button(new moodle_url('/mod/assign/submission.php',
+                        array('id' => $this->get_course_module()->id, 'action'=>'submit')), get_string('submitassignment', 'assign'), 'get');
+                    echo $OUTPUT->box_start('boxaligncenter', 'intro');
+                    echo get_string('submitassignment_help', 'assign');
+                    echo $OUTPUT->box_end();
                 }
             }
         }
@@ -529,7 +655,6 @@ class assign_base {
             $mform->setDefault('onlinetextsubmission', 0);
         }
         if (!assign_base::hide_config_setting_hook('maxfilessubmission') ||
-            !assign_base::hide_config_setting_hook('minfilessubmission') ||
             !assign_base::hide_config_setting_hook('maxsubmissionsizebytes')) {
             $mform->addElement('header', 'general', get_string('filesubmissions', 'assign'));
         }
@@ -540,14 +665,6 @@ class assign_base {
             }
             $mform->addElement('select', 'maxfilessubmission', get_string('maxfilessubmission', 'assign'), $options);
             $mform->setDefault('maxfilessubmission', 3);
-        }
-        if (!assign_base::hide_config_setting_hook('minfilessubmission')) {
-            $options = array();
-            for($i = 0; $i <= 20; $i++) {
-                $options[$i] = $i;
-            }
-            $mform->addElement('select', 'minfilessubmission', get_string('minfilessubmission', 'assign'), $options);
-            $mform->setDefault('minfilessubmission', 3);
         }
         if (!assign_base::hide_config_setting_hook('maxsubmissionsizebytes')) {
             $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
@@ -622,6 +739,7 @@ class mod_assign_upload_form extends moodleform {
         // visible elements
         $mform->addElement('filemanager', 'files_filemanager', get_string('uploadafile'), null, $instance['options']);
 
+        $mform->addElement('static', '', '', get_string('descriptionmaxfiles', 'assign', $instance['options']['maxfiles']));
         // hidden params
         $mform->addElement('hidden', 'contextid', $instance['contextid']);
         $mform->setType('contextid', PARAM_INT);
@@ -633,6 +751,34 @@ class mod_assign_upload_form extends moodleform {
         $mform->setType('action', PARAM_ALPHA);
 
         // buttons
-        $this->add_action_buttons(false, get_string('savechanges', 'admin'));
+        $this->add_action_buttons(false, get_string('savefiles', 'assign'));
+    }
+}
+
+/**
+ * @package   mod-assign
+ * @copyright 2010 Dongsheng Cai <dongsheng@moodle.com>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class mod_assign_submission_comments_form extends moodleform {
+    function definition() {
+        $mform = $this->_form;
+        $instance = $this->_customdata;
+
+        // visible elements
+        $mform->addElement('textarea', 'submissioncomment', get_string('submissioncomment', 'assign'), array('cols' => 60, 'rows' => 5));
+
+        // hidden params
+        $mform->addElement('hidden', 'contextid', $instance['contextid']);
+        $mform->setType('contextid', PARAM_INT);
+        $mform->addElement('hidden', 'id', $instance['cm']);
+        $mform->setType('id', PARAM_INT);
+        $mform->addElement('hidden', 'userid', $instance['userid']);
+        $mform->setType('userid', PARAM_INT);
+        $mform->addElement('hidden', 'action', 'savecomments');
+        $mform->setType('action', PARAM_ALPHA);
+
+        // buttons
+        $this->add_action_buttons(false, get_string('savecomments', 'assign'));
     }
 }
