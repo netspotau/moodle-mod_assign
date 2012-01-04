@@ -412,7 +412,9 @@ class assign_base {
         $this->view_header(get_string('onlinetext', 'assign'));       
         echo $OUTPUT->container_start('viewonlinetext');
         echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
-        echo format_text($submission->onlinetext);
+        $text = file_rewrite_pluginfile_urls($submission->onlinetext, 'pluginfile.php', $this->context->id, 'mod_assign', 'submission', $USER->id);
+        echo format_text($text, $submission->onlineformat, array('overflowdiv'=>true));
+        //echo format_text($submission->onlinetext);
         echo $OUTPUT->box_end();
         echo $OUTPUT->container_end();
         echo $OUTPUT->spacer(array('height'=>30));
@@ -589,7 +591,10 @@ class assign_base {
             $submission->timecreated = time();
             $submission->timemodified = $submission->timecreated;
             $submission->submissioncommenttext = '';
-            $submission->submissioncommentformat = FORMAT_HTML;
+            $submission->submissioncommentformat = editors_get_preferred_format();
+            $submission->onlinetext = '';
+            $submission->onlineformat = editors_get_preferred_format();
+            
             if ($this->data->submissiondrafts) {
                 $submission->status = ASSIGN_SUBMISSION_STATUS_DRAFT;
             } else {
@@ -680,7 +685,7 @@ class assign_base {
         if ($submission) {          
             $data->sid = $submission->id;
             $data->text = $submission->onlinetext;
-            $data->textformat = $submission->format;          
+            $data->textformat = $submission->onlineformat;          
         }  else {
             $data->sid = NULL;
             $data->text = '';
@@ -747,7 +752,7 @@ class assign_base {
              $data = file_postupdate_standard_editor($data, 'text', $editoroptions, $this->context, 'mod_assign', 'submission', $USER->id);                         
              $submission = $this->get_submission($USER->id, true); //create the submission if needed & its id              
              $submission->onlinetext = $data->text_editor['text'];
-             $submission->format = $data->text_editor['format'];
+             $submission->onlineformat = $data->text_editor['format'];
              $this->update_submission($submission);
                 
          }        
