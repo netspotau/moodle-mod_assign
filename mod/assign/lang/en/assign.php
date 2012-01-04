@@ -89,3 +89,13 @@ $string['filterrequiregrading'] = 'Requires grading';
 $string['filter'] = 'Filter';
 $string['update'] = 'Update';
 $string['gradingoptions'] = 'Display options';
+// online text
+// add in view_online_text_submit_form function in the view header bit
+$string['onlinetext'] = 'View online text';
+// add in view submission status
+$string['onlinetextwordcount'] = 'Online text word count';
+// add in view_online_text_sbmit_form function for heading
+$string['onlinetexteditor'] = 'Online text editor';
+$string['onlinetextcomment'] = 'Online text';
+$string['savechanges'] = 'Save changes';
+$string['saveonlinetext'] = 'Save changes';
