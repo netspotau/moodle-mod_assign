@@ -800,8 +800,9 @@ class assign_base {
         echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
         
         $submission = $this->get_submission($USER->id);
-        $data = new stdClass();
+        $data = null; 
         if ($submission) {
+            $data = new stdClass();
             $data->text = $submission->submissioncommenttext;
             $data->submissioncomment = $submission->submissioncommenttext;
             $data->submissioncommentformat = $submission->submissioncommentformat;
@@ -928,121 +929,121 @@ class assign_base {
             echo $OUTPUT->box_end();
         }
 
-            if ($this->data->allowsubmissionsfromdate &&
-                    $time <= $this->data->allowsubmissionsfromdate) {
-                echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
-                echo get_string('allowsubmissionsfromdatesummary', 'assign', userdate($this->data->allowsubmissionsfromdate));
-                echo $OUTPUT->box_end();
-            } 
-                $submission = $this->get_submission($userid);
-                    echo $OUTPUT->box_start('boxaligncenter', 'intro');
-                    $t = new html_table();
+        if ($this->data->allowsubmissionsfromdate &&
+                $time <= $this->data->allowsubmissionsfromdate) {
+            echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
+            echo get_string('allowsubmissionsfromdatesummary', 'assign', userdate($this->data->allowsubmissionsfromdate));
+            echo $OUTPUT->box_end();
+        } 
+        $submission = $this->get_submission($userid);
+        echo $OUTPUT->box_start('boxaligncenter', 'intro');
+        $t = new html_table();
 
-                    // status
-                    $row = new html_table_row();
-                    $cell1 = new html_table_cell(get_string('submissionstatus', 'assign'));
-                    if ($submission) {
-                    $cell2 = new html_table_cell(get_string('submissionstatus_' . $submission->status, 'assign'));
+        // status
+        $row = new html_table_row();
+        $cell1 = new html_table_cell(get_string('submissionstatus', 'assign'));
+        if ($submission) {
+            $cell2 = new html_table_cell(get_string('submissionstatus_' . $submission->status, 'assign'));
+        } else {
+            $cell2 = new html_table_cell(get_string('nosubmission', 'assign'));
+        }
+        $row->cells = array($cell1, $cell2);
+        $t->data[] = $row;
+
+        // grading status
+        $row = new html_table_row();
+        $cell1 = new html_table_cell(get_string('gradingstatus', 'assign'));
+        $grade = $this->get_grade($userid);
+
+        if ($grade) {
+            $cell2 = new html_table_cell(get_string('graded', 'assign'));
+        } else {
+            $cell2 = new html_table_cell(get_string('notgraded', 'assign'));
+        }
+        $row->cells = array($cell1, $cell2);
+        $t->data[] = $row;
+
+        
+        
+        if ($this->data->duedate >= 1) {
+            // due date
+            $row = new html_table_row();
+            $cell1 = new html_table_cell(get_string('duedate', 'assign'));
+            $cell2 = new html_table_cell(userdate($this->data->duedate));
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+            
+            // time remaining
+            $row = new html_table_row();
+            $cell1 = new html_table_cell(get_string('timeremaining', 'assign'));
+            if ($this->data->duedate - $time <= 0) {
+                if (!$submission || $submission->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED &&
+                    $submission->status != ASSIGN_SUBMISSION_STATUS_LOCKED) {
+                    $cell2 = new html_table_cell(get_string('overdue', 'assign', format_time($time - $this->data->duedate)));
+                } else {
+                    if ($submission->timemodified > $this->data->duedate) {
+                        $cell2 = new html_table_cell(get_string('submittedlate', 'assign', format_time($submission->timemodified - $this->data->duedate)));
                     } else {
-                    $cell2 = new html_table_cell(get_string('nosubmission', 'assign'));
+                        $cell2 = new html_table_cell(get_string('submittedearly', 'assign', format_time($submission->timemodified - $this->data->duedate)));
                     }
-                    $row->cells = array($cell1, $cell2);
-                    $t->data[] = $row;
+                }
+            } else {
+                $cell2 = new html_table_cell(format_time($this->data->duedate - $time));
+            }
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+        } 
 
-                    // grading status
-                    $row = new html_table_row();
-                    $cell1 = new html_table_cell(get_string('gradingstatus', 'assign'));
-                    $grade = $this->get_grade($userid);
+        // last modified 
+        $row = new html_table_row();
+        $cell1 = new html_table_cell(get_string('timemodified', 'assign'));
+        if ($submission) {
+            $cell2 = new html_table_cell(userdate($submission->timemodified));
+        } else {
+            $cell2 = new html_table_cell();
+        }
+        $row->cells = array($cell1, $cell2);
+        $t->data[] = $row;
 
-                    if ($grade) {
-                        $cell2 = new html_table_cell(get_string('graded', 'assign'));
-                    } else {
-                        $cell2 = new html_table_cell(get_string('notgraded', 'assign'));
-                    }
-                    $row->cells = array($cell1, $cell2);
-                    $t->data[] = $row;
+        // if online text assignment submission is set to yes
+        //onlinetextsubmission                      
+        if ($this->data->onlinetextsubmission && $submission) {
+            $link = new moodle_url ('/mod/assign/online_text.php?id='.$this->get_course_module()->id);
+            $row = new html_table_row();
+            $cell1 = new html_table_cell(get_string('onlinetextwordcount', 'assign')); 
+            if(count_words(format_text($submission->onlinetext)) < 1){                           
+                $cell2 = new html_table_cell(get_string('numwords', '', count_words(format_text($submission->onlinetext))));                                                     
+            } else{                               
+                $cell2 = new html_table_cell($OUTPUT->action_link($link,get_string('numwords', '', count_words(format_text($submission->onlinetext)))));
+            }                      
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+        }             
 
-                    
-                    
-                    if ($this->data->duedate >= 1) {
-                        // due date
-                        $row = new html_table_row();
-                        $cell1 = new html_table_cell(get_string('duedate', 'assign'));
-                        $cell2 = new html_table_cell(userdate($this->data->duedate));
-                        $row->cells = array($cell1, $cell2);
-                        $t->data[] = $row;
-                        
-                        // time remaining
-                        $row = new html_table_row();
-                        $cell1 = new html_table_cell(get_string('timeremaining', 'assign'));
-                        if ($this->data->duedate - $time <= 0) {
-                            if (!$submission || $submission->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED &&
-                                $submission->status != ASSIGN_SUBMISSION_STATUS_LOCKED) {
-                                $cell2 = new html_table_cell(get_string('overdue', 'assign', format_time($time - $this->data->duedate)));
-                            } else {
-                                if ($submission->timemodified > $this->data->duedate) {
-                                    $cell2 = new html_table_cell(get_string('submittedlate', 'assign', format_time($submission->timemodified - $this->data->duedate)));
-                                } else {
-                                    $cell2 = new html_table_cell(get_string('submittedearly', 'assign', format_time($submission->timemodified - $this->data->duedate)));
-                                }
-                            }
-                        } else {
-                            $cell2 = new html_table_cell(format_time($this->data->duedate - $time));
-                        }
-                        $row->cells = array($cell1, $cell2);
-                        $t->data[] = $row;
-                    } 
+        // files 
+        if ($this->data->maxfilessubmission >= 1) {
+            $row = new html_table_row();
+            $cell1 = new html_table_cell(get_string('submissionfiles', 'assign'));
+            $cell2 = new html_table_cell($this->list_response_files($userid));
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+        } 
 
-                    // last modified 
-                    $row = new html_table_row();
-                    $cell1 = new html_table_cell(get_string('timemodified', 'assign'));
-                    if ($submission) {
-                        $cell2 = new html_table_cell(userdate($submission->timemodified));
-                    } else {
-                        $cell2 = new html_table_cell();
-                    }
-                    $row->cells = array($cell1, $cell2);
-                    $t->data[] = $row;
-
-                    // comments 
-                    if ($this->data->submissioncomments) {
-                        $row = new html_table_row();
-                        $cell1 = new html_table_cell(get_string('submissioncomment', 'assign'));
-                        if ($submission) {
-                            $cell2 = new html_table_cell(format_text($submission->submissioncommenttext));
-                        } else {
-                            $cell2 = new html_table_cell();
-                        }
-                        $row->cells = array($cell1, $cell2);
-                        $t->data[] = $row;
-                    } 
-
-                    // files 
-                    if ($this->data->maxfilessubmission >= 1) {
-                        $row = new html_table_row();
-                        $cell1 = new html_table_cell(get_string('submissionfiles', 'assign'));
-                        $cell2 = new html_table_cell($this->list_response_files($userid));
-                        $row->cells = array($cell1, $cell2);
-                        $t->data[] = $row;
-                    } 
-
-                    // if online text assignment submission is set to yes
-                    //onlinetextsubmission                      
-                    if ($this->data->onlinetextsubmission) {                       
-                        $link = new moodle_url ('/mod/assign/online_text.php?id='.$this->get_course_module()->id);
-                        $row = new html_table_row();
-                        $cell1 = new html_table_cell(get_string('onlinetextwordcount', 'assign')); 
-                        if(count_words(format_text($submission->onlinetext)) < 1){                           
-                            $cell2 = new html_table_cell(get_string('numwords', '', count_words(format_text($submission->onlinetext))));                                                     
-                        } else{                               
-                            $cell2 = new html_table_cell($OUTPUT->action_link($link,get_string('numwords', '', count_words(format_text($submission->onlinetext)))));
-                        }                      
-                        $row->cells = array($cell1, $cell2);
-                        $t->data[] = $row;
-                    }             
-                                  
-                    echo html_writer::table($t);
-                    echo $OUTPUT->box_end();
+        // comments 
+        if ($this->data->submissioncomments) {
+            $row = new html_table_row();
+            $cell1 = new html_table_cell(get_string('submissioncomment', 'assign'));
+            if ($submission) {
+                $cell2 = new html_table_cell(format_text($submission->submissioncommenttext));
+            } else {
+                $cell2 = new html_table_cell();
+            }
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+        } 
+                      
+        echo html_writer::table($t);
+        echo $OUTPUT->box_end();
         
         echo $OUTPUT->container_end();
     }
