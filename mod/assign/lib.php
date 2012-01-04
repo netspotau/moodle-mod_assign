@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-define('ASSIGN_SUBMISSION_STATUS_DRAFT', 'draft'); // student thinks it is finished
+define('ASSIGN_SUBMISSION_STATUS_DRAFT', 'draft'); // student thinks it is a draft
 define('ASSIGN_SUBMISSION_STATUS_SUBMITTED', 'submitted'); // student thinks it is finished
 define('ASSIGN_SUBMISSION_STATUS_LOCKED', 'locked'); // teacher prevents more submissions
 
@@ -28,7 +28,7 @@ require_once($CFG->libdir . '/plagiarismlib.php');
 require_once($CFG->dirroot . '/repository/lib.php');
 
 class assign_base {
-
+   
     // list of configuration options for the assignment base type
 
     // list of all settings
@@ -39,7 +39,11 @@ class assign_base {
     // cached current course and module
     protected $course;
     protected $coursemodule;
-
+    var $filearea = 'submission';
+    var $editoroptions = array();
+    
+    
+    
     function hide_config_setting_hook($name) {
         return false;
     }
@@ -398,6 +402,26 @@ class assign_base {
         $this->view_footer();
     }
     
+    function view_online_text($action='') {
+        global $OUTPUT, $CFG, $USER;
+        
+        $submission = $this->get_submission($USER->id);       
+        if ($action == 'saveonlinetext') {
+            $this->process_online_text_submit_form();
+        } 
+        $this->view_header(get_string('onlinetext', 'assign'));       
+        echo $OUTPUT->container_start('viewonlinetext');
+        echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
+        echo format_text($submission->onlinetext);
+        echo $OUTPUT->box_end();
+        echo $OUTPUT->container_end();
+        echo $OUTPUT->spacer(array('height'=>30));
+        echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
+            array('id' => $this->get_course_module()->id)), get_string('backtoassignment', 'assign'), 'get');
+
+        $this->view_footer();       
+    }
+       
     function view_grading($action='') {
         global $OUTPUT, $CFG, $USER;
 
@@ -479,8 +503,9 @@ class assign_base {
             $this->process_submission_comments();
         } else if ($action == "submit") {
             $this->process_submit_assignment();
+        } else if ($action == "saveonlinetext") {
+            $this->process_online_text_submit_form();
         }
-        
         $this->view_header($subpage);
         $this->view_intro();
         // check view permissions
@@ -631,14 +656,41 @@ class assign_base {
 
         return TRUE;
     }
-    
-    /**
+   
+   /**
      * Show the form for creating an online text submission
      *
      */
-    function view_online_text_submit_form() {
-    }
-
+    function view_online_text_submit_form() {       
+        global $OUTPUT, $USER;
+               
+        require_capability('mod/assignment:view', $this->context); 
+        echo $OUTPUT->heading(get_string('onlinetexteditor', 'assign'), 3);
+        echo $OUTPUT->box_start('generalbox', 'onlineenter');       
+         // prepare form and process submitted data
+        $editoroptions = array(
+           'noclean' => false,
+           'maxfiles' => EDITOR_UNLIMITED_FILES,
+           'maxbytes' => $this->get_course()->maxbytes,
+           'context' => $this->context
+        );           
+        $submission = $this->get_submission($USER->id, false);       
+        $data = new stdClass();
+        $data->id = $this->get_course_module()->id;       
+        if ($submission) {          
+            $data->sid = $submission->id;
+            $data->text = $submission->onlinetext;
+            $data->textformat = $submission->format;          
+        }  else {
+            $data->sid = NULL;
+            $data->text = '';
+            $data->textformat = editors_get_preferred_format();        
+        }
+        $data = file_prepare_standard_editor($data, 'text', $editoroptions, $this->context, 'mod_assign', 'submission', $USER->id);      
+        $mform = new mod_assign_online_edit_form(null, array($data, $editoroptions, $this->get_course_module()->id));    
+        $mform->display();
+        echo $OUTPUT->box_end();
+   }
 
     function list_response_files($userid = null) {
         global $CFG, $USER, $OUTPUT, $PAGE;
@@ -676,7 +728,31 @@ class assign_base {
             set_user_preference('assign_filter', $formdata->filter);
         }
     }
-    
+   
+    // process function for saved online text submit form
+    function process_online_text_submit_form() {       
+         global $USER;
+     
+         $editoroptions = array(
+           'noclean' => false,
+           'maxfiles' => EDITOR_UNLIMITED_FILES,
+           'maxbytes' => $this->get_course()->maxbytes,
+           'context' => $this->context
+         );               
+         $mform = new mod_assign_online_edit_form(null, array(null, $editoroptions, null));
+         if ($data = $mform->get_data()) {               
+                // move any linked files such as images into the final submission area from drafts
+             $fs = get_file_storage();
+             $fs->get_area_files($this->context->id, 'mod_assign', 'submission', $USER->id, "timemodified", false);
+             $data = file_postupdate_standard_editor($data, 'text', $editoroptions, $this->context, 'mod_assign', 'submission', $USER->id);                         
+             $submission = $this->get_submission($USER->id, true); //create the submission if needed & its id              
+             $submission->onlinetext = $data->text_editor['text'];
+             $submission->format = $data->text_editor['format'];
+             $this->update_submission($submission);
+                
+         }        
+    }
+   
     function process_submission_comments() {
         global $USER;
 
@@ -950,8 +1026,21 @@ class assign_base {
                         $t->data[] = $row;
                     } 
 
-                    // online text assignment submission
-
+                    // if online text assignment submission is set to yes
+                    //onlinetextsubmission                      
+                    if ($this->data->onlinetextsubmission) {                       
+                        $link = new moodle_url ('/mod/assign/online_text.php?id='.$this->get_course_module()->id);
+                        $row = new html_table_row();
+                        $cell1 = new html_table_cell(get_string('onlinetextwordcount', 'assign')); 
+                        if(count_words(format_text($submission->onlinetext)) < 1){                           
+                            $cell2 = new html_table_cell(get_string('numwords', '', count_words(format_text($submission->onlinetext))));                                                     
+                        } else{                               
+                            $cell2 = new html_table_cell($OUTPUT->action_link($link,get_string('numwords', '', count_words(format_text($submission->onlinetext)))));
+                        }                      
+                        $row->cells = array($cell1, $cell2);
+                        $t->data[] = $row;
+                    }             
+                                  
                     echo html_writer::table($t);
                     echo $OUTPUT->box_end();
         
@@ -1434,3 +1523,36 @@ class mod_assign_grading_options_form extends moodleform {
         $this->add_action_buttons(false, get_string('updatetable', 'assign'));
     }
 }
+
+// class for mform!!!
+
+
+class mod_assign_online_edit_form extends moodleform {
+
+    function definition() {
+        $mform = $this->_form;
+
+        list($data, $editoroptions, $cm) = $this->_customdata;
+        //$instance = $this->_customdata;
+        // visible elements
+        $mform->addElement('editor', 'text_editor', get_string('onlinetexteditor', 'assign'), null, $editoroptions);
+      
+        $mform->setType('text_editor', PARAM_RAW); // to be cleaned before display
+        $mform->addRule('text_editor', get_string('required'), 'required', null, 'client');
+
+        // hidden params
+        $mform->addElement('hidden', 'id', $cm);
+        $mform->setType('id', PARAM_INT);
+
+        $mform->addElement('hidden', 'action', 'saveonlinetext');
+        $mform->setType('action', PARAM_TEXT);
+        
+
+        // buttons
+        //$this->add_action_buttons();
+       $this->add_action_buttons(false, get_string('saveonlinetext', 'assign'));
+       $this->set_data($data);
+       
+    }
+}
+

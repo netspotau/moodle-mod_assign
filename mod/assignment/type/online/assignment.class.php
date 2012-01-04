@@ -453,9 +453,7 @@ class mod_assignment_online_edit_form extends moodleform {
         // buttons
         $this->add_action_buttons();
 
-        var_dump($data);
         $this->set_data($data);
-        var_dump($data);
     }
 }
 
