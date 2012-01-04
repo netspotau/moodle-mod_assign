@@ -89,7 +89,7 @@ class assign_files implements renderable {
     public $cm;
     public $course;
     public function __construct($context, $userid, $filearea='submission') {
-        global $USER, $CFG;
+        global $CFG;
         $this->context = $context;
         list($context, $course, $cm) = get_context_info_array($context->id);
         $this->cm = $cm;
