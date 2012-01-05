@@ -64,8 +64,9 @@
         <FIELD NAME="feedbacktext" TYPE="text" LENGTH="small" NOTNULL="false" SEQUENCE="false" PREVIOUS="numfeedbackfiles" NEXT="feedbackformat"/>
         <FIELD NAME="feedbackformat" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="feedbacktext" NEXT="grader"/>
         <FIELD NAME="grader" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="feedbackformat" NEXT="grade"/>
-        <FIELD NAME="grade" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="grader" NEXT="mailed"/>
-        <FIELD NAME="mailed" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="grade"/>
+        <FIELD NAME="grade" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="grader" NEXT="locked"/>
+        <FIELD NAME="locked" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="grade" NEXT="mailed"/>
+        <FIELD NAME="mailed" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="locked"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="assignment"/>

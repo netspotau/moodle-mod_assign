@@ -17,7 +17,6 @@
 
 define('ASSIGN_SUBMISSION_STATUS_DRAFT', 'draft'); // student thinks it is a draft
 define('ASSIGN_SUBMISSION_STATUS_SUBMITTED', 'submitted'); // student thinks it is finished
-define('ASSIGN_SUBMISSION_STATUS_LOCKED', 'locked'); // teacher prevents more submissions
 
 define('ASSIGN_FILTER_SUBMITTED', 'submitted');
 define('ASSIGN_FILTER_REQUIRE_GRADING', 'require_grading');
@@ -282,7 +281,7 @@ class assign_base {
         if (!empty($users)) {
             $select = "SELECT $ufields,
                               s.id AS submissionid, g.grade, s.submissioncommenttext, s.status,
-                              s.timemodified as timesubmitted, g.timemodified AS timemarked, g.feedbacktext ";
+                              s.timemodified as timesubmitted, g.timemodified AS timemarked, g.feedbacktext, g.locked ";
             $sql = 'FROM {user} u '.
                    'LEFT JOIN {assign_submissions} s ON u.id = s.userid
                     AND s.assignment = '.$this->data->id.' '.
@@ -314,6 +313,9 @@ class assign_base {
                     $userlink = $OUTPUT->action_link(new moodle_url('/user/view.php', array('id' => $auser->id, 'course'=>$this->get_course()->id)), fullname($auser, has_capability('moodle/site:viewfullnames', $this->context)));
 
                     $grade = $auser->grade;
+                    if ($grade < 0) {
+                        $grade = '';
+                    }
                     $comment = format_text($auser->submissioncommenttext);
                     $studentmodified = '-';
                     if ($auser->timesubmitted) {
@@ -326,12 +328,18 @@ class assign_base {
                     $status = get_string('submissionstatus_' . $auser->status, 'assign');
                     $finalgrade = '-';
                     if (isset($grading_info->items[0]) && $grading_info->items[0]->grades[$auser->id]) {
+                        // debugging
                         $finalgrade = print_r($grading_info->items[0]->grades[$auser->id], true);
                     }
                     
                     $edit = $OUTPUT->action_link(new moodle_url('/mod/assign/grade.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id)), $OUTPUT->pix_icon('t/grades', get_string('grade')));
-                    $edit .= $OUTPUT->action_link(new moodle_url('/mod/assign/reset.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id)), $OUTPUT->pix_icon('t/delete', get_string('reset')));
-                    $edit .= $OUTPUT->action_link(new moodle_url('/mod/assign/lock.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id)), $OUTPUT->pix_icon('t/lock', get_string('lock', 'grades')));
+                    if (!$auser->status || $auser->status == ASSIGN_SUBMISSION_STATUS_DRAFT || !$this->data->submissiondrafts) {
+                        if (!$auser->locked) {
+                            $edit .= $OUTPUT->action_link(new moodle_url('/mod/assign/grading.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id, 'action'=>'lock')), $OUTPUT->pix_icon('t/lock', get_string('preventsubmissions', 'assign')));
+                        } else {
+                            $edit .= $OUTPUT->action_link(new moodle_url('/mod/assign/grading.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id, 'action'=>'unlock')), $OUTPUT->pix_icon('t/unlock', get_string('allowsubmissions', 'assign')));
+                        }
+                    }
 
                     $feedback = format_text($auser->feedbacktext);
 
@@ -343,6 +351,26 @@ class assign_base {
 
         return $table;
 
+    }
+    
+    function process_lock() {
+        global $USER;
+        $userid = required_param('userid', PARAM_INT);
+
+        $grade = $this->get_grade($userid, true);
+        $grade->locked = 1;
+        $this->update_grade($grade);
+        
+    }
+    
+    function process_unlock() {
+        global $USER;
+        $userid = required_param('userid', PARAM_INT);
+
+        $grade = $this->get_grade($userid, true);
+        $grade->locked = 0;
+        $this->update_grade($grade);
+        
     }
 
     function process_save_grade() {
@@ -429,6 +457,10 @@ class assign_base {
 
         if ($action == 'saveoptions') {
             $this->process_save_grading_options();
+        } else if ($action == 'lock') {
+            $this->process_lock();
+        } else if ($action == 'unlock') {
+            $this->process_unlock();
         }
         
         // only load this if it is 
@@ -490,7 +522,7 @@ class assign_base {
 
         $this->view_footer();
     }
-    
+
     /**
      * Display the assignment, used by view.php
      *
@@ -504,7 +536,7 @@ class assign_base {
         } else if ($action == "savecomments") {
             $this->process_submission_comments();
         } else if ($action == "submit") {
-            $this->process_submit_assignment();
+            $this->process_submit_assignment(optional_param('userid', null, PARAM_INT));
         } else if ($action == "saveonlinetext") {
             $this->process_online_text_submit_form();
         }
@@ -559,6 +591,8 @@ class assign_base {
             $grade->timecreated = time();
             $grade->timemodified = $grade->timecreated;
             $grade->grade = -1;
+            $grade->feedbacktext = '';
+            $grade->feedbackformat = editors_get_preferred_format();
             $gid = $DB->insert_record('assign_grades', $grade);
             $grade->id = $gid;
             return $grade;
@@ -658,6 +692,11 @@ class assign_base {
                 return FALSE;
             }
         }
+        if ($grade = $this->get_grade($USER->id)) {
+            if ($grade->locked) {
+                return FALSE;
+            }
+        }
 
         return TRUE;
     }
@@ -715,9 +754,12 @@ class assign_base {
         
     }
     
-    function process_submit_assignment() {
+    function process_submit_assignment($userid=null) {
         global $USER;
-        $submission = $this->get_submission($USER->id, true);
+        if (!$userid) {
+            $userid = $USER->id;
+        }
+        $submission = $this->get_submission($userid, true);
         $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
 
         $this->update_submission($submission);
@@ -750,6 +792,9 @@ class assign_base {
              $fs = get_file_storage();
              $fs->get_area_files($this->context->id, 'mod_assign', 'submission', $USER->id, "timemodified", false);
              $data = file_postupdate_standard_editor($data, 'text', $editoroptions, $this->context, 'mod_assign', 'submission', $USER->id);                         
+
+             file_save_draft_area_files($USER->id, $this->context->id, 'mod_assign', 'submission', 0, array('subdirs'=>true));
+            
              $submission = $this->get_submission($USER->id, true); //create the submission if needed & its id              
              $submission->onlinetext = $data->text_editor['text'];
              $submission->onlineformat = $data->text_editor['format'];
@@ -789,6 +834,8 @@ class assign_base {
             $fs = get_file_storage();
             $fs->delete_area_files($this->context->id, 'mod_assign', 'submission', $USER->id);
             $formdata = file_postupdate_standard_filemanager($formdata, 'files', $options, $this->context, 'mod_assign', 'submission', $USER->id);
+
+            file_save_draft_area_files($USER->id, $this->context->id, 'mod_assign', 'submission', 0, array('subdirs'=>true));
 
             $submission = $this->get_submission($USER->id, true);
 
@@ -1012,15 +1059,18 @@ class assign_base {
 
         // if online text assignment submission is set to yes
         //onlinetextsubmission                      
-        if ($this->data->onlinetextsubmission && $submission) {
+        if ($this->data->onlinetextsubmission) {
             $link = new moodle_url ('/mod/assign/online_text.php?id='.$this->get_course_module()->id);
             $row = new html_table_row();
             $cell1 = new html_table_cell(get_string('onlinetextwordcount', 'assign')); 
-            if(count_words(format_text($submission->onlinetext)) < 1){                           
+            if (!$submission) {
+                $cell2 = new html_table_cell(get_string('numwords', '', 0));                                                     
+            } else if(count_words(format_text($submission->onlinetext)) < 1){                           
                 $cell2 = new html_table_cell(get_string('numwords', '', count_words(format_text($submission->onlinetext))));                                                     
             } else{                               
                 $cell2 = new html_table_cell($OUTPUT->action_link($link,get_string('numwords', '', count_words(format_text($submission->onlinetext)))));
             }                      
+            
             $row->cells = array($cell1, $cell2);
             $t->data[] = $row;
         }             

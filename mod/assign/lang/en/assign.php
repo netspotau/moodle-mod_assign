@@ -111,3 +111,5 @@ $string['onlinetextwordcount'] = 'Online text word count';
 $string['onlinetexteditor'] = 'Online text editor';
 $string['onlinetextcomment'] = 'Online text';
 $string['saveonlinetext'] = 'Save changes';
+$string['preventsubmissions'] = 'Prevent the user from making any more submissions to this assignment.';
+$string['allowsubmissions'] = 'Allow the user to continue making submissions to this assignment.';
