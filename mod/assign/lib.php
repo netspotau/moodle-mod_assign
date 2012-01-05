@@ -21,6 +21,10 @@ define('ASSIGN_SUBMISSION_STATUS_SUBMITTED', 'submitted'); // student thinks it 
 define('ASSIGN_FILTER_SUBMITTED', 'submitted');
 define('ASSIGN_FILTER_REQUIRE_GRADING', 'require_grading');
 
+define('ASSIGN_FILEAREA_SUBMISSION_FILES', 'submissions_files');
+define('ASSIGN_FILEAREA_SUBMISSION_FEEDBACK', 'feedback_files');
+define('ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT', 'submissions_onlinetext');
+
 require_once($CFG->libdir.'/accesslib.php');
 require_once($CFG->libdir.'/formslib.php');
 require_once($CFG->libdir . '/plagiarismlib.php');
@@ -39,8 +43,6 @@ class assign_base {
     // cached current course and module
     protected $course;
     protected $coursemodule;
-    var $filearea = 'submission';
-    var $editoroptions = array();
     
     
     
@@ -441,7 +443,7 @@ class assign_base {
         $this->view_header(get_string('onlinetext', 'assign'));       
         echo $OUTPUT->container_start('viewonlinetext');
         echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
-        $text = file_rewrite_pluginfile_urls($submission->onlinetext, 'pluginfile.php', $this->context->id, 'mod_assign', 'submission', $USER->id);
+        $text = file_rewrite_pluginfile_urls($submission->onlinetext, 'pluginfile.php', $this->context->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $USER->id);
         echo format_text($text, $submission->onlineformat, array('overflowdiv'=>true));
         //echo format_text($submission->onlinetext);
         echo $OUTPUT->box_end();
@@ -712,7 +714,7 @@ class assign_base {
         $browser = get_file_browser();
 
         $renderer = $PAGE->get_renderer('mod_assign');
-        return $renderer->assign_files($this->context, $userid, 'submission');
+        return $renderer->assign_files($this->context, $userid, ASSIGN_FILEAREA_SUBMISSION_FILES);
         
     }
     
@@ -767,10 +769,10 @@ class assign_base {
            'context' => $this->context
         );
 
-        file_postupdate_standard_editor($data, 'onlinetext', $editoroptions, $this->context, 'assign', 'submissions', $USER->id);
+        $data = file_postupdate_standard_editor($data, 'onlinetext', $editoroptions, $this->context, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $USER->id);
 
-        $submission->onlinetext = $data->onlinetext_editor['text'];
-        $submission->onlineformat = $data->onlinetext_editor['format'];
+        $submission->onlinetext = $data->onlinetext;
+        $submission->onlineformat = $data->onlinetextformat;
         
     }
     
@@ -797,11 +799,8 @@ class assign_base {
                                 'return_types'=>FILE_INTERNAL);
 
             
-        $fs = get_file_storage();
-        $fs->delete_area_files($this->context->id, 'mod_assign', 'submission', $USER->id);
-        $data = file_postupdate_standard_filemanager($data, 'files', $fileoptions, $this->context, 'mod_assign', 'submission', $USER->id);
+        $data = file_postupdate_standard_filemanager($data, 'files', $fileoptions, $this->context, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $USER->id);
 
-        file_save_draft_area_files($USER->id, $this->context->id, 'mod_assign', 'submission', 0, array('subdirs'=>true));
     }
    
 
@@ -1326,7 +1325,7 @@ class assign_base {
 
         $mform->addElement('static', '', '', get_string('descriptionmaxfiles', 'assign', $this->data->maxfilessubmission));
     
-        $data = file_prepare_standard_filemanager($data, 'files', $fileoptions, $this->context, 'mod_assign', 'submission', $USER->id);
+        $data = file_prepare_standard_filemanager($data, 'files', $fileoptions, $this->context, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $USER->id);
     }
     
     function add_submission_comment_form_elements(& $mform, & $data) {
@@ -1354,7 +1353,7 @@ class assign_base {
            'context' => $this->context
         );           
 
-        $data = file_prepare_standard_editor($data, 'onlinetext', $editoroptions, $this->context, 'mod_assign', 'submission', $USER->id);      
+        $data = file_prepare_standard_editor($data, 'onlinetext', $editoroptions, $this->context, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $USER->id);      
         $mform->addElement('editor', 'onlinetext_editor', '', null, $editoroptions);
   
         $mform->setType('onlinetext_editor', PARAM_RAW); // to be cleaned before display
@@ -1376,6 +1375,27 @@ class assign_base {
         $mform->setType('action', PARAM_TEXT);
         // buttons
         
+    }
+
+    function send_file($filearea, $args) {
+        global $USER;
+        $userid = (int)array_shift($args);
+
+
+        // check is users submission or has grading permission
+        if ($USER->id != $userid and !has_capability('mod/assignment:grade', $this->context)) {
+            return false;
+        }
+        
+        $relativepath = implode('/', $args);
+
+        $fullpath = "/{$this->context->id}/mod_assign/$filearea/$userid/$relativepath";
+
+        $fs = get_file_storage();
+        if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
+            return false;
+        }
+        send_stored_file($file, 0, 0, true); // download MUST be forced - security!
     }
 }
 
@@ -1430,5 +1450,35 @@ function assign_extend_settings_navigation($settings, navigation_node $navref) {
 
     $ass = new assign_base($context);
     return $ass->extend_settings_navigation($navref);
+}
+
+/**
+ * Serves assignment submissions and other files.
+ *
+ * @param object $course
+ * @param object $cm
+ * @param object $context
+ * @param string $filearea
+ * @param array $args
+ * @param bool $forcedownload
+ * @return bool false if file not found, does not return if found - just send the file
+ */
+function assign_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
+    global $CFG, $DB;
+
+    if ($context->contextlevel != CONTEXT_MODULE) {
+        return false;
+    }
+
+    require_login($course, false, $cm);
+
+    
+    if (!$assignment = $DB->get_record('assign', array('id'=>$cm->instance))) {
+        return false;
+    }
+
+    $assignmentinstance = new assign_base($context);
+
+    return $assignmentinstance->send_file($filearea, $args);
 }
 
