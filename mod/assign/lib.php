@@ -25,6 +25,7 @@ require_once($CFG->libdir.'/accesslib.php');
 require_once($CFG->libdir.'/formslib.php');
 require_once($CFG->libdir . '/plagiarismlib.php');
 require_once($CFG->dirroot . '/repository/lib.php');
+require_once('mod_form.php');
 
 class assign_base {
    
@@ -211,7 +212,7 @@ class assign_base {
     }
 
     function & load_submissions_table($perpage=10,$filter=null) {
-        global $CFG, $DB, $OUTPUT;
+        global $CFG, $DB, $OUTPUT, $PAGE;
 
         $tablecolumns = array('picture', 'fullname', 'status', 'edit', 'submissioncomment', 'feedback', 'grade', 'timemodified', 'timemarked', 'finalgrade');
 
@@ -316,7 +317,7 @@ class assign_base {
                     if ($grade < 0) {
                         $grade = '';
                     }
-                    $comment = format_text($auser->submissioncommenttext);
+                    $comment = shorten_text(format_text($auser->submissioncommenttext));
                     $studentmodified = '-';
                     if ($auser->timesubmitted) {
                         $studentmodified = userdate($auser->timesubmitted);
@@ -342,7 +343,9 @@ class assign_base {
                         }
                     }
 
-                    $feedback = format_text($auser->feedbacktext);
+                    $feedback = shorten_text(format_text($auser->feedbacktext));
+                    $renderer = $PAGE->get_renderer('mod_assign');
+                    $feedback .= '<br/>' . $renderer->assign_files($this->context, $auser->id, 'feedback');
 
                     $row = array($picture, $userlink, $status, $edit, $comment, $feedback, $grade, $studentmodified, $teachermodified, $finalgrade);
                     $table->add_data($row);
@@ -435,9 +438,6 @@ class assign_base {
         global $OUTPUT, $CFG, $USER;
         
         $submission = $this->get_submission($USER->id);       
-        if ($action == 'saveonlinetext') {
-            $this->process_online_text_submit_form();
-        } 
         $this->view_header(get_string('onlinetext', 'assign'));       
         echo $OUTPUT->container_start('viewonlinetext');
         echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
@@ -532,14 +532,10 @@ class assign_base {
      */
     function view($subpage='', $action='') {
         // handle custom actions first
-        if ($action == "uploadfile") {
-            $this->process_file_upload();
-        } else if ($action == "savecomments") {
-            $this->process_submission_comments();
+        if ($action == "savesubmission") {
+            $this->process_save_submission();
         } else if ($action == "submit") {
-            $this->process_submit_assignment(optional_param('userid', null, PARAM_INT));
-        } else if ($action == "saveonlinetext") {
-            $this->process_online_text_submit_form();
+            $this->process_submit_assignment();
         }
         $this->view_header($subpage);
         $this->view_intro();
@@ -611,8 +607,12 @@ class assign_base {
      * @param bool $teachermodified student submission set if false
      * @return object The submission
      */
-    function get_submission($userid, $create = false) {
-        global $DB;
+    function get_submission($userid = null, $create = false) {
+        global $DB, $USER;
+
+        if (!$userid) {
+            $userid = $USER->id;
+        }
 
         $submission = $DB->get_record('assign_submissions', array('assignment'=>$this->data->id, 'userid'=>$userid));
 
@@ -688,10 +688,6 @@ class assign_base {
                 // drafts are tracked and the student has submitted the assignment
                 return FALSE;
             }
-            if ($submission->status == ASSIGN_SUBMISSION_STATUS_LOCKED) {
-                // the marker has prevented any more submissions
-                return FALSE;
-            }
         }
         if ($grade = $this->get_grade($USER->id)) {
             if ($grade->locked) {
@@ -702,41 +698,6 @@ class assign_base {
         return TRUE;
     }
    
-   /**
-     * Show the form for creating an online text submission
-     *
-     */
-    function view_online_text_submit_form() {       
-        global $OUTPUT, $USER;
-               
-        require_capability('mod/assignment:view', $this->context); 
-        echo $OUTPUT->heading(get_string('onlinetexteditor', 'assign'), 3);
-        echo $OUTPUT->box_start('generalbox', 'onlineenter');       
-         // prepare form and process submitted data
-        $editoroptions = array(
-           'noclean' => false,
-           'maxfiles' => EDITOR_UNLIMITED_FILES,
-           'maxbytes' => $this->get_course()->maxbytes,
-           'context' => $this->context
-        );           
-        $submission = $this->get_submission($USER->id, false);       
-        $data = new stdClass();
-        $data->id = $this->get_course_module()->id;       
-        if ($submission) {          
-            $data->sid = $submission->id;
-            $data->text = $submission->onlinetext;
-            $data->textformat = $submission->onlineformat;          
-        }  else {
-            $data->sid = NULL;
-            $data->text = '';
-            $data->textformat = editors_get_preferred_format();        
-        }
-        $data = file_prepare_standard_editor($data, 'text', $editoroptions, $this->context, 'mod_assign', 'submission', $USER->id);      
-        $mform = new mod_assign_online_edit_form(null, array($data, $editoroptions, $this->get_course_module()->id));    
-        $mform->display();
-        echo $OUTPUT->box_end();
-   }
-
     function list_response_files($userid = null) {
         global $CFG, $USER, $OUTPUT, $PAGE;
 
@@ -755,12 +716,9 @@ class assign_base {
         
     }
     
-    function process_submit_assignment($userid=null) {
+    function process_submit_assignment() {
         global $USER;
-        if (!$userid) {
-            $userid = $USER->id;
-        }
-        $submission = $this->get_submission($userid, true);
+        $submission = $this->get_submission($USER->id, true);
         $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
 
         $this->update_submission($submission);
@@ -776,97 +734,77 @@ class assign_base {
             set_user_preference('assign_filter', $formdata->filter);
         }
     }
-   
-    // process function for saved online text submit form
-    function process_online_text_submit_form() {       
-         global $USER;
-     
-         $editoroptions = array(
+    
+    function process_save_submission() {       
+        global $USER;
+        $data = $this->get_default_submission_data();
+        $mform = new mod_assign_submission_form(null, array($this, $data));
+        if ($data = $mform->get_data()) {               
+            $submission = $this->get_submission($USER->id, true); //create the submission if needed & its id              
+            $grade = $this->get_grade($USER->id); // get the grade to check if it is locked
+            if ($grade->locked) {
+                print_error('submissionslocked', 'assign');
+                return;
+            }
+            $this->process_online_text_submission($submission, $data);
+            $this->process_file_upload_submission($submission, $data);
+            $this->process_submission_comment_submission($submission, $data);
+            $this->update_submission($submission);
+        }
+         
+    }
+    
+    function process_online_text_submission(& $submission, & $data) {
+        global $USER;
+        if (!$this->data->onlinetextsubmission) {
+            return;
+        }
+    
+        $editoroptions = array(
            'noclean' => false,
            'maxfiles' => EDITOR_UNLIMITED_FILES,
            'maxbytes' => $this->get_course()->maxbytes,
            'context' => $this->context
-         );               
-         $mform = new mod_assign_online_edit_form(null, array(null, $editoroptions, null));
-         if ($data = $mform->get_data()) {               
-                // move any linked files such as images into the final submission area from drafts
-             $fs = get_file_storage();
-             $fs->get_area_files($this->context->id, 'mod_assign', 'submission', $USER->id, "timemodified", false);
-             $data = file_postupdate_standard_editor($data, 'text', $editoroptions, $this->context, 'mod_assign', 'submission', $USER->id);                         
+        );
 
-             file_save_draft_area_files($USER->id, $this->context->id, 'mod_assign', 'submission', 0, array('subdirs'=>true));
+        file_postupdate_standard_editor($data, 'onlinetext', $editoroptions, $this->context, 'assign', 'submissions', $USER->id);
+
+        $submission->onlinetext = $data->onlinetext_editor['text'];
+        $submission->onlineformat = $data->onlinetext_editor['format'];
+        
+    }
+    
+    // process function for submission comment
+    function process_submission_comment_submission(& $submission, & $data) {
+        if (!$this->data->submissioncomments) {
+            return;
+        }
+
+        $submission->submissioncommenttext = $data->submissioncomment_editor['text'];
+        $submission->submissioncommentformat = $data->submissioncomment_editor['format'];
+    }
+
+    // process function for saved file upload submit form
+    function process_file_upload_submission(& $submission, & $data) {
+        global $USER;
+        if ($this->data->maxfilessubmission <= 0) {
+            return;
+        }
+        $fileoptions = array('subdirs'=>1, 
+                                'maxbytes'=>$this->data->maxsubmissionsizebytes, 
+                                'maxfiles'=>$this->data->maxfilessubmission, 
+                                'accepted_types'=>'*', 
+                                'return_types'=>FILE_INTERNAL);
+
             
-             $submission = $this->get_submission($USER->id, true); //create the submission if needed & its id              
-             $submission->onlinetext = $data->text_editor['text'];
-             $submission->onlineformat = $data->text_editor['format'];
-             $this->update_submission($submission);
-                
-         }        
+        $fs = get_file_storage();
+        $fs->delete_area_files($this->context->id, 'mod_assign', 'submission', $USER->id);
+        $data = file_postupdate_standard_filemanager($data, 'files', $fileoptions, $this->context, 'mod_assign', 'submission', $USER->id);
+
+        file_save_draft_area_files($USER->id, $this->context->id, 'mod_assign', 'submission', 0, array('subdirs'=>true));
     }
    
-    function process_submission_comments() {
-        global $USER;
 
-        $mform = new mod_assign_submission_comments_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'userid'=>$USER->id, 'course'=>$this->get_course(), 'context'=>$this->context));
-        
-        if ($formdata = $mform->get_data()) {
-            $submission = $this->get_submission($USER->id, true);
-            $submission->submissioncommenttext= $formdata->submissioncomment_editor['text'];
-            $submission->submissioncommentformat= $formdata->submissioncomment_editor['format'];
-            // get the format
-
-            $this->update_submission($submission);
-        
-        }
-    }
-
-    function process_file_upload() {
-        global $USER;
-    
-        $options = array('subdirs'=>1, 
-                                        'maxbytes'=>$this->data->maxsubmissionsizebytes, 
-                                        'maxfiles'=>$this->data->maxfilessubmission, 
-                                        'accepted_types'=>'*', 
-                                        'return_types'=>FILE_INTERNAL);
-
-        $mform = new mod_assign_upload_form(null, array('cm'=>$this->get_course_module()->id, 'options'=>$options, 'contextid'=>$this->context->id, 'userid'=>$USER->id));
-    
-        if ($formdata = $mform->get_data()) {
-            $fs = get_file_storage();
-            $fs->delete_area_files($this->context->id, 'mod_assign', 'submission', $USER->id);
-            $formdata = file_postupdate_standard_filemanager($formdata, 'files', $options, $this->context, 'mod_assign', 'submission', $USER->id);
-
-            file_save_draft_area_files($USER->id, $this->context->id, 'mod_assign', 'submission', 0, array('subdirs'=>true));
-
-            $submission = $this->get_submission($USER->id, true);
-
-            $this->update_submission($submission);
-            redirect('view.php?id='.$this->get_course_module()->id);
-            die();
-        }
-        
-    }
-    
-    function view_submission_comments_form() {
-        global $OUTPUT, $USER;
-        echo $OUTPUT->heading(get_string('submissioncomment', 'assign'), 3);
-        echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
-        
-        $submission = $this->get_submission($USER->id);
-        $data = null; 
-        if ($submission) {
-            $data = new stdClass();
-            $data->text = $submission->submissioncommenttext;
-            $data->submissioncomment = $submission->submissioncommenttext;
-            $data->submissioncommentformat = $submission->submissioncommentformat;
-        }
-
-        $mform = new mod_assign_submission_comments_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'userid'=>$USER->id, 'course'=>$this->get_course(), 'context'=>$this->context, 'data'=>$data));
-        $mform->display();
-        echo $OUTPUT->box_end();
-        echo $OUTPUT->spacer(array('height'=>30));
-    }
-    
     function view_grade_form() {
         global $OUTPUT, $USER;
         echo $OUTPUT->heading(get_string('grade'), 3);
@@ -901,34 +839,38 @@ class assign_base {
         echo $OUTPUT->spacer(array('height'=>30));
     }
 
-    function view_files_submit_form() {
-        global $OUTPUT, $USER;
-        echo $OUTPUT->heading(get_string('uploadfiles', 'assign'), 3);
-        echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
-
-        
-        // move submission files to user draft area
-        $filemanager_options = array('subdirs'=>1, 
-                                        'maxbytes'=>$this->data->maxsubmissionsizebytes, 
-                                        'maxfiles'=>$this->data->maxfilessubmission, 
-                                        'accepted_types'=>'*', 
-                                        'return_types'=>FILE_INTERNAL);
-
-        $mform = new mod_assign_upload_form(null, array('cm'=>$this->get_course_module()->id, 'options'=>$filemanager_options, 'contextid'=>$this->context->id, 'userid'=>$USER->id));
+    function get_default_submission_data() {
         $data = new stdClass();
-        $data = file_prepare_standard_filemanager($data, 'files', $filemanager_options, $this->context, 'mod_assign', 'submission', $USER->id);
-        // set file manager itemid, so it will find the files in draft area
-        $mform->set_data($data);
-        
+        $data->onlinetext = '';
+        $data->onlinetextformat = editors_get_preferred_format();        
+        $data->submissioncomment_editor['format'] = editors_get_preferred_format();
 
+        return $data;
+    }
+    
+    function view_submission_form() {
+        global $OUTPUT, $USER;
+        echo $OUTPUT->heading(get_string('submission', 'assign'), 3);
+        echo $OUTPUT->container_start('submission');
+
+        $data = $this->get_default_submission_data();
+        $submission = $this->get_submission($USER->id);
+        if ($submission) {          
+            $data->onlinetext = $submission->onlinetext;
+            $data->onlinetextformat = $submission->onlineformat;          
+            $data->submissioncomment_editor['text'] = $submission->submissioncommenttext;
+            $data->submissioncomment_editor['format'] = $submission->submissioncommentformat;
+        }
+
+        $mform = new mod_assign_submission_form(null, array($this, $data));
 
         // show upload form
         $mform->display();
         
-        echo $OUTPUT->box_end();
+        echo $OUTPUT->container_end();
         echo $OUTPUT->spacer(array('height'=>30));
     }
-    
+
     /**
      * Show the screen for creating an assignment submission
      *
@@ -940,19 +882,7 @@ class assign_base {
         // check submissions open
 
         if ($this->submissions_open()) {
-            // if online text allowed
-            if ($this->data->onlinetextsubmission) {
-                // show online text submission form
-                $this->view_online_text_submit_form();
-            }
-            // if upload files allowed
-            if ($this->data->maxfilessubmission >= 1) {
-                // show upload files submission form
-                $this->view_files_submit_form();
-            }
-            if ($this->data->submissioncomments) {
-                $this->view_submission_comments_form();
-            }
+            $this->view_submission_form();
             // call view_submit_hook() for subtypes   
         }
         echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
@@ -1377,6 +1307,76 @@ class assign_base {
             $node = $navref->add(get_string('downloadall', 'assign'), $link, navigation_node::TYPE_SETTING);
         }
     }
+    
+    function add_file_upload_form_elements(& $mform, & $data) {
+        global $USER;
+        if ($this->data->maxfilessubmission <= 0) {
+            return;
+        }
+        $mform->addElement('header', 'general', get_string('uploadfiles', 'assign'));
+
+        $fileoptions = array('subdirs'=>1, 
+                                'maxbytes'=>$this->data->maxsubmissionsizebytes, 
+                                'maxfiles'=>$this->data->maxfilessubmission, 
+                                'accepted_types'=>'*', 
+                                'return_types'=>FILE_INTERNAL);
+
+
+        $mform->addElement('filemanager', 'files_filemanager', '', null, $fileoptions);
+
+        $mform->addElement('static', '', '', get_string('descriptionmaxfiles', 'assign', $this->data->maxfilessubmission));
+    
+        $data = file_prepare_standard_filemanager($data, 'files', $fileoptions, $this->context, 'mod_assign', 'submission', $USER->id);
+    }
+    
+    function add_submission_comment_form_elements(& $mform, & $data) {
+        if (!$this->data->submissioncomments) {
+            return;
+        }
+
+        $mform->addElement('header', 'general', get_string('submissioncomment', 'assign'));
+        $mform->addElement('editor', 'submissioncomment_editor', '', null, null);
+        $mform->setType('submissioncomment_editor', PARAM_RAW); // to be cleaned before display
+    }
+
+    function add_online_text_form_elements(& $mform, & $data) {
+        global $USER;
+        if (!$this->data->onlinetextsubmission) {
+            return;
+        }
+
+
+        $mform->addElement('header', 'general', get_string('onlinetextcomment', 'assign'));
+        $editoroptions = array(
+           'noclean' => false,
+           'maxfiles' => EDITOR_UNLIMITED_FILES,
+           'maxbytes' => $this->get_course()->maxbytes,
+           'context' => $this->context
+        );           
+
+        $data = file_prepare_standard_editor($data, 'onlinetext', $editoroptions, $this->context, 'mod_assign', 'submission', $USER->id);      
+        $mform->addElement('editor', 'onlinetext_editor', '', null, $editoroptions);
+  
+        $mform->setType('onlinetext_editor', PARAM_RAW); // to be cleaned before display
+    }
+
+    function add_submission_form_elements(& $mform, & $data) {
+        // online text submissions
+        $this->add_online_text_form_elements($mform, $data);
+        // file uploads
+        $this->add_file_upload_form_elements($mform, $data);
+        // submission comment
+        $this->add_submission_comment_form_elements($mform, $data);
+
+        // hidden params
+        $mform->addElement('hidden', 'id', $this->get_course_module()->id);
+        $mform->setType('id', PARAM_INT);
+
+        $mform->addElement('hidden', 'action', 'savesubmission');
+        $mform->setType('action', PARAM_TEXT);
+        // buttons
+        
+    }
 }
 
 /**
@@ -1430,190 +1430,5 @@ function assign_extend_settings_navigation($settings, navigation_node $navref) {
 
     $ass = new assign_base($context);
     return $ass->extend_settings_navigation($navref);
-}
-
-/**
- * @package   mod-assign
- * @copyright 2010 Dongsheng Cai <dongsheng@moodle.com>
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class mod_assign_upload_form extends moodleform {
-    function definition() {
-        $mform = $this->_form;
-        $instance = $this->_customdata;
-
-        // visible elements
-        $mform->addElement('filemanager', 'files_filemanager', get_string('uploadafile'), null, $instance['options']);
-
-        $mform->addElement('static', '', '', get_string('descriptionmaxfiles', 'assign', $instance['options']['maxfiles']));
-        // hidden params
-        $mform->addElement('hidden', 'contextid', $instance['contextid']);
-        $mform->setType('contextid', PARAM_INT);
-        $mform->addElement('hidden', 'id', $instance['cm']);
-        $mform->setType('id', PARAM_INT);
-        $mform->addElement('hidden', 'userid', $instance['userid']);
-        $mform->setType('userid', PARAM_INT);
-        $mform->addElement('hidden', 'action', 'uploadfile');
-        $mform->setType('action', PARAM_ALPHA);
-
-        // buttons
-        $this->add_action_buttons(false, get_string('savefiles', 'assign'));
-    }
-}
-
-/**
- * @package   mod-assign
- * @copyright 2010 Dongsheng Cai <dongsheng@moodle.com>
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class mod_assign_submission_comments_form extends moodleform {
-    function definition() {
-        $mform = $this->_form;
-        $instance = $this->_customdata;
-
-        $data = null;
-        if (isset($instance['data'])) {
-            $data = $instance['data'];
-        }
-
-        if ($data) {
-            $data->submissioncomment_editor['text'] = $data->submissioncomment;
-            $data->submissioncomment_editor['format'] = $data->submissioncommentformat;
-            $this->set_data($data);
-        }
-        
-        // visible elements
-        // note the special naming convention here - an editor has to be called something _editor or the default values
-        // wont get populated.
-        $mform->addElement('editor', 'submissioncomment_editor', get_string('submissioncomment', 'assign'), null, null);
-        $mform->setType('submissioncomment_editor', PARAM_RAW); // to be cleaned before display
-
-        // hidden params
-        $mform->addElement('hidden', 'contextid', $instance['contextid']);
-        $mform->setType('contextid', PARAM_INT);
-        $mform->addElement('hidden', 'id', $instance['cm']);
-        $mform->setType('id', PARAM_INT);
-        $mform->addElement('hidden', 'userid', $instance['userid']);
-        $mform->setType('userid', PARAM_INT);
-        $mform->addElement('hidden', 'action', 'savecomments');
-        $mform->setType('action', PARAM_ALPHA);
-
-        // buttons
-        $this->add_action_buttons(false, get_string('savecomments', 'assign'));
-
-    }
-
-}
-
-/**
- * @package   mod-assign
- * @copyright 2010 Dongsheng Cai <dongsheng@moodle.com>
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class mod_assign_grade_form extends moodleform {
-    function definition() {
-        $mform = $this->_form;
-        $instance = $this->_customdata;
-
-        // visible elements
-        $grademenu = make_grades_menu(100);
-        $grademenu = array('-1'=>get_string('nograde')) + $grademenu;
-
-        $mform->addElement('select', 'grade', get_string('grade').':', $grademenu);
-        $mform->setType('grade', PARAM_INT);
-        
-        $data = null;
-        if (isset($instance['data'])) {
-            $data = $instance['data'];
-            $data->feedback_editor['text'] = $data->feedback;
-            $data->feedback_editor['format'] = $data->feedbackformat;
-            $data = file_prepare_standard_filemanager($data, 'feedbackfiles', $instance['options'], $instance['context'], 'mod_assign', 'feedback', $instance['userid']);
-            $this->set_data($data);
-        }
-        
-        $mform->addElement('editor', 'feedback_editor', get_string('feedbackcomments', 'assign'));
-        $mform->setType('feedback_editor', PARAM_RAW); // to be cleaned before display
-
-        $mform->addElement('filemanager', 'feedbackfiles_filemanager', get_string('uploadafile'), null, $instance['options']);
-        // hidden params
-        $mform->addElement('hidden', 'contextid', $instance['contextid']);
-        $mform->setType('contextid', PARAM_INT);
-        $mform->addElement('hidden', 'id', $instance['cm']);
-        $mform->setType('id', PARAM_INT);
-        $mform->addElement('hidden', 'userid', $instance['userid']);
-        $mform->setType('userid', PARAM_INT);
-        $mform->addElement('hidden', 'action', 'savegrade');
-        $mform->setType('action', PARAM_ALPHA);
-
-        // buttons
-        $this->add_action_buttons(false, get_string('savechanges', 'assign'));
-    }
-}
-
-/**
- * @package   mod-assign
- * @copyright 2010 Dongsheng Cai <dongsheng@moodle.com>
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class mod_assign_grading_options_form extends moodleform {
-    function definition() {
-        $mform = $this->_form;
-        $instance = $this->_customdata;
-
-        $mform->addElement('header', 'general', get_string('gradingoptions', 'assign'));
-        // visible elements
-        $options = array(-1=>'All',10=>'10', 20=>'20', 50=>'50', 100=>'100');
-        $autosubmit = array('onchange'=>'form.submit();');
-        $mform->addElement('select', 'perpage', get_string('assignmentsperpage', 'assign'), $options, $autosubmit);
-        $options = array(''=>get_string('filternone', 'assign'), ASSIGN_FILTER_SUBMITTED=>get_string('filtersubmitted', 'assign'), ASSIGN_FILTER_REQUIRE_GRADING=>get_string('filterrequiregrading', 'assign'));
-        $mform->addElement('select', 'filter', get_string('filter', 'assign'), $options, $autosubmit);
-    
- //       $mform->_attributes['id'] = 'gradingoptions';
-
-        // hidden params
-        $mform->addElement('hidden', 'contextid', $instance['contextid']);
-        $mform->setType('contextid', PARAM_INT);
-        $mform->addElement('hidden', 'id', $instance['cm']);
-        $mform->setType('id', PARAM_INT);
-        $mform->addElement('hidden', 'userid', $instance['userid']);
-        $mform->setType('userid', PARAM_INT);
-        $mform->addElement('hidden', 'action', 'saveoptions');
-        $mform->setType('action', PARAM_ALPHA);
-
-        // buttons
-        $this->add_action_buttons(false, get_string('updatetable', 'assign'));
-    }
-}
-
-// class for mform!!!
-
-
-class mod_assign_online_edit_form extends moodleform {
-
-    function definition() {
-        $mform = $this->_form;
-
-        list($data, $editoroptions, $cm) = $this->_customdata;
-        //$instance = $this->_customdata;
-        // visible elements
-        $mform->addElement('editor', 'text_editor', get_string('onlinetexteditor', 'assign'), null, $editoroptions);
-      
-        $mform->setType('text_editor', PARAM_RAW); // to be cleaned before display
-        $mform->addRule('text_editor', get_string('required'), 'required', null, 'client');
-
-        // hidden params
-        $mform->addElement('hidden', 'id', $cm);
-        $mform->setType('id', PARAM_INT);
-
-        $mform->addElement('hidden', 'action', 'saveonlinetext');
-        $mform->setType('action', PARAM_TEXT);
-        
-
-        // buttons
-        //$this->add_action_buttons();
-       $this->add_action_buttons(false, get_string('saveonlinetext', 'assign'));
-       $this->set_data($data);
-       
-    }
 }
 

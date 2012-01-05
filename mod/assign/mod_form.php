@@ -33,30 +33,101 @@ class mod_assign_mod_form extends moodleform_mod {
         $this->add_action_buttons();
     }
 
-    // Needed by plugin assignment types if they include a filemanager element in the settings form
-    function has_instance() {
-        return ($this->_instance != NULL);
+}
+
+class mod_assign_submission_form extends moodleform {
+
+    function definition() {
+        $mform = $this->_form;
+
+        list($assignment, $defaults) = $this->_customdata;
+
+        $assignment->add_submission_form_elements($mform, $defaults);
+
+        $this->add_action_buttons(false, get_string('savechanges', 'assign'));
+        if ($defaults) {
+            $this->set_data($defaults);
+        }
     }
+}
 
-    /*
-    // Needed by plugin assignment types if they include a filemanager element in the settings form
-    function get_context() {
-        return $this->context;
+/**
+ * @package   mod-assign
+ * @copyright 2010 Dongsheng Cai <dongsheng@moodle.com>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class mod_assign_grade_form extends moodleform {
+    function definition() {
+        $mform = $this->_form;
+        $instance = $this->_customdata;
+
+        // visible elements
+        $grademenu = make_grades_menu(100);
+        $grademenu = array('-1'=>get_string('nograde')) + $grademenu;
+
+        $mform->addElement('select', 'grade', get_string('grade').':', $grademenu);
+        $mform->setType('grade', PARAM_INT);
+        
+        $data = null;
+        if (isset($instance['data'])) {
+            $data = $instance['data'];
+            $data->feedback_editor['text'] = $data->feedback;
+            $data->feedback_editor['format'] = $data->feedbackformat;
+            $data = file_prepare_standard_filemanager($data, 'feedbackfiles', $instance['options'], $instance['context'], 'mod_assign', 'feedback', $instance['userid']);
+            $this->set_data($data);
+        }
+        
+        $mform->addElement('editor', 'feedback_editor', get_string('feedbackcomments', 'assign'));
+        $mform->setType('feedback_editor', PARAM_RAW); // to be cleaned before display
+
+        $mform->addElement('filemanager', 'feedbackfiles_filemanager', get_string('feedbackfiles', 'assign'), null, $instance['options']);
+        // hidden params
+        $mform->addElement('hidden', 'contextid', $instance['contextid']);
+        $mform->setType('contextid', PARAM_INT);
+        $mform->addElement('hidden', 'id', $instance['cm']);
+        $mform->setType('id', PARAM_INT);
+        $mform->addElement('hidden', 'userid', $instance['userid']);
+        $mform->setType('userid', PARAM_INT);
+        $mform->addElement('hidden', 'action', 'savegrade');
+        $mform->setType('action', PARAM_ALPHA);
+
+        // buttons
+        $this->add_action_buttons(false, get_string('savechanges', 'assign'));
     }
+}
 
+/**
+ * @package   mod-assign
+ * @copyright 2010 Dongsheng Cai <dongsheng@moodle.com>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class mod_assign_grading_options_form extends moodleform {
+    function definition() {
+        $mform = $this->_form;
+        $instance = $this->_customdata;
 
-    function data_preprocessing(&$default_values) {
-        // Allow plugin assignment types to preprocess form data (needed if they include any filemanager elements)
-        //$this->get_assignment_instance()->form_data_preprocessing($default_values, $this);
+        $mform->addElement('header', 'general', get_string('gradingoptions', 'assign'));
+        // visible elements
+        $options = array(-1=>'All',10=>'10', 20=>'20', 50=>'50', 100=>'100');
+        $autosubmit = array('onchange'=>'form.submit();');
+        $mform->addElement('select', 'perpage', get_string('assignmentsperpage', 'assign'), $options, $autosubmit);
+        $options = array(''=>get_string('filternone', 'assign'), ASSIGN_FILTER_SUBMITTED=>get_string('filtersubmitted', 'assign'), ASSIGN_FILTER_REQUIRE_GRADING=>get_string('filterrequiregrading', 'assign'));
+        $mform->addElement('select', 'filter', get_string('filter', 'assign'), $options, $autosubmit);
+    
+ //       $mform->_attributes['id'] = 'gradingoptions';
+
+        // hidden params
+        $mform->addElement('hidden', 'contextid', $instance['contextid']);
+        $mform->setType('contextid', PARAM_INT);
+        $mform->addElement('hidden', 'id', $instance['cm']);
+        $mform->setType('id', PARAM_INT);
+        $mform->addElement('hidden', 'userid', $instance['userid']);
+        $mform->setType('userid', PARAM_INT);
+        $mform->addElement('hidden', 'action', 'saveoptions');
+        $mform->setType('action', PARAM_ALPHA);
+
+        // buttons
+        $this->add_action_buttons(false, get_string('updatetable', 'assign'));
     }
-
-
-    function validation($data, $files) {
-        // Allow plugin assignment types to do any extra validation after the form has been submitted
-        $errors = parent::validation($data, $files);
-        //$errors = array_merge($errors, $this->get_assignment_instance()->form_validation($data, $files));
-        return $errors;
-    }
-      */
 }
 
