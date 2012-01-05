@@ -326,6 +326,7 @@ class assign_base {
                         $teachermodified = userdate($auser->timemarked);
                     }
                     $status = get_string('submissionstatus_' . $auser->status, 'assign');
+                    $status = $OUTPUT->action_link(new moodle_url('/mod/assign/grade.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id)), $status);
                     $finalgrade = '-';
                     if (isset($grading_info->items[0]) && $grading_info->items[0]->grades[$auser->id]) {
                         // debugging
@@ -988,16 +989,21 @@ class assign_base {
             echo $OUTPUT->box_end();
         } 
         $submission = $this->get_submission($userid);
+        $grade = $this->get_grade($userid);
         echo $OUTPUT->box_start('boxaligncenter', 'intro');
         $t = new html_table();
 
         // status
         $row = new html_table_row();
         $cell1 = new html_table_cell(get_string('submissionstatus', 'assign'));
+        $locked = '';
+        if ($grade && $grade->locked) {
+            $locked = '<br/><br/>' . get_string('submissionslocked', 'assign');
+        }
         if ($submission) {
-            $cell2 = new html_table_cell(get_string('submissionstatus_' . $submission->status, 'assign'));
+            $cell2 = new html_table_cell(get_string('submissionstatus_' . $submission->status, 'assign') . $locked);
         } else {
-            $cell2 = new html_table_cell(get_string('nosubmission', 'assign'));
+            $cell2 = new html_table_cell(get_string('nosubmission', 'assign') . $locked);
         }
         $row->cells = array($cell1, $cell2);
         $t->data[] = $row;
@@ -1005,9 +1011,8 @@ class assign_base {
         // grading status
         $row = new html_table_row();
         $cell1 = new html_table_cell(get_string('gradingstatus', 'assign'));
-        $grade = $this->get_grade($userid);
 
-        if ($grade) {
+        if ($grade && $grade->grade > 0) {
             $cell2 = new html_table_cell(get_string('graded', 'assign'));
         } else {
             $cell2 = new html_table_cell(get_string('notgraded', 'assign'));
