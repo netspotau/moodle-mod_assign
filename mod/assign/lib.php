@@ -209,10 +209,16 @@ class assign_base {
         echo $OUTPUT->container_end();
         echo $OUTPUT->spacer(array('height'=>30));
     }
+    
+    function get_userid_for_row($num){
+        
+        return $this->load_submissions_table(1, null, $num, true);
+        
+    }
 
-    function & load_submissions_table($perpage=10,$filter=null) {
+    function & load_submissions_table($perpage=10,$filter=null,$rownum_id_pair=null,$onlyfirstuserid=false) {
         global $CFG, $DB, $OUTPUT;
-
+       
         $tablecolumns = array('picture', 'fullname', 'status', 'edit', 'submissioncomment', 'feedback', 'grade', 'timemodified', 'timemarked', 'finalgrade');
 
         $tableheaders = array('',
@@ -228,6 +234,7 @@ class assign_base {
 
         // more efficient to load this here
         require_once($CFG->libdir.'/tablelib.php');
+        require_once($CFG->libdir.'/gradelib.php');
         $table = new flexible_table('mod-assign-submissions');
 
         $table->define_columns($tablecolumns);
@@ -301,13 +308,17 @@ class assign_base {
 
             $table->pagesize($perpage, $count);
             
-            $ausers = $DB->get_records_sql($select.$sql.$sort, $params, $table->get_page_start(), $table->get_page_size());
-
+            $ausers = $DB->get_records_sql($select.$sql.$sort, $params, $rownum_id_pair?$rownum_id_pair:$table->get_page_start(), $table->get_page_size());
+            
             //$table->pagesize($perpage, count($ausers));
             if ($ausers !== false) {
                 $grading_info = grade_get_grades($this->get_course()->id, 'mod', 'assign', $this->data->id, array_keys($ausers));
                 foreach ($ausers as $auser) {
-
+                                       
+                    if ($onlyfirstuserid) {
+                        return $auser->id;
+                    }
+                    
                     $picture = $OUTPUT->user_picture($auser);
 
                     $userlink = $OUTPUT->action_link(new moodle_url('/user/view.php', array('id' => $auser->id, 'course'=>$this->get_course()->id)), fullname($auser, has_capability('moodle/site:viewfullnames', $this->context)));
@@ -326,7 +337,12 @@ class assign_base {
                         $teachermodified = userdate($auser->timemarked);
                     }
                     $status = get_string('submissionstatus_' . $auser->status, 'assign');
-                    $status = $OUTPUT->action_link(new moodle_url('/mod/assign/grade.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id)), $status);
+                    //  get row number !
+                    $rownum = array_search($auser->id,array_keys($ausers)) + $table->get_page_start();
+                    //$status = $OUTPUT->action_link(new moodle_url('/mod/assign/grade.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id)), $status);
+                    $status = $OUTPUT->action_link(new moodle_url('/mod/assign/grade.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id,'rownum'=>$rownum)), $status);
+                    
+                    
                     $finalgrade = '-';
                     if (isset($grading_info->items[0]) && $grading_info->items[0]->grades[$auser->id]) {
                         // debugging
@@ -348,6 +364,9 @@ class assign_base {
                     $table->add_data($row);
                 }
             }
+        }
+        if ($onlyfirstuserid && count($ausers) == 0) {
+            return false;
         }
 
         return $table;
@@ -376,6 +395,7 @@ class assign_base {
 
     function process_save_grade() {
         global $USER;
+        $rownum = required_param('rownum', PARAM_INT);
         $userid = required_param('userid', PARAM_INT);
 
         $options = array('subdirs'=>1, 
@@ -383,7 +403,7 @@ class assign_base {
                                         'maxfiles'=>EDITOR_UNLIMITED_FILES,
                                         'accepted_types'=>'*', 
                                         'return_types'=>FILE_INTERNAL);
-        $mform = new mod_assign_grade_form(null, array('cm'=>$this->get_course_module()->id, 'options'=>$options, 'contextid'=>$this->context->id, 'userid'=>$userid, 'course'=>$this->get_course(), 'context'=>$this->context));
+        $mform = new mod_assign_grade_form(null, array('cm'=>$this->get_course_module()->id, 'options'=>$options, 'rownum'=>$rownum, 'contextid'=>$this->context->id, 'userid'=>$userid, 'course'=>$this->get_course(), 'context'=>$this->context));
         
         if ($formdata = $mform->get_data()) {
             $fs = get_file_storage();
@@ -404,16 +424,32 @@ class assign_base {
     function view_grade($action='') {
         global $OUTPUT, $DB;
 
-        if ($action == 'savegrade') {
+        if (optional_param('saveandshownext', null, PARAM_ALPHA)) {
+                       
+            $this->process_save_grade();                            
+            $rnum = required_param('rownum', PARAM_INT);
+            $rnum +=1;
+            $userid = $this->get_userid_for_row($rnum);
+            if (!$userid) {
+                print_error('outofbound exception array:rownumber&userid');
+                die();                        
+            }
+                    
+            redirect('grade.php?id='.$this->get_course_module()->id.'&userid='.$userid.'&rownum='.$rnum);
+            die();
+       }
+        
+        if ($action == 'savegrade') {                            
+            
             $this->process_save_grade();
             redirect('grading.php?id='.$this->get_course_module()->id);
             die();
         }
-
-
+                
+            
         $this->view_header(get_string('grading', 'assign'));
-
-        $userid = required_param('userid', PARAM_INT);
+       
+        $userid = required_param('userid', PARAM_INT);        
         $user = $DB->get_record('user', array('id' => $userid));
 
         
@@ -871,6 +907,8 @@ class assign_base {
         global $OUTPUT, $USER;
         echo $OUTPUT->heading(get_string('grade'), 3);
         echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
+
+        $rownum = required_param('rownum', PARAM_INT);
         $userid = required_param('userid', PARAM_INT);
 
         $grade = $this->get_grade($userid);
@@ -892,7 +930,7 @@ class assign_base {
                                         'maxfiles'=>EDITOR_UNLIMITED_FILES,
                                         'accepted_types'=>'*', 
                                         'return_types'=>FILE_INTERNAL);
-        $mform = new mod_assign_grade_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'userid'=>$userid, 'options'=>$options, 'course'=>$this->get_course(), 'context'=>$this->context, 'data'=>$data));
+        $mform = new mod_assign_grade_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'rownum'=>$rownum, 'userid'=>$userid, 'options'=>$options, 'course'=>$this->get_course(), 'context'=>$this->context, 'data'=>$data));
 
         // show upload form
         $mform->display();
@@ -1511,6 +1549,9 @@ class mod_assign_submission_comments_form extends moodleform {
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_assign_grade_form extends moodleform {
+    
+    
+    
     function definition() {
         $mform = $this->_form;
         $instance = $this->_customdata;
@@ -1542,12 +1583,21 @@ class mod_assign_grade_form extends moodleform {
         $mform->setType('id', PARAM_INT);
         $mform->addElement('hidden', 'userid', $instance['userid']);
         $mform->setType('userid', PARAM_INT);
+        $mform->addElement('hidden', 'rownum', $instance['rownum']);
+        $mform->setType('rownum', PARAM_INT);
+        
         $mform->addElement('hidden', 'action', 'savegrade');
         $mform->setType('action', PARAM_ALPHA);
-
-        // buttons
-        $this->add_action_buttons(false, get_string('savechanges', 'assign'));
-    }
+        
+        
+            $buttonarray=array();
+            $buttonarray[] = &$mform->createElement('submit', 'savegrade', get_string('savechanges', 'assign'));
+            $buttonarray[] = &$mform->createElement('submit', 'saveandshownext', get_string('savenext','assign'));       
+            $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
+            $mform->closeHeaderBefore('buttonar');
+        }
+        
+    
 }
 
 /**
@@ -1562,7 +1612,9 @@ class mod_assign_grading_options_form extends moodleform {
 
         $mform->addElement('header', 'general', get_string('gradingoptions', 'assign'));
         // visible elements
+       // $options = array(-1=>'All',5=>'5',10=>'10', 20=>'20', 50=>'50', 100=>'100');
         $options = array(-1=>'All',10=>'10', 20=>'20', 50=>'50', 100=>'100');
+        
         $autosubmit = array('onchange'=>'form.submit();');
         $mform->addElement('select', 'perpage', get_string('assignmentsperpage', 'assign'), $options, $autosubmit);
         $options = array(''=>get_string('filternone', 'assign'), ASSIGN_FILTER_SUBMITTED=>get_string('filtersubmitted', 'assign'), ASSIGN_FILTER_REQUIRE_GRADING=>get_string('filterrequiregrading', 'assign'));
