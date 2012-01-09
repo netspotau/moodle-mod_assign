@@ -1111,6 +1111,7 @@ class assignment_upload extends assignment_base {
                 $a_user = $DB->get_record("user", array("id"=>$a_userid),'id,username,firstname,lastname'); //get user firstname/lastname
 
                 $files = $fs->get_area_files($this->context->id, 'mod_assignment', 'submission', $submission->id, "timemodified", false);
+                //$files = $fs->get_area_files($this->context->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $a_user->id, "timemodified", false);
                 foreach ($files as $file) {
                     //get files new name.
                     $fileext = strstr($file->get_filename(), '.');
