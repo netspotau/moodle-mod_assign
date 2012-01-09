@@ -372,8 +372,11 @@ class assign_base {
                 }
             }
         }
+        
+        // important bit for hiding buttons for the last user in the grading section 
         if ($onlyfirstuserid && count($ausers) == 0) {
-            return false;
+            $result = false;
+            return $result;
         }
 
         return $table;
@@ -430,9 +433,8 @@ class assign_base {
 
     function view_grade($action='') {
         global $OUTPUT, $DB;
-
-        if (optional_param('saveandshownext', null, PARAM_ALPHA)) {
-                       
+             // save and show next button
+        if (optional_param('saveandshownext', null, PARAM_ALPHA)) {                   
             $this->process_save_grade();                            
             $rnum = required_param('rownum', PARAM_INT);
             $rnum +=1;
@@ -445,14 +447,27 @@ class assign_base {
             redirect('grade.php?id='.$this->get_course_module()->id.'&userid='.$userid.'&rownum='.$rnum);
             die();
        }
-        
+              // next and don't save
+       if (optional_param('nosaveandnext', null, PARAM_ALPHA)) {
+            $rnum = required_param('rownum', PARAM_INT);
+            $rnum +=1;
+            $userid = $this->get_userid_for_row($rnum);
+            if (!$userid) {
+                print_error('outofbound exception array:rownumber&userid');
+                die();                        
+            }
+                    
+            redirect('grade.php?id='.$this->get_course_module()->id.'&userid='.$userid.'&rownum='.$rnum);
+            die();
+       }      
+             //save changes button
         if ($action == 'savegrade') {                            
             
             $this->process_save_grade();
             redirect('grading.php?id='.$this->get_course_module()->id);
             die();
         }
-                
+           
             
         $this->view_header(get_string('grading', 'assign'));
        
@@ -869,7 +884,9 @@ class assign_base {
                                         'maxfiles'=>EDITOR_UNLIMITED_FILES,
                                         'accepted_types'=>'*', 
                                         'return_types'=>FILE_INTERNAL);
-        $mform = new mod_assign_grade_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'rownum'=>$rownum, 'userid'=>$userid, 'options'=>$options, 'course'=>$this->get_course(), 'context'=>$this->context, 'data'=>$data));
+        
+        $last = !$this->get_userid_for_row($rownum+1);
+        $mform = new mod_assign_grade_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'rownum'=>$rownum, 'last'=>$last, 'userid'=>$userid, 'options'=>$options, 'course'=>$this->get_course(), 'context'=>$this->context, 'data'=>$data));
 
         // show upload form
         $mform->display();

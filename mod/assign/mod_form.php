@@ -56,14 +56,10 @@ class mod_assign_submission_form extends moodleform {
  * @copyright 2010 Dongsheng Cai <dongsheng@moodle.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_assign_grade_form extends moodleform {
-    
-    
-    
+class mod_assign_grade_form extends moodleform {         
     function definition() {
         $mform = $this->_form;
-        $instance = $this->_customdata;
-
+        $instance = $this->_customdata;       
         // visible elements
         $grademenu = make_grades_menu(100);
         $grademenu = array('-1'=>get_string('nograde')) + $grademenu;
@@ -96,16 +92,29 @@ class mod_assign_grade_form extends moodleform {
         
         $mform->addElement('hidden', 'action', 'savegrade');
         $mform->setType('action', PARAM_ALPHA);
-        
-        
-            $buttonarray=array();
+         
+        $buttonarray=array();
+            
+        $buttonarray[] = &$mform->createElement('submit', 'saveandshownext', get_string('savenext','assign')); 
+        $buttonarray[] = &$mform->createElement('submit', 'nosaveandnext', get_string('nosavebutnext', 'assign'));
+        $buttonarray[] = &$mform->createElement('submit', 'savegrade', get_string('savechanges', 'assign'));           
+        // handle this cancel button with is_cancelled() ?
+        $buttonarray[] = &$mform->createElement('cancel', 'cancelbutton', get_string('cancel','assign'));     
+        $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
+        $mform->closeHeaderBefore('buttonar');            
+               ///- use this to get the last userid/row number to hide the next and save$show next button 
+              // var_dump($instance['last']);
+              /// related to the view_grade_form function
+        if ( $instance['last']== true ){
+            $mform->removeElement('buttonar');
+            $buttonarray=array();          
             $buttonarray[] = &$mform->createElement('submit', 'savegrade', get_string('savechanges', 'assign'));
-            $buttonarray[] = &$mform->createElement('submit', 'saveandshownext', get_string('savenext','assign'));       
+            $buttonarray[] = &$mform->createElement('cancel', 'cancelbutton', get_string('cancel','assign'));     
             $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
-            $mform->closeHeaderBefore('buttonar');
-        }
-        
-    
+            $mform->closeHeaderBefore('buttonar');                                     
+      }            
+  }
+          
 }
 
 /**

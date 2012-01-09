@@ -119,3 +119,5 @@ $string['submissionslocked'] = 'This assignment is not accepting submissions';
 //grading button
 
 $string['savenext'] = 'Save and show next';
+$string['nosavebutnext'] = 'Next';
+$string['cancel'] = 'Cancel';
