@@ -4,7 +4,7 @@ if (!defined('MOODLE_INTERNAL')) {
 }
 
 require_once ($CFG->dirroot.'/course/moodleform_mod.php');
-
+require_once('locallib.php');
 class mod_assign_mod_form extends moodleform_mod {
     protected $_assignmentinstance = null;
 
@@ -15,7 +15,7 @@ class mod_assign_mod_form extends moodleform_mod {
         //-------------------------------------------------------------------------------
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
-        $mform->addElement('text', 'name', get_string('assignmentname', 'assignment'), array('size'=>'64'));
+        $mform->addElement('text', 'name', get_string('assignmentname', 'assign'), array('size'=>'64'));
         if (!empty($CFG->formatstringstriptags)) {
             $mform->setType('name', PARAM_TEXT);
         } else {
@@ -23,8 +23,8 @@ class mod_assign_mod_form extends moodleform_mod {
         }
         $mform->addRule('name', null, 'required', null, 'client');
 
-        $this->add_intro_editor(true, get_string('description', 'assignment'));
-
+        $this->add_intro_editor(true, get_string('description', 'assign'));
+          
         assign_base::add_settings($mform);
         
         $this->standard_grading_coursemodule_elements();
@@ -106,7 +106,7 @@ class mod_assign_grade_form extends moodleform {
               // var_dump($instance['last']);
               /// related to the view_grade_form function
        
-        if ($instance['last']== true ){
+        if (!empty($instance['last'])== true ){
             $mform->removeElement('buttonar');
             $buttonarray=array();          
             $buttonarray[] = &$mform->createElement('submit', 'savegrade', get_string('savechanges', 'assign'));
