@@ -205,8 +205,8 @@ class assign_base {
         echo html_writer::table($t);
         echo $OUTPUT->box_end();
         
-        echo $OUTPUT->single_button(new moodle_url('/mod/assign/grading.php',
-            array('id' => $this->get_course_module()->id)), get_string('viewgrading', 'assign'), 'get');
+        echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
+            array('id' => $this->get_course_module()->id ,'action'=>'grading')), get_string('viewgrading', 'assign'), 'get');
 
 
         echo $OUTPUT->container_end();
@@ -244,7 +244,7 @@ class assign_base {
 
         $table->define_columns($tablecolumns);
         $table->define_headers($tableheaders);
-        $table->define_baseurl($CFG->wwwroot.'/mod/assign/grading.php?id='.$this->get_course_module()->id);
+        $table->define_baseurl($CFG->wwwroot.'/mod/assign/view.php?id='.$this->get_course_module()->id. '&action=grading');
 
         $table->sortable(true, 'lastname');//sorted by lastname by default
         $table->collapsible(true);
@@ -344,9 +344,8 @@ class assign_base {
                     $status = get_string('submissionstatus_' . $auser->status, 'assign');
                     //  get row number !
                     $rownum = array_search($auser->id,array_keys($ausers)) + $table->get_page_start();
-                    //$status = $OUTPUT->action_link(new moodle_url('/mod/assign/grade.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id)), $status);
-                    $status = $OUTPUT->action_link(new moodle_url('/mod/assign/grade.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id,'rownum'=>$rownum)), $status);
-                    
+                                        
+                    $status = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id,'rownum'=>$rownum,'action'=>'grade')), $status);
                     
                     $finalgrade = '-';
                     if (isset($grading_info->items[0]) && $grading_info->items[0]->grades[$auser->id]) {
@@ -354,12 +353,12 @@ class assign_base {
                         $finalgrade = print_r($grading_info->items[0]->grades[$auser->id], true);
                     }
                     
-                    $edit = $OUTPUT->action_link(new moodle_url('/mod/assign/grade.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id)), $OUTPUT->pix_icon('t/grades', get_string('grade')));
+                    $edit = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id,'action'=>'grade')), $OUTPUT->pix_icon('t/grades', get_string('grade')));
                     if (!$auser->status || $auser->status == ASSIGN_SUBMISSION_STATUS_DRAFT || !$this->data->submissiondrafts) {
                         if (!$auser->locked) {
-                            $edit .= $OUTPUT->action_link(new moodle_url('/mod/assign/grading.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id, 'action'=>'lock')), $OUTPUT->pix_icon('t/lock', get_string('preventsubmissions', 'assign')));
+                            $edit .= $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id, 'action'=>'lock')), $OUTPUT->pix_icon('t/lock', get_string('preventsubmissions', 'assign')));
                         } else {
-                            $edit .= $OUTPUT->action_link(new moodle_url('/mod/assign/grading.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id, 'action'=>'unlock')), $OUTPUT->pix_icon('t/unlock', get_string('allowsubmissions', 'assign')));
+                            $edit .= $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id, 'action'=>'unlock')), $OUTPUT->pix_icon('t/unlock', get_string('allowsubmissions', 'assign')));
                         }
                     }
 
@@ -430,43 +429,27 @@ class assign_base {
         }
         
     }
+    
+    // to make saveandshownext button and nosaveandnext button in grade form cleaner 
+    function next_button() {
+          
+     $rnum = required_param('rownum', PARAM_INT);
+     $rnum +=1;
+     $userid = $this->get_userid_for_row($rnum);
+     if (!$userid) {
+             print_error('outofbound exception array:rownumber&userid');
+             die();
+     }
 
-    function view_grade($action='') {
+     redirect('view.php?id=' . $this->get_course_module()->id . '&userid=' . $userid . '&rownum=' . $rnum . '&action=grade');
+     die();
+
+    }
+    
+    
+    function view_grade() {
         global $OUTPUT, $DB;
-             // save and show next button
-        if (optional_param('saveandshownext', null, PARAM_ALPHA)) {                   
-            $this->process_save_grade();                            
-            $rnum = required_param('rownum', PARAM_INT);
-            $rnum +=1;
-            $userid = $this->get_userid_for_row($rnum);
-            if (!$userid) {
-                print_error('outofbound exception array:rownumber&userid');
-                die();                        
-            }
-                    
-            redirect('grade.php?id='.$this->get_course_module()->id.'&userid='.$userid.'&rownum='.$rnum);
-            die();
-       }
-              // next and don't save
-       if (optional_param('nosaveandnext', null, PARAM_ALPHA)) {
-            $rnum = required_param('rownum', PARAM_INT);
-            $rnum +=1;
-            $userid = $this->get_userid_for_row($rnum);
-            if (!$userid) {
-                print_error('outofbound exception array:rownumber&userid');
-                die();                        
-            }
-                    
-            redirect('grade.php?id='.$this->get_course_module()->id.'&userid='.$userid.'&rownum='.$rnum);
-            die();
-       }      
-             //save changes button
-        if ($action == 'savegrade') {                            
-            
-            $this->process_save_grade();
-            redirect('grading.php?id='.$this->get_course_module()->id);
-            die();
-        }
+        
            
             
         $this->view_header(get_string('grading', 'assign'));
@@ -489,7 +472,7 @@ class assign_base {
         $this->view_footer();
     }
     
-    function view_online_text($action='') {
+    function view_online_text() {
         global $OUTPUT, $CFG, $USER;
         
         $submission = $this->get_submission($USER->id);       
@@ -508,9 +491,9 @@ class assign_base {
         $this->view_footer();       
     }
        
-    function view_grading($action='') {
+    function view_grading() {
         global $OUTPUT, $CFG, $USER;
-
+        $action ='';
         if ($action == 'saveoptions') {
             $this->process_save_grading_options();
         } else if ($action == 'lock') {
@@ -578,21 +561,18 @@ class assign_base {
 
         $this->view_footer();
     }
-
-    /**
-     * Display the assignment, used by view.php
-     *
-     * The assignment is displayed differently depending on your role, 
-     * the settings for the assignment and the status of the assignment.
-     */
-    function view($subpage='', $action='') {
-        // handle custom actions first
-        if ($action == "savesubmission") {
-            $this->process_save_submission();
-        } else if ($action == "submit") {
-            $this->process_submit_assignment();
+    
+    function view_edit_submission() {
+        $this->view_header(get_string('editsubmission', 'assign'));
+        $this->view_intro();
+        if (has_capability('mod/assign:submit', $this->context)) {
+            $this->view_submit();
         }
-        $this->view_header($subpage);
+        $this->view_footer();
+    }
+    
+    function view_submission() {
+        $this->view_header(get_string('pluginname', 'assign'));
         $this->view_intro();
         // check view permissions
             // show no permission error 
@@ -602,30 +582,72 @@ class assign_base {
             // return
         // check can grade
         if (has_capability('mod/assign:grade', $this->context)) {
-            if ($action != 'editsubmission') {
-                $this->view_grading_summary();
-            }
+            $this->view_grading_summary();
         }
             // display link to grading interface
         // check can submit
         if (has_capability('mod/assign:submit', $this->context)) {
             // display current submission status
-            if ($action != 'editsubmission') {
-                $this->view_submission_status();
-                $this->view_submission_links();
-            }
-            // check submissions open
-            // display submit interface
-            if ($action == 'editsubmission') {
-                $this->view_submit();
-            }
-    
-            if ($action != 'editsubmission') {
-                $this->view_feedback();
-            }
+            $this->view_submission_status();
+            $this->view_submission_links();
+            $this->view_feedback();
+            
         }
         
         $this->view_footer();
+    }
+    
+    /**
+     * Display the assignment, used by view.php
+     *
+     * The assignment is displayed differently depending on your role, 
+     * the settings for the assignment and the status of the assignment.
+     */
+    function view($action='') {
+        // handle form submissions first
+        if ($action == "savesubmission") {
+            $this->process_save_submission();
+         } else if ($action == "lock") {
+            $this->process_lock();
+            $action = 'grading';
+         } else if ($action == "unlock") {
+            $this->process_unlock();
+            $action = 'grading';
+         } else if ($action == "submit") {
+            $this->process_submit_assignment();
+                 // save and show next button
+        } else if ($action == "submitgrade") {
+            if (optional_param('saveandshownext', null, PARAM_ALPHA)) {
+                //save and show next
+                $this->process_save_grade();                
+                $this->next_button();              
+            } else if (optional_param('nosaveandnext', null, PARAM_ALPHA)) { 
+                //show next button
+                $this->next_button();
+            } else if (optional_param('savegrade', null, PARAM_ALPHA)) {
+                //save changes button
+                $this->process_save_grade();
+                $action = 'grading';
+            } else {
+                //cancel button
+                $action = 'grading';
+            }
+        }
+        
+        // now show the right view page
+        if ($action == 'grade') {
+            $this->view_grade();                        
+        } else if ($action == "editsubmission") {
+            $this->view_edit_submission();
+        } else if ($action == "onlinetext"){
+            
+            $this->view_online_text();
+        } else if ($action == 'grading') {
+            $this->view_grading();
+        } else {
+            $this->view_submission();
+        }
+       
     }
     
     function get_grade($userid, $create = false) {
@@ -1051,7 +1073,8 @@ class assign_base {
         // if online text assignment submission is set to yes
         //onlinetextsubmission                      
         if ($this->data->onlinetextsubmission) {
-            $link = new moodle_url ('/mod/assign/online_text.php?id='.$this->get_course_module()->id);
+           // $link = new moodle_url ('/mod/assign/online_text.php?id='.$this->get_course_module()->id);
+            $link = new moodle_url ('/mod/assign/view.php?id='.$this->get_course_module()->id.'&action=onlinetext');
             $row = new html_table_row();
             $cell1 = new html_table_cell(get_string('onlinetextwordcount', 'assign')); 
             if (!$submission) {
@@ -1169,14 +1192,16 @@ class assign_base {
         
         if (has_capability('mod/assign:submit', $this->context) &&
             $this->submissions_open() && ($this->data->maxfilessubmission >= 1 || $this->data->onlinetextsubmission)) {
-            echo $OUTPUT->single_button(new moodle_url('/mod/assign/submission.php',
-                array('id' => $this->get_course_module()->id)), get_string('editsubmission', 'assign'), 'get');
+            // submission.php test
+            echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
+                array('id' => $this->get_course_module()->id, 'action' => 'editsubmission')), get_string('editsubmission', 'assign'), 'get');
 
             $submission = $this->get_submission($userid);
 
             if ($submission) {
                 if ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT) {
-                    echo $OUTPUT->single_button(new moodle_url('/mod/assign/submission.php',
+                    // submission.php test
+                    echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
                         array('id' => $this->get_course_module()->id, 'action'=>'submit')), get_string('submitassignment', 'assign'), 'get');
                     echo $OUTPUT->box_start('boxaligncenter', 'intro');
                     echo get_string('submitassignment_help', 'assign');

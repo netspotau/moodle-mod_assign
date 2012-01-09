@@ -90,7 +90,7 @@ class mod_assign_grade_form extends moodleform {
         $mform->addElement('hidden', 'rownum', $instance['rownum']);
         $mform->setType('rownum', PARAM_INT);
         
-        $mform->addElement('hidden', 'action', 'savegrade');
+        $mform->addElement('hidden', 'action', 'submitgrade');
         $mform->setType('action', PARAM_ALPHA);
          
         $buttonarray=array();
@@ -105,7 +105,8 @@ class mod_assign_grade_form extends moodleform {
                ///- use this to get the last userid/row number to hide the next and save$show next button 
               // var_dump($instance['last']);
               /// related to the view_grade_form function
-        if ( $instance['last']== true ){
+       
+        if ($instance['last']== true ){
             $mform->removeElement('buttonar');
             $buttonarray=array();          
             $buttonarray[] = &$mform->createElement('submit', 'savegrade', get_string('savechanges', 'assign'));
