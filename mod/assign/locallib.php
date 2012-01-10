@@ -205,7 +205,6 @@ class assign_base {
         
     }
 
-
     function & load_submissions_table($perpage=10,$filter=null,$rownum_id_pair=null,$onlyfirstuserid=false) {
         global $CFG, $DB, $OUTPUT,$PAGE;
        
@@ -432,12 +431,98 @@ class assign_base {
 
     }
     
-    
+    /**
+     * creates a zip of all assignment submissions and sends a zip to the browser
+     */
+    public function download_submissions() {
+        global $CFG,$DB;
+        require_once($CFG->libdir.'/filelib.php');
+        $submissions = $this->get_all_submissions('','');
+        
+        if (empty($submissions)) {
+            print_error('errornosubmissions', 'assignment');
+        }
+        $filesforzipping = array();
+        $fs = get_file_storage();
+
+       
+        $filename = str_replace(' ', '_', clean_filename($this->get_course()->shortname.'-'.$this->data->name.'-'.$this->get_course_module()->id.".zip")); //name of new zip file.
+        foreach ($submissions as $submission) {
+            $a_userid = $submission->userid; //get userid
+            $a_assignid = $submission->assignment; //get name of this assignment for use in the file names.
+            $a_user = $DB->get_record("user", array("id" => $a_userid), 'id,username,firstname,lastname'); //get user firstname/lastname
+            // $files = $fs->get_area_files($this->context->id, 'mod_assignment', 'submission', $submission->id, "timemodified", false);
+            $files = $fs->get_area_files($this->context->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $a_user->id, "timemodified", false);
+            foreach ($files as $file) {
+                //get files new name.
+                $fileext = strstr($file->get_filename(), '.');
+                $fileoriginal = str_replace($fileext, '', $file->get_filename());
+                $fileforzipname = clean_filename(fullname($a_user) . "_" . $fileoriginal . "_" . $a_userid . $fileext);
+                //save file name to array for zipping.
+                $filesforzipping[$fileforzipname] = $file;
+            }
+          
+            
+        } // end of foreach loop
+        if ($zipfile = $this->pack_files($filesforzipping)) {
+            send_temp_file($zipfile, $filename); //send file and delete after sending.
+        }
+     }
+    /**
+     * Return all assignment submissions by ENROLLED students (even empty)
+     *
+     * There are also assignment type methods get_submissions() wich in the default
+     * implementation simply call this function.
+     * @param $sort string optional field names for the ORDER BY in the sql query
+     * @param $dir string optional specifying the sort direction, defaults to DESC
+     * @return array The submission objects indexed by id
+     */
+    function get_all_submissions( $sort="", $dir="DESC") {
+    /// Return all assignment submissions by ENROLLED students (even empty)
+        global $CFG, $DB;
+
+        if ($sort == "lastname" or $sort == "firstname") {
+            $sort = "u.$sort $dir";
+        } else if (empty($sort)) {
+            $sort = "a.timemodified DESC";
+        } else {
+            $sort = "a.$sort $dir";
+        }
+
+        /* not sure this is needed at all since assignment already has a course define, so this join?
+        $select = "s.course = '$assignment->course' AND";
+        if ($assignment->course == SITEID) {
+            $select = '';
+        }*/
+
+        return $DB->get_records_sql("SELECT a.*
+                                       FROM {assign_submissions} a, {user} u
+                                      WHERE u.id = a.userid
+                                            AND a.assignment = ?
+                                   ORDER BY $sort", array($this->data->id));
+
+    }
+     
+/**
+ * generate zip file from array of given files
+ * @param array $filesforzipping - array of files to pass into archive_to_pathname
+ * @return path of temp file - note this returned file does not have a .zip extension - it is a temp file.
+ */
+     function pack_files($filesforzipping) {
+          global $CFG;
+          //create path for new zip file.
+          $tempzip = tempnam($CFG->tempdir.'/', 'assignment_');
+          //zip files
+          $zipper = new zip_packer();
+          if ($zipper->archive_to_pathname($filesforzipping, $tempzip)) {
+               return $tempzip;
+          }
+          return false;
+        }
+   
     function view_grade() {
         global $OUTPUT, $DB;
-        
-           
-            
+          
         $this->view_header(get_string('grading', 'assign'));
        
         $userid = required_param('userid', PARAM_INT);        
@@ -539,7 +624,7 @@ class assign_base {
         }
         if (has_capability('mod/assign:grade', $this->get_course_context())) {
             echo $OUTPUT->container_start('downloadalllink');
-            echo $OUTPUT->action_link(new moodle_url('/mod/assign/download-all.php', array('id' => $this->get_course_module()->id)), get_string('downloadall', 'assign'));
+            echo $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id,'action'=>'downloadall')), get_string('downloadall', 'assign'));
             echo $OUTPUT->container_end();
         }
         echo $OUTPUT->container_end();
@@ -630,7 +715,10 @@ class assign_base {
             $this->view_online_text();
         } else if ($action == 'grading') {
             $this->view_grading();
-        } else {
+        } else if ($action == 'downloadall') {
+            $this->download_submissions();
+                    
+        }else {
             $this->view_submission();
         }
        
@@ -1370,7 +1458,7 @@ class assign_base {
             $node = $navref->add(get_string('viewgradebook', 'assign'), $link, navigation_node::TYPE_SETTING);
         }
         if (has_capability('mod/assign:grade', $this->get_course_context())) {
-            $link = new moodle_url('/mod/assign/downloadall.php', array('id' => $this->get_course_module()->id));
+            $link = new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id,'action'=>'downloadall'));
             $node = $navref->add(get_string('downloadall', 'assign'), $link, navigation_node::TYPE_SETTING);
         }
     }
