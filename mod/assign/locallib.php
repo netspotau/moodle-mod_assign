@@ -95,7 +95,7 @@ class assign_base {
         echo $OUTPUT->header();
         echo $OUTPUT->heading($this->data->name);
 
-        groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id);
+        groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id.'&action=grading');
         
     }
 
@@ -208,7 +208,7 @@ class assign_base {
     function & load_submissions_table($perpage=10,$filter=null,$rownum_id_pair=null,$onlyfirstuserid=false) {
         global $CFG, $DB, $OUTPUT,$PAGE;
        
-
+        
         $tablecolumns = array('picture', 'fullname', 'status', 'edit', 'submissioncomment', 'feedback', 'grade', 'timemodified', 'timemarked', 'finalgrade');
 
         $tableheaders = array('',
@@ -273,7 +273,7 @@ class assign_base {
         }
 
         $users = array_keys( $this->list_enrolled_users_with_capability("mod/assign:submit"));
-
+        
         $ufields = user_picture::fields('u');
         if (!empty($users)) {
             $select = "SELECT $ufields,
@@ -288,7 +288,8 @@ class assign_base {
 
             if ($filter != null) {
                 if ($filter == ASSIGN_FILTER_REQUIRE_GRADING) {
-                    $sql .= ' AND g.timemarked < g.timemodified '; 
+                    $sql .= ' AND g.timemodified < s.timemodified '; 
+                    
                 } else if ($filter == ASSIGN_FILTER_SUBMITTED) {
                     $sql .= ' AND s.timemodified > 0 '; 
                 }
@@ -431,16 +432,69 @@ class assign_base {
 
     }
     
-    /**
+    
+     /** //this function is to download with groups setting intalled --> temp comment this to be removed 
+      * BUT IT GIVES YOU ZERO RESULT IN ARRAY OF '$FILES' IF YOU VARDUMP IT!!!!! 
+      * SO THIS FUNCTION DOESNOT WORK YET!! MAYBE WAIT TILL GROUP SETTING IN LOAD SUMMISSION TABLE SORTED FIRST 
      * creates a zip of all assignment submissions and sends a zip to the browser
-     */
+     
     public function download_submissions() {
         global $CFG,$DB;
         require_once($CFG->libdir.'/filelib.php');
         $submissions = $this->get_all_submissions('','');
         
         if (empty($submissions)) {
-            print_error('errornosubmissions', 'assignment');
+            print_error('errornosubmissions', 'assign');
+        }
+        $filesforzipping = array();
+        $fs = get_file_storage();
+
+         
+        $groupmode = groups_get_activity_groupmode($this->get_course_module());
+        $groupid = 0;   // All users
+        $groupname = '';
+        if ($groupmode) {
+            $groupid = groups_get_activity_group($this->get_course_module(), true);
+            $groupname = groups_get_group_name($groupid).'-';
+        }
+
+        $filename = str_replace(' ', '_', clean_filename($this->get_course()->shortname.'-'.$this->data->name.'-'.$groupname.$this->get_course_module()->id.".zip")); //name of new zip file.
+        foreach ($submissions as $submission) {
+           $a_userid = $submission->userid; //get userid
+           if ((groups_is_member($groupid,$a_userid)or !$groupmode or !$groupid)) {
+
+            $a_assignid = $submission->assignment; //get name of this assignment for use in the file names.
+            $a_user = $DB->get_record("user", array("id" => $a_userid), 'id,username,firstname,lastname'); //get user firstname/lastname
+            // $files = $fs->get_area_files($this->context->id, 'mod_assignment', 'submission', $submission->id, "timemodified", false);
+            $files = $fs->get_area_files($this->context->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $a_user->id, "timemodified", false);
+            foreach ($files as $file) {
+                //get files new name.
+                $fileext = strstr($file->get_filename(), '.');
+                $fileoriginal = str_replace($fileext, '', $file->get_filename());
+                $fileforzipname = clean_filename(fullname($a_user) . "_" . $fileoriginal . "_" . $a_userid . $fileext);
+                //save file name to array for zipping.
+                $filesforzipping[$fileforzipname] = $file;
+            }
+          
+           } 
+        } // end of foreach loop
+        if ($zipfile = $this->pack_files($filesforzipping)) {
+            send_temp_file($zipfile, $filename); //send file and delete after sending.
+        }
+   }
+
+
+    */
+    // this function is just to download all assignment submissions  and put them in this zip  without having groups setting installed yet 
+     // creates a zip of all assignment submissions and sends a zip to the browser
+     
+    public function download_submissions() {
+        global $CFG,$DB;
+        require_once($CFG->libdir.'/filelib.php');
+        $submissions = $this->get_all_submissions('','');
+        
+        if (empty($submissions)) {
+            print_error('errornosubmissions', 'assign');
         }
         $filesforzipping = array();
         $fs = get_file_storage();
@@ -450,8 +504,7 @@ class assign_base {
         foreach ($submissions as $submission) {
             $a_userid = $submission->userid; //get userid
             $a_assignid = $submission->assignment; //get name of this assignment for use in the file names.
-            $a_user = $DB->get_record("user", array("id" => $a_userid), 'id,username,firstname,lastname'); //get user firstname/lastname
-            // $files = $fs->get_area_files($this->context->id, 'mod_assignment', 'submission', $submission->id, "timemodified", false);
+            $a_user = $DB->get_record("user", array("id" => $a_userid), 'id,username,firstname,lastname'); //get user firstname/lastname           
             $files = $fs->get_area_files($this->context->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $a_user->id, "timemodified", false);
             foreach ($files as $file) {
                 //get files new name.
@@ -467,7 +520,12 @@ class assign_base {
         if ($zipfile = $this->pack_files($filesforzipping)) {
             send_temp_file($zipfile, $filename); //send file and delete after sending.
         }
-     }
+  }
+  
+  
+  
+  
+  
     /**
      * Return all assignment submissions by ENROLLED students (even empty)
      *
@@ -703,6 +761,9 @@ class assign_base {
                 //cancel button
                 $action = 'grading';
             }
+        }else if ($action == "saveoptions") {
+            $this->process_save_grading_options();
+            $action = 'grading';
         }
         
         // now show the right view page
