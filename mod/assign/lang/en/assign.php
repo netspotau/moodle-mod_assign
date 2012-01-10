@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 // This file is part of Moodle - http://moodle.org/
 //
@@ -22,6 +22,12 @@
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+$string['assign:exportownsubmission'] = 'Export own submission';
+$string['assign:grade'] = 'Grade assignment';
+$string['assign:submit'] = 'Submit assignment';
+$string['assign:view'] = 'View assignment';
+
 $string['errornosubmissions'] = 'There are no submissions to download';
 $string['assignmentname'] = 'Assignment name';
 $string['description'] = 'Description';
