@@ -95,7 +95,7 @@ class assign_base {
         echo $OUTPUT->header();
         echo $OUTPUT->heading($this->data->name);
 
-        groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id.'&action=grading');
+        //groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id.'&action=grading');
         
     }
 
@@ -120,8 +120,9 @@ class assign_base {
         echo $OUTPUT->footer();
     }
 
-    function & list_enrolled_users_with_capability($permission) {
-        $users = & get_enrolled_users($this->context, $permission, 0, 'u.id');
+    function & list_enrolled_users_with_capability($permission,$currentgroup) {
+        //$users = & get_enrolled_users($this->context, $permission, 0, 'u.id');
+        $users = & get_enrolled_users($this->context, $permission, $currentgroup);
         return $users;
     }
 
@@ -207,8 +208,7 @@ class assign_base {
 
     function & load_submissions_table($perpage=10,$filter=null,$rownum_id_pair=null,$onlyfirstuserid=false) {
         global $CFG, $DB, $OUTPUT,$PAGE;
-       
-        
+                     
         $tablecolumns = array('picture', 'fullname', 'status', 'edit', 'submissioncomment', 'feedback', 'grade', 'timemodified', 'timemarked', 'finalgrade');
 
         $tableheaders = array('',
@@ -262,18 +262,34 @@ class assign_base {
         $table->no_sorting('submissioncomment');
 
         $table->setup();
-
+       // group setting
+        $groupmode = groups_get_activity_groupmode($this->get_course_module());
+        $currentgroup = groups_get_activity_group($this->get_course_module(), true);
+        
+              
         list($where, $params) = $table->get_sql_where();
         if ($where) {
             $where .= ' AND ';
         }
-
+        
         if ($sort = $table->get_sql_sort()) {
             $sort = ' ORDER BY '.$sort;
         }
 
-        $users = array_keys( $this->list_enrolled_users_with_capability("mod/assign:submit"));
+        $users = array_keys( $this->list_enrolled_users_with_capability("mod/assign:submit",$currentgroup));
+          
         
+        /** might use this code block in case if an activity group related bug pops up later 
+         
+           // if groupmembersonly used, remove users who are not in any group
+              if ($users and !empty($CFG->enablegroupmembersonly) and $this->get_course_module()->groupmembersonly) {
+            if ($groupingusers = groups_get_grouping_members($this->get_course_module()->groupingid, 'u.id', 'u.id')) {
+                $users = array_intersect($users, array_keys($groupingusers));
+            }
+          }
+               
+         */
+              
         $ufields = user_picture::fields('u');
         if (!empty($users)) {
             $select = "SELECT $ufields,
@@ -283,7 +299,7 @@ class assign_base {
                    'LEFT JOIN {assign_submissions} s ON u.id = s.userid
                     AND s.assignment = '.$this->data->id.' '.
                    'LEFT JOIN {assign_grades} g ON u.id = g.userid
-                    AND g.assignment = '.$this->data->id.' '.
+                    AND g.assignment = '.$this->data->id.' '.                   
                    'WHERE '.$where.'u.id IN ('.implode(',',$users).') ';
 
             if ($filter != null) {
@@ -294,13 +310,13 @@ class assign_base {
                     $sql .= ' AND s.timemodified > 0 '; 
                 }
             }
-            
+                                 
             $count = $DB->count_records_sql("SELECT COUNT(*) AS X ".$sql, $params);
 
             $table->pagesize($perpage, $count);
             
             $ausers = $DB->get_records_sql($select.$sql.$sort, $params, $rownum_id_pair?$rownum_id_pair:$table->get_page_start(), $table->get_page_size());
-            
+                             
             //$table->pagesize($perpage, count($ausers));
             if ($ausers !== false) {
                 $grading_info = grade_get_grades($this->get_course()->id, 'mod', 'assign', $this->data->id, array_keys($ausers));
@@ -432,11 +448,8 @@ class assign_base {
 
     }
     
-    
-     /** //this function is to download with groups setting intalled --> temp comment this to be removed 
-      * BUT IT GIVES YOU ZERO RESULT IN ARRAY OF '$FILES' IF YOU VARDUMP IT!!!!! 
-      * SO THIS FUNCTION DOESNOT WORK YET!! MAYBE WAIT TILL GROUP SETTING IN LOAD SUMMISSION TABLE SORTED FIRST 
-     * creates a zip of all assignment submissions and sends a zip to the browser
+     //this function is to download with groups setting intalled      
+    // creates a zip of all assignment submissions and sends a zip to the browser
      
     public function download_submissions() {
         global $CFG,$DB;
@@ -448,8 +461,7 @@ class assign_base {
         }
         $filesforzipping = array();
         $fs = get_file_storage();
-
-         
+        
         $groupmode = groups_get_activity_groupmode($this->get_course_module());
         $groupid = 0;   // All users
         $groupname = '';
@@ -461,7 +473,7 @@ class assign_base {
         $filename = str_replace(' ', '_', clean_filename($this->get_course()->shortname.'-'.$this->data->name.'-'.$groupname.$this->get_course_module()->id.".zip")); //name of new zip file.
         foreach ($submissions as $submission) {
            $a_userid = $submission->userid; //get userid
-           if ((groups_is_member($groupid,$a_userid)or !$groupmode or !$groupid)) {
+           if ((groups_is_member($groupid,$a_userid) or !$groupmode or !$groupid)) {
 
             $a_assignid = $submission->assignment; //get name of this assignment for use in the file names.
             $a_user = $DB->get_record("user", array("id" => $a_userid), 'id,username,firstname,lastname'); //get user firstname/lastname
@@ -483,49 +495,6 @@ class assign_base {
         }
    }
 
-
-    */
-    // this function is just to download all assignment submissions  and put them in this zip  without having groups setting installed yet 
-     // creates a zip of all assignment submissions and sends a zip to the browser
-     
-    public function download_submissions() {
-        global $CFG,$DB;
-        require_once($CFG->libdir.'/filelib.php');
-        $submissions = $this->get_all_submissions('','');
-        
-        if (empty($submissions)) {
-            print_error('errornosubmissions', 'assign');
-        }
-        $filesforzipping = array();
-        $fs = get_file_storage();
-
-       
-        $filename = str_replace(' ', '_', clean_filename($this->get_course()->shortname.'-'.$this->data->name.'-'.$this->get_course_module()->id.".zip")); //name of new zip file.
-        foreach ($submissions as $submission) {
-            $a_userid = $submission->userid; //get userid
-            $a_assignid = $submission->assignment; //get name of this assignment for use in the file names.
-            $a_user = $DB->get_record("user", array("id" => $a_userid), 'id,username,firstname,lastname'); //get user firstname/lastname           
-            $files = $fs->get_area_files($this->context->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $a_user->id, "timemodified", false);
-            foreach ($files as $file) {
-                //get files new name.
-                $fileext = strstr($file->get_filename(), '.');
-                $fileoriginal = str_replace($fileext, '', $file->get_filename());
-                $fileforzipname = clean_filename(fullname($a_user) . "_" . $fileoriginal . "_" . $a_userid . $fileext);
-                //save file name to array for zipping.
-                $filesforzipping[$fileforzipname] = $file;
-            }
-          
-            
-        } // end of foreach loop
-        if ($zipfile = $this->pack_files($filesforzipping)) {
-            send_temp_file($zipfile, $filename); //send file and delete after sending.
-        }
-  }
-  
-  
-  
-  
-  
     /**
      * Return all assignment submissions by ENROLLED students (even empty)
      *
@@ -635,6 +604,9 @@ class assign_base {
         require_once($CFG->libdir.'/gradelib.php');
 
         $this->view_header(get_string('grading', 'assign'));
+        groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id.'&action=grading');
+        
+        
         
         // check view permissions
         // check grading permissions
@@ -701,7 +673,9 @@ class assign_base {
     }
     
     function view_submission() {
+        global $CFG;
         $this->view_header(get_string('pluginname', 'assign'));
+        groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id);
         $this->view_intro();
         // check view permissions
             // show no permission error 

@@ -1178,7 +1178,7 @@ class assignment_base {
         $groupmode = groups_get_activity_groupmode($cm);
         $currentgroup = groups_get_activity_group($cm, true);
         groups_print_activity_menu($cm, $CFG->wwwroot . '/mod/assignment/submissions.php?id=' . $this->cm->id);
-
+        
         /// Print quickgrade form around the table
         if ($quickgrade) {
             $formattrs = array();
@@ -1236,9 +1236,13 @@ class assignment_base {
         if ($users and !empty($CFG->enablegroupmembersonly) and $cm->groupmembersonly) {
             if ($groupingusers = groups_get_grouping_members($cm->groupingid, 'u.id', 'u.id')) {
                 $users = array_intersect($users, array_keys($groupingusers));
+                
+                
             }
         }
-
+        
+       
+        
         $tablecolumns = array('picture', 'fullname', 'grade', 'submissioncomment', 'timemodified', 'timemarked', 'status', 'finalgrade');
         if ($uses_outcomes) {
             $tablecolumns[] = 'outcome'; // no sorting based on outcomes column
