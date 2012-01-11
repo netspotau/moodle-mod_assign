@@ -591,14 +591,7 @@ class assign_base {
        
     function view_grading() {
         global $OUTPUT, $CFG, $USER;
-        $action ='';
-        if ($action == 'saveoptions') {
-            $this->process_save_grading_options();
-        } else if ($action == 'lock') {
-            $this->process_lock();
-        } else if ($action == 'unlock') {
-            $this->process_unlock();
-        }
+
         
         // only load this if it is 
         require_once($CFG->libdir.'/gradelib.php');
@@ -707,6 +700,8 @@ class assign_base {
      * the settings for the assignment and the status of the assignment.
      */
     function view($action='') {
+       
+        
         // handle form submissions first
         if ($action == "savesubmission") {
             $this->process_save_submission();
@@ -923,6 +918,12 @@ class assign_base {
     
     function process_save_submission() {       
         global $USER;
+        
+        // Always require view permission to do anything
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:submit', $this->context);
+      
         $data = $this->get_default_submission_data();
         $mform = new mod_assign_submission_form(null, array($this, $data));
         if ($data = $mform->get_data()) {               
