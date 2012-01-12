@@ -79,6 +79,7 @@ $string['submittedlate'] = '<font color="red">Assignment was submitted {$a} late
 $string['submittedearly'] = 'Assignment was submitted {$a} early';
 $string['editsubmission'] = 'Edit my submission';
 $string['backtoassignment'] = 'Back to assignment';
+$string['back'] = 'Back';
 $string['submitassignment'] = 'Submit assignment';
 $string['submitassignment_help'] = 'Once this assignment is submitted you will not be able to make any more changes';
 $string['gradingsummary'] = 'Grading summary';

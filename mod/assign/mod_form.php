@@ -98,7 +98,6 @@ class mod_assign_grade_form extends moodleform {
         $buttonarray[] = &$mform->createElement('submit', 'saveandshownext', get_string('savenext','assign')); 
         $buttonarray[] = &$mform->createElement('submit', 'nosaveandnext', get_string('nosavebutnext', 'assign'));
         $buttonarray[] = &$mform->createElement('submit', 'savegrade', get_string('savechanges', 'assign'));           
-        // handle this cancel button with is_cancelled() ?
         $buttonarray[] = &$mform->createElement('cancel', 'cancelbutton', get_string('cancel','assign'));     
         $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
         $mform->closeHeaderBefore('buttonar');            

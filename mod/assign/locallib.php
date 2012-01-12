@@ -142,6 +142,14 @@ class assign_base {
     
     function view_grading_summary() {
         global $OUTPUT;
+        
+         // Always require view permission to do anything
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:grade', $this->context);
+
+       
+        
         echo $OUTPUT->container_start('gradingsummary');
         echo $OUTPUT->heading(get_string('gradingsummary', 'assign'), 3);
         echo $OUTPUT->box_start('boxaligncenter', 'intro');
@@ -347,7 +355,7 @@ class assign_base {
                     //  get row number !
                     $rownum = array_search($auser->id,array_keys($ausers)) + $table->get_page_start();
                                         
-                    $status = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id,'rownum'=>$rownum,'action'=>'grade')), $status);
+                    $status = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'rownum'=>$rownum,'action'=>'grade')), $status);
                     
                     $finalgrade = '-';
                     if (isset($grading_info->items[0]) && $grading_info->items[0]->grades[$auser->id]) {
@@ -355,7 +363,7 @@ class assign_base {
                         $finalgrade = print_r($grading_info->items[0]->grades[$auser->id], true);
                     }
                     
-                    $edit = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id,'rownum'=>$rownum,'action'=>'grade')), $OUTPUT->pix_icon('t/grades', get_string('grade')));
+                    $edit = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'rownum'=>$rownum,'action'=>'grade')), $OUTPUT->pix_icon('t/grades', get_string('grade')));
                     if (!$auser->status || $auser->status == ASSIGN_SUBMISSION_STATUS_DRAFT || !$this->data->submissiondrafts) {
                         if (!$auser->locked) {
                             $edit .= $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id, 'action'=>'lock')), $OUTPUT->pix_icon('t/lock', get_string('preventsubmissions', 'assign')));
@@ -386,6 +394,11 @@ class assign_base {
     
     function process_lock() {
         global $USER;
+        
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:grade', $this->context);
+
         $userid = required_param('userid', PARAM_INT);
 
         $grade = $this->get_grade($userid, true);
@@ -396,6 +409,11 @@ class assign_base {
     
     function process_unlock() {
         global $USER;
+
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:grade', $this->context);
+
         $userid = required_param('userid', PARAM_INT);
 
         $grade = $this->get_grade($userid, true);
@@ -406,6 +424,11 @@ class assign_base {
 
     function process_save_grade() {
         global $USER;
+        
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:grade', $this->context);
+
         $rownum = required_param('rownum', PARAM_INT);
         $userid = required_param('userid', PARAM_INT);
 
@@ -442,8 +465,8 @@ class assign_base {
              print_error('outofbound exception array:rownumber&userid');
              die();
      }
-
-     redirect('view.php?id=' . $this->get_course_module()->id . '&userid=' . $userid . '&rownum=' . $rnum . '&action=grade');
+    
+       redirect('view.php?id=' . $this->get_course_module()->id . '&rownum=' . $rnum . '&action=grade');
      die();
 
     }
@@ -549,10 +572,20 @@ class assign_base {
    
     function view_grade() {
         global $OUTPUT, $DB;
-          
+        
+        // Always require view permission to do anything
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:grade', $this->context);
+
         $this->view_header(get_string('grading', 'assign'));
        
-        $userid = required_param('userid', PARAM_INT);        
+        $rownum = required_param('rownum', PARAM_INT);  
+        $userid = $this->get_userid_for_row($rownum);
+        if(!$userid){
+             print_error('outofbound exception array:rownumber&userid');
+             die();
+        }
         $user = $DB->get_record('user', array('id' => $userid));
 
         
@@ -571,28 +604,58 @@ class assign_base {
     }
     
     function view_online_text() {
-        global $OUTPUT, $CFG, $USER;
+        global $OUTPUT, $CFG, $USER,$DB;
+       
+        $userid = optional_param('userid', $USER->id, PARAM_INT);
+        if ($userid == $USER->id) {
+            // Always require view permission to do anything
+            require_capability('mod/assign:view', $this->context);
+        } else {
+            // Always require view permission to do anything
+            require_capability('mod/assign:view', $this->context);
+            // Need submit permission to submit an assignment
+            require_capability('mod/assign:grade', $this->context);
+        }
         
-        $submission = $this->get_submission($USER->id);       
-        $this->view_header(get_string('onlinetext', 'assign'));       
+        $submission = $this->get_submission($userid);
+
+        $this->view_header(get_string('onlinetext', 'assign'));
         echo $OUTPUT->container_start('viewonlinetext');
         echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
-        $text = file_rewrite_pluginfile_urls($submission->onlinetext, 'pluginfile.php', $this->context->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $USER->id);
-        echo format_text($text, $submission->onlineformat, array('overflowdiv'=>true));
+        $text = file_rewrite_pluginfile_urls($submission->onlinetext, 'pluginfile.php', $this->context->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $userid);
+
+
+        echo format_text($text, $submission->onlineformat, array('overflowdiv' => true));
         //echo format_text($submission->onlinetext);
+
+
+
         echo $OUTPUT->box_end();
         echo $OUTPUT->container_end();
         echo $OUTPUT->spacer(array('height'=>30));
-        echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
-            array('id' => $this->get_course_module()->id)), get_string('backtoassignment', 'assign'), 'get');
-
+        
+        $returnaction = optional_param('returnaction','', PARAM_ALPHA);
+        $returnparams = optional_param('returnparams','', PARAM_TEXT);
+        
+        if ($returnaction) {
+            $params = array();
+            parse_str($returnparams, $params);
+           
+            echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
+                            //array('id' => $this->get_course_module()->id,'userid'=>$userid,'rownum'=>$rownum,'action'=>'grade')), get_string('backtoassignment', 'assign'), 'get');
+                            array_merge(array('id' => $this->get_course_module()->id, 'action' => $returnaction), $params)), get_string('back', 'assign'), 'get');
+        }
         $this->view_footer();       
     }
        
     function view_grading() {
         global $OUTPUT, $CFG, $USER;
 
-        
+        // Always require view permission to do anything
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:grade', $this->context);
+
         // only load this if it is 
         require_once($CFG->libdir.'/gradelib.php');
 
@@ -645,11 +708,10 @@ class assign_base {
             echo $OUTPUT->action_link(new moodle_url('/grade/report/grader/index.php', array('id' => $this->get_course()->id)), get_string('viewgradebook', 'assign'));
             echo $OUTPUT->container_end();
         }
-        if (has_capability('mod/assign:grade', $this->get_course_context())) {
-            echo $OUTPUT->container_start('downloadalllink');
-            echo $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id,'action'=>'downloadall')), get_string('downloadall', 'assign'));
-            echo $OUTPUT->container_end();
-        }
+        echo $OUTPUT->container_start('downloadalllink');
+        echo $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'action' => 'downloadall')), get_string('downloadall', 'assign'));
+        echo $OUTPUT->container_end();
+
         echo $OUTPUT->container_end();
 
 
@@ -657,25 +719,30 @@ class assign_base {
     }
     
     function view_edit_submission() {
+        // Always require view permission to do anything
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:submit', $this->context);
+
+
         $this->view_header(get_string('editsubmission', 'assign'));
         $this->view_intro();
-        if (has_capability('mod/assign:submit', $this->context)) {
-            $this->view_submit();
-        }
+        $this->view_submit();
+        
         $this->view_footer();
     }
     
     function view_submission() {
         global $CFG;
+        
+         // Always require view permission to do anything
+        require_capability('mod/assign:view', $this->context);
+       
+        
         $this->view_header(get_string('pluginname', 'assign'));
         groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id);
         $this->view_intro();
-        // check view permissions
-            // show no permission error 
-            // return
-        // check is hidden
-            // show hidden assignment page
-            // return
+       
         // check can grade
         if (has_capability('mod/assign:grade', $this->context)) {
             $this->view_grading_summary();
@@ -898,6 +965,12 @@ class assign_base {
     }
     
     function process_submit_assignment() {
+        
+         // Always require view permission to do anything
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:submit', $this->context);
+        
         global $USER;
         $submission = $this->get_submission($USER->id, true);
         $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
@@ -908,6 +981,14 @@ class assign_base {
     function process_save_grading_options() {
         global $USER;
 
+        
+         // Always require view permission to do anything
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:grade', $this->context);
+        
+        
+        
         $mform = new mod_assign_grading_options_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'userid'=>$USER->id));
         
         if ($formdata = $mform->get_data()) {
@@ -940,13 +1021,20 @@ class assign_base {
         }
          
     }
-    
+    // helper function for process_save_submission (for the purpose of permission checking only)?
+    // so it does not require permission checks as they have
+    // been done in process_save_submission.
     function process_online_text_submission(& $submission, & $data) {
         global $USER;
+         
         if (!$this->data->onlinetextsubmission) {
             return;
         }
-    
+
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:submit', $this->context);
+
         $editoroptions = array(
            'noclean' => false,
            'maxfiles' => EDITOR_UNLIMITED_FILES,
@@ -955,13 +1043,16 @@ class assign_base {
         );
 
         $data = file_postupdate_standard_editor($data, 'onlinetext', $editoroptions, $this->context, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $USER->id);
-
+        
         $submission->onlinetext = $data->onlinetext;
         $submission->onlineformat = $data->onlinetextformat;
         
     }
     
-    // process function for submission comment
+    // helper function for process_save_submission (for the purpose of permission checking only)?
+    // so it does not require permission checks as they have
+    // been done in process_save_submission.
+    //** process function for submission comment
     function process_submission_comment_submission(& $submission, & $data) {
         if (!$this->data->submissioncomments) {
             return;
@@ -970,8 +1061,11 @@ class assign_base {
         $submission->submissioncommenttext = $data->submissioncomment_editor['text'];
         $submission->submissioncommentformat = $data->submissioncomment_editor['format'];
     }
-
-    // process function for saved file upload submit form
+    
+    // helper function for process_save_submission (for the purpose of permission checking only)?
+    // so it does not require permission checks as they have
+    // been done in process_save_submission.
+    //** process function for saved file upload submit form
     function process_file_upload_submission(& $submission, & $data) {
         global $USER;
         if ($this->data->maxfilessubmission <= 0) {
@@ -991,12 +1085,23 @@ class assign_base {
 
     function view_grade_form() {
         global $OUTPUT, $USER;
+        
+         // Always require view permission to do anything
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:grade', $this->context);
+
+       
         echo $OUTPUT->heading(get_string('grade'), 3);
         echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
 
-        $rownum = required_param('rownum', PARAM_INT);
-        $userid = required_param('userid', PARAM_INT);
-
+        $rownum = required_param('rownum', PARAM_INT);  
+        $userid = $this->get_userid_for_row($rownum);
+        if(!$userid){
+             print_error('outofbound exception array:rownumber&userid');
+             die();
+        }
+       
         $grade = $this->get_grade($userid);
         if ($grade) {
             $data = new stdClass();
@@ -1038,6 +1143,13 @@ class assign_base {
     
     function view_submission_form() {
         global $OUTPUT, $USER;
+        
+         // Always require view permission to do anything
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:submit', $this->context);
+
+       
         echo $OUTPUT->heading(get_string('submission', 'assign'), 3);
         echo $OUTPUT->container_start('submission');
 
@@ -1065,8 +1177,12 @@ class assign_base {
      */
     function view_submit() {
         global $OUTPUT;
-        // check view permissions
-        // check submit permissions
+         // Always require view permission to do anything
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:submit', $this->context);
+
+       
         // check submissions open
 
         if ($this->submissions_open()) {
@@ -1082,6 +1198,10 @@ class assign_base {
     function view_submission_status($userid=null) {
         global $OUTPUT, $USER;
 
+         // Always require view permission to do anything
+        require_capability('mod/assign:view', $this->context);
+       
+       
         if (!$userid) {
             $userid = $USER->id;
         }
@@ -1181,10 +1301,11 @@ class assign_base {
         $t->data[] = $row;
 
         // if online text assignment submission is set to yes
-        //onlinetextsubmission                      
+        //onlinetextsubmission  
+              
         if ($this->data->onlinetextsubmission) {
-           // $link = new moodle_url ('/mod/assign/online_text.php?id='.$this->get_course_module()->id);
-            $link = new moodle_url ('/mod/assign/view.php?id='.$this->get_course_module()->id.'&action=onlinetext');
+            $link = new moodle_url ('/mod/assign/view.php?id='.$this->get_course_module()->id.'&userid='.$userid.'&action=onlinetext&returnaction='.  optional_param('action','view',PARAM_ALPHA).'&returnparams=rownum%3D'.  optional_param('rownum','', PARAM_INT));
+           // $link = new moodle_url ('/mod/assign/view.php?id='.$this->get_course_module()->id.'&userid='.$userid.'&rownum='.$rnum.'&action=onlinetext');
             $row = new html_table_row();
             $cell1 = new html_table_cell(get_string('onlinetextwordcount', 'assign')); 
             if (!$submission) {
@@ -1233,6 +1354,17 @@ class assign_base {
         if (!$userid) {
             $userid = $USER->id;
         }
+        
+        if ($userid == $USER->id) {
+            // Always require view permission to do anything
+            require_capability('mod/assign:view', $this->context);
+        } else {
+            // Always require view permission to do anything
+            require_capability('mod/assign:view', $this->context);
+            // Need submit permission to submit an assignment
+            require_capability('mod/assign:grade', $this->context);
+        }
+        
         
         if (!is_enrolled($this->get_course_context(), $userid)) {
             return;
