@@ -11,6 +11,7 @@ define('ASSIGN_FILEAREA_SUBMISSION_FILES', 'submissions_files');
 define('ASSIGN_FILEAREA_SUBMISSION_FEEDBACK', 'feedback_files');
 define('ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT', 'submissions_onlinetext');
 
+global $CFG;
 require_once($CFG->libdir.'/accesslib.php');
 require_once($CFG->libdir.'/formslib.php');
 require_once($CFG->libdir . '/plagiarismlib.php');
@@ -1460,6 +1461,12 @@ class assign_base {
     function post_add_instance_hook() {
     }
 
+    function pre_delete_instance_hook() {
+    }
+    
+    function post_delete_instance_hook() {
+    }
+
     function pre_update_instance_hook() {
     }
     
@@ -1507,18 +1514,35 @@ class assign_base {
         return $this->data->id;
     }
     
-    /**
-     * Deletes an assignment activity
-     *
-     * Deletes all database records, files and calendar events for this assignment.
-     */
     function delete_instance() {
+        global $DB;
+        $result = true;
+        
         // call pre_delete hook (for subtypes)
-        // delete the database record
-        // delete all the files
-        // delete all the calendar events
-        // delete entries from gradebook
-        // call post_delete hook (for subtypes)
+        $this->pre_delete_instance_hook();
+        // delete files associated with this assignment
+        $fs = get_file_storage();
+        if (! $fs->delete_area_files($this->context->id) ) {
+            $result = false;
+        }
+        
+        if (! $DB->delete_records('assignment_submissions', array('assignment'=>$assignment->id))) {
+            $result = false;
+        }
+
+        if (! $DB->delete_records('event', array('modulename'=>'assignment', 'instance'=>$assignment->id))) {
+            $result = false;
+        }
+
+        if (! $DB->delete_records('assignment', array('id'=>$assignment->id))) {
+            $result = false;
+        }
+
+        // assignment_grade_item_delete($assignment);
+        // update all the calendar events 
+        // call post_update hook (for subtypes)
+        $this->post_delete_instance_hook();
+        return $result;
     }
 
     /**

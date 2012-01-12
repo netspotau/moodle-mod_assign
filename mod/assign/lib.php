@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+require_once('locallib.php');
 
 /**
  * Adds an assignment instance
@@ -22,10 +23,21 @@
  * This is done by calling the add_instance() method of the assignment type class
  */
 function assign_add_instance($form_data) {
-    require_once('locallib.php');
     $context = get_context_instance(CONTEXT_COURSE,$form_data->course);
     $ass = new assign_base($context, $form_data);
     return $ass->add_instance();
+}
+
+function assign_delete_instance($id) {
+    if (!$cm = get_coursemodule_from_instance('assign', $id)) {
+        return false;
+    }
+    if (!$context = get_context_instance(CONTEXT_MODULE, $cm->id)) {
+        return false;
+    }
+
+    $ass = new assign_base($context);
+    return $ass->delete_instance();
 }
 
 /**
@@ -34,7 +46,6 @@ function assign_add_instance($form_data) {
  * This is done by calling the update_instance() method of the assignment type class
  */
 function assign_update_instance($form_data) {
-    require_once('locallib.php');
     $context = get_context_instance(CONTEXT_MODULE,$form_data->coursemodule);
     $ass = new assign_base($context, $form_data);
     return $ass->update_instance();
@@ -64,7 +75,6 @@ function assign_supports($feature) {
 function assign_extend_settings_navigation($settings, navigation_node $navref) {
     global $PAGE;     
 
-    require_once('locallib.php');
     $cm = $PAGE->cm;
     $context = $cm->context;
 
@@ -86,7 +96,6 @@ function assign_extend_settings_navigation($settings, navigation_node $navref) {
 function assign_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
     global $CFG, $DB;
 
-    require_once('locallib.php');
     
     if ($context->contextlevel != CONTEXT_MODULE) {
         return false;
