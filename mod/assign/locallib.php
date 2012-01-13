@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 
 define('ASSIGN_SUBMISSION_STATUS_DRAFT', 'draft'); // student thinks it is a draft
@@ -50,8 +50,9 @@ class assign_base {
         $this->data = & $data;
         $this->coursemodule = & $coursemodule; 
         $this->course = & $course; 
+        
     }
-
+        
     private function get_course_context() {
         if ($this->context->contextlevel == CONTEXT_COURSE) {
             return $this->context;
@@ -209,8 +210,9 @@ class assign_base {
     }
     
     function get_userid_for_row($num){
-        
-        return $this->load_submissions_table(1, null, $num, true);
+        $filter = get_user_preferences('assign_filter', '');
+     
+        return $this->load_submissions_table(1, $filter, $num, true);
         
     }
 
@@ -385,6 +387,9 @@ class assign_base {
         // important bit for hiding buttons for the last user in the grading section 
         if ($onlyfirstuserid && count($ausers) == 0) {
             $result = false;
+            
+           
+            
             return $result;
         }
 
@@ -451,6 +456,7 @@ class assign_base {
             $grade->feedbackformat= $formdata->feedback_editor['format'];
 
             $this->update_grade($grade);
+            //$this->update_grades($userid);
         }
         
     }
@@ -896,6 +902,78 @@ class assign_base {
         $grade->timemodified = time();
         return $DB->update_record('assign_grades', $grade);
     }
+    
+    
+    
+    // update grades from database to moodle gradebook
+     //see this update grades function called in line 455
+    
+    /**
+    function update_grades($userid) {
+        $this->assign_update_grades($this->data, $userid);
+    }
+
+    
+    function assign_update_grades($assignment, $userid=0, $nullifnone=true) {
+    global $CFG, $DB;
+    require_once($CFG->libdir.'/gradelib.php');
+
+    if ($assignment->grade == 0) {
+        assignment_grade_item_update($assignment);
+
+    } else if ($grades = $this->get_grade($userid,true)) {
+        foreach($grades as $k=>$v) {
+            if ($v->rawgrade == -1) {
+                $grades[$k]->rawgrade = null;
+            }
+        }
+        $this->assignment_grade_item_update($assignment, $grades);
+
+    } else {
+        $this->assignment_grade_item_update($assignment);
+    }
+}
+
+  function assign_grade_item_update($assignment, $grades=NULL) {
+    global $CFG;
+    require_once($CFG->libdir.'/gradelib.php');
+
+    if (!isset($assignment->courseid)) {
+        $assignment->courseid = $assignment->course;
+    }
+
+    $params = array('itemname'=>$assignment->name, 'idnumber'=>$this->get_course_module()->id);
+
+    if ($assignment->grade > 0) {
+        $params['gradetype'] = GRADE_TYPE_VALUE;
+        $params['grademax']  = $assignment->grade;
+        $params['grademin']  = 0;
+
+    } else if ($assignment->grade < 0) {
+        $params['gradetype'] = GRADE_TYPE_SCALE;
+        $params['scaleid']   = -$assignment->grade;
+
+    } else {
+        $params['gradetype'] = GRADE_TYPE_TEXT; // allow text comments only
+    }
+
+    if ($grades  === 'reset') {
+        $params['reset'] = true;
+        $grades = NULL;
+    }
+
+    return grade_update('mod/assign', $assignment->courseid, 'mod', 'assign', $assignment->id, 0, $grades, $params);
+}
+  
+   
+    */
+    
+    
+    
+    
+    
+    
+    
     
     function update_submission($submission) {
         global $DB;
