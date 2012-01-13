@@ -61,8 +61,8 @@ class mod_assign_grade_form extends moodleform {
         $mform = $this->_form;
         $instance = $this->_customdata;       
         // visible elements
-        $grademenu = make_grades_menu(100);
-        $grademenu = array('-1'=>get_string('nograde')) + $grademenu;
+        $grademenu = make_grades_menu($instance['scale']);
+        $grademenu['-1'] = get_string('nograde');
 
         $mform->addElement('select', 'grade', get_string('grade').':', $grademenu);
         $mform->setType('grade', PARAM_INT);
