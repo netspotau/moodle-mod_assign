@@ -30,6 +30,7 @@ class assign_base {
     // cached current course and module
     protected $course;
     protected $coursemodule;
+    protected $cache;
     
     
     
@@ -51,6 +52,7 @@ class assign_base {
         $this->data = & $data;
         $this->coursemodule = & $coursemodule; 
         $this->course = & $course; 
+        $this->cache = array(); // temporary cache only lives for a single request - used to reduce db lookups
     }
 
     private function get_course_context() {
@@ -99,6 +101,42 @@ class assign_base {
         //groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id.'&action=grading');
         
     }
+
+    /**
+     *  Return a grade in user-friendly form, whether it's a scale or not
+     *
+     * @global object
+     * @param mixed $grade
+     * @return string User-friendly representation of grade
+     */
+    function display_grade($grade) {
+        global $DB;
+
+        static $scalegrades = array();
+                                        
+
+        if ($this->data->grade >= 0) {    // Normal number
+            if ($grade == -1) {
+                return '-';
+            } else {
+                return $grade.' / '.$this->data->grade;
+            }
+
+        } else {                                // Scale
+            if (empty($this->cache['scale'])) {
+                if ($scale = $DB->get_record('scale', array('id'=>-($this->data->grade)))) {
+                    $this->cache['scale'] = make_menu_from_list($scale->scale);
+                } else {
+                    return '-';
+                }
+            }
+            if (isset($this->cache['scale'][$grade])) {
+                return $this->cache['scale'][$grade];
+            }
+            return '-';
+        }
+    }
+
 
     /**
      * Display the assignment intro
@@ -339,10 +377,7 @@ class assign_base {
 
                     $userlink = $OUTPUT->action_link(new moodle_url('/user/view.php', array('id' => $auser->id, 'course'=>$this->get_course()->id)), fullname($auser, has_capability('moodle/site:viewfullnames', $this->context)));
 
-                    $grade = $auser->grade;
-                    if ($grade < 0) {
-                        $grade = '';
-                    }
+                    $grade = $this->display_grade($auser->grade);
                     $comment = shorten_text(format_text($auser->submissioncommenttext));
                     $studentmodified = '-';
                     if ($auser->timesubmitted) {
@@ -438,7 +473,7 @@ class assign_base {
                                         'maxfiles'=>EDITOR_UNLIMITED_FILES,
                                         'accepted_types'=>'*', 
                                         'return_types'=>FILE_INTERNAL);
-        $mform = new mod_assign_grade_form(null, array('cm'=>$this->get_course_module()->id, 'options'=>$options, 'rownum'=>$rownum, 'contextid'=>$this->context->id, 'userid'=>$userid, 'course'=>$this->get_course(), 'context'=>$this->context));
+        $mform = new mod_assign_grade_form(null, array('cm'=>$this->get_course_module()->id, 'options'=>$options, 'rownum'=>$rownum, 'contextid'=>$this->context->id, 'userid'=>$userid, 'course'=>$this->get_course(), 'scale'=>$this->data->grade, 'context'=>$this->context));
         
         if ($formdata = $mform->get_data()) {
             $fs = get_file_storage();
@@ -1124,7 +1159,7 @@ class assign_base {
                                         'return_types'=>FILE_INTERNAL);
         
         $last = !$this->get_userid_for_row($rownum+1);
-        $mform = new mod_assign_grade_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'rownum'=>$rownum, 'last'=>$last, 'userid'=>$userid, 'options'=>$options, 'course'=>$this->get_course(), 'context'=>$this->context, 'data'=>$data));
+        $mform = new mod_assign_grade_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'rownum'=>$rownum, 'last'=>$last, 'userid'=>$userid, 'options'=>$options, 'course'=>$this->get_course(), 'scale'=>$this->data->grade, 'context'=>$this->context, 'data'=>$data));
 
         // show upload form
         $mform->display();
