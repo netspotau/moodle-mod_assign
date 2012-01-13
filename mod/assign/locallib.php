@@ -397,7 +397,8 @@ class assign_base {
                     $finalgrade = '-';
                     if (isset($grading_info->items[0]) && $grading_info->items[0]->grades[$auser->id]) {
                         // debugging
-                        $finalgrade = print_r($grading_info->items[0]->grades[$auser->id], true);
+                        $finalgrade = $this->display_grade($grading_info->items[0]->grades[$auser->id]->grade);
+                        //$finalgrade = print_r($grading_info->items[0]->grades[$auser->id], true);
                     }
                     
                     $edit = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'rownum'=>$rownum,'action'=>'grade')), $OUTPUT->pix_icon('t/grades', get_string('grade')));
@@ -491,7 +492,8 @@ class assign_base {
             $grade->feedbackformat= $formdata->feedback_editor['format'];
 
             $this->update_grade($grade);
-            //$this->update_grades($userid);
+             
+       
         }
         
     }
@@ -866,7 +868,7 @@ class assign_base {
         global $DB;
 
         $grade = $DB->get_record('assign_grades', array('assignment'=>$this->data->id, 'userid'=>$userid));
-
+         
         if ($grade) {
             return $grade;
         }
@@ -935,86 +937,89 @@ class assign_base {
         global $DB;
 
         $grade->timemodified = time();
-        return $DB->update_record('assign_grades', $grade);
-    }
-    
-    
-    
-    // update grades from database to moodle gradebook
-     //see this update grades function called in line 455
-    
-    /**
-    function update_grades($userid) {
-        $this->assign_update_grades($this->data, $userid);
-    }
-
-    
-    function assign_update_grades($assignment, $userid=0, $nullifnone=true) {
-    global $CFG, $DB;
-    require_once($CFG->libdir.'/gradelib.php');
-
-    if ($assignment->grade == 0) {
-        assignment_grade_item_update($assignment);
-
-    } else if ($grades = $this->get_grade($userid,true)) {
-        foreach($grades as $k=>$v) {
-            if ($v->rawgrade == -1) {
-                $grades[$k]->rawgrade = null;
-            }
+        $result = $DB->update_record('assign_grades', $grade);
+        if ($result) {
+            $this->gradebook_item_update(null,$grade);
         }
-        $this->assignment_grade_item_update($assignment, $grades);
-
-    } else {
-        $this->assignment_grade_item_update($assignment);
+        return $result;
     }
-}
+    
+    
 
-  function assign_grade_item_update($assignment, $grades=NULL) {
-    global $CFG;
-    require_once($CFG->libdir.'/gradelib.php');
-
-    if (!isset($assignment->courseid)) {
-        $assignment->courseid = $assignment->course;
-    }
-
-    $params = array('itemname'=>$assignment->name, 'idnumber'=>$this->get_course_module()->id);
-
-    if ($assignment->grade > 0) {
-        $params['gradetype'] = GRADE_TYPE_VALUE;
-        $params['grademax']  = $assignment->grade;
-        $params['grademin']  = 0;
-
-    } else if ($assignment->grade < 0) {
-        $params['gradetype'] = GRADE_TYPE_SCALE;
-        $params['scaleid']   = -$assignment->grade;
-
-    } else {
-        $params['gradetype'] = GRADE_TYPE_TEXT; // allow text comments only
+    
+    function convert_grade_for_gradebook($grade) {
+        $gradebook_grade = array();
+        
+        // trying to match those array keys in grade update function in gradelib.php
+        // with keys in th database table assign_grades
+        // starting around line 262
+        $gradebook_grade['rawgrade'] = $grade->grade;
+        $gradebook_grade['userid'] = $grade->userid;
+        $gradebook_grade['feedback'] = $grade->feedbacktext;
+        $gradebook_grade['feedbackformat'] = $grade->feedbackformat;
+        $gradebook_grade['usermodified'] = $grade->grader;
+        $gradebook_grade['datesubmitted'] = NULL;
+        $gradebook_grade['dategraded'] = $grade->timemodified;
+       
+        // more to do ?
+        return $gradebook_grade;
     }
 
-    if ($grades  === 'reset') {
-        $params['reset'] = true;
-        $grades = NULL;
+    function convert_submission_for_gradebook($submission) {
+        $gradebook_grade = array();
+        
+        
+        $gradebook_grade['userid'] = $submission->userid;
+        $gradebook_grade['usermodified'] = $submission->userid;
+        $gradebook_grade['datesubmitted'] = $submission->timemodified;
+        
+       
+        // more to do ?
+        return $gradebook_grade;
     }
 
-    return grade_update('mod/assign', $assignment->courseid, 'mod', 'assign', $assignment->id, 0, $grades, $params);
-}
+    
   
-   
-    */
     
-    
-    
-    
-    
-    
-    
-    
+    function gradebook_item_update($submission=NULL, $grade=NULL) {
+        global $CFG;
+        require_once($CFG->libdir . '/gradelib.php');
+
+        $params = array('itemname' => $this->data->name, 'idnumber' => $this->get_course_module()->id);
+
+        if ($this->data->grade > 0) {
+            $params['gradetype'] = GRADE_TYPE_VALUE;
+            $params['grademax'] = $this->data->grade;
+            $params['grademin'] = 0;
+        } else if ($this->data->grade < 0) {
+            $params['gradetype'] = GRADE_TYPE_SCALE;
+            $params['scaleid'] = -$this->data->grade;
+        } else {
+            $params['gradetype'] = GRADE_TYPE_TEXT; // allow text comments only
+        }
+        
+        if($submission != NULL){
+            
+            $gradebook_grade = $this->convert_submission_for_gradebook($submission);
+            
+            
+        }else{
+            
+        
+            $gradebook_grade = $this->convert_grade_for_gradebook($grade);
+        }
+        return grade_update('mod/assign', $this->get_course()->id, 'mod', 'assign', $this->data->id, 0, $gradebook_grade, $params);
+    }
+
     function update_submission($submission) {
         global $DB;
 
         $submission->timemodified = time();
-        return $DB->update_record('assign_submissions', $submission);
+        $result= $DB->update_record('assign_submissions', $submission);
+        if ($result) {
+            $this->gradebook_item_update($submission);
+        }
+        return $result;
     }
 
     /**
