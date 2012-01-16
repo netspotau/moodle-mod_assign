@@ -27,6 +27,7 @@ $string['assign:exportownsubmission'] = 'Export own submission';
 $string['assign:grade'] = 'Grade assignment';
 $string['assign:submit'] = 'Submit assignment';
 $string['assign:view'] = 'View assignment';
+$string['messageprovider:assign_updates'] = 'Assignment notifications';
 
 $string['errornosubmissions'] = 'There are no submissions to download';
 $string['assignmentname'] = 'Assignment name';
@@ -53,7 +54,7 @@ $string['feedback'] = 'Feedback';
 $string['textinstructions'] = 'Assignment instructions';
 $string['instructionfiles'] = 'Instruction files';
 $string['notifications'] = 'Notifications';
-$string['sendnotifications'] = 'Send markers notifications';
+$string['sendnotifications'] = 'Send notifications to graders';
 $string['submissionreceipts'] = 'Send submission receipts';
 $string['alwaysshowdescription'] = 'Always show description';
 $string['submissionstatusheading'] = 'Submission status';
@@ -68,6 +69,7 @@ $string['submissionstatus_draft'] = 'Draft (not submitted)';
 $string['submissionstatus_submitted'] = 'Submitted for grading';
 $string['submissionstatus_marked'] = 'Graded';
 $string['submissionstatus_new'] = 'New submission';
+$string['submitted'] = 'Submitted';
 $string['timemodified'] = 'Last modified';
 $string['submissionfiles'] = 'Submission files';
 $string['submissioncomment'] = 'Submission comments';
@@ -151,3 +153,12 @@ $string['viewownsubmissionform'] = 'View own submit assignment page.';
 $string['viewownsubmissionstatus'] = 'View own submission status page.';
 $string['viewsubmissiongradingtable'] = 'View submission grading table.';
 $string['download all submissions'] = 'Download all submissions in a zip file.';
+$string['emailgradermail'] = '{$a->username} has updated their assignment submission
+for \'{$a->assignment}\' at {$a->timeupdated}
+
+It is available here:
+
+    {$a->url}';
+$string['emailgradermailhtml'] = '{$a->username} has updated their assignment submission
+for <i>\'{$a->assignment}\'  at {$a->timeupdated}</i><br /><br />
+It is <a href="{$a->url}">available on the web site</a>.';

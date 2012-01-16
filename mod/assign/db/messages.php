@@ -25,8 +25,8 @@
 
 $messageproviders = array (
 
-/// Ordinary single forum posts
-    'assignment_updates' => array (
+/// Ordinary assignment submissions
+    'assign_updates' => array (
     )
 
 );

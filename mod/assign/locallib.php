@@ -453,7 +453,7 @@ class assign_base {
         $submission->status = ASSIGN_SUBMISSION_STATUS_DRAFT;
         $this->update_submission($submission, false);
 
-        // update the modified time on the grade (marker modified)
+        // update the modified time on the grade (grader modified)
         $grade = $this->get_grade($userid, true);
         $this->update_grade($grade);
 
@@ -587,7 +587,6 @@ class assign_base {
 
             $a_assignid = $submission->assignment; //get name of this assignment for use in the file names.
             $a_user = $DB->get_record("user", array("id" => $a_userid), 'id,username,firstname,lastname'); //get user firstname/lastname
-            // $files = $fs->get_area_files($this->context->id, 'mod_assignment', 'submission', $submission->id, "timemodified", false);
             $files = $fs->get_area_files($this->context->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $a_user->id, "timemodified", false);
             foreach ($files as $file) {
                 //get files new name.
@@ -1149,6 +1148,135 @@ class assign_base {
         return $renderer->assign_files($this->context, $userid, ASSIGN_FILEAREA_SUBMISSION_FILES);
         
     }
+
+    /**
+     * Returns a list of teachers that should be grading given submission
+     *
+     * @param object $user
+     * @return array
+     */
+    function get_graders($user) {
+        //potential graders
+        $potgraders = get_users_by_capability($this->context, 'mod/assign:grade', '', '', '', '', '', '', false, false);
+
+        $graders = array();
+        if (groups_get_activity_groupmode($this->get_course_module()) == SEPARATEGROUPS) {   // Separate groups are being used
+            if ($groups = groups_get_all_groups($this->get_course()->id, $user->id)) {  // Try to find all groups
+                foreach ($groups as $group) {
+                    foreach ($potgraders as $t) {
+                        if ($t->id == $user->id) {
+                            continue; // do not send self
+                        }
+                        if (groups_is_member($group->id, $t->id)) {
+                            $graders[$t->id] = $t;
+                        }
+                    }
+                }
+            } else {
+                // user not in group, try to find graders without group
+                foreach ($potgraders as $t) {
+                    if ($t->id == $user->id) {
+                        continue; // do not send self
+                    }
+                    if (!groups_has_membership($this->get_course_module(), $t->id)) {
+                        $graders[$t->id] = $t;
+                    }
+                }
+            }
+        } else {
+            foreach ($potgraders as $t) {
+                if ($t->id == $user->id) {
+                    continue; // do not send self
+                }
+                // must be enrolled
+                if (is_enrolled($this->get_course_context(), $t->id)) {
+                    $graders[$t->id] = $t;
+                }
+            }
+        }
+        return $graders;
+    }
+
+    /**
+     * Creates the text content for emails to grader
+     *
+     * @param $info object The info used by the 'emailgradermail' language string
+     * @return string
+     */
+    function format_email_grader_text($info) {
+        $posttext  = format_string($this->get_course()->shortname, true, array('context' => $this->get_course_context())).' -> '.
+                     get_string('modulename', 'assign').' -> '.
+                     format_string($this->data->name, true, array('context' => $this->context))."\n";
+        $posttext .= '---------------------------------------------------------------------'."\n";
+        $posttext .= get_string("emailgradermail", "assign", $info)."\n";
+        $posttext .= "\n---------------------------------------------------------------------\n";
+        return $posttext;
+    }
+
+     /**
+     * Creates the html content for emails to graders
+     *
+     * @param $info object The info used by the 'emailgradermailhtml' language string
+     * @return string
+     */
+    function format_email_grader_html($info) {
+        global $CFG;
+        $posthtml  = '<p><font face="sans-serif">'.
+                     '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$this->get_course()->id.'">'.format_string($this->get_course()->shortname, true, array('context' => $this->get_course_context())).'</a> ->'.
+                     '<a href="'.$CFG->wwwroot.'/mod/assignment/index.php?id='.$this->get_course()->id.'">'.get_string('modulename', 'assign').'</a> ->'.
+                     '<a href="'.$CFG->wwwroot.'/mod/assignment/view.php?id='.$this->get_course_module()->id.'">'.format_string($this->data->name, true, array('context' => $this->context)).'</a></font></p>';
+        $posthtml .= '<hr /><font face="sans-serif">';
+        $posthtml .= '<p>'.get_string('emailgradermailhtml', 'assign', $info).'</p>';
+        $posthtml .= '</font><hr />';
+        return $posthtml;
+    }
+
+    function email_graders($submission) {
+        global $CFG, $DB;
+
+        if (empty($this->data->sendnotifications)) {          // No need to do anything
+            return;
+        }
+
+        $user = $DB->get_record('user', array('id'=>$submission->userid));
+
+        if ($teachers = $this->get_graders($user)) {
+
+            $strassignments = get_string('modulenameplural', 'assign');
+            $strassignment  = get_string('modulename', 'assign');
+            $strsubmitted  = get_string('submitted', 'assign');
+
+            foreach ($teachers as $teacher) {
+                $info = new stdClass();
+                $info->username = fullname($user, true);
+                $info->assignment = format_string($this->data->name,true);
+                $info->url = $CFG->wwwroot.'/mod/assign/view.php?id='.$this->get_course_module()->id;
+                $info->timeupdated = strftime('%c',$submission->timemodified);
+
+                $postsubject = $strsubmitted.': '.$info->username.' -> '.$this->data->name;
+                $posttext = $this->format_email_grader_text($info);
+                $posthtml = ($teacher->mailformat == 1) ? $this->format_email_grader_html($info) : '';
+
+                $eventdata = new stdClass();
+                $eventdata->modulename       = 'assign';
+                $eventdata->userfrom         = $user;
+                $eventdata->userto           = $teacher;
+                $eventdata->subject          = $postsubject;
+                $eventdata->fullmessage      = $posttext;
+                $eventdata->fullmessageformat = FORMAT_PLAIN;
+                $eventdata->fullmessagehtml  = $posthtml;
+                $eventdata->smallmessage     = $postsubject;
+
+                $eventdata->name            = 'assign_updates';
+                $eventdata->component       = 'mod_assign';
+                $eventdata->notification    = 1;
+                $eventdata->contexturl      = $info->url;
+                $eventdata->contexturlname  = $info->assignment;
+
+                message_send($eventdata);
+            }
+        }
+    }
     
     function process_submit_assignment() {
         
@@ -1163,6 +1291,7 @@ class assign_base {
 
         $this->update_submission($submission);
         $this->add_to_log('submit for grading', $this->format_submission_for_log($submission));
+        $this->email_graders($submission);
     }
     
     function process_save_grading_options() {
@@ -1266,6 +1395,10 @@ class assign_base {
 
             // Logging
             $this->add_to_log('submit', $this->format_submission_for_log($submission));
+
+            if (!$this->data->submissiondrafts) {
+                $this->email_graders($submission);
+            }
         }
          
     }
