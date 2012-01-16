@@ -72,7 +72,7 @@ class mod_assign_grade_form extends moodleform {
             $data = $instance['data'];
             $data->feedback_editor['text'] = $data->feedback;
             $data->feedback_editor['format'] = $data->feedbackformat;
-            $data = file_prepare_standard_filemanager($data, 'feedbackfiles', $instance['options'], $instance['context'], 'mod_assign', 'feedback', $instance['userid']);
+            $data = file_prepare_standard_filemanager($data, 'feedbackfiles', $instance['options'], $instance['context'], 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FEEDBACK, $instance['userid']);
             $this->set_data($data);
         }
         

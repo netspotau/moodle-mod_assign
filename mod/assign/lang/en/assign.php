@@ -123,6 +123,21 @@ $string['saveonlinetext'] = 'Save changes';
 $string['preventsubmissions'] = 'Prevent the user from making any more submissions to this assignment.';
 $string['allowsubmissions'] = 'Allow the user to continue making submissions to this assignment.';
 $string['submissionslocked'] = 'This assignment is not accepting submissions';
+$string['numfiles'] = 'Number of files: {$a}. ';
+$string['numfeedbackfiles'] = 'Number of feedback files: {$a}. ';
+$string['nofiles'] = 'No files. ';
+$string['noonlinetext'] = 'No online text. ';
+$string['nofeedbackfiles'] = 'No feedback files. ';
+$string['nofeedbacktext'] = 'No feedback text. ';
+$string['feedbacktextnumwords'] = 'Number of words in feedback text: {$a}. ';
+$string['nosubmissioncomment'] = 'No submission comment. ';
+$string['submissioncommentnumwords'] = 'Number of words in submission comment: {$a}. ';
+$string['onlinetextnumwords'] = 'Number of words in online text: {$a}. ';
+$string['locksubmissionforstudent'] = 'Prevent any more submissions for student: (id={$a->id}, fullname={$a->fullname}).';
+$string['unlocksubmissionforstudent'] = 'Allow submissions for student: (id={$a->id}, fullname={$a->fullname}).';
+$string['reverttodraftforstudent'] = 'Revert submission to draft for student: (id={$a->id}, fullname={$a->fullname}).';
+$string['viewgradingformforstudent'] = 'View grading page for student: (id={$a->id}, fullname={$a->fullname}).';
+$string['reverttodraft'] = 'Revert the submission to draft status. This allows further changes to the submission.';
 
 
 //grading button
@@ -130,3 +145,9 @@ $string['submissionslocked'] = 'This assignment is not accepting submissions';
 $string['savenext'] = 'Save and show next';
 $string['nosavebutnext'] = 'Next';
 $string['cancel'] = 'Cancel';
+$string['gradestudent'] = 'Grade student: (id={$a->id}, fullname={$a->fullname}). ';
+$string['nograde'] = 'No grade. ';
+$string['viewownsubmissionform'] = 'View own submit assignment page.';
+$string['viewownsubmissionstatus'] = 'View own submission status page.';
+$string['viewsubmissiongradingtable'] = 'View submission grading table.';
+$string['download all submissions'] = 'Download all submissions in a zip file.';
