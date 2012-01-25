@@ -442,7 +442,9 @@ class assignment {
         if ($this->instance) {
             return $this->instance;
         }
-        $this->instance = $DB->get_record('assign', array('id' => $this->get_course_module()->instance));
+        if ($this->get_course_module()) {
+            $this->instance = $DB->get_record('assign', array('id' => $this->get_course_module()->instance));
+        }
         return $this->instance;
     }
     
@@ -473,8 +475,7 @@ class assignment {
             return $this->coursemodule;
         }
         if (!$this->context) {
-            print_error('badcontext');
-            die();
+            return null;
         }
 
         if ($this->context->contextlevel == CONTEXT_MODULE) {

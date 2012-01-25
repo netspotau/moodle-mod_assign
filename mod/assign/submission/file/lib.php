@@ -15,7 +15,9 @@ class submission_file extends submission_plugin {
         if ($this->instance) {
             return $this->instance;
         }
-        $this->instance = $DB->get_record('assign_submission_file_settings', array('assignment'=>$this->assignment->get_instance()->id));
+        if ($this->assignment->get_instance()) {
+            $this->instance = $DB->get_record('assign_submission_file_settings', array('assignment'=>$this->assignment->get_instance()->id));
+        }
     
         return $this->instance;
     }
