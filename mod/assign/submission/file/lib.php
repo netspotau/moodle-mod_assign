@@ -15,8 +15,9 @@ class submission_file extends submission_plugin {
         if ($this->instance) {
             return $this->instance;
         }
-        if ($this->assignment->get_instance()) {
-            $this->instance = $DB->get_record('assign_submission_file_settings', array('assignment'=>$this->assignment->get_instance()->id));
+        $assignment = $this->assignment->get_instance();
+        if ($assignment) {
+            $this->instance = $DB->get_record('assign_submission_file_settings', array('assignment'=>$assignment->id));
         }
     
         return $this->instance;
@@ -29,12 +30,20 @@ class submission_file extends submission_plugin {
 
         $default_maxfilesubmissions = $current_settings?$current_settings->maxfilesubmissions:3;
         $default_maxsubmissionsizebytes = $current_settings?$current_settings->maxsubmissionsizebytes:0;
+        $default_allowfilesubmissions = $current_settings?$current_settings->enabled:0;
 
         $settings = array();
         $options = array();
-        for($i = 0; $i <= ASSIGN_MAX_SUBMISSION_FILES; $i++) {
+        for($i = 1; $i <= ASSIGN_MAX_SUBMISSION_FILES; $i++) {
             $options[$i] = $i;
         }
+        $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
+        
+        $settings[] = array('type' => 'select', 
+                            'name' => 'allowfilesubmissions', 
+                            'description' => get_string('allowfilesubmissions', 'submission_file'), 
+                            'options'=>$ynoptions,
+                            'default'=>$default_allowfilesubmissions);
 
         $settings[] = array('type' => 'select', 
                             'name' => 'maxfilesubmissions', 
@@ -61,6 +70,8 @@ class submission_file extends submission_plugin {
         if ($file_settings) {
             $file_settings->maxfilesubmissions = $mform->maxfilesubmissions;
             $file_settings->maxsubmissionsizebytes = $mform->maxsubmissionsizebytes;
+            var_dump($mform);
+            $file_settings->enabled = $mform->allowfilesubmissions;
 
             return $DB->update_record('assign_submission_file_settings', $file_settings);
         } else {
@@ -68,17 +79,27 @@ class submission_file extends submission_plugin {
             $file_settings->assignment = $this->assignment->get_instance()->id;
             $file_settings->maxfilesubmissions = $mform->maxfilesubmissions;
             $file_settings->maxsubmissionsizebytes = $mform->maxsubmissionsizebytes;
+            $file_settings->enabled = $mform->allowfilesubmissions;
             return $DB->insert_record('assign_submission_file_settings', $file_settings) > 0;
         }
+    }
+
+    public function is_enabled() {
+        $file_settings = $this->get_instance();
+        if (!$file_settings) {
+            return false;
+        }
+        return $file_settings->enabled;
     }
 
     public function get_submission_form_elements() {
         global $USER;
         $file_settings = $this->get_instance();
-        if ($file_settings->maxfilesubmissions <= 0) {
-            return;
-        }
         $elements = array();
+
+        if (!$file_settings->enabled || $file_settings->maxfilesubmissions <= 0) {
+            return $elements;
+        }
         
 
         $fileoptions = array('subdirs'=>1,
@@ -94,5 +115,10 @@ class submission_file extends submission_plugin {
         $elements[] = array('type'=>'filemanager', 'name'=>'files_filemanager', 'description'=>'', 'options'=>$fileoptions, 'default'=>$default_data);
 
         return $elements;
+    }
+
+    public function save($mform) {
+        var_dump($mform);
+        return true;
     }
 }

@@ -97,6 +97,15 @@ abstract class submission_plugin {
     public function save($mform) {
         return true;   
     }
+    
+    /**
+     * Allows hiding this plugin from the submission screen if it is not enabled.
+     * 
+     * @return boolean - if false - this plugin will not accept submissions
+     */
+    public function is_enabled() {
+        return false;
+    }
 
     /**
      * Get any additional fields for the submission form for this assignment.

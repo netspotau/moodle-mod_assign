@@ -251,6 +251,13 @@ class assignment {
         $returnid = $DB->insert_record("assign", $this->instance);
         $this->instance->id = $returnid;
 
+        // call save_settings hook for submission plugins
+        foreach ($this->submission_plugins as $plugin) {
+            if (!$plugin->save_settings($this->instance)) {
+                print_error($plugin->get_error());
+                return false;
+            }
+        }
         // TODO: add event to the calendar
         
         // TODO: add the item in the gradebook
@@ -331,7 +338,11 @@ class assignment {
             if ($settings && count($settings) > 0) {
                 $mform->addElement('header', 'general', $plugin->get_name());
                 foreach ($settings as $setting) {
-                    $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
+                    if (isset($setting['options'])) {
+                        $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
+                    } else {
+                        $mform->addElement($setting['type'], $setting['name'], $setting['description']);
+                    }
                     if (isset($setting['default'])) {
                         $mform->setDefault($setting['name'], $setting['default']);
                     }
@@ -1792,7 +1803,13 @@ class assignment {
                 return;
             }
             $this->process_online_text_submission($submission, $data);
-            $this->process_file_upload_submission($submission, $data);
+            //$this->process_file_upload_submission($submission, $data);
+        
+            foreach ($this->submission_plugins as $plugin) {
+                if (!$plugin->save($data)) {
+                    print_error($plugin->get_error());
+                }
+            }
             $this->process_submission_comment_submission($submission, $data);
             $this->update_submission($submission);
 
@@ -1948,8 +1965,9 @@ class assignment {
                 foreach ($submission_elements as $setting) {
                     $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
                     if (isset($setting['default'])) {
-                        $name = $setting['name'];
-                        //$data->$name = $setting['default'];
+                        foreach ($setting['default'] as $key => $value) {
+                            $data->$key = $value;
+                        }
                     }
                 }
                 
@@ -2013,6 +2031,21 @@ class assignment {
         // plagiarism?
     }
 
+    private function is_any_submission_plugin_enabled() {
+        if (!isset($this->cache['any_submission_plugin_enabled'])) {
+            $this->cache['any_submission_plugin_enabled'] = false;
+            foreach ($this->submission_plugins as $plugin) {
+                if ($plugin->is_enabled()) {
+                    $this->cache['any_submission_plugin_enabled'] = true;
+                    break;
+                }
+            }
+        }
+
+        return $this->cache['any_submission_plugin_enabled'];
+        
+    }
+
     private function view_submission_status($userid=null) {
         global $OUTPUT, $USER;
 
@@ -2041,7 +2074,7 @@ class assignment {
         echo $OUTPUT->container_start('submissionstatus');
         echo $OUTPUT->heading(get_string('submissionstatusheading', 'assign'), 3);
         $time = time();
-        if ($this->instance->maxfilessubmission < 1 && !$this->instance->onlinetextsubmission) {
+        if (!$this->is_any_submission_plugin_enabled()) {
             echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
             echo get_string('noonlinesubmissions', 'assign');
             echo $OUTPUT->box_end();
@@ -2148,6 +2181,7 @@ class assignment {
         }             
 
         // files 
+        /*
         if ($this->instance->maxfilessubmission >= 1) {
             $row = new html_table_row();
             $cell1 = new html_table_cell(get_string('submissionfiles', 'assign'));
@@ -2155,6 +2189,7 @@ class assignment {
             $row->cells = array($cell1, $cell2);
             $t->data[] = $row;
         } 
+        */
 
         // comments 
         if ($this->instance->submissioncomments) {
@@ -2262,7 +2297,7 @@ class assignment {
         }
         
         if (has_capability('mod/assign:submit', $this->context) &&
-            $this->submissions_open() && ($this->instance->maxfilessubmission >= 1 || $this->instance->onlinetextsubmission)) {
+            $this->submissions_open() && ($this->is_any_submission_plugin_enabled())) {
             // submission.php test
             echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
                 array('id' => $this->get_course_module()->id, 'action' => 'editsubmission')), get_string('editsubmission', 'assign'), 'get');
