@@ -44,9 +44,7 @@ $string['submissions'] = 'Submissions';
 $string['submissiondrafts'] = 'Enable draft submissions';
 $string['submissioncomments'] = 'Enable submission comments';
 $string['onlinetextsubmission'] = 'Allow online text submission';
-$string['maxfilessubmission'] = 'Maximum number of uploaded files';
 $string['minfilessubmission'] = 'Minimum number of uploaded files';
-$string['maximumsubmissionsize'] = 'Maximum submission size';
 $string['availability'] = 'Availability';
 $string['onlinesubmissions'] = 'Online Submissions';
 $string['filesubmissions'] = 'File Submissions';
@@ -162,3 +160,5 @@ It is available here:
 $string['emailgradermailhtml'] = '{$a->username} has updated their assignment submission
 for <i>\'{$a->assignment}\'  at {$a->timeupdated}</i><br /><br />
 It is <a href="{$a->url}">available on the web site</a>.';
+
+

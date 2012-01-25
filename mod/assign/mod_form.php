@@ -25,7 +25,15 @@ class mod_assign_mod_form extends moodleform_mod {
 
         $this->add_intro_editor(true, get_string('description', 'assign'));
           
-        $instance = new assign_base();
+        $ctx = null;
+        if ($this->current && $this->current->coursemodule) {
+            $cm = get_coursemodule_from_instance('assign', $this->current->id);
+            if ($cm) {
+                $ctx = get_context_instance(CONTEXT_MODULE, $cm->id);
+            }
+        }
+        $instance = new assignment($ctx);
+        
         $instance->add_settings($mform);
         
         $this->standard_grading_coursemodule_elements();

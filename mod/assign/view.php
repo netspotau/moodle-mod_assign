@@ -34,5 +34,5 @@ $PAGE->requires->css('/mod/assign/style.css');
 
 $context = get_context_instance(CONTEXT_MODULE,$cm->id);
    
-$ass = new assign_base($context,$assignment,$cm,$course);
+$ass = new assignment($context,$assignment,$cm,$course);
 $ass->view(optional_param('action', '', PARAM_TEXT));

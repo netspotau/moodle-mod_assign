@@ -24,7 +24,7 @@ require_once('locallib.php');
  */
 function assign_add_instance($form_data) {
     $context = get_context_instance(CONTEXT_COURSE,$form_data->course);
-    $ass = new assign_base($context, $form_data);
+    $ass = new assignment($context, $form_data);
     return $ass->add_instance();
 }
 
@@ -36,7 +36,7 @@ function assign_delete_instance($id) {
         return false;
     }
 
-    $ass = new assign_base($context);
+    $ass = new assignment($context);
     return $ass->delete_instance();
 }
 
@@ -47,7 +47,7 @@ function assign_delete_instance($id) {
  */
 function assign_update_instance($form_data) {
     $context = get_context_instance(CONTEXT_MODULE,$form_data->coursemodule);
-    $ass = new assign_base($context, $form_data);
+    $ass = new assignment($context, $form_data);
     return $ass->update_instance();
 }
 
@@ -78,7 +78,7 @@ function assign_extend_settings_navigation($settings, navigation_node $navref) {
     $cm = $PAGE->cm;
     $context = $cm->context;
 
-    $ass = new assign_base($context);
+    $ass = new assignment($context);
     return $ass->extend_settings_navigation($navref);
 }
 
@@ -109,7 +109,7 @@ function assign_pluginfile($course, $cm, $context, $filearea, $args, $forcedownl
         return false;
     }
 
-    $assignmentinstance = new assign_base($context);
+    $assignmentinstance = new assignment($context);
 
     return $assignmentinstance->send_file($filearea, $args);
 }
