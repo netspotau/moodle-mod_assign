@@ -34,13 +34,13 @@ class submission_onlinetext extends submission_plugin {
     }
     
     public function get_settings() {
-       // global $CFG, $COURSE;
+        // global $CFG, $COURSE;
 
-       $current_settings = $this->get_instance();
+        $current_settings = $this->get_instance();
         $settings = array();
         $options = array();
-       $default_enabled_allowonlinetextsubmissions = $current_settings?$current_settings->enabled:0;
-       $e_ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
+        $default_enabled_allowonlinetextsubmissions = $current_settings?$current_settings->enabled:0;
+        $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
          
           
            
@@ -48,7 +48,7 @@ class submission_onlinetext extends submission_plugin {
           $settings[] = array('type' => 'select', 
                             'name' => 'allowonlinetextsubmissions', 
                             'description' => get_string('allowonlinetextsubmissions', 'submission_onlinetext'), 
-                            'options'=>$e_ynoptions,
+                            'options'=>$ynoptions,
                             'default'=>$default_enabled_allowonlinetextsubmissions);
         
     
@@ -67,8 +67,6 @@ class submission_onlinetext extends submission_plugin {
         $onlinetext_settings = $this->get_instance();
 
         if ($onlinetext_settings) {
-            
-            //var_dump($mform);
             $onlinetext_settings->enabled = $mform->allowonlinetextsubmissions;
 
             return $DB->update_record('assign_submission_onlinetext_settings', $onlinetext_settings);
@@ -103,30 +101,20 @@ class submission_onlinetext extends submission_plugin {
         $submissionid = $submission ? $submission->id : 0;
         
       
-      // $fs = get_file_storage();
-      $data = file_prepare_standard_editor($data, 'onlinetext', $editoroptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $submissionid);      
+        // $fs = get_file_storage();
+        $data = file_prepare_standard_editor($data, 'onlinetext', $editoroptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $submissionid);      
         
         $elements[] = array('type'=>'editor', 'name'=>'onlinetext_editor', 'description'=>'', 'options'=>$editoroptions);
   
         if ($submission) {
             $onlinetext_submission = $this->get_submission($submission->id);
             if ($onlinetext_submission) {
-            $data->onlinetext_editor['text'] = $onlinetext_submission->onlinetext;
-            $data->onlinetext_editor['format'] = $onlinetext_submission->onlineformat;
+                $data->onlinetext_editor['text'] = $onlinetext_submission->onlinetext;
+                $data->onlinetext_editor['format'] = $onlinetext_submission->onlineformat;
             }
             
         }
         return $elements;
-        
-        
-       
-        
-        
-        
-        
-      
-        
-        
     }
     
     
@@ -183,14 +171,19 @@ class submission_onlinetext extends submission_plugin {
     
      public function view_summary($submission) {
         $online_submission = $this->get_submission($submission->id);
-        return shorten_text(format_text($online_submission->onlinetext));
+        if ($online_submission) {
+            return shorten_text(format_text($online_submission->onlinetext));
+        }
+        return '';
     }
     
     public function view($submission) {
         $online_submission = $this->get_submission($submission->id);
-        $text = file_rewrite_pluginfile_urls($online_submission->onlinetext, 'pluginfile.php', $this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $submission->id);
-
-        return format_text($text, $online_submission->onlineformat, array('overflowdiv' => true));
+        if ($online_submission) {
+            $text = file_rewrite_pluginfile_urls($online_submission->onlinetext, 'pluginfile.php', $this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $submission->id);
+            return format_text($text, $online_submission->onlineformat, array('overflowdiv' => true));
+        } 
+        return '';
     }
     
     

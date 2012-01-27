@@ -120,11 +120,17 @@ class submission_comments extends submission_plugin {
 
     public function view_summary($submission) {
         $submission_comments = $this->get_submission($submission->id);
-        return shorten_text(format_text($submission_comments->commenttext));
+        if ($submission_comments) {
+            return shorten_text(format_text($submission_comments->commenttext));
+        }
+        return '';
     }
     
     public function view($submission) {
         $submission_comments = $this->get_submission($submission->id);
-        return format_text($submission_comments->commenttext);
+        if ($submission_comments) {
+            return format_text($submission_comments->commenttext);
+        } 
+        return '';
     }
 }

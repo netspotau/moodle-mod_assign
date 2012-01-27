@@ -339,7 +339,12 @@ class assignment {
                 $mform->addElement('header', 'general', $plugin->get_name());
                 foreach ($settings as $setting) {
                     if (isset($setting['options'])) {
-                        $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
+                        // the editor element accepts it's arguments in a non-standard order
+                        if ($setting['type'] == 'editor' || $setting['type'] == 'filemanager') {
+                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], null, $setting['options']);
+                        } else {
+                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
+                        }
                     } else {
                         $mform->addElement($setting['type'], $setting['name'], $setting['description']);
                     }
@@ -1797,8 +1802,10 @@ class assignment {
             //$this->process_file_upload_submission($submission, $data);
         
             foreach ($this->submission_plugins as $plugin) {
-                if (!$plugin->save($submission, $data)) {
-                    print_error($plugin->get_error());
+                if ($plugin->is_enabled()) {
+                    if (!$plugin->save($submission, $data)) {
+                        print_error($plugin->get_error());
+                    }
                 }
             }
             //$this->process_submission_comment_submission($submission, $data);
@@ -1949,18 +1956,25 @@ class assignment {
 
     private function add_plugin_submission_elements($submission, & $mform, & $data) {
         foreach ($this->submission_plugins as $plugin) {
-            $submission_elements = $plugin->get_submission_form_elements($submission, $data);
+            if ($plugin->is_enabled()) {
+                $submission_elements = $plugin->get_submission_form_elements($submission, $data);
 
-            if ($submission_elements && count($submission_elements) > 0) {
-                // add a header for the plugin data
-                $mform->addElement('header', 'general', $plugin->get_name());
-                foreach ($submission_elements as $setting) {
-                    $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
-                    if (isset($setting['default'])) {
-                        $mform->setDefault($setting['name'], $setting['default']);
+                if ($submission_elements && count($submission_elements) > 0) {
+                    // add a header for the plugin data
+                    $mform->addElement('header', 'general', $plugin->get_name());
+                    foreach ($submission_elements as $setting) {
+                        // the editor element accepts it's arguments in a non-standard order
+                        if ($setting['type'] == 'editor' || $setting['type'] == 'filemanager') {
+                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], null, $setting['options']);
+                        } else {
+                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
+                        }
+                        if (isset($setting['default'])) {
+                            $mform->setDefault($setting['name'], $setting['default']);
+                        }
                     }
+                    
                 }
-                
             }
         }
     }
@@ -2152,11 +2166,13 @@ class assignment {
 
         if ($submission) {
             foreach ($this->submission_plugins as $plugin) {
-                $row = new html_table_row();
-                $cell1 = new html_table_cell($plugin->get_name());
-                $cell2 = new html_table_cell($plugin->view_summary($submission));
-                $row->cells = array($cell1, $cell2);
-                $t->data[] = $row;
+                if ($plugin->is_enabled()) {
+                    $row = new html_table_row();
+                    $cell1 = new html_table_cell($plugin->get_name());
+                    $cell2 = new html_table_cell($plugin->view_summary($submission));
+                    $row->cells = array($cell1, $cell2);
+                    $t->data[] = $row;
+                }
             }
         }
         
