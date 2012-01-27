@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/assign/submission/file/db" VERSION="20090420" COMMENT="XMLDB file for Moodle mod/assign/submission/file"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="assign_submission_onlinetext_settings" COMMENT="Settings for the online text submission plugin" NEXT="assign_submission_onlinetext">
+   
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="assignment"/>
+        <FIELD NAME="assignment" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="id" NEXT="enabled"/>              
+         <FIELD NAME="enabled" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="assignment"/>
+    </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="assignment"/>
+        <KEY NAME="assignment" TYPE="foreign" FIELDS="assignment" REFTABLE="assign" REFFIELDS="id" PREVIOUS="primary"/>
+      </KEYS>
+    </TABLE>
+  
+  <TABLE NAME="assign_submission_onlinetext" COMMENT="Info about onlinetext submission " PREVIOUS="assign_submission_onlinetext_settings">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="assignment"/>
+        <FIELD NAME="assignment" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="submission"/>
+        <FIELD NAME="submission" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="assignment" NEXT="onlinetext"/>
+        <FIELD NAME="onlinetext" TYPE="text" LENGTH="small" NOTNULL="false" SEQUENCE="false" PREVIOUS="submission" NEXT="onlineformat"/>
+        <FIELD NAME="onlineformat" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="onlinetext"/>
+        
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="assignment"/>
+        <KEY NAME="assignment" TYPE="foreign" FIELDS="assignment" REFTABLE="assignment" REFFIELDS="id" PREVIOUS="primary" NEXT="submission"/>
+        <KEY NAME="submission" TYPE="foreign" FIELDS="submission" REFTABLE="assign_submission" REFFIELDS="id" PREVIOUS="assignment"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="submission" UNIQUE="false" FIELDS="submission"/>
+      </INDEXES>
+ </TABLE>
+ </TABLES>
+ </XMLDB>
