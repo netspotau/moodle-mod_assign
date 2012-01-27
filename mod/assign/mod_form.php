@@ -49,13 +49,13 @@ class mod_assign_submission_form extends moodleform {
     function definition() {
         $mform = $this->_form;
 
-        list($assignment, $defaults) = $this->_customdata;
+        list($assignment, $data) = $this->_customdata;
 
-        $assignment->add_submission_form_elements($mform, $defaults);
+        $assignment->add_submission_form_elements($mform, $data);
 
         $this->add_action_buttons(false, get_string('savechanges', 'assign'));
-        if ($defaults) {
-            $this->set_data($defaults);
+        if ($data) {
+            $this->set_data($data);
         }
     }
 }

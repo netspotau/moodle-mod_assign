@@ -376,11 +376,11 @@ class assignment {
         $mform->addElement('header', 'general', get_string('submissions', 'assign'));
         $mform->addElement('select', 'submissiondrafts', get_string('submissiondrafts', 'assign'), $ynoptions);
         $mform->setDefault('submissiondrafts', 0);
-        $mform->addElement('select', 'submissioncomments', get_string('submissioncomments', 'assign'), $ynoptions);
-        $mform->setDefault('submissioncomments', 0);
+        //$mform->addElement('select', 'submissioncomments', get_string('submissioncomments', 'assign'), $ynoptions);
+        //$mform->setDefault('submissioncomments', 0);
         $mform->addElement('header', 'general', get_string('onlinesubmissions', 'assign'));
-        $mform->addElement('select', 'onlinetextsubmission', get_string('onlinetextsubmission', 'assign'), $ynoptions);
-        $mform->setDefault('onlinetextsubmission', 0);
+        //$mform->addElement('select', 'onlinetextsubmission', get_string('onlinetextsubmission', 'assign'), $ynoptions);
+        //$mform->setDefault('onlinetextsubmission', 0);
         /*
         $mform->addElement('header', 'general', get_string('filesubmissions', 'assign'));
     
@@ -534,7 +534,7 @@ class assignment {
                                         
 
         if ($this->instance->grade >= 0) {    // Normal number
-            if ($grade == -1) {
+            if ($grade == -1 || $grade === null) {
                 return '-';
             } else {
                 return $grade.' / '.$this->instance->grade;
@@ -697,13 +697,12 @@ class assignment {
     private function & load_submissions_table($perpage=10,$filter=null,$startpage=null,$onlyfirstuserid=false) {
         global $CFG, $DB, $OUTPUT,$PAGE;
                      
-        $tablecolumns = array('picture', 'fullname', 'status', 'edit', 'submissioncomment', 'feedback', 'grade', 'timemodified', 'timemarked', 'finalgrade');
+        $tablecolumns = array('picture', 'fullname', 'status', 'edit', 'feedback', 'grade', 'timemodified', 'timemarked', 'finalgrade');
 
         $tableheaders = array('',
                               get_string('fullnameuser'),
                               get_string('status'),
                               get_string('edit'),
-                              get_string('submissioncomment', 'assign'),
                               get_string('feedback', 'assign'),
                               get_string('grade'),
                               get_string('lastmodified').' ('.get_string('submission', 'assign').')',
@@ -734,7 +733,6 @@ class assignment {
         $table->column_class('edit', 'edit');
         $table->column_class('grade', 'grade');
         $table->column_class('feedback', 'feedback');
-        $table->column_class('submissioncomment', 'comment');
         $table->column_class('timemodified', 'timemodified');
         $table->column_class('timemarked', 'timemarked');
         $table->column_class('finalgrade', 'finalgrade');
@@ -749,7 +747,6 @@ class assignment {
         $table->no_sorting('outcome');
         $table->no_sorting('feedback');
         $table->no_sorting('status');
-        $table->no_sorting('submissioncomment');
 
         $table->setup();
        // group setting
@@ -771,7 +768,7 @@ class assignment {
         $ufields = user_picture::fields('u');
         if (!empty($users)) {
             $select = "SELECT $ufields,
-                              s.id AS submissionid, g.grade, s.submissioncommenttext, s.status,
+                              s.id AS submissionid, g.grade, s.status,
                               s.timemodified as timesubmitted, g.timemodified AS timemarked, g.feedbacktext, g.locked ";
             $sql = 'FROM {user} u '.
                    'LEFT JOIN {assign_submission} s ON u.id = s.userid
@@ -808,7 +805,6 @@ class assignment {
                     $userlink = $OUTPUT->action_link(new moodle_url('/user/view.php', array('id' => $auser->id, 'course'=>$this->get_course()->id)), fullname($auser, has_capability('moodle/site:viewfullnames', $this->context)));
 
                     $grade = $this->display_grade($auser->grade);
-                    $comment = shorten_text(format_text($auser->submissioncommenttext));
                     $studentmodified = '-';
                     if ($auser->timesubmitted) {
                         $studentmodified = userdate($auser->timesubmitted);
@@ -827,7 +823,6 @@ class assignment {
                     if (isset($grading_info->items[0]) && $grading_info->items[0]->grades[$auser->id]) {
                         // debugging
                         $finalgrade = $this->display_grade($grading_info->items[0]->grades[$auser->id]->grade);
-                        //$finalgrade = print_r($grading_info->items[0]->grades[$auser->id], true);
                     }
                     
                     $edit = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'rownum'=>$rownum,'action'=>'grade')), $OUTPUT->pix_icon('t/grades', get_string('grade')));
@@ -846,7 +841,7 @@ class assignment {
                     $renderer = $PAGE->get_renderer('mod_assign');
                     $feedback .= '<br/>' . $renderer->assign_files($this->context, $auser->id, ASSIGN_FILEAREA_SUBMISSION_FEEDBACK);
 
-                    $row = array($picture, $userlink, $status, $edit, $comment, $feedback, $grade, $studentmodified, $teachermodified, $finalgrade);
+                    $row = array($picture, $userlink, $status, $edit, $feedback, $grade, $studentmodified, $teachermodified, $finalgrade);
                     $table->add_data($row);
                 }
             }
@@ -1101,10 +1096,6 @@ class assignment {
             $submission->userid       = $userid;
             $submission->timecreated = time();
             $submission->timemodified = $submission->timecreated;
-            $submission->submissioncommenttext = '';
-            $submission->submissioncommentformat = editors_get_preferred_format();
-            $submission->onlinetext = '';
-            $submission->onlineformat = editors_get_preferred_format();
             
             if ($this->instance->submissiondrafts) {
                 $submission->status = ASSIGN_SUBMISSION_STATUS_DRAFT;
@@ -1763,6 +1754,7 @@ class assignment {
     private function format_submission_for_log($submission) {
         $info = '';
         $info .= get_string('submissionstatus', 'assign') . ': ' . get_string('submissionstatus_' . $submission->status, 'assign') . '.';
+        /*
         if ($submission->numfiles > 0) {
             $info .= get_string('numfiles', 'assign', $submission->numfiles);
         } else {
@@ -1778,6 +1770,7 @@ class assignment {
         } else {
             $info .= get_string('nosubmissioncomment', 'assign');
         }
+        */
         return $info;
     }
 
@@ -1808,7 +1801,7 @@ class assignment {
                     print_error($plugin->get_error());
                 }
             }
-            $this->process_submission_comment_submission($submission, $data);
+            //$this->process_submission_comment_submission($submission, $data);
             $this->update_submission($submission);
 
             // Logging
@@ -1963,9 +1956,7 @@ class assignment {
                 foreach ($submission_elements as $setting) {
                     $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
                     if (isset($setting['default'])) {
-                        foreach ($setting['default'] as $key => $value) {
-                            $data->$key = $value;
-                        }
+                        $mform->setDefault($setting['name'], $setting['default']);
                     }
                 }
                 
@@ -1988,10 +1979,10 @@ class assignment {
         $data = $this->get_default_submission_data();
         $submission = $this->get_submission($USER->id);
         if ($submission) {          
-            $data->onlinetext = $submission->onlinetext;
-            $data->onlinetextformat = $submission->onlineformat;          
-            $data->submissioncomment_editor['text'] = $submission->submissioncommenttext;
-            $data->submissioncomment_editor['format'] = $submission->submissioncommentformat;
+            //$data->onlinetext = $submission->onlinetext;
+            //$data->onlinetextformat = $submission->onlineformat;          
+            //$data->submissioncomment_editor['text'] = $submission->submissioncommenttext;
+            //$data->submissioncomment_editor['format'] = $submission->submissioncommentformat;
         }
 
         $mform = new mod_assign_submission_form(null, array($this, $data));
@@ -2158,17 +2149,20 @@ class assignment {
         $row->cells = array($cell1, $cell2);
         $t->data[] = $row;
 
-        foreach ($this->submission_plugins as $plugin) {
-            $row = new html_table_row();
-            $cell1 = new html_table_cell($plugin->get_name());
-            $cell2 = new html_table_cell($plugin->view_summary($submission));
-            $row->cells = array($cell1, $cell2);
-            $t->data[] = $row;
+        if ($submission) {
+            foreach ($this->submission_plugins as $plugin) {
+                $row = new html_table_row();
+                $cell1 = new html_table_cell($plugin->get_name());
+                $cell2 = new html_table_cell($plugin->view_summary($submission));
+                $row->cells = array($cell1, $cell2);
+                $t->data[] = $row;
+            }
         }
         
         // if online text assignment submission is set to yes
         //onlinetextsubmission  
               
+        /*
         if ($this->instance->onlinetextsubmission) {
             $link = new moodle_url ('/mod/assign/view.php?id='.$this->get_course_module()->id.'&userid='.$userid.'&action=onlinetext&returnaction='.  optional_param('action','view',PARAM_ALPHA).'&returnparams=rownum%3D'.  optional_param('rownum','', PARAM_INT));
            // $link = new moodle_url ('/mod/assign/view.php?id='.$this->get_course_module()->id.'&userid='.$userid.'&rownum='.$rnum.'&action=onlinetext');
@@ -2185,6 +2179,7 @@ class assignment {
             $row->cells = array($cell1, $cell2);
             $t->data[] = $row;
         }             
+        */
 
         // files 
         /*
@@ -2198,6 +2193,7 @@ class assignment {
         */
 
         // comments 
+        /*
         if ($this->instance->submissioncomments) {
             $row = new html_table_row();
             $cell1 = new html_table_cell(get_string('submissioncomment', 'assign'));
@@ -2209,6 +2205,7 @@ class assignment {
             $row->cells = array($cell1, $cell2);
             $t->data[] = $row;
         } 
+        */
                       
         echo html_writer::table($t);
         echo $OUTPUT->box_end();
@@ -2380,7 +2377,7 @@ class assignment {
         global $USER;
         
         // online text submissions
-        $this->add_online_text_form_elements($mform, $data);
+        //$this->add_online_text_form_elements($mform, $data);
 
         $submission = $this->get_submission($USER->id, false);
         
@@ -2388,7 +2385,7 @@ class assignment {
         // file uploads
         //$this->add_file_upload_form_elements($mform, $data);
         // submission comment
-        $this->add_submission_comment_form_elements($mform, $data);
+        //$this->add_submission_comment_form_elements($mform, $data);
 
         // hidden params
         $mform->addElement('hidden', 'id', $this->get_course_module()->id);

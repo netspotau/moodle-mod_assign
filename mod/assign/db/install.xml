@@ -13,10 +13,8 @@
         <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="intro" NEXT="alwaysshowdescription"/>
         <FIELD NAME="alwaysshowdescription" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="introformat" NEXT="preventlatesubmissions"/>
         <FIELD NAME="preventlatesubmissions" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="alwaysshowdescription" NEXT="submissiondrafts"/>
-        <FIELD NAME="submissiondrafts" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="preventlatesubmissions" NEXT="submissioncomments"/>
-        <FIELD NAME="submissioncomments" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="submissiondrafts" NEXT="onlinetextsubmission"/>
-        <FIELD NAME="onlinetextsubmission" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="submissioncomments" NEXT="sendnotifications"/>
-        <FIELD NAME="sendnotifications" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="onlinetextsubmission" NEXT="duedate"/>
+        <FIELD NAME="submissiondrafts" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="preventlatesubmissions" NEXT="sendnotifications"/>
+        <FIELD NAME="sendnotifications" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="submissiondrafts" NEXT="duedate"/>
         <FIELD NAME="duedate" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="sendnotifications" NEXT="allowsubmissionsfromdate"/>
         <FIELD NAME="allowsubmissionsfromdate" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="duedate" NEXT="grade"/>
         <FIELD NAME="grade" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="allowsubmissionsfromdate" NEXT="timemodified"/>
@@ -35,13 +33,8 @@
         <FIELD NAME="assignment" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="userid"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="assignment" NEXT="timecreated"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="userid" NEXT="timemodified"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timecreated" NEXT="numfiles"/>
-        <FIELD NAME="numfiles" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timemodified" NEXT="onlinetext"/>
-        <FIELD NAME="onlinetext" TYPE="text" LENGTH="small" NOTNULL="false" SEQUENCE="false" PREVIOUS="numfiles" NEXT="onlineformat"/>
-        <FIELD NAME="onlineformat" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="onlinetext" NEXT="status"/>
-        <FIELD NAME="status" TYPE="text" LENGTH="small" NOTNULL="false" SEQUENCE="false" PREVIOUS="onlineformat" NEXT="submissioncommenttext"/>
-        <FIELD NAME="submissioncommenttext" TYPE="text" LENGTH="small" NOTNULL="true" SEQUENCE="false" PREVIOUS="status" NEXT="submissioncommentformat"/>
-        <FIELD NAME="submissioncommentformat" TYPE="text" LENGTH="small" NOTNULL="true" SEQUENCE="false" PREVIOUS="submissioncommenttext"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timecreated" NEXT="status"/>
+        <FIELD NAME="status" TYPE="text" LENGTH="small" NOTNULL="false" SEQUENCE="false" PREVIOUS="timemodified"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="assignment"/>
