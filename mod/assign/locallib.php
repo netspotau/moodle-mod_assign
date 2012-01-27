@@ -601,7 +601,7 @@ class assignment {
     final protected function count_submissions_with_status($status) {
         global $DB;
         return $DB->count_records_sql("SELECT COUNT('x')
-                                     FROM {assign_submissions}
+                                     FROM {assign_submission}
                                     WHERE assignment = ? AND
                                           status = ?", array($this->get_course_module()->instance, $status));
     }
@@ -656,7 +656,7 @@ class assignment {
         }
 
         return $DB->get_records_sql("SELECT a.*
-                                       FROM {assign_submissions} a, {user} u
+                                       FROM {assign_submission} a, {user} u
                                       WHERE u.id = a.userid
                                             AND a.assignment = ?
                                    ORDER BY $sort", array($this->instance->id));
@@ -790,7 +790,7 @@ class assignment {
                               s.id AS submissionid, g.grade, s.submissioncommenttext, s.status,
                               s.timemodified as timesubmitted, g.timemodified AS timemarked, g.feedbacktext, g.locked ";
             $sql = 'FROM {user} u '.
-                   'LEFT JOIN {assign_submissions} s ON u.id = s.userid
+                   'LEFT JOIN {assign_submission} s ON u.id = s.userid
                     AND s.assignment = '.$this->instance->id.' '.
                    'LEFT JOIN {assign_grades} g ON u.id = g.userid
                     AND g.assignment = '.$this->instance->id.' '.                   
@@ -1106,7 +1106,7 @@ class assignment {
             $userid = $USER->id;
         }
 
-        $submission = $DB->get_record('assign_submissions', array('assignment'=>$this->instance->id, 'userid'=>$userid));
+        $submission = $DB->get_record('assign_submission', array('assignment'=>$this->instance->id, 'userid'=>$userid));
 
         if ($submission) {
             return $submission;
@@ -1127,7 +1127,7 @@ class assignment {
             } else {
                 $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
             }
-            $sid = $DB->insert_record('assign_submissions', $submission);
+            $sid = $DB->insert_record('assign_submission', $submission);
             $submission->id = $sid;
             return $submission;
         }
@@ -1509,7 +1509,7 @@ class assignment {
         if ($updatetime) {
             $submission->timemodified = time();
         }
-        $result= $DB->update_record('assign_submissions', $submission);
+        $result= $DB->update_record('assign_submission', $submission);
         if ($result) {
             $this->gradebook_item_update($submission);
         }
@@ -1558,21 +1558,19 @@ class assignment {
         return TRUE;
     }
    
-    private function list_response_files($userid = null) {
+    public function render_area_files($area, $submissionid = null) {
         global $CFG, $USER, $OUTPUT, $PAGE;
 
-        if (!$userid) {
-            $userid = $USER->id;
+        if (!$submissionid) {
+            $submission = $this->get_submission($USER->id, false);
+            $submissionid = $submission->id;
         }
     
-        //$candelete = $this->can_manage_responsefiles();
-        $strdelete   = get_string('delete');
-
         $fs = get_file_storage();
         $browser = get_file_browser();
 
         $renderer = $PAGE->get_renderer('mod_assign');
-        return $renderer->assign_files($this->context, $userid, ASSIGN_FILEAREA_SUBMISSION_FILES);
+        return $renderer->assign_files($this->context, $submissionid, $area);
         
     }
 
@@ -1822,7 +1820,7 @@ class assignment {
             //$this->process_file_upload_submission($submission, $data);
         
             foreach ($this->submission_plugins as $plugin) {
-                if (!$plugin->save($data)) {
+                if (!$plugin->save($submission, $data)) {
                     print_error($plugin->get_error());
                 }
             }
@@ -1972,9 +1970,9 @@ class assignment {
         return $data;
     }
 
-    private function add_plugin_submission_elements(& $mform, & $data) {
+    private function add_plugin_submission_elements($submission, & $mform, & $data) {
         foreach ($this->submission_plugins as $plugin) {
-            $submission_elements = $plugin->get_submission_form_elements();
+            $submission_elements = $plugin->get_submission_form_elements($submission, $data);
 
             if ($submission_elements && count($submission_elements) > 0) {
                 // add a header for the plugin data
@@ -2177,6 +2175,14 @@ class assignment {
         $row->cells = array($cell1, $cell2);
         $t->data[] = $row;
 
+        foreach ($this->submission_plugins as $plugin) {
+            $row = new html_table_row();
+            $cell1 = new html_table_cell($plugin->get_name());
+            $cell2 = new html_table_cell($plugin->view_summary($submission));
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+        }
+        
         // if online text assignment submission is set to yes
         //onlinetextsubmission  
               
@@ -2202,7 +2208,7 @@ class assignment {
         if ($this->instance->maxfilessubmission >= 1) {
             $row = new html_table_row();
             $cell1 = new html_table_cell(get_string('submissionfiles', 'assign'));
-            $cell2 = new html_table_cell($this->list_response_files($userid));
+            $cell2 = new html_table_cell($this->print_area_files($userid));
             $row->cells = array($cell1, $cell2);
             $t->data[] = $row;
         } 
@@ -2388,12 +2394,14 @@ class assignment {
     }
 
     public function add_submission_form_elements(& $mform, & $data) {
-
+        global $USER;
         
         // online text submissions
       //  $this->add_online_text_form_elements($mform, $data);
+
+        $submission = $this->get_submission($USER->id, false);
         
-        $this->add_plugin_submission_elements($mform, $data);
+        $this->add_plugin_submission_elements($submission, $mform, $data);
         // file uploads
         //$this->add_file_upload_form_elements($mform, $data);
         // submission comment
