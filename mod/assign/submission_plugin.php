@@ -94,7 +94,7 @@ abstract class submission_plugin {
      * @param object $mform - the data submitted from the form
      * @return boolean - on error the subtype should call set_error and return false.
      */
-    public function save($mform) {
+    public function save($submission, $data) {
         return true;   
     }
     
@@ -111,9 +111,10 @@ abstract class submission_plugin {
      * Get any additional fields for the submission form for this assignment.
      * 
      * @param object $defaults - The list of default values for the settings added by this plugin
+     * @param object $data - This is the form data that can be modified for example by a filemanager element
      * @return array - a list of form elements to include in the submission form
      */
-    public function get_submission_form_elements() {
+    public function get_submission_form_elements($submission, & $data) {
         return array();
     }
 
@@ -122,7 +123,7 @@ abstract class submission_plugin {
      * 
      * @return string - return a string representation of the submission in full
      */
-    public function view() {
+    public function view($submission) {
         return '';
     }
     
@@ -131,7 +132,7 @@ abstract class submission_plugin {
      * 
      * @return string - return a string representation of the submission in full
      */
-    public function view_summary() {
+    public function view_summary($submission) {
         return '';
     }
 }
