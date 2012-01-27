@@ -43,7 +43,7 @@ define('ASSIGN_FILTER_REQUIRE_GRADING', 'require_grading');
  * File areas for the assignment
  */
 define('ASSIGN_FILEAREA_SUBMISSION_FEEDBACK', 'feedback_files');
-define('ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT', 'submissions_onlinetext');
+//define('ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT', 'submissions_onlinetext');
 define('ASSIGN_SUBMISSION_TYPES_FOLDER', 'mod/assign/submission');
 define('ASSIGN_SUBMISSION_TYPES_FILE', 'lib.php');
 
@@ -363,7 +363,11 @@ class assignment {
     public function add_settings(& $mform) {
         global $CFG, $COURSE;
         $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
-
+        
+       
+        
+        
+        
         $mform->addElement('header', 'general', get_string('availability', 'assign'));
         $mform->addElement('date_time_selector', 'allowsubmissionsfromdate', get_string('allowsubmissionsfromdate', 'assign'), array('optional'=>true));
         $mform->setDefault('allowsubmissionsfromdate', time());
@@ -378,9 +382,21 @@ class assignment {
         $mform->setDefault('submissiondrafts', 0);
         $mform->addElement('select', 'submissioncomments', get_string('submissioncomments', 'assign'), $ynoptions);
         $mform->setDefault('submissioncomments', 0);
+        
+        /**
+        
         $mform->addElement('header', 'general', get_string('onlinesubmissions', 'assign'));
+       
+        
+       
+        
         $mform->addElement('select', 'onlinetextsubmission', get_string('onlinetextsubmission', 'assign'), $ynoptions);
         $mform->setDefault('onlinetextsubmission', 0);
+                         
+         */
+        
+        
+        
         /*
         $mform->addElement('header', 'general', get_string('filesubmissions', 'assign'));
     
@@ -1802,7 +1818,7 @@ class assignment {
                 print_error('submissionslocked', 'assign');
                 return;
             }
-            $this->process_online_text_submission($submission, $data);
+           // $this->process_online_text_submission($submission, $data);
             //$this->process_file_upload_submission($submission, $data);
         
             foreach ($this->submission_plugins as $plugin) {
@@ -1822,6 +1838,7 @@ class assignment {
         }
          
     }
+    
     // helper function for process_save_submission (for the purpose of permission checking only)?
     // so it does not require permission checks as they have
     // been done in process_save_submission.
@@ -2374,7 +2391,7 @@ class assignment {
 
         
         // online text submissions
-        $this->add_online_text_form_elements($mform, $data);
+      //  $this->add_online_text_form_elements($mform, $data);
         
         $this->add_plugin_submission_elements($mform, $data);
         // file uploads
