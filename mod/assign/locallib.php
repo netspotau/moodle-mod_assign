@@ -267,9 +267,11 @@ class assignment {
 
         // call save_settings hook for submission plugins
         foreach ($this->submission_plugins as $plugin) {
-            if (!$plugin->save_settings($this->instance)) {
-                print_error($plugin->get_error());
-                return false;
+            if ($plugin->is_visible()) {
+                if (!$plugin->save_settings($this->instance)) {
+                    print_error($plugin->get_error());
+                    return false;
+                }
             }
         }
         // TODO: add event to the calendar
