@@ -138,8 +138,6 @@ abstract class submission_plugin {
         }
     }
 
-    public abstract function get_type();
-
     /**
      * Save any custom data for this student submission
      * 
