@@ -13,19 +13,6 @@ class submission_onlinetext extends submission_plugin {
         return get_string('onlinetext', 'submission_onlinetext');
     }
 
-    private function get_instance() {
-        global $DB;
-        if ($this->instance) {
-            return $this->instance;
-        }
-        $assignment = $this->assignment->get_instance();
-        if ($assignment) {
-            $this->instance = $DB->get_record('assign_submission_onlinetext_settings', array('assignment'=>$assignment->id));
-        }
-    
-        return $this->instance;
-    }
-
     private function get_submission($submissionid) {
         global $DB;
         return $DB->get_record('assign_submission_onlinetext', array('submission'=>$submissionid));
@@ -33,9 +20,6 @@ class submission_onlinetext extends submission_plugin {
     
     public function get_submission_form_elements($submission, & $data) {
         global $USER;
-        $onlinetext_settings = $this->get_instance();
-        
-       
         
         $elements = array();
 
@@ -74,8 +58,6 @@ class submission_onlinetext extends submission_plugin {
      public function save($submission, $data) {     
        
         global $USER, $DB;
-
-        $settings = $this->get_instance();
 
         $editoroptions = $this->get_edit_options();
         

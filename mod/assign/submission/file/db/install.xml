@@ -4,19 +4,7 @@
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="assign_submission_file_settings" COMMENT="Settings for the file submission plugin" NEXT="assign_submission_file">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="assignment"/>
-        <FIELD NAME="assignment" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="id" NEXT="maxfilesubmissions"/>
-        <FIELD NAME="maxfilesubmissions" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="100000" SEQUENCE="false" PREVIOUS="assignment" NEXT="maxsubmissionsizebytes"/>
-        <FIELD NAME="maxsubmissionsizebytes" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="maxfilesubmissions"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="assignment"/>
-        <KEY NAME="assignment" TYPE="foreign" FIELDS="assignment" REFTABLE="assign" REFFIELDS="id" PREVIOUS="primary"/>
-      </KEYS>
-    </TABLE>
-    <TABLE NAME="assign_submission_file" COMMENT="Info about submitted assignments" PREVIOUS="assign_submission_file_settings">
+    <TABLE NAME="assign_submission_file" COMMENT="Info about submitted assignments">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="assignment"/>
         <FIELD NAME="assignment" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="submission"/>

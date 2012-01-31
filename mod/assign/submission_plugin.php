@@ -292,9 +292,12 @@ abstract class submission_plugin {
         global $DB;
 
         if ($setting) {
-            $result = $DB->get_record('assign_plugin_config', array('assignment'=>$this->assignment->get_instance()->id, 'plugin'=>$this->get_type(), 'name'=>$setting));
-            if ($result) {
-                return $result->value;
+            $assignment = $this->assignment->get_instance();
+            if ($assignment) {
+                $result = $DB->get_record('assign_plugin_config', array('assignment'=>$assignment->id, 'plugin'=>$this->get_type(), 'name'=>$setting));
+                if ($result) {
+                    return $result->value;
+                }
             }
             return false;
         }
