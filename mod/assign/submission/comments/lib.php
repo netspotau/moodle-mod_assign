@@ -7,9 +7,6 @@ class submission_comments extends submission_plugin {
     public function get_name() {
         return get_string('pluginname', 'submission_comments');
     }
-    public function get_type() {
-        return 'comments';
-    }
     
     private function get_instance() {
         global $DB;

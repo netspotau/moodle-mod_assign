@@ -10,10 +10,6 @@ class submission_file extends submission_plugin {
         return get_string('file', 'submission_file');
     }
     
-     public function get_type() {
-        return 'file';
-    }
-    
     private function get_instance() {
         global $DB;
         if ($this->instance) {

@@ -13,10 +13,6 @@ class submission_onlinetext extends submission_plugin {
         return get_string('onlinetext', 'submission_onlinetext');
     }
 
-    public function get_type() {
-        return 'onlinetext';
-    }
-    
     private function get_instance() {
         global $DB;
         if ($this->instance) {
