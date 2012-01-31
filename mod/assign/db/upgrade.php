@@ -26,6 +26,7 @@ function xmldb_assign_upgrade($oldversion) {
     $dbman = $DB->get_manager();
 
     // do the upgrades
+    // enable all existing plugins
     return true;
 }
 

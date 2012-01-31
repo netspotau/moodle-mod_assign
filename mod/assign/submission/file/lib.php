@@ -88,7 +88,7 @@ class submission_file extends submission_plugin {
         }
     }
 
-    public function is_enabled() {
+    public function submissions_enabled() {
         $file_settings = $this->get_instance();
         if (!$file_settings) {
             return false;
@@ -171,4 +171,5 @@ class submission_file extends submission_plugin {
     public function view($submission) {
         return $this->view_summary($submission);
     }
+    
 }

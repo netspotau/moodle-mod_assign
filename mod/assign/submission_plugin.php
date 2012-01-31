@@ -37,6 +37,7 @@ defined('MOODLE_INTERNAL') || die();
 abstract class submission_plugin {
 
     protected $assignment;
+    private $type = '';
     private $error = '';
 
     /**
@@ -44,8 +45,30 @@ abstract class submission_plugin {
      *
      * @param object $assignment 
      */
-    public function __construct($assignment = null) {
+    public function __construct($assignment = null, $type = null) {
         $this->assignment = $assignment;
+        $this->type = $type;
+    }
+    
+    public function is_first() {
+        global $DB;
+
+        $order = get_config('submission_' . $this->get_type(), 'sortorder');
+
+        if ($order == 0) {
+            return true;
+        }
+        return false;
+    }
+
+    public function is_last() {
+        global $DB;
+
+        if ((count(get_plugin_list('submission'))-1) == get_config('submission_' . $this->get_type(), 'sortorder')) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -87,6 +110,33 @@ abstract class submission_plugin {
      * @return string - the name
      */
     public abstract function get_name();
+    
+    /**
+     * Should return the type of this submission plugin. 
+     * 
+     * @return string - the type
+     */
+    public function get_type() {
+        return $this->type;
+    }
+    
+    public function get_version() {
+        $version = get_config('submission_' . $this->get_type(), 'version');
+        if ($version) {
+            return $version;
+        } else {
+            return '';
+        }
+    }
+    
+    public function get_requires() {
+        $requires = get_config('submission_' . $this->get_type(), 'requires');
+        if ($requires) {
+            return $requires;
+        } else {
+            return '';
+        }
+    }
 
     /**
      * Save any custom data for this student submission
@@ -103,7 +153,7 @@ abstract class submission_plugin {
      * 
      * @return boolean - if false - this plugin will not accept submissions
      */
-    public function is_enabled() {
+    public function submissions_enabled() {
         return false;
     }
 
@@ -125,6 +175,90 @@ abstract class submission_plugin {
      */
     public function view($submission) {
         return '';
+    }
+
+    
+
+    public function move($dir='down') {
+        // get a list of the current plugins
+        $submission_plugins = array();
+
+        $names = get_plugin_list('submission');
+        $current_index = 0;
+
+        // get a sorted list of plugins
+        foreach ($names as $name) {
+            if (file_exists($name . '/' . ASSIGN_SUBMISSION_TYPES_FILE)) {
+                require_once($name . '/' . ASSIGN_SUBMISSION_TYPES_FILE);
+
+                $name = basename($name);
+
+                $submission_plugin_class = "submission_$name";
+                $submission_plugin = new $submission_plugin_class($this, $name);
+
+                if ($submission_plugin instanceof submission_plugin) {
+                    $idx = $submission_plugin->get_sort_order();
+                    while (array_key_exists($idx, $submission_plugins)) $idx +=1;
+                 
+                    $submission_plugins[$idx] = $submission_plugin;
+                }
+            }
+        }
+        ksort($submission_plugins);
+        // throw away the keys
+
+        $submission_plugins = array_values($submission_plugins);
+
+        // find this plugin in the list
+        foreach ($submission_plugins as $key => $plugin) {
+            if ($plugin->get_type() == $this->get_type()) {
+                $current_index = $key;
+                break;
+            }
+        }
+
+        // make the switch
+        if ($dir == 'up') {
+            if ($current_index > 0) {
+                $a = $submission_plugins[$current_index - 1];
+                $submission_plugins[$current_index - 1] = $submission_plugins[$current_index];
+                $submission_plugins[$current_index] = $a;
+            }
+        } else if ($dir == 'down') {
+            if ($current_index < (count($submission_plugins) - 1)) {
+                $a = $submission_plugins[$current_index + 1];
+                $submission_plugins[$current_index + 1] = $submission_plugins[$current_index];
+                $submission_plugins[$current_index] = $a;
+            }
+        }
+
+        // save the new normal order 
+        foreach ($submission_plugins as $key => $plugin) {
+            set_config('sortorder', $key, 'submission_' . $plugin->get_type());
+        }
+    }
+    
+    public function get_sort_order() {
+        $order = get_config('submission_' . $this->get_type(), 'sortorder');
+        return $order?$order:0;
+    }
+
+    public function is_visible() {
+        return !get_config('submission_' . $this->get_type(), 'disabled');
+    }
+    
+    public function show() {
+        set_config('disabled', 0, 'submission_' . $this->get_type());
+    }
+    
+    public function hide() {
+        set_config('disabled', 1, 'submission_' . $this->get_type());
+    }
+
+    public function has_admin_settings() {
+        global $CFG;
+        
+        return file_exists($CFG->dirroot . '/mod/assign/submission/' . $this->get_type() . '/settings.php');        
     }
     
     /**

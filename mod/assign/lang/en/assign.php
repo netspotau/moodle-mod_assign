@@ -162,3 +162,12 @@ for <i>\'{$a->assignment}\'  at {$a->timeupdated}</i><br /><br />
 It is <a href="{$a->url}">available on the web site</a>.';
 
 
+$string['maximumsize'] = 'Max';
+$string['managesubmissionplugins'] = 'Manage Submission Plugins';
+$string['submissionplugins'] = 'Submission Plugins';
+$string['submissionpluginname'] = 'Submission Plugin';
+$string['hideshow'] = 'Hide/Show';
+
+$string['deletepluginareyousure'] = 'Delete assignment plugin {$a}: are you sure?';
+$string['deletepluginareyousuremessage'] = 'You are about to completely delete the assignment plugin {$a}. This will completely delete everything in the database associated with this assignment plugin. Are you SURE you want to continue?';
+$string['deletingplugin'] = 'Deleting plugin {$a}.';

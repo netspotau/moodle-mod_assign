@@ -79,7 +79,7 @@ class submission_onlinetext extends submission_plugin {
         }
     }
   
-    public function is_enabled() {
+    public function submissions_enabled() {
         $onlinetext_settings = $this->get_instance();
         if (!$onlinetext_settings) {
             return false;
@@ -92,7 +92,7 @@ class submission_onlinetext extends submission_plugin {
         $onlinetext_settings = $this->get_instance();
         $elements = array();
 
-        if (!$this->is_enabled()) {
+        if (!$this->submissions_enabled()) {
             return $elements;
         }
         
@@ -185,7 +185,6 @@ class submission_onlinetext extends submission_plugin {
         } 
         return '';
     }
-    
     
     
     

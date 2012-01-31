@@ -43,7 +43,6 @@ define('ASSIGN_FILTER_REQUIRE_GRADING', 'require_grading');
  * File areas for the assignment
  */
 define('ASSIGN_FILEAREA_SUBMISSION_FEEDBACK', 'feedback_files');
-//define('ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT', 'submissions_onlinetext');
 define('ASSIGN_SUBMISSION_TYPES_FOLDER', 'mod/assign/submission');
 define('ASSIGN_SUBMISSION_TYPES_FILE', 'lib.php');
 
@@ -111,6 +110,19 @@ class assignment {
 
     }
 
+    public function get_submission_plugins() {
+        return $this->submission_plugins;
+    }
+    
+    public function get_submission_plugin_by_type($type) {
+        foreach ($this->submission_plugins as $plugin) {
+            if ($plugin->get_type() == $type) {
+                return $plugin;
+            }
+        }
+        return null;
+    }
+
     /**
      * Load the submission plugins from the sub folders under submission
      *
@@ -121,7 +133,6 @@ class assignment {
 
         $names = get_plugin_list('submission');
 
-        asort($names);
         foreach ($names as $name) {
             if (file_exists($name . '/' . ASSIGN_SUBMISSION_TYPES_FILE)) {
                 require_once($name . '/' . ASSIGN_SUBMISSION_TYPES_FILE);
@@ -129,13 +140,16 @@ class assignment {
                 $name = basename($name);
                 
                 $submission_plugin_class = "submission_$name";
-                $submission_plugin = new $submission_plugin_class($this);
+                $submission_plugin = new $submission_plugin_class($this, $name);
 
                 if ($submission_plugin instanceof submission_plugin) {
-                    $this->submission_plugins[] = $submission_plugin;
+                    $idx = $submission_plugin->get_sort_order();
+                    while (array_key_exists($idx, $this->submission_plugins)) $idx +=1;
+                    $this->submission_plugins[$idx] = $submission_plugin;
                 }
             }
         }
+        ksort($this->submission_plugins);
     
     }
     
@@ -332,24 +346,26 @@ class assignment {
 
     private function add_plugin_settings(& $mform) {
         foreach ($this->submission_plugins as $plugin) {
-            $settings = $plugin->get_settings();
+            if ($plugin->is_visible()) {
+                $settings = $plugin->get_settings();
 
-            // settings is an array and each element of the array is a map of 'type', 'name', 'description', 'options'
-            if ($settings && count($settings) > 0) {
-                $mform->addElement('header', 'general', $plugin->get_name());
-                foreach ($settings as $setting) {
-                    if (isset($setting['options'])) {
-                        // the editor element accepts it's arguments in a non-standard order
-                        if ($setting['type'] == 'editor' || $setting['type'] == 'filemanager') {
-                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], null, $setting['options']);
+                // settings is an array and each element of the array is a map of 'type', 'name', 'description', 'options'
+                if ($settings && count($settings) > 0) {
+                    $mform->addElement('header', 'general', $plugin->get_name());
+                    foreach ($settings as $setting) {
+                        if (isset($setting['options'])) {
+                            // the editor element accepts it's arguments in a non-standard order
+                            if ($setting['type'] == 'editor' || $setting['type'] == 'filemanager') {
+                                $mform->addElement($setting['type'], $setting['name'], $setting['description'], null, $setting['options']);
+                            } else {
+                                $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
+                            }
                         } else {
-                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
+                            $mform->addElement($setting['type'], $setting['name'], $setting['description']);
                         }
-                    } else {
-                        $mform->addElement($setting['type'], $setting['name'], $setting['description']);
-                    }
-                    if (isset($setting['default'])) {
-                        $mform->setDefault($setting['name'], $setting['default']);
+                        if (isset($setting['default'])) {
+                            $mform->setDefault($setting['name'], $setting['default']);
+                        }
                     }
                 }
             }
@@ -1802,7 +1818,7 @@ class assignment {
             //$this->process_file_upload_submission($submission, $data);
         
             foreach ($this->submission_plugins as $plugin) {
-                if ($plugin->is_enabled()) {
+                if ($plugin->submissions_enabled()) {
                     if (!$plugin->save($submission, $data)) {
                         print_error($plugin->get_error());
                     }
@@ -1956,7 +1972,7 @@ class assignment {
 
     private function add_plugin_submission_elements($submission, & $mform, & $data) {
         foreach ($this->submission_plugins as $plugin) {
-            if ($plugin->is_enabled()) {
+            if ($plugin->submissions_enabled() && $plugin->is_visible()) {
                 $submission_elements = $plugin->get_submission_form_elements($submission, $data);
 
                 if ($submission_elements && count($submission_elements) > 0) {
@@ -2039,7 +2055,7 @@ class assignment {
         if (!isset($this->cache['any_submission_plugin_enabled'])) {
             $this->cache['any_submission_plugin_enabled'] = false;
             foreach ($this->submission_plugins as $plugin) {
-                if ($plugin->is_enabled()) {
+                if ($plugin->submissions_enabled() && $plugin->is_visible()) {
                     $this->cache['any_submission_plugin_enabled'] = true;
                     break;
                 }
@@ -2166,7 +2182,7 @@ class assignment {
 
         if ($submission) {
             foreach ($this->submission_plugins as $plugin) {
-                if ($plugin->is_enabled()) {
+                if ($plugin->submissions_enabled() && $plugin->is_visible()) {
                     $row = new html_table_row();
                     $cell1 = new html_table_cell($plugin->get_name());
                     $cell2 = new html_table_cell($plugin->view_summary($submission));
