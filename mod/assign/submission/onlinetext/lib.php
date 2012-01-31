@@ -13,7 +13,9 @@ class submission_onlinetext extends submission_plugin {
         return get_string('onlinetext', 'submission_onlinetext');
     }
 
-    
+    public function get_type() {
+        return 'onlinetext';
+    }
     
     private function get_instance() {
         global $DB;
@@ -90,6 +92,9 @@ class submission_onlinetext extends submission_plugin {
     public function get_submission_form_elements($submission, & $data) {
         global $USER;
         $onlinetext_settings = $this->get_instance();
+        
+       
+        
         $elements = array();
 
         if (!$this->is_enabled()) {
@@ -101,7 +106,7 @@ class submission_onlinetext extends submission_plugin {
         $submissionid = $submission ? $submission->id : 0;
         
       
-        // $fs = get_file_storage();
+        
         $data = file_prepare_standard_editor($data, 'onlinetext', $editoroptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $submissionid);      
         
         $elements[] = array('type'=>'editor', 'name'=>'onlinetext_editor', 'description'=>'', 'options'=>$editoroptions);
@@ -170,27 +175,59 @@ class submission_onlinetext extends submission_plugin {
     
     
      public function view_summary($submission) {
-        $online_submission = $this->get_submission($submission->id);
-        if ($online_submission) {
-            return shorten_text(format_text($online_submission->onlinetext));
-        }
+         global $OUTPUT,$USER;
+         
+         
+         // new link folder
+
+    //      $link = new moodle_url ('/mod/assign/submission/onlinetext/onlinetext_view.php?id='.$this->assignment->get_course_module()->id.'&sid='.$submission->id);
+         
+           $link = new moodle_url ('/mod/assign/submission/onlinetext/onlinetext_view.php?id='.$this->assignment->get_course_module()->id.'&sid='.$submission->id.'&plugintype=onlinetext&returnaction='.  optional_param('action','view',PARAM_ALPHA).'&returnparams=rownum%3D'.  optional_param('rownum','', PARAM_INT));
+         $onlinetext_submission = $this->get_submission($submission->id);
+        if (!$onlinetext_submission) {
+                return get_string('numwords', '', 0);                                                     
+            } else if(count_words(format_text($onlinetext_submission->onlinetext)) < 1){                           
+                return get_string('numwords', '', count_words(format_text($submission->onlinetext)));                                                     
+            } else{    
+                             
+                return $OUTPUT->action_link($link,get_string('numwords', '', count_words(format_text($onlinetext_submission->onlinetext))));
+            }    
         return '';
+        
+       
     }
     
     public function view($submission) {
-        $online_submission = $this->get_submission($submission->id);
-        if ($online_submission) {
-            $text = file_rewrite_pluginfile_urls($online_submission->onlinetext, 'pluginfile.php', $this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $submission->id);
-            return format_text($text, $online_submission->onlineformat, array('overflowdiv' => true));
+        $result = '';
+        
+        
+        
+        $onlinetext_submission = $this->get_submission($submission->id);
+        
+        
+        if ($onlinetext_submission) {
+            $text = file_rewrite_pluginfile_urls($onlinetext_submission->onlinetext, 'pluginfile.php', $this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $onlinetext_submission->submission);
+            $result .= format_text($text, $onlinetext_submission->onlineformat, array('overflowdiv' => true));
         } 
-        return '';
+        return $result;
     }
     
     
+   
+   
+    
+   
+  
+    
+   
     
     
-    
-    
+   
+      
+      
+      
+     
+     
     
 }
 

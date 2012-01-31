@@ -192,7 +192,7 @@ class assignment {
         } else if ($action == 'editsubmission') {
             $this->view_edit_submission_page();
         } else if ($action == 'onlinetext'){
-            $this->view_online_text_page();
+           // $this->view_online_text_page();
         } else if ($action == 'grading') {
             $this->view_grading_page();
         } else if ($action == 'downloadall') {
@@ -863,6 +863,29 @@ class assignment {
 
     }
     
+    public function view_submission($submissionid=null, $plugintype=null) {
+           global $OUTPUT;
+           $this->view_header();
+            echo $OUTPUT->container_start('viewonlinetext');
+            echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
+            
+            $submission = $this->get_submission(null, $submissionid, false);
+            
+            foreach ($this->submission_plugins as $plugin) {
+                if ($plugin->get_type() == $plugintype) {
+                    echo $plugin->view($submission);
+                }
+            }
+           
+            echo $OUTPUT->box_end();
+            echo $OUTPUT->container_end();
+            echo $OUTPUT->spacer(array('height'=>30));
+                 
+            $this->view_return_links();
+          
+            $this->view_footer();     
+          
+    }
 
     /**
      * Setup the PAGE variable and print the assignment name as a header
@@ -1083,15 +1106,20 @@ class assignment {
      * @param boolean $createnew optional Defaults to false. If set to true a new submission object will be created in the database
      * @return object The submission
      */
-    private function get_submission($userid = null, $create = false) {
+    public function get_submission($userid = null,$submissionid =null, $create = false) {
         global $DB, $USER;
 
-        if (!$userid) {
+        if (!$userid && !$submissionid) {
             $userid = $USER->id;
         }
-
-        $submission = $DB->get_record('assign_submission', array('assignment'=>$this->instance->id, 'userid'=>$userid));
-
+        if ($userid){
+            
+              // if the userid is not null then use userid
+             $submission = $DB->get_record('assign_submission', array('assignment'=>$this->instance->id, 'userid'=>$userid));
+         }else{
+         
+             $submission = $DB->get_record('assign_submission', array('assignment'=>$this->instance->id, 'id'=>$submissionid));
+         }
         if ($submission) {
             return $submission;
         }
@@ -1206,7 +1234,7 @@ class assignment {
      *
      * @global object $OUTPUT
      * @param int $userid The id of the user who created the submission to display
-     */
+     
     private function view_online_text_submission($userid) {
         global $OUTPUT;
         
@@ -1226,7 +1254,9 @@ class assignment {
             print_error('nosubmission', 'assign');
         }
     }
-
+    
+      */
+     
     /**
      * View a link to go back to the previous page. Uses url parameters returnaction and returnparams.
      *
@@ -1254,7 +1284,7 @@ class assignment {
      * @global object $OUTPUT
      * @global object $USER
      * @global object $DB
-     */
+     
     private function view_online_text_page() {
         global $OUTPUT, $USER,$DB;
        
@@ -1283,6 +1313,8 @@ class assignment {
         $this->add_to_log('view online text submission', get_string('viewonlinetextsubmissionforstudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user))));
     }
 
+    */
+    
     /**
      * View the grading table of all submissions for this assignment
      *
@@ -1542,7 +1574,7 @@ class assignment {
         global $CFG, $USER, $OUTPUT, $PAGE;
 
         if (!$submissionid) {
-            $submission = $this->get_submission($USER->id, false);
+            $submission = $this->get_submission($USER->id,null, false);
             $submissionid = $submission->id;
         }
     
@@ -1691,7 +1723,7 @@ class assignment {
         require_capability('mod/assign:submit', $this->context);
         
         global $USER;
-        $submission = $this->get_submission($USER->id, true);
+        $submission = $this->get_submission($USER->id,null, true);
         $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
 
         $this->update_submission($submission);
@@ -1792,7 +1824,7 @@ class assignment {
         $data = $this->get_default_submission_data();
         $mform = new mod_assign_submission_form(null, array($this, $data));
         if ($data = $mform->get_data()) {               
-            $submission = $this->get_submission($USER->id, true); //create the submission if needed & its id              
+            $submission = $this->get_submission($USER->id, null, true); //create the submission if needed & its id              
             $grade = $this->get_grade($USER->id); // get the grade to check if it is locked
             if ($grade && $grade->locked) {
                 print_error('submissionslocked', 'assign');
@@ -2395,7 +2427,7 @@ class assignment {
         
         // online text submissions
 
-        $submission = $this->get_submission($USER->id, false);
+        $submission = $this->get_submission($USER->id, null, false);
         
         $this->add_plugin_submission_elements($submission, $mform, $data);
         // file uploads
@@ -2424,7 +2456,7 @@ class assignment {
 
         $userid = required_param('userid', PARAM_INT);
 
-        $submission = $this->get_submission($userid, false);
+        $submission = $this->get_submission($userid, null, false);
         if (!$submission) {
             return;
         }
