@@ -31,60 +31,6 @@ class submission_onlinetext extends submission_plugin {
         return $DB->get_record('assign_submission_onlinetext', array('submission'=>$submissionid));
     }
     
-    public function get_settings() {
-        // global $CFG, $COURSE;
-
-        $current_settings = $this->get_instance();
-        $settings = array();
-        $options = array();
-        $default_enabled_allowonlinetextsubmissions = $current_settings?$current_settings->enabled:0;
-        $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
-         
-          
-           
-         
-          $settings[] = array('type' => 'select', 
-                            'name' => 'allowonlinetextsubmissions', 
-                            'description' => get_string('allowonlinetextsubmissions', 'submission_onlinetext'), 
-                            'options'=>$ynoptions,
-                            'default'=>$default_enabled_allowonlinetextsubmissions);
-        
-    
-          
-          
-      
-
-      
-        return $settings;
-
-    }
-
-    public function save_settings($mform) {
-        global $DB;
-
-        $onlinetext_settings = $this->get_instance();
-
-        if ($onlinetext_settings) {
-            $onlinetext_settings->enabled = $mform->allowonlinetextsubmissions;
-
-            return $DB->update_record('assign_submission_onlinetext_settings', $onlinetext_settings);
-        } else {
-            $onlinetext_settings = new stdClass();
-            $onlinetext_settings->assignment = $this->assignment->get_instance()->id;
-           
-            $onlinetext_settings->enabled = $mform->allowonlinetextsubmissions;
-            return $DB->insert_record('assign_submission_onlinetext_settings', $onlinetext_settings) > 0;
-        }
-    }
-  
-    public function submissions_enabled() {
-        $onlinetext_settings = $this->get_instance();
-        if (!$onlinetext_settings) {
-            return false;
-        }
-        return $onlinetext_settings->enabled;
-    }
-   
     public function get_submission_form_elements($submission, & $data) {
         global $USER;
         $onlinetext_settings = $this->get_instance();
@@ -92,11 +38,6 @@ class submission_onlinetext extends submission_plugin {
        
         
         $elements = array();
-
-        if (!$this->submissions_enabled()) {
-            return $elements;
-        }
-        
 
         $editoroptions = $this->get_edit_options();
         $submissionid = $submission ? $submission->id : 0;
@@ -136,9 +77,6 @@ class submission_onlinetext extends submission_plugin {
 
         $settings = $this->get_instance();
 
-        if (!$settings->enabled) {
-            return true;
-        }
         $editoroptions = $this->get_edit_options();
         
 
