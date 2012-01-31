@@ -26,9 +26,9 @@ defined('MOODLE_INTERNAL') || die;
 
         $settings = new admin_settingpage('submission_'.$submission_pluginname,
                 $strsubmission_pluginname, 'moodle/site:config', !$module->visible);
-    //    if ($ADMIN->fulltree) {
+        if ($ADMIN->fulltree) {
             include($CFG->dirroot . "/mod/assign/submission/$submission_pluginname/settings.php");
-      //  }
+        }
             
         $ADMIN->add('submissionplugins', $settings);
     }
