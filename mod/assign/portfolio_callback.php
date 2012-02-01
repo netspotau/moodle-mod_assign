@@ -197,9 +197,11 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
         // of files based on the data set by load_data
         if ($this->plugin && $this->editor) {
             $plugin = $this->get_submission_plugin();
-            
+            $options = portfolio_format_text_options();
+            $options->context = get_context_instance(CONTEXT_MODULE,$this->cmid);
+
             $textsha1 = sha1(format_text($plugin->get_editor_text($this->editor, $this->sid), 
-                                         $plugin->get_editor_format($this->editor, $this->sid)));
+                                         $plugin->get_editor_format($this->editor, $this->sid), $options));
             $filesha1 = '';
             try {
                 $filesha1 = $this->get_sha1_file();
