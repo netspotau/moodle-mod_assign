@@ -47,6 +47,13 @@ define('ASSIGN_SUBMISSION_TYPES_FOLDER', 'mod/assign/submission');
 define('ASSIGN_SUBMISSION_TYPES_FILE', 'lib.php');
 
 
+/**#@+
+ * File areas for assignment portfolio if enabled
+ */
+define('ASSIGN_FILEAREA_PORTFOLIO_FILES', 'portfolio_files');
+
+
+
 /** Include accesslib.php */
 require_once($CFG->libdir.'/accesslib.php');
 /** Include formslib.php */
@@ -57,6 +64,9 @@ require_once($CFG->libdir . '/plagiarismlib.php');
 require_once($CFG->dirroot . '/repository/lib.php');
 /** Include local mod_form.php */
 require_once('mod_form.php');
+/** Include portfoliolib.php */
+require_once($CFG->libdir . '/portfoliolib.php');
+/** Include submission_plugin.php */
 require_once('submission_plugin.php');
 
 /*
@@ -414,6 +424,12 @@ class assignment {
         $mform->addElement('select', 'maxsubmissionsizebytes', get_string('maximumsubmissionsize', 'assign'), $choices);
         */
 
+          // plagiarism enabling form
+        
+        $course_context = get_context_instance(CONTEXT_COURSE, $COURSE->id);
+        plagiarism_get_form_elements_module($mform, $course_context);
+        
+        
         $mform->addElement('header', 'general', get_string('notifications', 'assign'));
         $mform->addElement('select', 'sendnotifications', get_string('sendnotifications', 'assign'), $ynoptions);
         $mform->setDefault('sendnotifications', 1);
@@ -882,7 +898,7 @@ class assignment {
     }
     
     public function view_submission($submissionid=null, $plugintype=null) {
-           global $OUTPUT;
+           global $OUTPUT, $CFG;
            $this->view_header();
             echo $OUTPUT->container_start('viewonlinetext');
             echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
@@ -894,7 +910,14 @@ class assignment {
                     echo $plugin->view($submission);
                 }
             }
-           
+           /*** if ($CFG->enableportfolios) {
+            
+            
+                $this->portfolio_enable();
+                
+                
+                
+            }**/
             echo $OUTPUT->box_end();
             echo $OUTPUT->container_end();
             echo $OUTPUT->spacer(array('height'=>30));
@@ -904,6 +927,39 @@ class assignment {
             $this->view_footer();     
           
     }
+    
+    public function render_editor_content($filearea, $submissionid, $plugintype, $editor) {
+        global $CFG;
+        
+        $result = '';
+        
+        $plugin = $this->get_submission_plugin_by_type($plugintype);
+        
+        $text = $plugin->get_editor_text($editor, $submissionid);
+        $format = $plugin->get_editor_format($editor, $submissionid);
+        
+        $text = file_rewrite_pluginfile_urls($text, 'pluginfile.php', $this->get_context()->id, 'mod_assign', $filearea, $submissionid);
+        $result .= format_text($text, $format, array('overflowdiv' => true));
+
+        
+
+        if ($CFG->enableportfolios) {
+            require_once($CFG->libdir . '/portfoliolib.php');
+           
+            $button = new portfolio_add_button();
+            $button->set_callback_options('assign_portfolio_caller', array('cmid' => $this->get_course_module()->id, 'sid' => $submissionid, 'plugin' => $plugintype, 'editor' => $editor, 'area'=>$filearea), '/mod/assign/portfolio_callback.php');
+            $fs = get_file_storage();
+
+            if ($files = $fs->get_area_files($this->context->id, 'mod_assign',$filearea, $submissionid, "timemodified", false)) {
+                $button->set_formats(PORTFOLIO_FORMAT_RICHHTML);
+            } else {
+                $button->set_formats(PORTFOLIO_FORMAT_PLAINHTML);
+            }
+            $result .= $button->to_html();
+        }
+        return $result;
+    }
+            
 
     /**
      * Setup the PAGE variable and print the assignment name as a header
@@ -941,7 +997,7 @@ class assignment {
             echo format_module_intro('assign', $this->instance, $this->get_course_module()->id);
             echo $OUTPUT->box_end();
         }
-        //plagiarism_print_disclosure($this->get_course_module()->id);
+        plagiarism_print_disclosure($this->get_course_module()->id);
     }
     
     /**
@@ -2280,6 +2336,116 @@ class assignment {
         echo $OUTPUT->container_end();
     }
 
+    /**
+     * enable assigment portfolio 
+     
+    public function portfolio_enable(){
+        
+             global $CFG;
+             require_once($CFG->libdir . '/portfoliolib.php');
+             
+             $submission = $this->get_submission();
+             
+             $button = new portfolio_add_button();
+             $button->set_callback_options('assign_portfolio_caller', array('id' => $this->get_course_module()->id), '/mod/assign/portfolio_callback.php');
+              $fs = get_file_storage();
+              
+                        if ($files = $fs->get_area_files($this->context->id, 'mod_assign', ASSIGN_FILEAREA_PORTFOLIO_FILES, $submission->id, "timemodified", false)) {
+                            $button->set_formats(PORTFOLIO_FORMAT_RICHHTML);
+                        } else {
+                            $button->set_formats(PORTFOLIO_FORMAT_PLAINHTML);
+                        }
+                        $button->render();
+
+  }*/
+
+    
+    /*
+    function portfolio_get_sha1($caller) {
+        $submission = $this->get_submission();
+        
+        
+        $textsha1 = sha1(format_text($submission->onlinetext, $submission->onlineformat));
+        $filesha1 = '';
+        try {
+            $filesha1 = $caller->get_sha1_file();
+        } catch (portfolio_caller_exception $e) {} // no files
+        return sha1($textsha1 . $filesha1);
+    }
+       
+    function portfolio_load_data($caller) {
+        //global $USER;
+        $submission = $this->get_submission();
+        $fs = get_file_storage();
+        if ($files = $fs->get_area_files($this->context->id, 'mod_assign', ASSIGN_FILEAREA_PORTFOLIO_FILES, $submission->id, "timemodified", false)) {
+            $caller->set('multifiles', $files);
+        }
+    }
+    
+    
+    function portfolio_prepare_package($exporter, $user) {
+        $submission = $this->get_submission($user->id);
+        $options = portfolio_format_text_options();
+        $html = format_text($submission->onlinetext, $submission->onlineformat, $options);
+        $html = portfolio_rewrite_pluginfile_urls($html, $this->context->id, 'mod_assign', ASSIGN_FILEAREA_PORTFOLIO_FILES, $submission->id, $exporter->get('format'));
+        
+       
+        
+        
+        if (in_array($exporter->get('formatclass'), array(PORTFOLIO_FORMAT_PLAINHTML, PORTFOLIO_FORMAT_RICHHTML))) {
+            if ($files = $exporter->get('caller')->get('multifiles')) {
+                foreach ($files as $f) {
+                    $exporter->copy_existing_file($f);
+                }
+            }
+            return $exporter->write_new_file($html, 'assign.html', !empty($files));
+        } else if ($exporter->get('formatclass') == PORTFOLIO_FORMAT_LEAP2A) {
+            
+            
+            
+            
+            $leapwriter = $exporter->get('format')->leap2a_writer();
+            $entry = new portfolio_format_leap2a_entry('onlinetext' . $this->data->id, $this->data->name, 'resource', $html);
+            $entry->add_category('web', 'resource_type');
+            $entry->published = $submission->timecreated;
+            $entry->updated = $submission->timemodified;
+            $entry->author = $user;
+            $leapwriter->add_entry($entry);
+            if ($files = $exporter->get('caller')->get('multifiles')) {
+                $leapwriter->link_files($entry, $files, 'onlinetext' . $this->data->id . 'file');
+                foreach ($files as $f) {
+                    $exporter->copy_existing_file($f);
+                }
+               
+            }
+             
+            
+            
+            $exporter->write_new_file($leapwriter->to_xml(), $exporter->get('format')->manifest_name(), true);
+            
+            
+        } else {
+            debugging('invalid format class: ' . $exporter->get('formatclass'));
+        }
+    }
+    
+    
+    
+    function portfolio_get_expected_time() {
+       // a file based export
+        // return portfolio_expected_time_file($this->exportfiles);
+ 
+    // or for database exports
+        // return portfolio_expected_time_db(count($this->recordstoexport));
+    }
+    
+    
+    */
+    
+    
+    
+    
+    
     private function view_feedback($userid=null) {
         global $OUTPUT, $USER, $PAGE, $DB;
 

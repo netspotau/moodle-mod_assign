@@ -88,20 +88,20 @@ class assign_files implements renderable {
     public $portfolioform;
     public $cm;
     public $course;
-    public function __construct($context, $userid, $filearea='submission') {
+    public function __construct($context, $sid, $filearea='submission') {
         global $CFG;
         $this->context = $context;
         list($context, $course, $cm) = get_context_info_array($context->id);
         $this->cm = $cm;
         $this->course = $course;
         $fs = get_file_storage();
-        $this->dir = $fs->get_area_tree($this->context->id, 'mod_assign', $filearea, $userid);
+        $this->dir = $fs->get_area_tree($this->context->id, 'mod_assign', $filearea, $sid);
         if (!empty($CFG->enableportfolios)) {
             require_once($CFG->libdir . '/portfoliolib.php');
-            $files = $fs->get_area_files($this->context->id, 'mod_assign', $filearea, $userid, "timemodified", false);
+            $files = $fs->get_area_files($this->context->id, 'mod_assign', $filearea, $sid, "timemodified", false);
             if (count($files) >= 1 && has_capability('mod/assign:exportownsubmission', $this->context)) {
                 $button = new portfolio_add_button();
-                $button->set_callback_options('assign_portfolio_caller', array('id' => $this->cm->id, 'userid' => $userid), '/mod/assign/locallib.php');
+                $button->set_callback_options('assign_portfolio_caller', array('cmid' => $this->cm->id, 'sid'=>$sid, 'area'=>$filearea), '/mod/assign/portfolio_callback.php');
                 $button->reset_formats();
                 $this->portfolioform = $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
             }
@@ -118,7 +118,7 @@ class assign_files implements renderable {
             if (!empty($CFG->enableportfolios)) {
                 $button = new portfolio_add_button();
                 if (has_capability('mod/assign:exportownsubmission', $this->context)) {
-                    $button->set_callback_options('assign_portfolio_caller', array('id' => $this->cm->id, 'fileid' => $file->get_id()), '/mod/assign/locallib.php');
+                    $button->set_callback_options('assign_portfolio_caller', array('cmid' => $this->cm->id, 'fileid' => $file->get_id()), '/mod/assign/portfolio_callback.php');
                     $button->set_format_by_file($file);
                     $file->portfoliobutton = $button->to_html(PORTFOLIO_ADD_ICON_LINK);
                 }

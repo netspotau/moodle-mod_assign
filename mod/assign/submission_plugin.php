@@ -34,12 +34,16 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+
+
 abstract class submission_plugin {
 
     protected $assignment;
     private $type = '';
     private $error = '';
-
+    
+   
     /**
      * Constructor for the abstract submission type class
      *
@@ -176,7 +180,6 @@ abstract class submission_plugin {
     public function view($submission) {
         return '';
     }
-
     
 
     public function move($dir='down') {
@@ -269,4 +272,28 @@ abstract class submission_plugin {
     public function view_summary($submission) {
         return '';
     }
+    
+    
+    /**
+     * Should not output anything - return the result as a string so it can be consumed by webservices.
+     * 
+     * @return string - return a string representation of the submission in full
+     */
+    public function get_editor_text($name, $submissionid) {
+        return '';
+    }
+    
+     /**
+     * Should not output anything - return the result as a string so it can be consumed by webservices.
+     * 
+     * @return string - return a string representation of the submission in full
+     */
+    public function get_editor_format($name, $submissionid) {
+        return 0;
+    }
+    
+    
+    
+    
+    
 }
