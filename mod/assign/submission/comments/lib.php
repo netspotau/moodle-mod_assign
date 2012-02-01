@@ -26,58 +26,9 @@ class submission_comments extends submission_plugin {
         return $DB->get_record('assign_submission_comments', array('submission'=>$submissionid));
     }
 
-    public function get_settings() {
-        global $CFG, $COURSE, $DB;
-
-        $current_settings = $this->get_instance();
-
-        $default_allowcomments = $current_settings?$current_settings->enabled:0;
-
-        $settings = array();
-        $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
-        
-        $settings[] = array('type' => 'select', 
-                            'name' => 'allowcomments', 
-                            'description' => get_string('allowsubmissioncomments', 'submission_comments'), 
-                            'options'=>$ynoptions,
-                            'default'=>$default_allowcomments);
-
-        return $settings;
-
-    }
-
-    public function save_settings($mform) {
-        global $DB;
-
-        $settings = $this->get_instance();
-
-        if ($settings) {
-            $settings->enabled = $mform->allowcomments;
-
-            return $DB->update_record('assign_submission_comments_settings', $settings);
-        } else {
-            $settings = new stdClass();
-            $settings->assignment = $this->assignment->get_instance()->id;
-            $settings->enabled = $mform->allowfilesubmissions;
-            return $DB->insert_record('assign_submission_comments_settings', $settings) > 0;
-        }
-    }
-
-    public function submissions_enabled() {
-        $settings = $this->get_instance();
-        if (!$settings) {
-            return false;
-        }
-        return $settings->enabled;
-    }
-
     public function get_submission_form_elements($submission, & $data) {
         $settings = $this->get_instance();
         $elements = array();
-
-        if (!$settings->enabled) {
-            return $elements;
-        }
 
         $submissionid = $submission ? $submission->id : 0;
         $default_comment = '';
@@ -99,10 +50,6 @@ class submission_comments extends submission_plugin {
 
         $settings = $this->get_instance();
 
-        if (!$settings->enabled) {
-            return;
-        }
-        
         $comment_submission = $this->get_submission($submission->id);
         if ($comment_submission) {
             $comment_submission->commenttext = $data->submissioncomments_editor['text'];

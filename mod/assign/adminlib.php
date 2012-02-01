@@ -163,7 +163,7 @@ class submission_plugin_manager {
     }
     
     private function delete_plugin($plugin) {
-        global $CFG;
+        global $CFG, $DB;
         $confirm = optional_param('confirm', null, PARAM_BOOL);
 
         if ($confirm) {
@@ -175,6 +175,8 @@ class submission_plugin_manager {
     
             unset_config('disabled', 'submission_' . $plugin->get_type());
             unset_config('sortorder', 'submission_' . $plugin->get_type());
+
+            $DB->delete_records('assign_plugin_config', array('plugin'=>$plugin->get_type()));
 
             // Then the tables themselves
             drop_plugin_tables('submission_' . $plugin->get_type(), $CFG->dirroot . '/mod/assign/submission/' .$plugin->get_type(). '/db/install.xml', false);
@@ -194,6 +196,7 @@ class submission_plugin_manager {
         $this->view_header();
         echo $OUTPUT->heading(get_string('deletingplugin', 'assign', $plugin->get_name()));
         echo $this->error;
+        echo $OUTPUT->notification(get_string('plugindeletefiles', 'moodle', array('name'=>$plugin->get_name(), 'directory'=>('/mod/assign/submission/'.$plugin->get_type()))));
         echo $OUTPUT->continue_button($this->pageurl);
         $this->view_footer();
     }

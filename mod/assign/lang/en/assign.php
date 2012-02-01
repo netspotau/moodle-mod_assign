@@ -171,3 +171,4 @@ $string['hideshow'] = 'Hide/Show';
 $string['deletepluginareyousure'] = 'Delete assignment plugin {$a}: are you sure?';
 $string['deletepluginareyousuremessage'] = 'You are about to completely delete the assignment plugin {$a}. This will completely delete everything in the database associated with this assignment plugin. Are you SURE you want to continue?';
 $string['deletingplugin'] = 'Deleting plugin {$a}.';
+$string['enabled'] = 'Enabled';

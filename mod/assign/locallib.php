@@ -272,12 +272,19 @@ class assignment {
         $this->instance->courseid = $this->instance->course;
 
 
-        $returnid = $DB->insert_record("assign", $this->instance);
+        $returnid = $DB->insert_record('assign', $this->instance);
         $this->instance->id = $returnid;
 
         // call save_settings hook for submission plugins
         foreach ($this->submission_plugins as $plugin) {
             if ($plugin->is_visible()) {
+                $enabled_name = $plugin->get_type() . '_enabled';
+                if ($this->instance->$enabled_name) {
+                    $plugin->enable();
+                } else {
+                    $plugin->disable();
+                }
+                
                 if (!$plugin->save_settings($this->instance)) {
                     print_error($plugin->get_error());
                     return false;
@@ -307,7 +314,11 @@ class assignment {
             $result = false;
         }
         
-        if (! $DB->delete_records('assignment_submissions', array('assignment'=>$this->instance->id))) {
+        if (! $DB->delete_records('assign_submissions', array('assignment'=>$this->instance->id))) {
+            $result = false;
+        }
+        
+        if (! $DB->delete_records('assign_plugin_config', array('assignment'=>$this->instance->id))) {
             $result = false;
         }
 
@@ -337,12 +348,23 @@ class assignment {
         $this->instance->id = $this->instance->instance;
         $this->instance->timemodified = time();
         
+        // load the assignment so the plugins have access to it
 
         // call save_settings hook for submission plugins
         foreach ($this->submission_plugins as $plugin) {
-            if (!$plugin->save_settings($this->instance)) {
-                print_error($plugin->get_error());
-                return false;
+            if ($plugin->is_visible()) {
+                $enabled_name = $plugin->get_type() . '_enabled';
+                if ($this->instance->$enabled_name) {
+                    $plugin->enable();
+                } else {
+                    $plugin->disable();
+                }
+                    
+            
+                if (!$plugin->save_settings($this->instance)) {
+                    print_error($plugin->get_error());
+                    return false;
+                }
             }
         }
 
@@ -359,11 +381,19 @@ class assignment {
     private function add_plugin_settings(& $mform) {
         foreach ($this->submission_plugins as $plugin) {
             if ($plugin->is_visible()) {
+                // section heading
+                $mform->addElement('header', 'general', $plugin->get_name());
+
+                // enabled
+                $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
+    
+                $mform->addElement('select', $plugin->get_type() . '_enabled', get_string('enabled', 'assign'), $ynoptions);
+                $mform->setDefault($plugin->get_type() . '_enabled', $plugin->is_enabled());
+
                 $settings = $plugin->get_settings();
 
                 // settings is an array and each element of the array is a map of 'type', 'name', 'description', 'options'
                 if ($settings && count($settings) > 0) {
-                    $mform->addElement('header', 'general', $plugin->get_name());
                     foreach ($settings as $setting) {
                         if (isset($setting['options'])) {
                             // the editor element accepts it's arguments in a non-standard order
@@ -1908,7 +1938,7 @@ class assignment {
             //$this->process_file_upload_submission($submission, $data);
         
             foreach ($this->submission_plugins as $plugin) {
-                if ($plugin->submissions_enabled()) {
+                if ($plugin->is_enabled()) {
                     if (!$plugin->save($submission, $data)) {
                         print_error($plugin->get_error());
                     }
@@ -2062,7 +2092,7 @@ class assignment {
 
     private function add_plugin_submission_elements($submission, & $mform, & $data) {
         foreach ($this->submission_plugins as $plugin) {
-            if ($plugin->submissions_enabled() && $plugin->is_visible()) {
+            if ($plugin->is_enabled() && $plugin->is_visible()) {
                 $submission_elements = $plugin->get_submission_form_elements($submission, $data);
 
                 if ($submission_elements && count($submission_elements) > 0) {
@@ -2145,7 +2175,7 @@ class assignment {
         if (!isset($this->cache['any_submission_plugin_enabled'])) {
             $this->cache['any_submission_plugin_enabled'] = false;
             foreach ($this->submission_plugins as $plugin) {
-                if ($plugin->submissions_enabled() && $plugin->is_visible()) {
+                if ($plugin->is_enabled() && $plugin->is_visible()) {
                     $this->cache['any_submission_plugin_enabled'] = true;
                     break;
                 }
@@ -2272,7 +2302,7 @@ class assignment {
 
         if ($submission) {
             foreach ($this->submission_plugins as $plugin) {
-                if ($plugin->submissions_enabled() && $plugin->is_visible()) {
+                if ($plugin->is_enabled() && $plugin->is_visible()) {
                     $row = new html_table_row();
                     $cell1 = new html_table_cell($plugin->get_name());
                     $cell2 = new html_table_cell($plugin->view_summary($submission));

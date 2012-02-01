@@ -152,13 +152,21 @@ abstract class submission_plugin {
         return true;   
     }
     
+    public function enable() {
+        return $this->set_config('enabled', 1);
+    }
+
+    public function disable() {
+        return $this->set_config('enabled', 0);
+    }
+    
     /**
      * Allows hiding this plugin from the submission screen if it is not enabled.
      * 
      * @return boolean - if false - this plugin will not accept submissions
      */
-    public function submissions_enabled() {
-        return false;
+    public function is_enabled() {
+        return $this->get_config('enabled');
     }
 
     /**
@@ -262,6 +270,50 @@ abstract class submission_plugin {
         global $CFG;
         
         return file_exists($CFG->dirroot . '/mod/assign/submission/' . $this->get_type() . '/settings.php');        
+    }
+    
+    public function set_config($name, $value) {
+        global $DB;
+        
+        $current = $DB->get_record('assign_plugin_config', array('assignment'=>$this->assignment->get_instance()->id, 'plugin'=>$this->get_type(), 'name'=>$name));
+
+        if ($current) {
+            $current->value = $value;
+            return $DB->update_record('assign_plugin_config', $current, array('id'=>$current->id));
+        } else {
+            $setting = new stdClass();
+            $setting->assignment = $this->assignment->get_instance()->id;
+            $setting->plugin = $this->get_type();
+            $setting->name = $name;
+            $setting->value = $value;
+             
+            return $DB->insert_record('assign_plugin_config', $setting) > 0;
+        }
+    }
+
+    public function get_config($setting = null) {
+        global $DB;
+
+        if ($setting) {
+            $assignment = $this->assignment->get_instance();
+            if ($assignment) {
+                $result = $DB->get_record('assign_plugin_config', array('assignment'=>$assignment->id, 'plugin'=>$this->get_type(), 'name'=>$setting));
+                if ($result) {
+                    return $result->value;
+                }
+            }
+            return false;
+        }
+        $results = $DB->get_records('assign_plugin_config', array('assignment'=>$this->assignment->get_instance()->id, 'plugin'=>$this->get_type()));
+
+        $config = new stdClass();
+        if (is_array($results)) {
+            foreach ($results as $setting) {
+                $name = $setting->name;
+                $config->$name = $setting->value;
+            }
+        }
+        return $config;
     }
     
     /**

@@ -44,7 +44,7 @@
         <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="assign_grades" COMMENT="Info about graded assignments" PREVIOUS="assign_submission" >
+    <TABLE NAME="assign_grades" COMMENT="Info about graded assignments" PREVIOUS="assign_submission" NEXT="assign_plugin_config">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="assignment"/>
         <FIELD NAME="assignment" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="userid"/>
@@ -66,6 +66,24 @@
       <INDEXES>
         <INDEX NAME="userid" UNIQUE="false" FIELDS="userid" NEXT="mailed"/>
         <INDEX NAME="mailed" UNIQUE="false" FIELDS="mailed" PREVIOUS="userid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="assign_plugin_config" COMMENT="Config data for an instance of a plugin" PREVIOUS="assign_grades" >
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="assignment"/>
+        <FIELD NAME="assignment" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="plugin"/>
+        <FIELD NAME="plugin" TYPE="char" LENGTH="28" NOTNULL="true" SEQUENCE="false" PREVIOUS="assignment" NEXT="name"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="28" NOTNULL="true" SEQUENCE="false" PREVIOUS="plugin" NEXT="value"/>
+        <FIELD NAME="value" TYPE="text" LENGTH="small" NOTNULL="false" SEQUENCE="false" PREVIOUS="name"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="assignment"/>
+        <KEY NAME="assignment" TYPE="foreign" FIELDS="assignment" REFTABLE="assignment" REFFIELDS="id" PREVIOUS="primary"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="assignment" UNIQUE="false" FIELDS="assignment" NEXT="plugin"/>
+        <INDEX NAME="plugin" UNIQUE="false" FIELDS="plugin" PREVIOUS="assignment" NEXT="name"/>
+        <INDEX NAME="name" UNIQUE="false" FIELDS="name" PREVIOUS="plugin"/>
       </INDEXES>
     </TABLE>
   </TABLES>

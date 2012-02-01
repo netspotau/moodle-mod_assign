@@ -10,19 +10,6 @@ class submission_file extends submission_plugin {
         return get_string('file', 'submission_file');
     }
     
-    private function get_instance() {
-        global $DB;
-        if ($this->instance) {
-            return $this->instance;
-        }
-        $assignment = $this->assignment->get_instance();
-        if ($assignment) {
-            $this->instance = $DB->get_record('assign_submission_file_settings', array('assignment'=>$assignment->id));
-        }
-    
-        return $this->instance;
-    }
-    
     private function get_submission($submissionid) {
         global $DB;
         return $DB->get_record('assign_submission_file', array('submission'=>$submissionid));
@@ -31,11 +18,8 @@ class submission_file extends submission_plugin {
     public function get_settings() {
         global $CFG, $COURSE, $DB;
 
-        $current_settings = $this->get_instance();
-
-        $default_maxfilesubmissions = $current_settings?$current_settings->maxfilesubmissions:3;
-        $default_maxsubmissionsizebytes = $current_settings?$current_settings->maxsubmissionsizebytes:0;
-        $default_allowfilesubmissions = $current_settings?$current_settings->enabled:0;
+        $default_maxfilesubmissions = $this->get_config('maxfilesubmissions');
+        $default_maxsubmissionsizebytes = $this->get_config('maxsubmissionsizebytes');
 
         $settings = array();
         $options = array();
@@ -44,12 +28,6 @@ class submission_file extends submission_plugin {
         }
         $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
         
-        $settings[] = array('type' => 'select', 
-                            'name' => 'allowfilesubmissions', 
-                            'description' => get_string('allowfilesubmissions', 'submission_file'), 
-                            'options'=>$ynoptions,
-                            'default'=>$default_allowfilesubmissions);
-
         $settings[] = array('type' => 'select', 
                             'name' => 'maxfilesubmissions', 
                             'description' => get_string('maxfilessubmission', 'submission_file'), 
@@ -68,39 +46,15 @@ class submission_file extends submission_plugin {
     }
 
     public function save_settings($mform) {
-        global $DB;
-
-        $file_settings = $this->get_instance();
-
-        if ($file_settings) {
-            $file_settings->maxfilesubmissions = $mform->maxfilesubmissions;
-            $file_settings->maxsubmissionsizebytes = $mform->maxsubmissionsizebytes;
-            $file_settings->enabled = $mform->allowfilesubmissions;
-
-            return $DB->update_record('assign_submission_file_settings', $file_settings);
-        } else {
-            $file_settings = new stdClass();
-            $file_settings->assignment = $this->assignment->get_instance()->id;
-            $file_settings->maxfilesubmissions = $mform->maxfilesubmissions;
-            $file_settings->maxsubmissionsizebytes = $mform->maxsubmissionsizebytes;
-            $file_settings->enabled = $mform->allowfilesubmissions;
-            return $DB->insert_record('assign_submission_file_settings', $file_settings) > 0;
-        }
-    }
-
-    public function submissions_enabled() {
-        $file_settings = $this->get_instance();
-        if (!$file_settings) {
-            return false;
-        }
-        return $file_settings->enabled;
+        $this->set_config('maxfilesubmissions', $mform->maxfilesubmissions);
+        $this->set_config('maxsubmissionsizebytes', $mform->maxsubmissionsizebytes);
+        return true;
     }
 
     private function get_file_options() {
-        $file_settings = $this->get_instance();
         $fileoptions = array('subdirs'=>1,
-                                'maxbytes'=>$file_settings->maxsubmissionsizebytes,
-                                'maxfiles'=>$file_settings->maxfilesubmissions,
+                                'maxbytes'=>$this->get_config('maxsubmissionsizebytes'),
+                                'maxfiles'=>$this->get_config('maxfilesubmissions'),
                                 'accepted_types'=>'*',
                                 'return_types'=>FILE_INTERNAL);
         return $fileoptions;
@@ -108,10 +62,9 @@ class submission_file extends submission_plugin {
 
     public function get_submission_form_elements($submission, & $data) {
 
-        $file_settings = $this->get_instance();
         $elements = array();
 
-        if (!$file_settings->enabled || $file_settings->maxfilesubmissions <= 0) {
+        if ($this->get_config('maxfilesubmissions') <= 0) {
             return $elements;
         }
 
@@ -140,11 +93,6 @@ class submission_file extends submission_plugin {
 
         global $USER, $DB;
 
-        $settings = $this->get_instance();
-
-        if (!$settings->enabled) {
-            return;
-        }
         $fileoptions = $this->get_file_options();
         
 
