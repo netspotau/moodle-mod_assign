@@ -10,7 +10,7 @@ class submission_comments extends submission_plugin {
     
    
     
-    private function get_submission_comment($submissionid) {
+    private function get_comment_submission($submissionid) {
         global $DB;
         return $DB->get_record('assign_submission_comments', array('submission'=>$submissionid));
     }
@@ -21,7 +21,7 @@ class submission_comments extends submission_plugin {
         $submissionid = $submission ? $submission->id : 0;
         $default_comment = '';
         if ($submission) {
-            $submission_comment = $this->get_submission_comment($submission->id);
+            $submission_comment = $this->get_comment_submission($submission->id);
             // This can null if the assignment settings are changed after an assignment is created
             if ($submission_comment) {
                 $data->submissioncomments_editor['text'] = $submission_comment->commenttext;
@@ -40,7 +40,7 @@ class submission_comments extends submission_plugin {
         global $USER, $DB;
 
     
-        $comment_submission = $this->get_submission_comment($submission->id);
+        $comment_submission = $this->get_comment_submission($submission->id);
         if ($comment_submission) {
             $comment_submission->commenttext = $data->submissioncomments_editor['text'];
             $comment_submission->commentformat = $data->submissioncomments_editor['format'];
@@ -56,7 +56,7 @@ class submission_comments extends submission_plugin {
     }
 
     public function view_summary($submission) {
-        $submission_comments = $this->get_submission_comment($submission->id);
+        $submission_comments = $this->get_comment_submission($submission->id);
         if ($submission_comments) {
             return shorten_text(format_text($submission_comments->commenttext));
         }
@@ -64,7 +64,7 @@ class submission_comments extends submission_plugin {
     }
     
     public function view($submission) {
-        $submission_comments = $this->get_submission_comment($submission->id);
+        $submission_comments = $this->get_comment_submission($submission->id);
         if ($submission_comments) {
             return format_text($submission_comments->commenttext);
         } 

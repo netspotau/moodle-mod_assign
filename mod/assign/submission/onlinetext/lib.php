@@ -124,7 +124,7 @@ class submission_onlinetext extends submission_plugin {
         if (!$onlinetext_submission) {
                 return get_string('numwords', '', 0);                                                     
             } else if(count_words(format_text($onlinetext_submission->onlinetext)) < 1){                           
-                return get_string('numwords', '', count_words(format_text($submission->onlinetext)));                                                     
+                return get_string('numwords', '', count_words(format_text($onlinetext_submission->onlinetext)));                                                     
             } else{    
                              
                 return $OUTPUT->action_link($link,get_string('numwords', '', count_words(format_text($onlinetext_submission->onlinetext))));
@@ -137,8 +137,6 @@ class submission_onlinetext extends submission_plugin {
   
     public function view($submission) {
         $result = '';
-        
-        
         
         $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
         

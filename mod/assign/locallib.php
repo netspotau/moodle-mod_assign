@@ -130,7 +130,7 @@ class assignment {
     /**
      * get a specific submission plugin by its type
      * @param string $type
-     * @return object $plugin 
+     * @return object $plugin /null
      */
     public function get_submission_plugin_by_type($type) {
         foreach ($this->submission_plugins as $plugin) {
@@ -388,8 +388,10 @@ class assignment {
 
     
     /**
+     * Add settings to edit plugin form 
      *
-     * @param object $mform 
+     * @param object $mform The form to add the configuration settings to. This form is modified directly (not returned)
+     *  
      */
     private function add_plugin_settings(& $mform) {
         foreach ($this->submission_plugins as $plugin) {
@@ -439,9 +441,6 @@ class assignment {
     public function add_settings(& $mform) {
         global $CFG, $COURSE;
         $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
-        
-       
-        
         
         
         $mform->addElement('header', 'general', get_string('availability', 'assign'));
@@ -940,6 +939,13 @@ class assignment {
 
     }
     
+    /**
+     * display the submission that is used by a plugin  
+     * @global object $OUTPUT
+     * @global object $CFG
+     * @param int $submissionid
+     * @param string $plugintype 
+     */
     public function view_submission($submissionid=null, $plugintype=null) {
            global $OUTPUT, $CFG;
            $this->view_header();
@@ -953,14 +959,7 @@ class assignment {
                     echo $plugin->view($submission);
                 }
             }
-           /*** if ($CFG->enableportfolios) {
-            
-            
-                $this->portfolio_enable();
-                
-                
-                
-            }**/
+          
             echo $OUTPUT->box_end();
             echo $OUTPUT->container_end();
             echo $OUTPUT->spacer(array('height'=>30));
@@ -971,6 +970,16 @@ class assignment {
           
     }
     
+    /**
+     * render the content in editor that is often used by plugin
+     *  
+     * @global object $CFG
+     * @param string $filearea
+     * @param integer  $submissionid
+     * @param string $plugintype
+     * @param string $editor
+     * @return type 
+     */
     public function render_editor_content($filearea, $submissionid, $plugintype, $editor) {
         global $CFG;
         
@@ -1346,33 +1355,7 @@ class assignment {
         $this->view_footer();
     }
 
-    /**
-     * View an online text submission
-     *
-     * @global object $OUTPUT
-     * @param int $userid The id of the user who created the submission to display
-     
-    private function view_online_text_submission($userid) {
-        global $OUTPUT;
-        
-        $submission = $this->get_submission($userid);
-        if ($submission) {
-
-            echo $OUTPUT->container_start('viewonlinetext');
-            echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
-            $text = file_rewrite_pluginfile_urls($submission->onlinetext, 'pluginfile.php', $this->context->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $userid);
-
-            echo format_text($text, $submission->onlineformat, array('overflowdiv' => true));
-
-            echo $OUTPUT->box_end();
-            echo $OUTPUT->container_end();
-            echo $OUTPUT->spacer(array('height'=>30));
-        } else {
-            print_error('nosubmission', 'assign');
-        }
-    }
-    
-      */
+   
      
     /**
      * View a link to go back to the previous page. Uses url parameters returnaction and returnparams.
@@ -1394,44 +1377,7 @@ class assignment {
         }
         
     }
-    
-    /**
-     * View a single online text submission (gets the userid param from the query string - default is USER->id)
-     *
-     * @global object $OUTPUT
-     * @global object $USER
-     * @global object $DB
-     
-    private function view_online_text_page() {
-        global $OUTPUT, $USER,$DB;
-       
-        $userid = optional_param('userid', $USER->id, PARAM_INT);
-        if ($userid == $USER->id) {
-            // Always require view permission to do anything
-            require_capability('mod/assign:view', $this->context);
-        } else {
-            // Always require view permission to do anything
-            require_capability('mod/assign:view', $this->context);
-            // Need submit permission to submit an assignment
-            require_capability('mod/assign:grade', $this->context);
-        }
-        
-
-        $this->view_header(get_string('onlinetext', 'assign'));
-
-        $user = $DB->get_record('user', array('id' => $userid));
-        $this->view_user($user);
-        $this->view_online_text_submission($userid);
-
-        $this->view_return_links();
-        $this->view_footer();       
-
-
-        $this->add_to_log('view online text submission', get_string('viewonlinetextsubmissionforstudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user))));
-    }
-
-    */
-    
+   
     /**
      * View the grading table of all submissions for this assignment
      *
@@ -1562,12 +1508,13 @@ class assignment {
             
         $this->view_footer();
         $this->add_to_log('view', get_string('viewownsubmissionstatus', 'assign'));
-    }
+    } 
     
-    
-    
-
-    
+    /**
+     * convert the final raw grade(s) in the  grading table for the gradebook  
+     * @param object $grade
+     * @return object $gradebook_grade 
+     */
     private function convert_grade_for_gradebook($grade) {
         $gradebook_grade = array();
         
@@ -1582,10 +1529,15 @@ class assignment {
         $gradebook_grade['datesubmitted'] = NULL;
         $gradebook_grade['dategraded'] = $grade->timemodified;
        
-        // more to do ?
+        // more TODO ?
         return $gradebook_grade;
     }
-
+    
+    /**
+     * convert submission details for the gradebook  
+     * @param object $submission
+     * @return object $gradebook_grade
+     */
     private function convert_submission_for_gradebook($submission) {
         $gradebook_grade = array();
         
@@ -1595,13 +1547,17 @@ class assignment {
         $gradebook_grade['datesubmitted'] = $submission->timemodified;
         
        
-        // more to do ?
+        // more TODO ?
         return $gradebook_grade;
     }
 
-    
-  
-    
+    /**
+     * update grades in the gradebook
+     * @global object $CFG
+     * @param object $submission
+     * @param object $grade
+     * @return mixed 
+     */
     private function gradebook_item_update($submission=NULL, $grade=NULL) {
         global $CFG;
         require_once($CFG->libdir . '/gradelib.php');
@@ -1632,6 +1588,13 @@ class assignment {
         return grade_update('mod/assign', $this->get_course()->id, 'mod', 'assign', $this->instance->id, 0, $gradebook_grade, $params);
     }
 
+    /**
+     * update grades in the gradebook based on submission time 
+     * @global object $DB
+     * @param object $submission
+     * @param boolean $updatetime
+     * @return mixed 
+     */
     private function update_submission($submission, $updatetime=true) {
         global $DB;
 
@@ -1652,6 +1615,8 @@ class assignment {
      * prevent late submissions, 
      * has this person already submitted, 
      * is the assignment locked?
+     * @global object $USER
+     * @return boolean 
      */
     protected final function submissions_open() {
         global $USER;
@@ -1686,7 +1651,16 @@ class assignment {
 
         return TRUE;
     }
-   
+    /**
+     * render the files in file area  
+     * @global object $CFG
+     * @global object $USER
+     * @global object $OUTPUT
+     * @global object $PAGE
+     * @param string $area
+     * @param int $submissionid
+     * @return object 
+     */
     public function render_area_files($area, $submissionid = null) {
         global $CFG, $USER, $OUTPUT, $PAGE;
 
@@ -1784,7 +1758,14 @@ class assignment {
         $posthtml .= '</font><hr />';
         return $posthtml;
     }
-
+    
+    /**
+     * email graders upon student submissions 
+     * @global object $CFG
+     * @global object $DB
+     * @param object $submission
+     * @return mixed 
+     */
     private function email_graders($submission) {
         global $CFG, $DB;
 
@@ -1831,7 +1812,10 @@ class assignment {
             }
         }
     }
-
+    /**
+     *  assignment submission is processed before grading 
+     * @global object $USER 
+     */
     private function process_submit_assignment_for_grading() {
         
          // Always require view permission to do anything
@@ -1847,7 +1831,10 @@ class assignment {
         $this->add_to_log('submit for grading', $this->format_submission_for_log($submission));
         $this->email_graders($submission);
     }
-    
+    /**
+     * save grading options 
+     * @global object $USER 
+     */
     private function process_save_grading_options() {
         global $USER;
 
@@ -1867,12 +1854,14 @@ class assignment {
         }
     }
     
-    
-    /*
-     * Take a grade object and print a short summary for the log file. 
-     * The size limit for the log file is 255 characters, so be careful not
-     * to include too much information.
-     */
+   /**
+    * Take a grade object and print a short summary for the log file. 
+    * The size limit for the log file is 255 characters, so be careful not
+    * to include too much information.
+    * @global object $DB
+    * @param object $grade
+    * @return string 
+    */
     private function format_grade_for_log($grade) {
         global $DB;
 
@@ -1899,11 +1888,13 @@ class assignment {
         }
         return $info;
     }
-
-    /*
+    
+    /**
      * Take a submission object and print a short summary for the log file. 
      * The size limit for the log file is 255 characters, so be careful not
      * to include too much information.
+     * @param object $submission
+     * @return string 
      */
     private function format_submission_for_log($submission) {
         $info = '';
@@ -1927,9 +1918,12 @@ class assignment {
         */
         return $info;
     }
-
     
-    
+    /**
+     * save assignment submission
+     * @global object $USER
+     * @return mixed 
+     */
     private function process_save_submission() {       
         global $USER;
         
@@ -1947,8 +1941,7 @@ class assignment {
                 print_error('submissionslocked', 'assign');
                 return;
             }
-           // $this->process_online_text_submission($submission, $data);
-            //$this->process_file_upload_submission($submission, $data);
+          
         
             foreach ($this->submission_plugins as $plugin) {
                 if ($plugin->is_enabled()) {
@@ -1957,7 +1950,7 @@ class assignment {
                     }
                 }
             }
-            //$this->process_submission_comment_submission($submission, $data);
+           
             $this->update_submission($submission);
 
             // Logging
@@ -1970,68 +1963,13 @@ class assignment {
          
     }
     
-    // helper function for process_save_submission (for the purpose of permission checking only)?
-    // so it does not require permission checks as they have
-    // been done in process_save_submission.
-    private function process_online_text_submission(& $submission, & $data) {
-        global $USER;
-         
-        if (!$this->instance->onlinetextsubmission) {
-            return;
-        }
-
-        require_capability('mod/assign:view', $this->context);
-        // Need submit permission to submit an assignment
-        require_capability('mod/assign:submit', $this->context);
-
-        $editoroptions = array(
-           'noclean' => false,
-           'maxfiles' => EDITOR_UNLIMITED_FILES,
-           'maxbytes' => $this->get_course()->maxbytes,
-           'context' => $this->context
-        );
-
-        $data = file_postupdate_standard_editor($data, 'onlinetext', $editoroptions, $this->context, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $USER->id);
-        
-        $submission->onlinetext = $data->onlinetext;
-        $submission->onlineformat = $data->onlinetextformat;
-        
-    }
-
-    // helper function for process_save_submission (for the purpose of permission checking only)?
-    // so it does not require permission checks as they have
-    // been done in process_save_submission.
-    //** process function for submission comment
-    private function process_submission_comment_submission(& $submission, & $data) {
-        if (!$this->instance->submissioncomments) {
-            return;
-        }
-
-        $submission->submissioncommenttext = $data->submissioncomment_editor['text'];
-        $submission->submissioncommentformat = $data->submissioncomment_editor['format'];
-    }
-    
-    // helper function for process_save_submission (for the purpose of permission checking only)?
-    // so it does not require permission checks as they have
-    // been done in process_save_submission.
-    //** process function for saved file upload submit form
-    private function process_file_upload_submission(& $submission, & $data) {
-        global $USER;
-        if ($this->instance->maxfilessubmission <= 0) {
-            return;
-        }
-        $fileoptions = array('subdirs'=>1, 
-                                'maxbytes'=>$this->instance->maxsubmissionsizebytes, 
-                                'maxfiles'=>$this->instance->maxfilessubmission, 
-                                'accepted_types'=>'*', 
-                                'return_types'=>FILE_INTERNAL);
-
-            
-        $data = file_postupdate_standard_filemanager($data, 'files', $fileoptions, $this->context, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $USER->id);
-
-        $submission->numfiles = $this->count_files($USER->id);
-    }
-    
+    /**
+     * count the number of files in the file area
+     * @global object $USER
+     * @param integer $userid
+     * @param string $area
+     * @return integer  
+     */
     private function count_files($userid = 0, $area = ASSIGN_FILEAREA_SUBMISSION_FILES) {
         global $USER;
 
@@ -2044,7 +1982,12 @@ class assignment {
 
         return count($files);
     }
-
+    
+    /**
+     * display the grade form
+     * @global object $OUTPUT
+     * @global object $USER 
+     */
     private function view_grade_form() {
         global $OUTPUT, $USER;
         
@@ -2094,6 +2037,10 @@ class assignment {
         echo $OUTPUT->spacer(array('height'=>30));
     }
 
+    /**
+     *  get the default submission data 
+     * @return stdClass 
+     */
     private function get_default_submission_data() {
         $data = new stdClass();
         $data->onlinetext = '';
@@ -2102,7 +2049,13 @@ class assignment {
 
         return $data;
     }
-
+    
+    /**
+     * add elements in submission plugin form 
+     * @param object $submission
+     * @param object $mform
+     * @param object $data 
+     */
     private function add_plugin_submission_elements($submission, & $mform, & $data) {
         foreach ($this->submission_plugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
@@ -2128,6 +2081,11 @@ class assignment {
         }
     }
     
+    /**
+     * display submission form 
+     * @global object $OUTPUT
+     * @global object $USER 
+     */
     private function view_submission_form() {
         global $OUTPUT, $USER;
         
@@ -2161,10 +2119,10 @@ class assignment {
         echo $OUTPUT->spacer(array('height'=>30));
     }
 
-    /**
-     * Show the screen for creating an assignment submission
-     *
-     */
+   /**
+    *  Show the screen for creating an assignment submission
+    * @global object $OUTPUT 
+    */
     private function view_edit_submission_form() {
         global $OUTPUT;
          // Always require view permission to do anything
@@ -2183,7 +2141,11 @@ class assignment {
 
         // plagiarism?
     }
-
+    
+    /**
+     * check if submission plugins installed are enabled 
+     * @return boolean
+     */
     private function is_any_submission_plugin_enabled() {
         if (!isset($this->cache['any_submission_plugin_enabled'])) {
             $this->cache['any_submission_plugin_enabled'] = false;
@@ -2198,7 +2160,14 @@ class assignment {
         return $this->cache['any_submission_plugin_enabled'];
         
     }
-
+        
+    /**
+     * display submission status page 
+     * @global object $OUTPUT
+     * @global object $USER
+     * @param integer $userid
+     * @return mixed
+     */
     private function view_submission_status($userid=null) {
         global $OUTPUT, $USER;
 
@@ -2325,53 +2294,8 @@ class assignment {
             }
         }
         
-        // if online text assignment submission is set to yes
-        //onlinetextsubmission  
-              
-        /*
-        if ($this->instance->onlinetextsubmission) {
-            $link = new moodle_url ('/mod/assign/view.php?id='.$this->get_course_module()->id.'&userid='.$userid.'&action=onlinetext&returnaction='.  optional_param('action','view',PARAM_ALPHA).'&returnparams=rownum%3D'.  optional_param('rownum','', PARAM_INT));
-           // $link = new moodle_url ('/mod/assign/view.php?id='.$this->get_course_module()->id.'&userid='.$userid.'&rownum='.$rnum.'&action=onlinetext');
-            $row = new html_table_row();
-            $cell1 = new html_table_cell(get_string('onlinetextwordcount', 'assign')); 
-            if (!$submission) {
-                $cell2 = new html_table_cell(get_string('numwords', '', 0));                                                     
-            } else if(count_words(format_text($submission->onlinetext)) < 1){                           
-                $cell2 = new html_table_cell(get_string('numwords', '', count_words(format_text($submission->onlinetext))));                                                     
-            } else{                               
-                $cell2 = new html_table_cell($OUTPUT->action_link($link,get_string('numwords', '', count_words(format_text($submission->onlinetext)))));
-            }                      
-            
-            $row->cells = array($cell1, $cell2);
-            $t->data[] = $row;
-        }             
-        */
-
-        // files 
-        /*
-        if ($this->instance->maxfilessubmission >= 1) {
-            $row = new html_table_row();
-            $cell1 = new html_table_cell(get_string('submissionfiles', 'assign'));
-            $cell2 = new html_table_cell($this->print_area_files($userid));
-            $row->cells = array($cell1, $cell2);
-            $t->data[] = $row;
-        } 
-        */
-
-        // comments 
-        /*
-        if ($this->instance->submissioncomments) {
-            $row = new html_table_row();
-            $cell1 = new html_table_cell(get_string('submissioncomment', 'assign'));
-            if ($submission) {
-                $cell2 = new html_table_cell(format_text($submission->submissioncommenttext));
-            } else {
-                $cell2 = new html_table_cell();
-            }
-            $row->cells = array($cell1, $cell2);
-            $t->data[] = $row;
-        } 
-        */
+       
+       
                       
         echo html_writer::table($t);
         echo $OUTPUT->box_end();
@@ -2380,115 +2304,15 @@ class assignment {
     }
 
     /**
-     * enable assigment portfolio 
-     
-    public function portfolio_enable(){
-        
-             global $CFG;
-             require_once($CFG->libdir . '/portfoliolib.php');
-             
-             $submission = $this->get_submission();
-             
-             $button = new portfolio_add_button();
-             $button->set_callback_options('assign_portfolio_caller', array('id' => $this->get_course_module()->id), '/mod/assign/portfolio_callback.php');
-              $fs = get_file_storage();
-              
-                        if ($files = $fs->get_area_files($this->context->id, 'mod_assign', ASSIGN_FILEAREA_PORTFOLIO_FILES, $submission->id, "timemodified", false)) {
-                            $button->set_formats(PORTFOLIO_FORMAT_RICHHTML);
-                        } else {
-                            $button->set_formats(PORTFOLIO_FORMAT_PLAINHTML);
-                        }
-                        $button->render();
-
-  }*/
-
-    
-    /*
-    function portfolio_get_sha1($caller) {
-        $submission = $this->get_submission();
-        
-        
-        $textsha1 = sha1(format_text($submission->onlinetext, $submission->onlineformat));
-        $filesha1 = '';
-        try {
-            $filesha1 = $caller->get_sha1_file();
-        } catch (portfolio_caller_exception $e) {} // no files
-        return sha1($textsha1 . $filesha1);
-    }
-       
-    function portfolio_load_data($caller) {
-        //global $USER;
-        $submission = $this->get_submission();
-        $fs = get_file_storage();
-        if ($files = $fs->get_area_files($this->context->id, 'mod_assign', ASSIGN_FILEAREA_PORTFOLIO_FILES, $submission->id, "timemodified", false)) {
-            $caller->set('multifiles', $files);
-        }
-    }
-    
-    
-    function portfolio_prepare_package($exporter, $user) {
-        $submission = $this->get_submission($user->id);
-        $options = portfolio_format_text_options();
-        $html = format_text($submission->onlinetext, $submission->onlineformat, $options);
-        $html = portfolio_rewrite_pluginfile_urls($html, $this->context->id, 'mod_assign', ASSIGN_FILEAREA_PORTFOLIO_FILES, $submission->id, $exporter->get('format'));
-        
-       
-        
-        
-        if (in_array($exporter->get('formatclass'), array(PORTFOLIO_FORMAT_PLAINHTML, PORTFOLIO_FORMAT_RICHHTML))) {
-            if ($files = $exporter->get('caller')->get('multifiles')) {
-                foreach ($files as $f) {
-                    $exporter->copy_existing_file($f);
-                }
-            }
-            return $exporter->write_new_file($html, 'assign.html', !empty($files));
-        } else if ($exporter->get('formatclass') == PORTFOLIO_FORMAT_LEAP2A) {
-            
-            
-            
-            
-            $leapwriter = $exporter->get('format')->leap2a_writer();
-            $entry = new portfolio_format_leap2a_entry('onlinetext' . $this->data->id, $this->data->name, 'resource', $html);
-            $entry->add_category('web', 'resource_type');
-            $entry->published = $submission->timecreated;
-            $entry->updated = $submission->timemodified;
-            $entry->author = $user;
-            $leapwriter->add_entry($entry);
-            if ($files = $exporter->get('caller')->get('multifiles')) {
-                $leapwriter->link_files($entry, $files, 'onlinetext' . $this->data->id . 'file');
-                foreach ($files as $f) {
-                    $exporter->copy_existing_file($f);
-                }
-               
-            }
-             
-            
-            
-            $exporter->write_new_file($leapwriter->to_xml(), $exporter->get('format')->manifest_name(), true);
-            
-            
-        } else {
-            debugging('invalid format class: ' . $exporter->get('formatclass'));
-        }
-    }
-    
-    
-    
-    function portfolio_get_expected_time() {
-       // a file based export
-        // return portfolio_expected_time_file($this->exportfiles);
- 
-    // or for database exports
-        // return portfolio_expected_time_db(count($this->recordstoexport));
-    }
-    
-    
-    */
-    
-    
-    
-    
-    
+     * display feedback
+     * display submission status page 
+     * @global object $OUTPUT
+     * @global object $USER
+     * @global object $PAGE
+     * @global object $DB
+     * @param integer $userid
+     * @return mixed
+     */
     private function view_feedback($userid=null) {
         global $OUTPUT, $USER, $PAGE, $DB;
 
@@ -2567,7 +2391,13 @@ class assignment {
         echo $OUTPUT->container_end();
 
     }
-
+    
+    /**
+     * display submission links
+     * @global object $OUTPUT
+     * @global object $USER
+     * @param integer $userid 
+     */
     private function view_submission_links($userid = null) {
         global $OUTPUT, $USER;
 
@@ -2596,7 +2426,13 @@ class assignment {
         }
     }
     
-
+    /**
+     * mform for file upload submission
+     * @global object $USER
+     * @param object $mform
+     * @param object $data
+     * @return mixed
+     */
     private function add_file_upload_form_elements(& $mform, & $data) {
         global $USER;
         if ($this->instance->maxfilessubmission <= 0) {
@@ -2618,6 +2454,12 @@ class assignment {
         $data = file_prepare_standard_filemanager($data, 'files', $fileoptions, $this->context, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $USER->id);
     }
     
+     /**
+     * mform for submission comment
+     * @param object $mform
+     * @param object $data
+     * @return mixed
+     */
     private function add_submission_comment_form_elements(& $mform, & $data) {
         if (!$this->instance->submissioncomments) {
             return;
@@ -2628,6 +2470,13 @@ class assignment {
         $mform->setType('submissioncomment_editor', PARAM_RAW); // to be cleaned before display
     }
 
+    /**
+     * mform for onlinetext submission
+     * @global object $USER
+     * @param object $mform
+     * @param object $data
+     * @return mixed
+     */
     private function add_online_text_form_elements(& $mform, & $data) {
         global $USER;
         if (!$this->instance->onlinetextsubmission) {
@@ -2648,7 +2497,13 @@ class assignment {
   
         $mform->setType('onlinetext_editor', PARAM_RAW); // to be cleaned before display
     }
-
+   
+    /**
+     *  add elements to submission form 
+     * @global object $USER
+     * @param object $mform
+     * @param object $data 
+     */
     public function add_submission_form_elements(& $mform, & $data) {
         global $USER;
         
@@ -2672,7 +2527,12 @@ class assignment {
         
     }
 
-    
+    /**
+     * revert to draft
+     * @global object $USER
+     * @global object $DB
+     * @return mixed
+     */
     private function process_revert_to_draft() {
         global $USER, $DB;
         
@@ -2700,6 +2560,11 @@ class assignment {
         
     }
     
+    /**
+     * lock  the process
+     * @global object $USER
+     * @global object $DB 
+     */
     private function process_lock() {
         global $USER, $DB;
         
@@ -2719,6 +2584,11 @@ class assignment {
         $this->add_to_log('lock submission', get_string('locksubmissionforstudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user))));
     }
     
+    /**
+     * unlock the process
+     * @global object $USER
+     * @global object $DB 
+     */
     private function process_unlock() {
         global $USER, $DB;
 
@@ -2737,7 +2607,12 @@ class assignment {
 
         $this->add_to_log('unlock submission', get_string('unlocksubmissionforstudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user))));
     }
-
+  
+    /**
+     * save grade
+     * @global object $USER
+     * @global object $DB 
+     */
     private function process_save_grade() {
         global $USER, $DB;
         

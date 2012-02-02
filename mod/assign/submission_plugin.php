@@ -336,9 +336,9 @@ abstract class submission_plugin {
     }
     
      /**
-     * Should not output anything - return the result as a string so it can be consumed by webservices.
+     * Should not output anything - return the result as a boolean for editor format.
      * 
-     * @return string - return a string representation of the submission in full
+     * @return boolean 
      */
     public function get_editor_format($name, $submissionid) {
         return 0;

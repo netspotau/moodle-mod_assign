@@ -10,7 +10,7 @@ class submission_file extends submission_plugin {
         return get_string('file', 'submission_file');
     }
     
-    private function get_submission($submissionid) {
+    private function get_file_submission($submissionid) {
         global $DB;
         return $DB->get_record('assign_submission_file', array('submission'=>$submissionid));
     }
@@ -99,7 +99,7 @@ class submission_file extends submission_plugin {
         $data = file_postupdate_standard_filemanager($data, 'files', $fileoptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
 
         
-        $file_submission = $this->get_submission($submission->id);
+        $file_submission = $this->get_file_submission($submission->id);
         if ($file_submission) {
             $file_submission->numfiles = $this->count_files($submission->id);
             return $DB->update_record('assign_submission_file', $file_submission);
