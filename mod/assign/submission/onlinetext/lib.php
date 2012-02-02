@@ -134,25 +134,7 @@ class submission_onlinetext extends submission_plugin {
        
     }
     
-    /**
-     function portfolio_get_sha1($caller, $submission) {
-        
-         
-        $onlinetext_submission = $this->get_submission($submission->id);
-        echo'<pre>';
-        var_dump($onlinetext_submission);
-        die('stop at this line 217');
-        
-        $textsha1 = sha1(format_text($onlinetext_submission->onlinetext, $onlinetext_submission->onlineformat));
-        $filesha1 = '';
-        try {
-            $filesha1 = $caller->get_sha1_file();
-        } catch (portfolio_caller_exception $e) {} // no files
-        return sha1($textsha1 . $filesha1);
-    }
-    */
-    
-    
+  
     public function view($submission) {
         $result = '';
         

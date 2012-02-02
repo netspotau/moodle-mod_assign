@@ -53,7 +53,6 @@ define('ASSIGN_SUBMISSION_TYPES_FILE', 'lib.php');
 define('ASSIGN_FILEAREA_PORTFOLIO_FILES', 'portfolio_files');
 
 
-
 /** Include accesslib.php */
 require_once($CFG->libdir.'/accesslib.php');
 /** Include formslib.php */
@@ -119,11 +118,20 @@ class assignment {
 
 
     }
-
+    
+    /** 
+     * get list of submission plugins installed
+     * @return array 
+     */
     public function get_submission_plugins() {
         return $this->submission_plugins;
     }
     
+    /**
+     * get a specific submission plugin by its type
+     * @param string $type
+     * @return object $plugin 
+     */
     public function get_submission_plugin_by_type($type) {
         foreach ($this->submission_plugins as $plugin) {
             if ($plugin->get_type() == $type) {
@@ -378,6 +386,11 @@ class assignment {
         return $result;
     }
 
+    
+    /**
+     *
+     * @param object $mform 
+     */
     private function add_plugin_settings(& $mform) {
         foreach ($this->submission_plugins as $plugin) {
             if ($plugin->is_visible()) {

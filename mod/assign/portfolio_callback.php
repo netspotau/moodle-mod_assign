@@ -17,15 +17,15 @@
 //
 // this file contains all the functions that aren't needed by core moodle
 // but start becoming required once we're actually inside the assignment module.
-
-require_once($CFG->dirroot . '/mod/assign/locallib.php');
-require_once($CFG->libdir . '/portfolio/caller.php');
-
 /**
  * @package   mod-assign
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+require_once($CFG->dirroot . '/mod/assign/locallib.php');
+require_once($CFG->libdir . '/portfolio/caller.php');
+
+
 class assign_portfolio_caller extends portfolio_module_caller_base {
 
    
