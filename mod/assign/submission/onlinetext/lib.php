@@ -1,23 +1,78 @@
 <?php
 
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * This file contains the definition for the library class file onlinetext
+ *  submission plugin 
+ * 
+ * This class provides all the functionality for the new assign module.
+ *
+ * @package   mod-assign
+ * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+/**#@+
+ * File area for online text submission assignment
+ */
 define('ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT', 'submissions_onlinetext');
 
-
+/*
+ * library class for onlinetext submission plugin extending submission plugin
+ * base class
+ * 
+ * @package   mod-assign
+ * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class submission_onlinetext extends submission_plugin {
+    
+    /** @var object the assignment record that contains the global settings for this assign instance */
     private $instance;
-
+       
+    /**
+     * get the name of the online text submission plugin
+     * @return string 
+     */
     public function get_name() {
         return get_string('onlinetext', 'submission_onlinetext');
     }
 
 
-
+   /**
+    * get onlinetext submission information from the database   
+    * 
+    * @global object $DB
+    * @param  integer $submissionid
+    * @return mixed 
+    */
     private function get_onlinetext_submission($submissionid) {
         global $DB;
         
         return $DB->get_record('assign_submission_onlinetext', array('submission'=>$submissionid));
     }
     
+    /**
+     * get submission form elements for settings
+     * @global object $USER
+     * @param object $submission
+     * @param object $data
+     * @return string 
+     */
     public function get_submission_form_elements($submission, & $data) {
         global $USER;
         
@@ -43,7 +98,10 @@ class submission_onlinetext extends submission_plugin {
         return $elements;
     }
     
-    
+    /**
+     * editor format options
+     * @return mixed
+     */
     private function get_edit_options() {
          $editoroptions = array(
            'noclean' => false,
@@ -54,7 +112,14 @@ class submission_onlinetext extends submission_plugin {
         return $editoroptions;
     }
 
-    
+     /**
+      * save data to the database
+      * @global object $USER
+      * @global object $DB
+      * @param object $submission
+      * @param object $data
+      * @return mixed 
+      */
      public function save($submission, $data) {     
        
         global $USER, $DB;
@@ -87,7 +152,12 @@ class submission_onlinetext extends submission_plugin {
      
     }
     
-    
+    /**
+     * get the saved text content from the editor
+     * @param string $name
+     * @param integer $submissionid
+     * @return string 
+     */
     public function get_editor_text($name, $submissionid) {
         if ($name == 'onlinetext') {
             $onlinetext_submission = $this->get_onlinetext_submission($submissionid);
@@ -98,7 +168,13 @@ class submission_onlinetext extends submission_plugin {
 
         return '';
     }
-
+    
+    /**
+     * get the content format for the editor 
+     * @param string $name
+     * @param integer $submissionid
+     * @return boolean 
+     */
     public function get_editor_format($name, $submissionid) {
         if ($name == 'onlinetext') {
             $onlinetext_submission = $this->get_onlinetext_submission($submissionid);
@@ -112,8 +188,13 @@ class submission_onlinetext extends submission_plugin {
     }
     
     
-    
-    
+     /**
+      * display onlinetext word count in the submission status table 
+      * @global object $OUTPUT
+      * @global object $USER
+      * @param object $submission
+      * @return string 
+      */
      public function view_summary($submission) {
          global $OUTPUT,$USER;
          
@@ -134,7 +215,11 @@ class submission_onlinetext extends submission_plugin {
        
     }
     
-  
+    /**
+     * display the saved text content from the editor in the view table 
+     * @param object $submission
+     * @return string  
+     */
     public function view($submission) {
         $result = '';
         
@@ -145,14 +230,8 @@ class submission_onlinetext extends submission_plugin {
             
             // render for portfolio API
             $result .= $this->assignment->render_editor_content(ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $onlinetext_submission->submission, $this->get_type(), 'onlinetext');
-            
-            //$text = file_rewrite_pluginfile_urls($onlinetext_submission->onlinetext, 'pluginfile.php', $this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $onlinetext_submission->submission);
-            //$result .= format_text($text, $onlinetext_submission->onlineformat, array('overflowdiv' => true));
+                       
         } 
-        
-        
-       
-        
         
         return $result;
     }

@@ -36,7 +36,7 @@ $PAGE->requires->css('/mod/assign/style.css');
 $context = get_context_instance(CONTEXT_MODULE,$cm->id);
    
 $ass = new assignment($context,$assignment,$cm,$course);
-//$ass->view_online_text(optional_param('action', '', PARAM_TEXT));
+
 
 
 $ass->view_submission(optional_param('sid', '', PARAM_INT), 'onlinetext');

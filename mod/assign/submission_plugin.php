@@ -13,12 +13,12 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the definition for the class assign_base
+ * This file contains the definition for the abstract class for submission_plugin
  *
- * This class provides all the functionality for the new assign module.
+ * This class provides all the functionality for submission plugins.
  *
  * @package   mod-assign
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
@@ -28,32 +28,41 @@
 defined('MOODLE_INTERNAL') || die();
 
 /*
- * Standard base class for mod_assign (assignment types).
+ * Abstract base class for submission plugin types.
  *
  * @package   mod-assign
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-
-
 abstract class submission_plugin {
 
+     /** @var object the assignment record that contains the global settings for this assign instance */
     protected $assignment;
+    /** @var string type of submission plugin */
     private $type = '';
+    /** @var string error for thowing an error message*/
     private $error = '';
     
    
     /**
      * Constructor for the abstract submission type class
      *
-     * @param object $assignment 
+     * 
+     * 
+     * @param object $assignment
+     * @param string $type 
      */
     public function __construct($assignment = null, $type = null) {
         $this->assignment = $assignment;
         $this->type = $type;
     }
     
+    /**
+     *  check if the submission plugin installed is the fist in 
+     *  submission plugin order
+     * @global object $DB
+     * @return boolean 
+     */
     public function is_first() {
         global $DB;
 
@@ -65,6 +74,12 @@ abstract class submission_plugin {
         return false;
     }
 
+    /**
+     *  check if the submission plugin installed is the last in 
+     *  submission plugin order
+     * @global object $DB
+     * @return boolean 
+     */
     public function is_last() {
         global $DB;
 
@@ -103,7 +118,11 @@ abstract class submission_plugin {
     protected final function set_error($msg) {
         $this->error = $msg;
     }
-
+    
+    /**
+     *  get error massage 
+     * @return string
+     */
     public final function get_error() {
         return $this->error;
     }
@@ -124,6 +143,11 @@ abstract class submission_plugin {
         return $this->type;
     }
     
+    /**
+     * get version of submission plugin
+     * 
+     * @return string
+     */
     public function get_version() {
         $version = get_config('submission_' . $this->get_type(), 'version');
         if ($version) {
@@ -133,6 +157,10 @@ abstract class submission_plugin {
         }
     }
     
+    /**
+     * get minimum version of moodle required for submission plugin
+     * @return string
+     */
     public function get_requires() {
         $requires = get_config('submission_' . $this->get_type(), 'requires');
         if ($requires) {
@@ -152,10 +180,18 @@ abstract class submission_plugin {
         return true;   
     }
     
+    /**
+     *  enable the submission plugin
+     * @return boolean
+     */
     public function enable() {
         return $this->set_config('enabled', 1);
     }
 
+    /**
+     * disable the submission plugin
+     * @return boolean
+     */
     public function disable() {
         return $this->set_config('enabled', 0);
     }
@@ -189,7 +225,11 @@ abstract class submission_plugin {
         return '';
     }
     
-
+    /**
+     *  move up and down  the order of the installed submission plugins in
+     *  manage submission plugin table 
+     * @param string $dir 
+     */
     public function move($dir='down') {
         // get a list of the current plugins
         $submission_plugins = array();
@@ -249,29 +289,56 @@ abstract class submission_plugin {
         }
     }
     
+    /**
+     *  sorting the order of installed submission plugins
+     * @return boolean
+     */
     public function get_sort_order() {
         $order = get_config('submission_' . $this->get_type(), 'sortorder');
         return $order?$order:0;
     }
-
+   
+    /**
+     * hide and show switch for the submission plugin in manage submission plugin
+     * table
+     * @return boolean
+     */
     public function is_visible() {
         return !get_config('submission_' . $this->get_type(), 'disabled');
     }
     
+    /**
+     * show/enable submission plugin
+     */
     public function show() {
         set_config('disabled', 0, 'submission_' . $this->get_type());
     }
     
+    /**
+     * hide/disable submission plugin
+     */
     public function hide() {
         set_config('disabled', 1, 'submission_' . $this->get_type());
     }
 
+    /**
+     * check if submission plugin has admin settings
+     * @global object $CFG
+     * @return boolean
+     */
     public function has_admin_settings() {
         global $CFG;
         
         return file_exists($CFG->dirroot . '/mod/assign/submission/' . $this->get_type() . '/settings.php');        
     }
     
+    /**
+     * setter method for configuration
+     * @global object $DB
+     * @param string $name
+     * @param integer $value
+     * @return mixed 
+     */
     public function set_config($name, $value) {
         global $DB;
         
@@ -291,6 +358,12 @@ abstract class submission_plugin {
         }
     }
 
+    /**
+     * getter method for configuration
+     * @global object $DB
+     * @param integer $setting
+     * @return stdClass 
+     */
     public function get_config($setting = null) {
         global $DB;
 
