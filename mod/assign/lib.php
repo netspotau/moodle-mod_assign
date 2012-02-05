@@ -21,6 +21,8 @@ require_once('locallib.php');
  * Adds an assignment instance
  *
  * This is done by calling the add_instance() method of the assignment type class
+ * @param object $form_data
+ * @return object 
  */
 function assign_add_instance($form_data) {
     $context = get_context_instance(CONTEXT_COURSE,$form_data->course);
@@ -28,6 +30,11 @@ function assign_add_instance($form_data) {
     return $ass->add_instance();
 }
 
+/**
+ * delete an assignment instance 
+ * @param int $id
+ * @return object 
+ */
 function assign_delete_instance($id) {
     if (!$cm = get_coursemodule_from_instance('assign', $id)) {
         return false;
@@ -44,6 +51,8 @@ function assign_delete_instance($id) {
  * Update an assignment instance
  *
  * This is done by calling the update_instance() method of the assignment type class
+ * @param object $form_data
+ * @return object
  */
 function assign_update_instance($form_data) {
     $context = get_context_instance(CONTEXT_MODULE,$form_data->coursemodule);
@@ -72,6 +81,14 @@ function assign_supports($feature) {
     }
 }
 
+/**
+ * extend an assigment navigation settings   
+ * 
+ * @global object $PAGE
+ * @param object $settings
+ * @param navigation_node $navref
+ * @return object
+ */
 function assign_extend_settings_navigation($settings, navigation_node $navref) {
     global $PAGE;     
 

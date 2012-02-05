@@ -25,7 +25,13 @@
 require_once($CFG->dirroot . '/mod/assign/locallib.php');
 require_once($CFG->libdir . '/portfolio/caller.php');
 
-
+/*
+ * portfolio caller class for mod_assign.
+ *
+ * @package   mod-assign
+ * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class assign_portfolio_caller extends portfolio_module_caller_base {
 
    
@@ -50,10 +56,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
     
     /**
     * callback arg for a single file export
-    */
-   // protected $fileid;
-   
-    
+    */ 
     public static function expected_callbackargs() {
         return array(
             'cmid' => true,

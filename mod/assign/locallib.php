@@ -27,19 +27,19 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-/**#@+
+/**
  * Assignment submission statuses
  */
 define('ASSIGN_SUBMISSION_STATUS_DRAFT', 'draft'); // student thinks it is a draft
 define('ASSIGN_SUBMISSION_STATUS_SUBMITTED', 'submitted'); // student thinks it is finished
 
-/**#@+
+/**
  * Search filters for grading page 
  */
 define('ASSIGN_FILTER_SUBMITTED', 'submitted');
 define('ASSIGN_FILTER_REQUIRE_GRADING', 'require_grading');
 
-/**#@+
+/**
  * File areas for the assignment
  */
 define('ASSIGN_FILEAREA_SUBMISSION_FEEDBACK', 'feedback_files');
@@ -47,7 +47,7 @@ define('ASSIGN_SUBMISSION_TYPES_FOLDER', 'mod/assign/submission');
 define('ASSIGN_SUBMISSION_TYPES_FILE', 'lib.php');
 
 
-/**#@+
+/**
  * File areas for assignment portfolio if enabled
  */
 define('ASSIGN_FILEAREA_PORTFOLIO_FILES', 'portfolio_files');
@@ -310,7 +310,7 @@ class assignment {
      * Delete this instance from the database
      * 
      * @global DB
-     * @return boolean false if an error occurs
+     * @return bool false if an error occurs
      */
     public function delete_instance() {
         global $DB;
@@ -348,7 +348,7 @@ class assignment {
      * Update this instance in the database
      * 
      * @global DB
-     * @return boolean false if an error occurs
+     * @return bool false if an error occurs
      */
     public function update_instance() {
         global $DB;
@@ -542,7 +542,7 @@ class assignment {
     
     /**
      * Get the context of the current course
-     *
+     * @uses die
      * @return object The course context
      */
     public function get_course_context() {
@@ -583,7 +583,7 @@ class assignment {
 
     /**
      * Get the current course
-     *
+     * @uses die
      * @global object
      * @return object The course
      */
@@ -975,10 +975,10 @@ class assignment {
      *  
      * @global object $CFG
      * @param string $filearea
-     * @param integer  $submissionid
+     * @param int  $submissionid
      * @param string $plugintype
      * @param string $editor
-     * @return type 
+     * @return string
      */
     public function render_editor_content($filearea, $submissionid, $plugintype, $editor) {
         global $CFG;
@@ -1129,6 +1129,8 @@ class assignment {
     
     /**
      * View a redirect to the next submission grading page
+     * 
+     * @uses die
      */
     private function view_next_single_grade() {
         $rnum = required_param('rownum', PARAM_INT);
@@ -1229,7 +1231,7 @@ class assignment {
      * @global object $DB
      * @global object $USER
      * @param int $userid The id of the user whose submission we want or 0 in which case USER->id is used
-     * @param boolean $createnew optional Defaults to false. If set to true a new submission object will be created in the database
+     * @param bool $createnew optional Defaults to false. If set to true a new submission object will be created in the database
      * @return object The submission
      */
     public function get_submission($userid = null,$submissionid =null, $create = false) {
@@ -1273,8 +1275,8 @@ class assignment {
      * This will retrieve a grade object from the db, optionally creating it if required
      *
      * @global object $DB
-     * @param integer $userid The user we are grading
-     * @param boolean $create If true the grade will be created if it does not exist
+     * @param int $userid The user we are grading
+     * @param bool $create If true the grade will be created if it does not exist
      * @return object The grade record
      */
     private function get_grade($userid, $create = false) {
@@ -1326,6 +1328,7 @@ class assignment {
      *
      * @global object $OUTPUT
      * @global object $DB
+     * @uses die
      */
     private function view_single_grade_page() {
         global $OUTPUT, $DB;
@@ -1592,7 +1595,7 @@ class assignment {
      * update grades in the gradebook based on submission time 
      * @global object $DB
      * @param object $submission
-     * @param boolean $updatetime
+     * @param bool $updatetime
      * @return mixed 
      */
     private function update_submission($submission, $updatetime=true) {
@@ -1616,7 +1619,7 @@ class assignment {
      * has this person already submitted, 
      * is the assignment locked?
      * @global object $USER
-     * @return boolean 
+     * @return bool 
      */
     protected final function submissions_open() {
         global $USER;
@@ -1966,9 +1969,9 @@ class assignment {
     /**
      * count the number of files in the file area
      * @global object $USER
-     * @param integer $userid
+     * @param int $userid
      * @param string $area
-     * @return integer  
+     * @return int  
      */
     private function count_files($userid = 0, $area = ASSIGN_FILEAREA_SUBMISSION_FILES) {
         global $USER;
@@ -1985,6 +1988,8 @@ class assignment {
     
     /**
      * display the grade form
+     * 
+     * @uses die
      * @global object $OUTPUT
      * @global object $USER 
      */
@@ -2144,7 +2149,7 @@ class assignment {
     
     /**
      * check if submission plugins installed are enabled 
-     * @return boolean
+     * @return bool
      */
     private function is_any_submission_plugin_enabled() {
         if (!isset($this->cache['any_submission_plugin_enabled'])) {
@@ -2165,7 +2170,7 @@ class assignment {
      * display submission status page 
      * @global object $OUTPUT
      * @global object $USER
-     * @param integer $userid
+     * @param int $userid
      * @return mixed
      */
     private function view_submission_status($userid=null) {
@@ -2310,7 +2315,7 @@ class assignment {
      * @global object $USER
      * @global object $PAGE
      * @global object $DB
-     * @param integer $userid
+     * @param int $userid
      * @return mixed
      */
     private function view_feedback($userid=null) {
@@ -2396,7 +2401,7 @@ class assignment {
      * display submission links
      * @global object $OUTPUT
      * @global object $USER
-     * @param integer $userid 
+     * @param int $userid 
      */
     private function view_submission_links($userid = null) {
         global $OUTPUT, $USER;

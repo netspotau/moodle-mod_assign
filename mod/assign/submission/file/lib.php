@@ -27,7 +27,7 @@
  */
 
 
-/**#@+
+/**
  * File areas for file submission assignment
  */
 define('ASSIGN_MAX_SUBMISSION_FILES', 20);
@@ -59,7 +59,7 @@ class submission_file extends submission_plugin {
      * get file submission information from the database  
      *  
      * @global object $DB
-     * @param integer $submissionid
+     * @param int $submissionid
      * @return mixed 
      */
     private function get_file_submission($submissionid) {
@@ -107,7 +107,7 @@ class submission_file extends submission_plugin {
     /**
      * save the settings for file submission plugin 
      * @param object $mform
-     * @return boolean 
+     * @return bool 
      */
     public function save_settings($mform) {
         $this->set_config('maxfilesubmissions', $mform->maxfilesubmissions);
@@ -158,9 +158,9 @@ class submission_file extends submission_plugin {
      * count the number of files
      * 
      * @global object $USER
-     * @param integer $submissionid
+     * @param int $submissionid
      * @param string $area
-     * @return integer 
+     * @return int 
      */
     private function count_files($submissionid = 0, $area = ASSIGN_FILEAREA_SUBMISSION_FILES) {
         global $USER;

@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 // This file is part of Moodle - http://moodle.org/
 //
@@ -26,7 +26,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/**#@+
+/**
  * File area for online text submission assignment
  */
 define('ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT', 'submissions_onlinetext');
@@ -57,7 +57,7 @@ class submission_onlinetext extends submission_plugin {
     * get onlinetext submission information from the database   
     * 
     * @global object $DB
-    * @param  integer $submissionid
+    * @param  int $submissionid
     * @return mixed 
     */
     private function get_onlinetext_submission($submissionid) {
@@ -155,7 +155,7 @@ class submission_onlinetext extends submission_plugin {
     /**
      * get the saved text content from the editor
      * @param string $name
-     * @param integer $submissionid
+     * @param int $submissionid
      * @return string 
      */
     public function get_editor_text($name, $submissionid) {
@@ -172,8 +172,8 @@ class submission_onlinetext extends submission_plugin {
     /**
      * get the content format for the editor 
      * @param string $name
-     * @param integer $submissionid
-     * @return boolean 
+     * @param int $submissionid
+     * @return bool
      */
     public function get_editor_format($name, $submissionid) {
         if ($name == 'onlinetext') {

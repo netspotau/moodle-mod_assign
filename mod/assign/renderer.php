@@ -105,6 +105,10 @@ class assign_files implements renderable {
                 $button->reset_formats();
                 $this->portfolioform = $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
             }
+            
+            
+           
+            
         }
         $this->preprocess($this->dir, $filearea);
     }

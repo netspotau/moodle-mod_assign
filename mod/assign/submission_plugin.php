@@ -61,7 +61,7 @@ abstract class submission_plugin {
      *  check if the submission plugin installed is the fist in 
      *  submission plugin order
      * @global object $DB
-     * @return boolean 
+     * @return bool
      */
     public function is_first() {
         global $DB;
@@ -78,7 +78,7 @@ abstract class submission_plugin {
      *  check if the submission plugin installed is the last in 
      *  submission plugin order
      * @global object $DB
-     * @return boolean 
+     * @return bool 
      */
     public function is_last() {
         global $DB;
@@ -104,7 +104,7 @@ abstract class submission_plugin {
      * standard type cannot be modified. 
      * 
      * @param object $mform - the data submitted from the form
-     * @return boolean - on error the subtype should call set_error and return false.
+     * @return bool - on error the subtype should call set_error and return false.
      */
     public function save_settings($mform) {
         return true;
@@ -174,7 +174,7 @@ abstract class submission_plugin {
      * Save any custom data for this student submission
      * 
      * @param object $mform - the data submitted from the form
-     * @return boolean - on error the subtype should call set_error and return false.
+     * @return bool - on error the subtype should call set_error and return false.
      */
     public function save($submission, $data) {
         return true;   
@@ -182,7 +182,7 @@ abstract class submission_plugin {
     
     /**
      *  enable the submission plugin
-     * @return boolean
+     * @return bool
      */
     public function enable() {
         return $this->set_config('enabled', 1);
@@ -190,7 +190,7 @@ abstract class submission_plugin {
 
     /**
      * disable the submission plugin
-     * @return boolean
+     * @return bool
      */
     public function disable() {
         return $this->set_config('enabled', 0);
@@ -199,7 +199,7 @@ abstract class submission_plugin {
     /**
      * Allows hiding this plugin from the submission screen if it is not enabled.
      * 
-     * @return boolean - if false - this plugin will not accept submissions
+     * @return bool - if false - this plugin will not accept submissions
      */
     public function is_enabled() {
         return $this->get_config('enabled');
@@ -291,7 +291,7 @@ abstract class submission_plugin {
     
     /**
      *  sorting the order of installed submission plugins
-     * @return boolean
+     * @return bool
      */
     public function get_sort_order() {
         $order = get_config('submission_' . $this->get_type(), 'sortorder');
@@ -301,7 +301,7 @@ abstract class submission_plugin {
     /**
      * hide and show switch for the submission plugin in manage submission plugin
      * table
-     * @return boolean
+     * @return bool
      */
     public function is_visible() {
         return !get_config('submission_' . $this->get_type(), 'disabled');
@@ -324,7 +324,7 @@ abstract class submission_plugin {
     /**
      * check if submission plugin has admin settings
      * @global object $CFG
-     * @return boolean
+     * @return bool
      */
     public function has_admin_settings() {
         global $CFG;
@@ -336,7 +336,7 @@ abstract class submission_plugin {
      * setter method for configuration
      * @global object $DB
      * @param string $name
-     * @param integer $value
+     * @param int $value
      * @return mixed 
      */
     public function set_config($name, $value) {
@@ -361,7 +361,7 @@ abstract class submission_plugin {
     /**
      * getter method for configuration
      * @global object $DB
-     * @param integer $setting
+     * @param int $setting
      * @return stdClass 
      */
     public function get_config($setting = null) {
@@ -411,7 +411,7 @@ abstract class submission_plugin {
      /**
      * Should not output anything - return the result as a boolean for editor format.
      * 
-     * @return boolean 
+     * @return bool 
      */
     public function get_editor_format($name, $submissionid) {
         return 0;

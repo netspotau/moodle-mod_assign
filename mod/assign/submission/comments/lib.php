@@ -52,7 +52,7 @@ class submission_comments extends submission_plugin {
     * get comment submission information from the database   
     * 
     * @global object $DB
-    * @param  integer $submissionid
+    * @param  int $submissionid
     * @return mixed 
     */
     private function get_comment_submission($submissionid) {
