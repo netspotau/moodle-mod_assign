@@ -86,6 +86,8 @@ class submission_plugin_manager {
 
     /** 
      * Return a list of plugins sorted by the order defined in the admin interface
+     * 
+     * @return array of installed plugins
      */
     private function get_sorted_plugins_list() {
         $assignment = new assignment();
@@ -93,7 +95,16 @@ class submission_plugin_manager {
         return $assignment->get_submission_plugins();
     }
     
-
+    /**
+     * format icon for link
+     * 
+     * @global object $OUTPUT
+     * @param string $action
+     * @param string $plugintype
+     * @param string $icon
+     * @param string $alt
+     * @return mixed
+     */
     private function format_icon_link($action, $plugintype, $icon, $alt) {
         global $OUTPUT;
 
@@ -103,6 +114,11 @@ class submission_plugin_manager {
                 null, array('title' => $alt)) . ' ';
     }
 
+    
+    /**
+     * display plugin table
+     * @global object $OUTPUT 
+     */
     private function view_plugins_table() {
         global $OUTPUT;
         // Set up the table.
@@ -161,6 +177,10 @@ class submission_plugin_manager {
         $this->view_footer();
     }
 
+    /**
+     * display header
+     * @global object $OUTPUT 
+     */
     private function view_header() {
         global $OUTPUT;
         admin_externalpage_setup('managesubmissionplugins');
@@ -169,11 +189,20 @@ class submission_plugin_manager {
         echo $OUTPUT->heading(get_string('managesubmissionplugins', 'assign'));
     }
     
+    /**
+     * display footer
+     * 
+     * @global object $OUTPUT 
+     */
     private function view_footer() {
         global $OUTPUT;
         echo $OUTPUT->footer();
     }
 
+    /**
+     *  plugin permission check
+     * 
+     */
     private function check_permissions() {
         // Check permissions.
         require_login();
@@ -181,6 +210,14 @@ class submission_plugin_manager {
         require_capability('moodle/site:config', $systemcontext);
     }
     
+    /**
+     * delete an installed plugin
+     * 
+     * @global object $CFG
+     * @global object $DB
+     * @param object $plugin
+     * @return string 
+     */
     private function delete_plugin($plugin) {
         global $CFG, $DB;
         $confirm = optional_param('confirm', null, PARAM_BOOL);
@@ -210,6 +247,12 @@ class submission_plugin_manager {
         
     }
     
+    /**
+     * view the deleted plugin
+     * 
+     * @global object $OUTPUT
+     * @param object $plugin 
+     */
     private function view_plugin_deleted($plugin) {
         global $OUTPUT;
         $this->view_header();
@@ -220,6 +263,11 @@ class submission_plugin_manager {
         $this->view_footer();
     }
 
+    /**
+     * confirm when the plugin wants to be deleted
+     * @global object $OUTPUT
+     * @param object $plugin 
+     */
     private function view_confirm_delete($plugin) {
         global $OUTPUT;
         $this->view_header();
@@ -230,21 +278,44 @@ class submission_plugin_manager {
         $this->view_footer();
     }
 
+    /**
+     * hide/disable an installed plugin
+     * @param object $plugin
+     * @return string 
+     */
     private function hide_plugin($plugin) {
         $plugin->hide();
         return 'view';
     }
     
+    /**
+     * show an installed plugin
+     * @param object $plugin
+     * @return string
+     */
     private function show_plugin($plugin) {
         $plugin->show();
         return 'view';
     }
     
+    /**
+     * move an installed plugin to a folder
+     * 
+     * @param object $plugin
+     * @param string $dir
+     * @return string 
+     */
     private function move($plugin, $dir) {
         $plugin->move($dir);
         return 'view';
     }
 
+    /**
+     * execute an installed plugin
+     * 
+     * @param string $action
+     * @param string $plugintype 
+     */
     public function execute($action = null, $plugintype = null) {
         if ($action == null) {
             $action = 'view';
