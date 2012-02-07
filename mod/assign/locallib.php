@@ -577,6 +577,11 @@ class assignment {
         return null;
     }
     
+    /**
+     * Get context module
+     * 
+     * @return object 
+     */
     public function get_context() {
         return $this->context;
     }

@@ -20,7 +20,7 @@
 // Please do not forget to use upgrade_set_timeout()
 // before any action that may take longer time to finish.
 
-function xmldb_submission_file_upgrade($oldversion) {
+function xmldb_submission_comments_upgrade($oldversion) {
     global $CFG, $DB, $OUTPUT;
 
     $dbman = $DB->get_manager();
