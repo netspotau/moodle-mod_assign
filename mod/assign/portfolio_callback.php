@@ -22,7 +22,12 @@
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+defined('MOODLE_INTERNAL') || die();
+
+/** Include assign locallib.php */
 require_once($CFG->dirroot . '/mod/assign/locallib.php');
+/** Include portfolio caller.php */
 require_once($CFG->libdir . '/portfolio/caller.php');
 
 /*

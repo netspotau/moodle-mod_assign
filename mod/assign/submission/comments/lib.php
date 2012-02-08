@@ -25,7 +25,12 @@
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+ 
+ defined('MOODLE_INTERNAL') || die();
+ 
+ /** Include comment core lib.php */
  require_once($CFG->dirroot . '/comment/lib.php');
+ /** Include submission_plugin.php to avaid AJAX error */
  require_once($CFG->dirroot . '/mod/assign/submission_plugin.php');
  
 /*
@@ -63,6 +68,7 @@ class submission_comments extends submission_plugin {
        // if ($CFG->usecomments) {
        
        // need to used this innit() otherwise it shows up undefined !
+       // require js for commenting
        comment::init();
        
        $options = new stdClass();

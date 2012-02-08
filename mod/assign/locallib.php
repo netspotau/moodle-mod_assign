@@ -1206,7 +1206,7 @@ class assignment {
         } // end of foreach loop
 
         if ($zipfile = $this->pack_files($filesforzipping)) {
-            $this->add_to_log('download all submissions', get_string('downloadallsubmissions', 'assign'));
+            $this->add_to_log('download all submissions', get_string('downloadall', 'assign'));
             send_temp_file($zipfile, $filename); //send file and delete after sending.
         }
     }
