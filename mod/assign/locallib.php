@@ -1184,11 +1184,13 @@ class assignment {
         // construct the zip file name
         $filename = str_replace(' ', '_', clean_filename($this->get_course()->shortname.'-'.$this->instance->name.'-'.$groupname.$this->get_course_module()->id.".zip")); //name of new zip file.
     
+       
         // get all the files for each submission
         foreach ($submissions as $submission) {
             $a_userid = $submission->userid; //get userid
             if ((groups_is_member($groupid,$a_userid) or !$groupmode or !$groupid)) {
 
+                 //  $a_assignid = $submission->assignment; //get name of this assignment for use in the file names.    
                 $a_user = $DB->get_record("user", array("id" => $a_userid), 'id,username,firstname,lastname'); //get user firstname/lastname
                 $files = $fs->get_area_files($this->context->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $a_user->id, "timemodified", false);
                 foreach ($files as $file) {
@@ -1682,6 +1684,24 @@ class assignment {
 
         $renderer = $PAGE->get_renderer('mod_assign');
         return $renderer->assign_files($this->context, $submissionid, $area);
+        
+        
+        /**
+         
+            if ($CFG->enableplagiarism) {
+                    require_once($CFG->libdir.'/plagiarismlib.php');
+                    $output .= plagiarism_get_links(array('userid'=>$userid, 'file'=>$file, 'cmid'=>$this->cm->id, 'course'=>$this->course, 'assignment'=>$this->assignment));
+                    $output .= '<br />';
+                }
+
+
+
+            //hook to allow plagiarism plugins to update status/print links.
+            plagiarism_update_status($this->course, $this->cm);
+         
+          
+         
+         */
         
     }
 
