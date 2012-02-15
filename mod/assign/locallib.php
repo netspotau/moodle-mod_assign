@@ -1281,23 +1281,26 @@ class assignment {
         foreach ($submissions as $submission) {
             $a_userid = $submission->userid; //get userid
             if ((groups_is_member($groupid,$a_userid) or !$groupmode or !$groupid)) {
+                // get the plugins to add their own files to the zip
 
-                $a_user = $DB->get_record("user", array("id" => $a_userid), 'id,username,firstname,lastname'); //get user firstname/lastname
-                $files = $fs->get_area_files($this->context->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $a_user->id, "timemodified", false);
-                foreach ($files as $file) {
-                    //get files new name.
-                    $fileext = strstr($file->get_filename(), '.');
-                    $fileoriginal = str_replace($fileext, '', $file->get_filename());
-                    $fileforzipname = clean_filename(fullname($a_user) . "_" . $fileoriginal . "_" . $a_userid . $fileext);
-                    //save file name to array for zipping.
-                    $filesforzipping[$fileforzipname] = $file;
+                $a_user = $DB->get_record("user", array("id"=>$a_userid),'id,username,firstname,lastname'); 
+
+                $prefix = clean_filename(fullname($a_user) . "_" .$a_userid . "_");
+
+
+                foreach ($this->submission_plugins as $plugin) {
+                    if ($plugin->is_enabled() && $plugin->is_visible()) {
+                        $plugin_files = $plugin->get_files($submission);
+
+                    
+                        foreach ($plugin_files as $filename => $file) {
+                            $filesforzipping[$prefix . $filename] = $file;
+                        } 
+                    }
                 }
-
-                // TODO: Should also get onlinetext as a html file and files linked to the online text as well
           
             } 
         } // end of foreach loop
-
         if ($zipfile = $this->pack_files($filesforzipping)) {
             $this->add_to_log('download all submissions', get_string('downloadall', 'assign'));
             send_temp_file($zipfile, $filename); //send file and delete after sending.

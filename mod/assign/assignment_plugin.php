@@ -422,6 +422,16 @@ abstract class assignment_plugin {
     public function get_editor_text($name, $submissionid) {
         return '';
     }
+
+    /**
+     * Produce a list of files suitable for export that represent this feedback or submission
+     * 
+     * @param object $submission_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
+     * @return array - return an array of files indexed by filename
+     */
+    public function get_files($submission_grade) {
+        return array();
+    }
     
      /**
      * Given a field name, should return the format of an editor field that is part of

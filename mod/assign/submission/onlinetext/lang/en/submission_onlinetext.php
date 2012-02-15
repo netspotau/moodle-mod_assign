@@ -8,3 +8,4 @@ $string['allowonlinetextsubmissions'] = 'Enabled';
 $string['onlinetextsubmission'] = 'Allow online text submission';
 
 $string['nosubmission'] = 'Nothing has been submitted for this assignment';
+$string['onlinetextfilename'] = 'onlinetext.html';

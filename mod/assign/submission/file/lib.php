@@ -201,6 +201,25 @@ class submission_file extends submission_plugin {
             return $DB->insert_record('assign_submission_file', $file_submission) > 0;
         }
     }
+
+    /**
+     * Produce a list of files suitable for export that represent this feedback or submission
+     * 
+     * @param object $submission_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
+     * @return array - return an array of files indexed by filename
+     */
+    public function get_files($submission) {
+        global $DB;
+        $result = array();
+        $fs = get_file_storage();
+
+        $files = $fs->get_area_files($this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id, "timemodified", false);
+
+        foreach ($files as $file) {
+            $result[$file->get_filename()] = $file;
+        }
+        return $result;
+    }
     
     /**
      * display the list of files  in the submission status table 

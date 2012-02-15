@@ -214,6 +214,24 @@ class submission_onlinetext extends submission_plugin {
         
        
     }
+
+    /**
+     * Produce a list of files suitable for export that represent this submission
+     * 
+     * @param object $submission - For this is the submission data
+     * @return array - return an array of files indexed by filename
+     */
+    public function get_files($submission) {
+        $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
+        if ($onlinetext_submission) {
+            $submissioncontent = "<html><body>". format_text($onlinetext_submission->onlinetext, $onlinetext_submission->onlineformat). "</body></html>";      //fetched from database
+
+            return array(get_string('onlinetextfilename', 'submission_onlinetext') => array($submissioncontent));
+        }
+
+        return array();
+    }
+
     
     /**
      * display the saved text content from the editor in the view table 
