@@ -42,12 +42,4 @@ abstract class submission_plugin extends assignment_plugin {
         return 'submission';
     }
 
-    /**
-     * Return a list of the areas that contain files valid for grading. 
-     * This is used by the advanced grading framework
-     * @return array An array of fileareas => descriptions
-     */
-    public function grading_areas_list() {
-        return array();
-    }
 }

@@ -239,12 +239,4 @@ class submission_file extends submission_plugin {
         return $this->view_summary($submission);
     }
     
-    /**
-     * Return a list of the areas that contain files valid for grading. 
-     * This is used by the advanced grading framework
-     * @return array An array of fileareas => descriptions
-     */
-    public function grading_areas_list() {
-        return array(ASSIGN_FILEAREA_SUBMISSION_FILES=>get_string('submissionfilearea', 'submission_file'));
-    }
 }

@@ -88,13 +88,7 @@ function assign_supports($feature) {
  * @return array
  */
 function assign_grading_areas_list() {
-    global $PAGE;     
-
-    $cm = $PAGE->cm;
-    $context = $cm->context;
-
-    $ass = new assignment($context);
-    return $ass->grading_areas_list();
+    return array('submissions'=>get_string('submissions', 'assign'));
 }
 
 

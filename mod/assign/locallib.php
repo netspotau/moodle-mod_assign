@@ -55,6 +55,7 @@ define('ASSIGN_FILEAREA_PORTFOLIO_FILES', 'portfolio_files');
 require_once($CFG->libdir.'/accesslib.php');
 /** Include formslib.php */
 require_once($CFG->libdir.'/formslib.php');
+require_once('HTML/QuickForm/input.php');
 /** Include plagiarismlib.php */
 require_once($CFG->libdir . '/plagiarismlib.php');
 /** Include repository/lib.php */
@@ -711,17 +712,18 @@ class assignment {
      * @param mixed $grade
      * @return string User-friendly representation of grade
      */
-    final protected function display_grade($grade) {
+    public function display_grade($grade) {
         global $DB;
 
         static $scalegrades = array();
+
                                         
 
         if ($this->instance->grade >= 0) {    // Normal number
             if ($grade == -1 || $grade === null) {
                 return '-';
             } else {
-                return $grade.' / '.$this->instance->grade;
+                return round($grade) .' / '.$this->instance->grade;
             }
 
         } else {                                // Scale
@@ -1553,6 +1555,7 @@ class assignment {
 
         // only load this if it is 
         require_once($CFG->libdir.'/gradelib.php');
+        require_once($CFG->dirroot.'/grade/grading/lib.php');
 
         $this->view_header(get_string('grading', 'assign'));
         groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id.'&action=grading');
@@ -2074,25 +2077,101 @@ class assignment {
     }
 
     /**
+     * Determine if this users grade is locked or overridden
+     * 
+     * @param int $userid - The student userid
+     * @return boolean $grading_disabled
+     */
+    private function grading_disabled($userid) {
+        $grading_info = grade_get_grades($this->get_course()->id, 'mod', 'assign', $this->instance->id, array($userid));
+        $gradingdisabled = $grading_info->items[0]->grades[$userid]->locked || $grading_info->items[0]->grades[$userid]->overridden;
+        return $gradingdisabled;
+    }
+
+
+    /**
+     * Get an instance of a grading form if advanced grading is enabled
+     * This is specific to the assignment, marker and student
+     * @param int $userid - The student userid
+     * @param object $gradingdisabled - For speed this can be passed - otherwise this is looked up
+     * @return object $gradinginstance
+     */
+    private function get_grading_instance($userid, $gradingdisabled = null) {
+        global $CFG, $USER;
+        require_once($CFG->libdir.'/gradelib.php');
+        require_once($CFG->dirroot.'/grade/grading/lib.php');
+
+        $grade = $this->get_grade($userid, false);
+        $grademenu = make_grades_menu($this->instance->grade);
+
+        if ($gradingdisabled === null) {
+            $gradingdisabled = $this->grading_disabled($userid);
+        }
+        
+        $advancedgradingwarning = false;
+        $gradingmanager = get_grading_manager($this->context, 'mod_assign', 'submissions');
+        $gradinginstance = null;
+        if ($gradingmethod = $gradingmanager->get_active_method()) {
+            $controller = $gradingmanager->get_controller($gradingmethod);
+            if ($controller->is_form_available()) {
+                $itemid = null;
+                if ($grade) {
+                    $itemid = $grade->id;
+                }
+                if ($gradingdisabled && $itemid) {
+                    $gradinginstance = ($controller->get_current_instance($USER->id, $itemid));
+                } else if (!$gradingdisabled) {
+                    $instanceid = optional_param('advancedgradinginstanceid', 0, PARAM_INT);
+                    $gradinginstance = ($controller->get_or_create_instance($instanceid, $USER->id, $itemid));
+                }
+            } else {
+                $advancedgradingwarning = $controller->form_unavailable_notification();
+            }
+        }
+        if ($gradinginstance) {
+            $gradinginstance->get_controller()->set_grade_range($grademenu);
+        }
+        return $gradinginstance;
+    }
+
+    /**
      *  add elements to grade form 
      * @global object $USER
      * @param object $mform
      * @param object $data 
      */
     public function add_grade_form_elements(& $mform, & $data, $params) {
+        global $USER, $CFG;
         $settings = $this->get_instance();
-        $grademenu = make_grades_menu($this->instance->grade);
-        $grademenu['-1'] = get_string('nograde');
 
-        $mform->addElement('select', 'grade', get_string('grade').':', $grademenu);
-        $mform->setType('grade', PARAM_INT);
-
-        // plugins
         $rownum = $params['rownum'];
         $userid = $this->get_userid_for_row($rownum);
         $grade = $this->get_grade($userid, false);
         
+        // add advanced grading
+        $gradingdisabled = $this->grading_disabled($userid);
+        $gradinginstance = $this->get_grading_instance($userid, $gradingdisabled);
+
+        if ($gradinginstance) {
+            $gradingelement = $mform->addElement('grading', 'advancedgrading', get_string('grade').':', array('gradinginstance' => $gradinginstance));
+            if ($gradingdisabled) {
+                $gradingelement->freeze();
+            } else {
+                $mform->addElement('hidden', 'advancedgradinginstanceid', $gradinginstance->get_id());
+            }
+        } else {
+            // use simple direct grading
+            $grademenu['-1'] = get_string('nograde');
+
+            $mform->addElement('select', 'grade', get_string('grade').':', $grademenu, $attributes);
+            $mform->setDefault('grade', $this->_customdata->submission->grade ); 
+            $mform->setType('grade', PARAM_INT);
+        }
+
+
+        // plugins
         $this->add_plugin_grade_elements($grade, $mform, $data);
+
         
         // hidden params
         $mform->addElement('hidden', 'id', $this->get_course_module()->id);
@@ -2431,11 +2510,14 @@ class assignment {
      * @global object $USER
      * @global object $PAGE
      * @global object $DB
+     * @global object $CFG
      * @param int $userid
      * @return mixed
      */
     private function view_feedback($userid=null) {
-        global $OUTPUT, $USER, $PAGE, $DB;
+        global $OUTPUT, $USER, $PAGE, $DB, $CFG;
+        require_once($CFG->libdir.'/gradelib.php');
+        require_once($CFG->dirroot.'/grade/grading/lib.php');
 
         if (!$userid) {
             $userid = $USER->id;
@@ -2459,30 +2541,51 @@ class assignment {
 
         $submission = null;
 
-        $grade = $this->get_grade($userid);
-        if (!$grade) {
+        $assignment_grade = $this->get_grade($userid);
+        if (!$assignment_grade) {
             return;
         }
         echo $OUTPUT->container_start('feedback');
         echo $OUTPUT->heading(get_string('feedback', 'assign'), 3);
         echo $OUTPUT->box_start('boxaligncenter', 'intro');
         $t = new html_table();
-
-        if ($grade->grade >= 0) {
-            $row = new html_table_row();
-            $cell1 = new html_table_cell(get_string('grade', 'assign'));
-            $cell2 = new html_table_cell($this->display_grade($grade->grade));
-            $row->cells = array($cell1, $cell2);
-            $t->data[] = $row;
-        }
         
+        $grading_info = grade_get_grades($this->get_course()->id, 'mod', 'assign', $this->instance->id, $userid);
+        $item = $grading_info->items[0];
+        $grade = $item->grades[$userid];
+
+        if ($grade->hidden or $grade->grade === false) { // hidden or error
+            return;
+        }
+
+        if ($grade->grade === null and empty($grade->str_feedback)) {   /// Nothing to show yet
+            return;
+        }
+
+        $graded_date = $grade->dategraded;
+
         $row = new html_table_row();
-        $cell1 = new html_table_cell(get_string('gradedon', 'assign'));
-        $cell2 = new html_table_cell(userdate($grade->timemodified));
+        $cell1 = new html_table_cell(get_string('grade', 'assign'));
+
+        $grading_manager = get_grading_manager($this->context, 'mod_assign', 'submissions');
+    
+        if ($controller = $grading_manager->get_active_controller()) {
+            $controller->set_grade_range(make_grades_menu($this->instance->grade));
+            $cell2 = new html_table_cell($controller->render_grade($PAGE, $assignment_grade->id, $item, $grade->str_long_grade, has_capability('mod/assignment:grade', $this->context)));
+        } else {
+
+            $cell2 = new html_table_cell($this->display_grade($grade->str_long_grade));
+        }
         $row->cells = array($cell1, $cell2);
         $t->data[] = $row;
         
-        if ($grader = $DB->get_record('user', array('id'=>$grade->grader))) {
+        $row = new html_table_row();
+        $cell1 = new html_table_cell(get_string('gradedon', 'assign'));
+        $cell2 = new html_table_cell(userdate($graded_date));
+        $row->cells = array($cell1, $cell2);
+        $t->data[] = $row;
+        
+        if ($grader = $DB->get_record('user', array('id'=>$grade->usermodified))) {
             $row = new html_table_row();
             $cell1 = new html_table_cell(get_string('gradedby', 'assign'));
             $cell2 = new html_table_cell($OUTPUT->user_picture($grader) . $OUTPUT->spacer(array('width'=>30)) . fullname($grader));
@@ -2492,11 +2595,14 @@ class assignment {
     
         foreach ($this->feedback_plugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
-                $row = new html_table_row();
-                $cell1 = new html_table_cell($plugin->get_name());
-                $cell2 = new html_table_cell($plugin->view_summary($grade));
-                $row->cells = array($cell1, $cell2);
-                $t->data[] = $row;
+                $feedback = $plugin->view_summary($assignment_grade);
+                if ($feedback != '') {
+                    $row = new html_table_row();
+                    $cell1 = new html_table_cell($plugin->get_name());
+                    $cell2 = new html_table_cell($feedback);
+                    $row->cells = array($cell1, $cell2);
+                    $t->data[] = $row;
+                }
             }
         }
  
@@ -2505,7 +2611,6 @@ class assignment {
         echo $OUTPUT->box_end();
         
         echo $OUTPUT->container_end();
-
     }
     
     /**
@@ -2663,12 +2768,17 @@ class assignment {
         $rownum = required_param('rownum', PARAM_INT);
         $userid = $this->get_userid_for_row($rownum);
 
-        $mform = new mod_assign_grade_form(null, array($this, null, array('rownum'=>$rownum)));
+        $mform = new mod_assign_grade_form(null, array($this, null, array('rownum'=>$rownum, 'last'=>false)));
 
         
         if ($formdata = $mform->get_data()) {
             $grade = $this->get_grade($userid, true);
-            $grade->grade= $formdata->grade;
+            $gradinginstance = $this->get_grading_instance($userid);
+            if ($gradinginstance) {
+                $grade->grade = $gradinginstance->submit_and_get_grade($formdata->advancedgrading, $grade->id);
+            } else {
+                $grade->grade= $formdata->grade;
+            }
             $grade->grader= $USER->id;
 
             $this->update_grade($grade);
@@ -2691,16 +2801,6 @@ class assignment {
        
         }
         
-    }
-
-    public function grading_areas_list() {
-        $areas = array();
-        foreach ($this->submission_plugins as $plugin) {
-            $plugin_areas = $plugin->grading_areas_list();
-            $areas = array_merge($areas, $plugin_areas);
-        }
-
-        return $areas;
     }
 
 }
