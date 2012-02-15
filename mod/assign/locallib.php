@@ -2693,4 +2693,14 @@ class assignment {
         
     }
 
+    public function grading_areas_list() {
+        $areas = array();
+        foreach ($this->submission_plugins as $plugin) {
+            $plugin_areas = $plugin->grading_areas_list();
+            $areas = array_merge($areas, $plugin_areas);
+        }
+
+        return $areas;
+    }
+
 }

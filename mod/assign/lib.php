@@ -76,10 +76,27 @@ function assign_supports($feature) {
         case FEATURE_GRADE_HAS_GRADE:         return true;
         case FEATURE_BACKUP_MOODLE2:          return true;
         case FEATURE_SHOW_DESCRIPTION:        return true;
+        case FEATURE_ADVANCED_GRADING:        return true;
 
         default: return null;
     }
 }
+
+/**
+ * Lists all gradable areas for the advanced grading methods gramework
+ *
+ * @return array
+ */
+function assign_grading_areas_list() {
+    global $PAGE;     
+
+    $cm = $PAGE->cm;
+    $context = $cm->context;
+
+    $ass = new assignment($context);
+    return $ass->grading_areas_list();
+}
+
 
 /**
  * extend an assigment navigation settings   

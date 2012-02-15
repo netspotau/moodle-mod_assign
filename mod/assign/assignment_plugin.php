@@ -442,4 +442,5 @@ abstract class assignment_plugin {
     public function get_editor_format($name, $submissionid) {
         return 0;
     }
+
 }
