@@ -16,18 +16,29 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Allows the admin to manage assignment plugins
+ * This file contains the definition for the class assign_base
  *
- * @package    mod
- * @subpackage assign
+ * This class provides all the functionality for the new assign module.
+ *
+ * @package   mod-assign
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once('adminlib.php');
+defined('MOODLE_INTERNAL') || die();
 
-// create the class for this controller
-$mgr = new assignment_plugin_manager(required_param('subtype', PARAM_PLUGIN));
+require_once('assignment_plugin.php');
 
-// execute the controller 
-$mgr->execute(optional_param('action', null, PARAM_PLUGIN), optional_param('plugin', null, PARAM_PLUGIN));
+/*
+ * Standard base class for mod_assign (assignment types).
+ *
+ * @package   mod-assign
+ * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+abstract class feedback_plugin extends assignment_plugin {
+
+    public function get_subtype() {
+        return 'feedback';
+    }
+}

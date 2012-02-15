@@ -42,9 +42,7 @@ define('ASSIGN_FILTER_REQUIRE_GRADING', 'require_grading');
 /**
  * File areas for the assignment
  */
-define('ASSIGN_FILEAREA_SUBMISSION_FEEDBACK', 'feedback_files');
-define('ASSIGN_SUBMISSION_TYPES_FOLDER', 'mod/assign/submission');
-define('ASSIGN_SUBMISSION_TYPES_FILE', 'lib.php');
+define('ASSIGN_PLUGIN_CLASS_FILE', 'lib.php');
 
 
 /**
@@ -66,6 +64,7 @@ require_once('mod_form.php');
 /** Include portfoliolib.php */
 require_once($CFG->libdir . '/portfoliolib.php');
 /** Include submission_plugin.php */
+require_once('feedback_plugin.php');
 require_once('submission_plugin.php');
 
 /*
@@ -114,9 +113,17 @@ class assignment {
         $this->course = & $course; 
         $this->cache = array(); // temporary cache only lives for a single request - used to reduce db lookups
 
-        $this->load_submission_plugins();
+        $this->submission_plugins = $this->load_plugins('submission');
+        $this->feedback_plugins = $this->load_plugins('feedback');
 
+    }
 
+    /** 
+     * get list of feedback plugins installed
+     * @return array 
+     */
+    public function get_feedback_plugins() {
+        return $this->feedback_plugins;
     }
     
     /** 
@@ -127,13 +134,16 @@ class assignment {
         return $this->submission_plugins;
     }
     
+
     /**
      * get a specific submission plugin by its type
      * @param string $type
      * @return object $plugin /null
      */
-    public function get_submission_plugin_by_type($type) {
-        foreach ($this->submission_plugins as $plugin) {
+    private function get_plugin_by_type($subtype, $type) {
+        $name = $subtype . '_plugins';
+        $p = $this->$name;
+        foreach ($p as $plugin) {
             if ($plugin->get_type() == $type) {
                 return $plugin;
             }
@@ -142,34 +152,55 @@ class assignment {
     }
 
     /**
-     * Load the submission plugins from the sub folders under submission
-     *
+     * Get a feedback plugin by type
+     * @param string $type - The type of plugin e.g comments
+     * @return $plugin
      */
-    private function load_submission_plugins() {
-        global $CFG;
-        $this->submission_plugins = array();
+    public function get_feedback_plugin_by_type($type) {
+        return $this->get_plugin_by_type('feedback', $type);
+    }
 
-        $names = get_plugin_list('submission');
+    /**
+     * Get a submission plugin by type
+     * @param string $type - The type of plugin e.g comments
+     * @return $plugin
+     */
+    public function get_submission_plugin_by_type($type) {
+        return $this->get_plugin_by_type('submission', $type);
+    }
+
+    /**
+     * Load the plugins from the sub folders under subtype
+     *
+     * @param string subtype - either submission or feedback
+     * @return array - The list of plugins
+     */
+    private function load_plugins($subtype) {
+        global $CFG;
+        $result = array();
+
+        $names = get_plugin_list($subtype);
 
         foreach ($names as $name) {
-            if (file_exists($name . '/' . ASSIGN_SUBMISSION_TYPES_FILE)) {
-                require_once($name . '/' . ASSIGN_SUBMISSION_TYPES_FILE);
+            if (file_exists($name . '/' . ASSIGN_PLUGIN_CLASS_FILE)) {
+                require_once($name . '/' . ASSIGN_PLUGIN_CLASS_FILE);
 
                 $name = basename($name);
-                
-                $submission_plugin_class = "submission_$name";
-                $submission_plugin = new $submission_plugin_class($this, $name);
 
-                if ($submission_plugin instanceof submission_plugin) {
-                    $idx = $submission_plugin->get_sort_order();
-                    while (array_key_exists($idx, $this->submission_plugins)) $idx +=1;
-                    $this->submission_plugins[$idx] = $submission_plugin;
+                $plugin_class = $subtype . '_' . $name;
+                $plugin = new $plugin_class($this, $name);
+
+                if ($plugin instanceof assignment_plugin) {
+                    $idx = $plugin->get_sort_order();
+                    while (array_key_exists($idx, $result)) $idx +=1;
+                    $result[$idx] = $plugin;
                 }
             }
         }
-        ksort($this->submission_plugins);
-    
+        ksort($result);
+        return $result;
     }
+
     
     /**
      * Display the assignment, used by view.php
@@ -285,18 +316,15 @@ class assignment {
 
         // call save_settings hook for submission plugins
         foreach ($this->submission_plugins as $plugin) {
-            if ($plugin->is_visible()) {
-                $enabled_name = $plugin->get_type() . '_enabled';
-                if ($this->instance->$enabled_name) {
-                    $plugin->enable();
-                } else {
-                    $plugin->disable();
-                }
-                
-                if (!$plugin->save_settings($this->instance)) {
-                    print_error($plugin->get_error());
-                    return false;
-                }
+            if (!$this->update_plugin_instance($plugin)) {
+                print_error($plugin->get_error());
+                return false;
+            }
+        }
+        foreach ($this->_plugins as $plugin) {
+            if (!$this->update_plugin_instance($plugin)) {
+                print_error($plugin->get_error());
+                return false;
             }
         }
         // TODO: add event to the calendar
@@ -345,6 +373,32 @@ class assignment {
     }
 
     /**
+     * Update the settings for a single plugin
+     * 
+     * @param object $plugin The plugin to update
+     * @global DB
+     * @return bool false if an error occurs
+     */
+    public function update_plugin_instance($plugin) {
+        if ($plugin->is_visible()) {
+            $enabled_name = $plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled';
+            if ($this->instance->$enabled_name) {
+                $plugin->enable();
+            } else {
+                $plugin->disable();
+            }
+
+
+            if (!$plugin->save_settings($this->instance)) {
+                print_error($plugin->get_error());
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    /**
      * Update this instance in the database
      * 
      * @global DB
@@ -360,19 +414,15 @@ class assignment {
 
         // call save_settings hook for submission plugins
         foreach ($this->submission_plugins as $plugin) {
-            if ($plugin->is_visible()) {
-                $enabled_name = $plugin->get_type() . '_enabled';
-                if ($this->instance->$enabled_name) {
-                    $plugin->enable();
-                } else {
-                    $plugin->disable();
-                }
-                    
-            
-                if (!$plugin->save_settings($this->instance)) {
-                    print_error($plugin->get_error());
-                    return false;
-                }
+            if (!$this->update_plugin_instance($plugin)) {
+                print_error($plugin->get_error());
+                return false;
+            }
+        }
+        foreach ($this->feedback_plugins as $plugin) {
+            if (!$this->update_plugin_instance($plugin)) {
+                print_error($plugin->get_error());
+                return false;
             }
         }
 
@@ -386,49 +436,97 @@ class assignment {
         return $result;
     }
 
-    
+    /**
+     * add elements in grading plugin form 
+     * @param object $grade
+     * @param object $mform
+     * @param object $data 
+     */
+    private function add_plugin_grade_elements($grade, & $mform, & $data) {
+        foreach ($this->feedback_plugins as $plugin) {
+            if ($plugin->is_enabled() && $plugin->is_visible()) {
+                $elements = $plugin->get_form_elements($grade, $data);
+
+                if ($elements && count($elements) > 0) {
+                    // add a header for the plugin data
+                    $mform->addElement('header', 'general', $plugin->get_name());
+                    foreach ($elements as $setting) {
+                        // the editor element accepts it's arguments in a non-standard order
+                        if ($setting['type'] == 'editor' || $setting['type'] == 'filemanager') {
+                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], null, $setting['options']);
+                        } else {
+                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
+                        }
+                        if (isset($setting['default'])) {
+                            $mform->setDefault($setting['name'], $setting['default']);
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+
+    /**
+     * Add one plugins settings to edit plugin form 
+     *
+     * @param object $plugin The plugin to add the settings from
+     * @param object $mform The form to add the configuration settings to. This form is modified directly (not returned)
+     *  
+     */
+    private function add_plugin_settings($plugin, & $mform) {
+        if ($plugin->is_visible()) {
+            // section heading
+            $mform->addElement('header', 'general', $plugin->get_name());
+
+            // enabled
+            $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
+
+            $mform->addElement('select', $plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', get_string('enabled', 'assign'), $ynoptions);
+            $mform->setDefault($plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', $plugin->is_enabled());
+
+            $settings = $plugin->get_settings();
+
+            // settings is an array and each element of the array is a map of 'type', 'name', 'description', 'options'
+            if ($settings && count($settings) > 0) {
+                foreach ($settings as $setting) {
+                    if (isset($setting['options'])) {
+                        // the editor element accepts it's arguments in a non-standard order
+                        if ($setting['type'] == 'editor' || $setting['type'] == 'filemanager') {
+                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], null, $setting['options']);
+                        } else {
+                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
+                        }
+                    } else {
+                        $mform->addElement($setting['type'], $setting['name'], $setting['description']);
+                    }
+                    if (isset($setting['default'])) {
+                        $mform->setDefault($setting['name'], $setting['default']);
+                    }
+                }
+            }
+        }
+
+    }
+
+
     /**
      * Add settings to edit plugin form 
      *
      * @param object $mform The form to add the configuration settings to. This form is modified directly (not returned)
      *  
      */
-    private function add_plugin_settings(& $mform) {
+    private function add_all_plugin_settings(& $mform) {
         foreach ($this->submission_plugins as $plugin) {
-            if ($plugin->is_visible()) {
-                // section heading
-                $mform->addElement('header', 'general', $plugin->get_name());
-
-                // enabled
-                $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
-    
-                $mform->addElement('select', $plugin->get_type() . '_enabled', get_string('enabled', 'assign'), $ynoptions);
-                $mform->setDefault($plugin->get_type() . '_enabled', $plugin->is_enabled());
-
-                $settings = $plugin->get_settings();
-
-                // settings is an array and each element of the array is a map of 'type', 'name', 'description', 'options'
-                if ($settings && count($settings) > 0) {
-                    foreach ($settings as $setting) {
-                        if (isset($setting['options'])) {
-                            // the editor element accepts it's arguments in a non-standard order
-                            if ($setting['type'] == 'editor' || $setting['type'] == 'filemanager') {
-                                $mform->addElement($setting['type'], $setting['name'], $setting['description'], null, $setting['options']);
-                            } else {
-                                $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
-                            }
-                        } else {
-                            $mform->addElement($setting['type'], $setting['name'], $setting['description']);
-                        }
-                        if (isset($setting['default'])) {
-                            $mform->setDefault($setting['name'], $setting['default']);
-                        }
-                    }
-                }
-            }
+            $this->add_plugin_settings($plugin, $mform);
+        }
+        foreach ($this->feedback_plugins as $plugin) {
+            $this->add_plugin_settings($plugin, $mform);
         }
     }
 
+
+    
     /**
      * Add settings to edit form
      *
@@ -476,7 +574,7 @@ class assignment {
         $mform->addElement('select', 'sendnotifications', get_string('sendnotifications', 'assign'), $ynoptions);
         $mform->setDefault('sendnotifications', 1);
 
-        $this->add_plugin_settings($mform);
+        $this->add_all_plugin_settings($mform);
     }
 
     /**
@@ -783,13 +881,12 @@ class assignment {
     private function & load_submissions_table($perpage=10,$filter=null,$startpage=null,$onlyfirstuserid=false) {
         global $CFG, $DB, $OUTPUT,$PAGE;
                      
-        $tablecolumns = array('picture', 'fullname', 'status', 'edit', 'feedback', 'grade', 'timemodified', 'timemarked', 'finalgrade');
+        $tablecolumns = array('picture', 'fullname', 'status', 'edit', 'grade', 'timemodified', 'timemarked', 'finalgrade');
 
         $tableheaders = array('',
                               get_string('fullnameuser'),
                               get_string('status'),
                               get_string('edit'),
-                              get_string('feedback', 'assign'),
                               get_string('grade'),
                               get_string('lastmodified').' ('.get_string('submission', 'assign').')',
                               get_string('lastmodified').' ('.get_string('grade').')',
@@ -818,7 +915,6 @@ class assignment {
         $table->column_class('status', 'status');
         $table->column_class('edit', 'edit');
         $table->column_class('grade', 'grade');
-        $table->column_class('feedback', 'feedback');
         $table->column_class('timemodified', 'timemodified');
         $table->column_class('timemarked', 'timemarked');
         $table->column_class('finalgrade', 'finalgrade');
@@ -831,7 +927,6 @@ class assignment {
         $table->no_sorting('edit');
         $table->no_sorting('finalgrade');
         $table->no_sorting('outcome');
-        $table->no_sorting('feedback');
         $table->no_sorting('status');
 
         $table->setup();
@@ -855,7 +950,7 @@ class assignment {
         if (!empty($users)) {
             $select = "SELECT $ufields,
                               s.id AS submissionid, g.grade, s.status,
-                              s.timemodified as timesubmitted, g.timemodified AS timemarked, g.feedbacktext, g.locked ";
+                              s.timemodified as timesubmitted, g.timemodified AS timemarked, g.locked ";
             $sql = 'FROM {user} u '.
                    'LEFT JOIN {assign_submission} s ON u.id = s.userid
                     AND s.assignment = '.$this->instance->id.' '.
@@ -923,11 +1018,9 @@ class assignment {
                             $edit .= $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id, 'action'=>'reverttodraft')), $OUTPUT->pix_icon('t/left', get_string('reverttodraft', 'assign')));
                     }
 
-                    $feedback = shorten_text(format_text($auser->feedbacktext));
                     $renderer = $PAGE->get_renderer('mod_assign');
-                    $feedback .= '<br/>' . $renderer->assign_files($this->context, $auser->id, ASSIGN_FILEAREA_SUBMISSION_FEEDBACK);
 
-                    $row = array($picture, $userlink, $status, $edit, $feedback, $grade, $studentmodified, $teachermodified, $finalgrade);
+                    $row = array($picture, $userlink, $status, $edit, $grade, $studentmodified, $teachermodified, $finalgrade);
                     $table->add_data($row);
                 }
             }
@@ -1300,8 +1393,6 @@ class assignment {
             $grade->timemodified = $grade->timecreated;
             $grade->locked = 0;
             $grade->grade = -1;
-            $grade->feedbacktext = '';
-            $grade->feedbackformat = editors_get_preferred_format();
             $gid = $DB->insert_record('assign_grades', $grade);
             $grade->id = $gid;
             return $grade;
@@ -1531,8 +1622,6 @@ class assignment {
         // starting around line 262
         $gradebook_grade['rawgrade'] = $grade->grade;
         $gradebook_grade['userid'] = $grade->userid;
-        $gradebook_grade['feedback'] = $grade->feedbacktext;
-        $gradebook_grade['feedbackformat'] = $grade->feedbackformat;
         $gradebook_grade['usermodified'] = $grade->grader;
         $gradebook_grade['datesubmitted'] = NULL;
         $gradebook_grade['dategraded'] = $grade->timemodified;
@@ -1876,16 +1965,6 @@ class assignment {
         $user = $DB->get_record('user', array('id' => $grade->userid));
         
         $info = get_string('gradestudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user)));
-        if ($grade->numfeedbackfiles > 0) {
-            $info .= get_string('numfeedbackfiles', 'assign', $grade->numfeedbackfiles);
-        } else {
-            $info .= get_string('nofeedbackfiles', 'assign');
-        }
-        if ($grade->feedbacktext != '') {
-            $info .= get_string('feedbacktextnumwords', 'assign', count_words(format_text($grade->feedbacktext)));
-        } else {
-            $info .= get_string('nofeedbacktext', 'assign');
-        }
         if ($grade->grade != '') {
             $info .= get_string('grade', 'assign') . ': ' . $this->display_grade($grade->grade) . '. ';
         } else {
@@ -1990,6 +2069,49 @@ class assignment {
 
         return count($files);
     }
+
+    /**
+     *  add elements to grade form 
+     * @global object $USER
+     * @param object $mform
+     * @param object $data 
+     */
+    public function add_grade_form_elements(& $mform, & $data, $params) {
+        $settings = $this->get_instance();
+        $grademenu = make_grades_menu($this->instance->grade);
+        $grademenu['-1'] = get_string('nograde');
+
+        $mform->addElement('select', 'grade', get_string('grade').':', $grademenu);
+        $mform->setType('grade', PARAM_INT);
+
+        // plugins
+        $rownum = $params['rownum'];
+        $userid = $this->get_userid_for_row($rownum);
+        $grade = $this->get_grade($userid, false);
+        
+        $this->add_plugin_grade_elements($grade, $mform, $data);
+        
+        // hidden params
+        $mform->addElement('hidden', 'id', $this->get_course_module()->id);
+        $mform->setType('id', PARAM_INT);
+        $mform->addElement('hidden', 'rownum', $params['rownum']);
+        $mform->setType('rownum', PARAM_INT);
+        
+        $mform->addElement('hidden', 'action', 'submitgrade');
+        $mform->setType('action', PARAM_ALPHA);
+          
+        $buttonarray=array();
+             
+        if (!$params['last']){
+            $buttonarray[] = &$mform->createElement('submit', 'saveandshownext', get_string('savenext','assign')); 
+            $buttonarray[] = &$mform->createElement('submit', 'nosaveandnext', get_string('nosavebutnext', 'assign'));
+        }
+        $buttonarray[] = &$mform->createElement('submit', 'savegrade', get_string('savechanges', 'assign'));        
+        $buttonarray[] = &$mform->createElement('cancel', 'cancelbutton', get_string('cancel','assign'));     
+        $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
+        $mform->closeHeaderBefore('buttonar');            
+    }
+
     
     /**
      * display the grade form
@@ -2000,49 +2122,45 @@ class assignment {
      */
     private function view_grade_form() {
         global $OUTPUT, $USER;
-        
+
          // Always require view permission to do anything
         require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
 
-       
+
         echo $OUTPUT->heading(get_string('grade'), 3);
         echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
 
-        $rownum = required_param('rownum', PARAM_INT);  
+        $rownum = required_param('rownum', PARAM_INT);
         $userid = $this->get_userid_for_row($rownum);
         if(!$userid){
              print_error('outofbound exception array:rownumber&userid');
              die();
         }
-       
+
         $grade = $this->get_grade($userid);
         if ($grade) {
             $data = new stdClass();
             $data->grade = $grade->grade;
-            $data->feedback = $grade->feedbacktext;
-            $data->feedbackformat = $grade->feedbackformat;
             // set the grade 
         } else {
             $data = new stdClass();
-            $data->feedback = '';
-            $data->feedbackformat = editors_get_preferred_format();
             $data->grade = -1;
         }
 
-        $options = array('subdirs'=>1, 
-                                        'maxbytes'=>$this->course->maxbytes, 
+        $options = array('subdirs'=>1,
+                                        'maxbytes'=>$this->course->maxbytes,
                                         'maxfiles'=>EDITOR_UNLIMITED_FILES,
-                                        'accepted_types'=>'*', 
+                                        'accepted_types'=>'*',
                                         'return_types'=>FILE_INTERNAL);
-        
+
         $last = !$this->get_userid_for_row($rownum+1);
-        $mform = new mod_assign_grade_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'rownum'=>$rownum, 'last'=>$last, 'userid'=>$userid, 'options'=>$options, 'course'=>$this->get_course(), 'scale'=>$this->instance->grade, 'context'=>$this->context, 'data'=>$data));
+        $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum, 'last'=>$last)));
 
         // show upload form
         $mform->display();
-        
+
         echo $OUTPUT->box_end();
         echo $OUTPUT->spacer(array('height'=>30));
     }
@@ -2069,7 +2187,7 @@ class assignment {
     private function add_plugin_submission_elements($submission, & $mform, & $data) {
         foreach ($this->submission_plugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
-                $submission_elements = $plugin->get_submission_form_elements($submission, $data);
+                $submission_elements = $plugin->get_form_elements($submission, $data);
 
                 if ($submission_elements && count($submission_elements) > 0) {
                     // add a header for the plugin data
@@ -2110,20 +2228,10 @@ class assignment {
 
         $data = $this->get_default_submission_data();
         $submission = $this->get_submission($USER->id);
-        if ($submission) {          
-            //$data->onlinetext = $submission->onlinetext;
-            //$data->onlinetextformat = $submission->onlineformat;          
-            //$data->submissioncomment_editor['text'] = $submission->submissioncommenttext;
-            //$data->submissioncomment_editor['format'] = $submission->submissioncommentformat;
-        }
 
         $mform = new mod_assign_submission_form(null, array($this, $data));
 
-
-        // show upload form
         $mform->display();
-
-    
         
         echo $OUTPUT->container_end();
         echo $OUTPUT->spacer(array('height'=>30));
@@ -2357,22 +2465,6 @@ class assignment {
         echo $OUTPUT->box_start('boxaligncenter', 'intro');
         $t = new html_table();
 
-        $row = new html_table_row();
-        $cell1 = new html_table_cell(get_string('feedbackcomments', 'assign'));
-        $cell2 = new html_table_cell(format_text($grade->feedbacktext));
-        $row->cells = array($cell1, $cell2);
-        $t->data[] = $row;
-        // feedback files
-        $row = new html_table_row();
-        $cell1 = new html_table_cell(get_string('feedbackfiles', 'assign'));
-        $fs = get_file_storage();
-        $browser = get_file_browser();
-
-        $renderer = $PAGE->get_renderer('mod_assign');
-        $cell2 = new html_table_cell($renderer->assign_files($this->context, $userid, 'feedback'));
-        $row->cells = array($cell1, $cell2);
-        $t->data[] = $row;
-        
         if ($grade->grade >= 0) {
             $row = new html_table_row();
             $cell1 = new html_table_cell(get_string('grade', 'assign'));
@@ -2394,6 +2486,17 @@ class assignment {
             $row->cells = array($cell1, $cell2);
             $t->data[] = $row;
         }
+    
+        foreach ($this->feedback_plugins as $plugin) {
+            if ($plugin->is_enabled() && $plugin->is_visible()) {
+                $row = new html_table_row();
+                $cell1 = new html_table_cell($plugin->get_name());
+                $cell2 = new html_table_cell($plugin->view_summary($grade));
+                $row->cells = array($cell1, $cell2);
+                $t->data[] = $row;
+            }
+        }
+ 
 
         echo html_writer::table($t);
         echo $OUTPUT->box_end();
@@ -2437,78 +2540,6 @@ class assignment {
     }
     
     /**
-     * mform for file upload submission
-     * @global object $USER
-     * @param object $mform
-     * @param object $data
-     * @return mixed
-     */
-    private function add_file_upload_form_elements(& $mform, & $data) {
-        global $USER;
-        if ($this->instance->maxfilessubmission <= 0) {
-            return;
-        }
-        $mform->addElement('header', 'general', get_string('uploadfiles', 'assign'));
-
-        $fileoptions = array('subdirs'=>1, 
-                                'maxbytes'=>$this->instance->maxsubmissionsizebytes, 
-                                'maxfiles'=>$this->instance->maxfilessubmission, 
-                                'accepted_types'=>'*', 
-                                'return_types'=>FILE_INTERNAL);
-
-
-        $mform->addElement('filemanager', 'files_filemanager', '', null, $fileoptions);
-
-        $mform->addElement('static', '', '', get_string('descriptionmaxfiles', 'assign', $this->instance->maxfilessubmission));
-    
-        $data = file_prepare_standard_filemanager($data, 'files', $fileoptions, $this->context, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $USER->id);
-    }
-    
-     /**
-     * mform for submission comment
-     * @param object $mform
-     * @param object $data
-     * @return mixed
-     */
-    private function add_submission_comment_form_elements(& $mform, & $data) {
-        if (!$this->instance->submissioncomments) {
-            return;
-        }
-
-        $mform->addElement('header', 'general', get_string('submissioncomment', 'assign'));
-        $mform->addElement('editor', 'submissioncomment_editor', '', null, null);
-        $mform->setType('submissioncomment_editor', PARAM_RAW); // to be cleaned before display
-    }
-
-    /**
-     * mform for onlinetext submission
-     * @global object $USER
-     * @param object $mform
-     * @param object $data
-     * @return mixed
-     */
-    private function add_online_text_form_elements(& $mform, & $data) {
-        global $USER;
-        if (!$this->instance->onlinetextsubmission) {
-            return;
-        }
-
-
-        $mform->addElement('header', 'general', get_string('onlinetextcomment', 'assign'));
-        $editoroptions = array(
-           'noclean' => false,
-           'maxfiles' => EDITOR_UNLIMITED_FILES,
-           'maxbytes' => $this->get_course()->maxbytes,
-           'context' => $this->context
-        );           
-
-        $data = file_prepare_standard_editor($data, 'onlinetext', $editoroptions, $this->context, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $USER->id);      
-        $mform->addElement('editor', 'onlinetext_editor', '', null, $editoroptions);
-  
-        $mform->setType('onlinetext_editor', PARAM_RAW); // to be cleaned before display
-    }
-   
-    /**
      *  add elements to submission form 
      * @global object $USER
      * @param object $mform
@@ -2522,10 +2553,6 @@ class assignment {
         $submission = $this->get_submission($USER->id, null, false);
         
         $this->add_plugin_submission_elements($submission, $mform, $data);
-        // file uploads
-        //$this->add_file_upload_form_elements($mform, $data);
-        // submission comment
-        //$this->add_submission_comment_form_elements($mform, $data);
 
         // hidden params
         $mform->addElement('hidden', 'id', $this->get_course_module()->id);
@@ -2631,29 +2658,28 @@ class assignment {
         require_capability('mod/assign:grade', $this->context);
 
         $rownum = required_param('rownum', PARAM_INT);
-        $userid = required_param('userid', PARAM_INT);
+        $userid = $this->get_userid_for_row($rownum);
 
-        $options = array('subdirs'=>1, 
-                                        'maxbytes'=>$this->course->maxbytes, 
-                                        'maxfiles'=>EDITOR_UNLIMITED_FILES,
-                                        'accepted_types'=>'*', 
-                                        'return_types'=>FILE_INTERNAL);
-        $mform = new mod_assign_grade_form(null, array('cm'=>$this->get_course_module()->id, 'options'=>$options, 'rownum'=>$rownum, 'contextid'=>$this->context->id, 'userid'=>$userid, 'course'=>$this->get_course(), 'scale'=>$this->instance->grade, 'context'=>$this->context));
+        $mform = new mod_assign_grade_form(null, array($this, null, array('rownum'=>$rownum)));
+
         
         if ($formdata = $mform->get_data()) {
-            $fs = get_file_storage();
-            $fs->delete_area_files($this->context->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FEEDBACK, $userid);
-            $formdata = file_postupdate_standard_filemanager($formdata, 'feedbackfiles', $options, $this->context, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FEEDBACK, $userid);
-
             $grade = $this->get_grade($userid, true);
             $grade->grade= $formdata->grade;
             $grade->grader= $USER->id;
-            $grade->feedbacktext= $formdata->feedback_editor['text'];
-            $grade->feedbackformat= $formdata->feedback_editor['format'];
-
-            $grade->numfeedbackfiles = $this->count_files($userid, ASSIGN_FILEAREA_SUBMISSION_FEEDBACK);
 
             $this->update_grade($grade);
+
+            // call save in plugins
+            foreach ($this->feedback_plugins as $plugin) {
+                if ($plugin->is_enabled() && $plugin->is_visible()) {
+                    if (!$plugin->save($grade, $formdata)) {
+                        $result = false;
+                        print_error($plugin->get_error());
+                    }
+                }
+            }
+
 
             $user = $DB->get_record('user', array('id' => $userid));
 

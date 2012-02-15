@@ -27,7 +27,7 @@
 require_once('adminlib.php');
 
 // create the class for this controller
-$mgr = new assignment_plugin_manager(required_param('subtype', PARAM_PLUGIN));
+$mgr = new assignment_plugin_manager('submission');
 
 // execute the controller 
 $mgr->execute(optional_param('action', null, PARAM_PLUGIN), optional_param('plugin', null, PARAM_PLUGIN));

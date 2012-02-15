@@ -73,7 +73,7 @@ class submission_onlinetext extends submission_plugin {
      * @param object $data
      * @return string 
      */
-    public function get_submission_form_elements($submission, & $data) {
+    public function get_form_elements($submission, & $data) {
         global $USER;
         
         $elements = array();

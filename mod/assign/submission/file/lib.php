@@ -135,7 +135,7 @@ class submission_file extends submission_plugin {
      * @param object $data
      * @return mixed 
      */
-    public function get_submission_form_elements($submission, & $data) {
+    public function get_form_elements($submission, & $data) {
 
         $elements = array();
 

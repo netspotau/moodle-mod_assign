@@ -1,3 +1,3 @@
 <?php
 
-$subplugins = array('submission'=>'mod/assign/submission');
+$subplugins = array('submission'=>'mod/assign/submission', 'feedback'=>'mod/assign/feedback');

@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -18,16 +19,19 @@ if (!defined('MOODLE_INTERNAL')) {
     die('Direct access to this script is forbidden.');    ///  It must be included from a Moodle page
 }
 
+// Includes
+
 require_once ($CFG->dirroot.'/course/moodleform_mod.php');
 require_once('locallib.php');
 
-/**
+/*
+ * Assignment settings form. 
+ *
  * @package   mod-assign
- * @copyright 2010 Dongsheng Cai <dongsheng@moodle.com>
+ * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_assign_mod_form extends moodleform_mod {
-    protected $_assignmentinstance = null;
 
     function definition() {
         global $CFG, $DB;
@@ -65,9 +69,11 @@ class mod_assign_mod_form extends moodleform_mod {
 
 }
 
-/**
+/*
+ * Assignment submission form
+ *
  * @package   mod-assign
- * @copyright 2010 Dongsheng Cai <dongsheng@moodle.com>
+ * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_assign_submission_form extends moodleform {
@@ -86,75 +92,33 @@ class mod_assign_submission_form extends moodleform {
     }
 }
 
-/**
+/*
+ * Assignment grade form
+ *
  * @package   mod-assign
- * @copyright 2010 Dongsheng Cai <dongsheng@moodle.com>
+ * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_assign_grade_form extends moodleform {         
     function definition() {
         $mform = $this->_form;
-        $instance = $this->_customdata;       
-        // visible elements
-        $grademenu = make_grades_menu($instance['scale']);
-        $grademenu['-1'] = get_string('nograde');
-
-        $mform->addElement('select', 'grade', get_string('grade').':', $grademenu);
-        $mform->setType('grade', PARAM_INT);
         
-        $data = null;
-        if (isset($instance['data'])) {
-            $data = $instance['data'];
-            $data->feedback_editor['text'] = $data->feedback;
-            $data->feedback_editor['format'] = $data->feedbackformat;
-            $data = file_prepare_standard_filemanager($data, 'feedbackfiles', $instance['options'], $instance['context'], 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FEEDBACK, $instance['userid']);
+        list($assignment, $data, $params) = $this->_customdata;
+        // visible elements
+        $assignment->add_grade_form_elements($mform, $data, $params);
+
+        if ($data) {
             $this->set_data($data);
         }
-        
-        $mform->addElement('editor', 'feedback_editor', get_string('feedbackcomments', 'assign'));
-        $mform->setType('feedback_editor', PARAM_RAW); // to be cleaned before display
-
-        $mform->addElement('filemanager', 'feedbackfiles_filemanager', get_string('uploadafile'), null, $instance['options']);
-        // hidden params
-        $mform->addElement('hidden', 'contextid', $instance['contextid']);
-        $mform->setType('contextid', PARAM_INT);
-        $mform->addElement('hidden', 'id', $instance['cm']);
-        $mform->setType('id', PARAM_INT);
-        $mform->addElement('hidden', 'userid', $instance['userid']);
-        $mform->setType('userid', PARAM_INT);
-        $mform->addElement('hidden', 'rownum', $instance['rownum']);
-        $mform->setType('rownum', PARAM_INT);
-        
-        $mform->addElement('hidden', 'action', 'submitgrade');
-        $mform->setType('action', PARAM_ALPHA);
-         
-        $buttonarray=array();
-            
-        $buttonarray[] = &$mform->createElement('submit', 'saveandshownext', get_string('savenext','assign')); 
-        $buttonarray[] = &$mform->createElement('submit', 'nosaveandnext', get_string('nosavebutnext', 'assign'));
-        $buttonarray[] = &$mform->createElement('submit', 'savegrade', get_string('savechanges', 'assign'));           
-        $buttonarray[] = &$mform->createElement('cancel', 'cancelbutton', get_string('cancel','assign'));     
-        $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
-        $mform->closeHeaderBefore('buttonar');            
-               ///- use this to get the last userid/row number to hide the next and save$show next button 
-              // var_dump($instance['last']);
-              /// related to the view_grade_form function
-       
-        if (!empty($instance['last'])== true ){
-            $mform->removeElement('buttonar');
-            $buttonarray=array();          
-            $buttonarray[] = &$mform->createElement('submit', 'savegrade', get_string('savechanges', 'assign'));
-            $buttonarray[] = &$mform->createElement('cancel', 'cancelbutton', get_string('cancel','assign'));     
-            $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
-            $mform->closeHeaderBefore('buttonar');                                     
-      }            
-  }
+    }
           
 }
 
-/**
+/*
+ * Assignment grading options form
+ *
  * @package   mod-assign
- * @copyright 2010 Dongsheng Cai <dongsheng@moodle.com>
+ * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_assign_grading_options_form extends moodleform {
@@ -170,8 +134,6 @@ class mod_assign_grading_options_form extends moodleform {
         $options = array(''=>get_string('filternone', 'assign'), ASSIGN_FILTER_SUBMITTED=>get_string('filtersubmitted', 'assign'), ASSIGN_FILTER_REQUIRE_GRADING=>get_string('filterrequiregrading', 'assign'));
         $mform->addElement('select', 'filter', get_string('filter', 'assign'), $options, $autosubmit);
     
- //       $mform->_attributes['id'] = 'gradingoptions';
-
         // hidden params
         $mform->addElement('hidden', 'contextid', $instance['contextid']);
         $mform->setType('contextid', PARAM_INT);

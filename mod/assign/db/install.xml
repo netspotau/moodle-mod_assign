@@ -50,11 +50,8 @@
         <FIELD NAME="assignment" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="userid"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="assignment" NEXT="timecreated"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="userid" NEXT="timemodified"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timecreated" NEXT="numfeedbackfiles"/>
-        <FIELD NAME="numfeedbackfiles" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timemodified" NEXT="feedbacktext"/>
-        <FIELD NAME="feedbacktext" TYPE="text" LENGTH="small" NOTNULL="false" SEQUENCE="false" PREVIOUS="numfeedbackfiles" NEXT="feedbackformat"/>
-        <FIELD NAME="feedbackformat" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="feedbacktext" NEXT="grader"/>
-        <FIELD NAME="grader" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="feedbackformat" NEXT="grade"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timecreated" NEXT="grader"/>
+        <FIELD NAME="grader" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timemodified" NEXT="grade"/>
         <FIELD NAME="grade" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="grader" NEXT="locked"/>
         <FIELD NAME="locked" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="grade" NEXT="mailed"/>
         <FIELD NAME="mailed" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="locked"/>
@@ -72,8 +69,9 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="assignment"/>
         <FIELD NAME="assignment" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="plugin"/>
-        <FIELD NAME="plugin" TYPE="char" LENGTH="28" NOTNULL="true" SEQUENCE="false" PREVIOUS="assignment" NEXT="name"/>
-        <FIELD NAME="name" TYPE="char" LENGTH="28" NOTNULL="true" SEQUENCE="false" PREVIOUS="plugin" NEXT="value"/>
+        <FIELD NAME="plugin" TYPE="char" LENGTH="28" NOTNULL="true" SEQUENCE="false" PREVIOUS="assignment" NEXT="subtype"/>
+        <FIELD NAME="subtype" TYPE="char" LENGTH="28" NOTNULL="true" SEQUENCE="false" PREVIOUS="plugin" NEXT="name"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="28" NOTNULL="true" SEQUENCE="false" PREVIOUS="subtype" NEXT="value"/>
         <FIELD NAME="value" TYPE="text" LENGTH="small" NOTNULL="false" SEQUENCE="false" PREVIOUS="name"/>
       </FIELDS>
       <KEYS>
@@ -82,8 +80,9 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="assignment" UNIQUE="false" FIELDS="assignment" NEXT="plugin"/>
-        <INDEX NAME="plugin" UNIQUE="false" FIELDS="plugin" PREVIOUS="assignment" NEXT="name"/>
-        <INDEX NAME="name" UNIQUE="false" FIELDS="name" PREVIOUS="plugin"/>
+        <INDEX NAME="plugin" UNIQUE="false" FIELDS="plugin" PREVIOUS="assignment" NEXT="subtype"/>
+        <INDEX NAME="subtype" UNIQUE="false" FIELDS="subtype" PREVIOUS="plugin" NEXT="name"/>
+        <INDEX NAME="name" UNIQUE="false" FIELDS="name" PREVIOUS="subtype"/>
       </INDEXES>
     </TABLE>
   </TABLES>
