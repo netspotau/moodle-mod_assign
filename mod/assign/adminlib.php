@@ -86,7 +86,7 @@ class admin_page_manage_assignment_plugins extends admin_externalpage {
 
         $found = false;
         $textlib = textlib_get_instance();
-        foreach (get_plugin_list('submission') as $name => $notused) {
+        foreach (get_plugin_list($this->subtype) as $name => $notused) {
             if (strpos($textlib->strtolower(get_string('pluginname', $this->subtype . '_' . $name)),
                     $query) !== false) {
                 $found = true;
