@@ -4,9 +4,17 @@ div.gradingnavigation div {
 }
 
 
-.submissionstatus .generaltable,
-.gradingsummary .generaltable {
+div.submissionstatus,
+div.feedback,
+div.gradingsummary {
 
     width: 70%;
     margin: 0 auto;
+}
+
+
+div.submissionstatus .generaltable,
+div.feedback .generaltable,
+div.gradingsummary .generaltable {
+    width: 100%;
 }
