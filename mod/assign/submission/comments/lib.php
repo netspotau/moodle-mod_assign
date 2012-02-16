@@ -46,46 +46,38 @@ class submission_comments extends submission_plugin {
     /** @var object the assignment record that contains the global settings for this assign instance */
     private $instance;
 
-   /**
-    * get the name of the online comment submission plugin
-    * @return string 
-    */   
+    /**
+     * get the name of the online comment submission plugin
+     * @return string 
+     */   
     public function get_name() {
         return get_string('pluginname', 'submission_comments');
     }
       
   
-     /**
-      * display AJAX based comment in the submission status table 
-      * 
-      * @param object $submission
-      * @return string 
-      */
-   public function view_summary($submission) {
+    /**
+     * display AJAX based comment in the submission status table 
+     * 
+     * @param object $submission
+     * @return string 
+     */
+    public function view_summary($submission) {
         
-      // global $CFG;
+        // need to used this init() otherwise it shows up undefined !
+        // require js for commenting
+        comment::init();
        
-       // if ($CFG->usecomments) {
-       
-       // need to used this innit() otherwise it shows up undefined !
-       // require js for commenting
-       comment::init();
-       
-       $options = new stdClass();
+        $options = new stdClass();
        
         $options->area    = 'submission_comments';
         
         $options->course    = $this->assignment->get_course();
         
         $options->context = $this->assignment->get_context();
+
         $options->itemid  = $submission->id;
-       // $options->itemid  = 0;
-        //$options->linktext= get_string('showcomments');
         $options->component = 'submission_comments';
         $options->showcount = true;
-      
-     //  $options->notoggle  = true;
-      //  $options->autostart = true;
         $options->displaycancel = true;
         
         $comment = new comment($options);
@@ -95,23 +87,28 @@ class submission_comments extends submission_plugin {
         return $comment->output(true);
      
     }
-    
-    
+
+    /**
+     * This plugin accepts submissions from a student
+     * The comments plugin has no submission component so should not be counted 
+     * when determining whether to show the edit submission link.
+     * @return boolean
+     */
+    public function allow_submissions() {
+        return false;
+    }
    
 }
 
-
-
-
-         /**
-          *
-          * callback method for data validation---- required method 
-          * for AJAXmoodle based comment API
-          * 
-          * @param object $options
-          * @return bool
-          */
-	 function submission_comments_comment_validate($options){
+    /**
+     *
+     * callback method for data validation---- required method 
+     * for AJAXmoodle based comment API
+     * 
+     * @param object $options
+     * @return bool
+     */
+	function submission_comments_comment_validate($options){
 
 	     return true;
 
@@ -119,17 +116,16 @@ class submission_comments extends submission_plugin {
 
 
      
-          /**
-           * permission control method for submission plugin ---- required method 
-           * for AJAXmoodle based comment API
-           * 
-           * @param object $options
-           * @return array
-           */
-	  function submission_comments_comment_permissions($options){
+    /**
+     * permission control method for submission plugin ---- required method 
+     * for AJAXmoodle based comment API
+     * 
+     * @param object $options
+     * @return array
+     */
+	function submission_comments_comment_permissions($options){
            
 	    return array('post'=>true,'view'=>true );
+	}
 
-	 }
-    
   

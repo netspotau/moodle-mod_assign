@@ -2357,7 +2357,7 @@ class assignment {
      */
     private function add_plugin_submission_elements($submission, & $mform, & $data) {
         foreach ($this->submission_plugins as $plugin) {
-            if ($plugin->is_enabled() && $plugin->is_visible()) {
+            if ($plugin->is_enabled() && $plugin->is_visible() && $plugin->allow_submissions()) {
                 $submission_elements = $plugin->get_form_elements($submission, $data);
 
                 if ($submission_elements && count($submission_elements) > 0) {
@@ -2442,7 +2442,7 @@ class assignment {
         if (!isset($this->cache['any_submission_plugin_enabled'])) {
             $this->cache['any_submission_plugin_enabled'] = false;
             foreach ($this->submission_plugins as $plugin) {
-                if ($plugin->is_enabled() && $plugin->is_visible()) {
+                if ($plugin->is_enabled() && $plugin->is_visible() && $plugin->allow_submissions()) {
                     $this->cache['any_submission_plugin_enabled'] = true;
                     break;
                 }
