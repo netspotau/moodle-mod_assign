@@ -533,7 +533,7 @@ class assignment {
             // enabled
             $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
 
-            //tied add rule to this select element
+            //tied disableIf rule to this select element
             $mform->addElement('select', $plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', get_string('enabled', 'assign'), $ynoptions);
             $mform->setDefault($plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', $plugin->is_enabled());
 
@@ -548,10 +548,12 @@ class assignment {
                             $mform->addElement($setting['type'], $setting['name'], $setting['description'], null, $setting['options']);
                         } else {
                             $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
+                            // add disableIf to disable/grey the rest of the setting options if the plugin is not enabled
+                            $mform->disabledIf($setting['name'],$plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', 'eq', 0);
                         }
                     } else {
                         $mform->addElement($setting['type'], $setting['name'], $setting['description']);
-                        // add rule to grey the seeting if not enabled
+                        
                     }
                     if (isset($setting['default'])) {
                         $mform->setDefault($setting['name'], $setting['default']);
