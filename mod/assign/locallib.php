@@ -1300,8 +1300,8 @@ class assignment {
                         $plugin_files = $plugin->get_files($submission);
 
                     
-                        foreach ($plugin_files as $filename => $file) {
-                            $filesforzipping[$prefix . $filename] = $file;
+                        foreach ($plugin_files as $zipfilename => $file) {
+                            $filesforzipping[$prefix . $zipfilename] = $file;
                         } 
                     }
                 }
