@@ -81,7 +81,13 @@ class submission_onlinetext extends submission_plugin {
         $editoroptions = $this->get_edit_options();
         $submissionid = $submission ? $submission->id : 0;
         
-      
+        if (!isset($data->onlinetext)) {
+            $data->onlinetext = '';
+        } 
+        if (!isset($data->onlinetextformat)) {
+            $data->onlinetextformat = editors_get_preferred_format();
+        } 
+        
         
         $data = file_prepare_standard_editor($data, 'onlinetext', $editoroptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $submissionid);      
         

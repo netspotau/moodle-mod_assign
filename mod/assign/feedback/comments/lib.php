@@ -20,8 +20,10 @@ class feedback_comments extends feedback_plugin {
         $default_comment = '';
         if ($grade) {
             $feedback_comments = $this->get_feedback_comments($grade->id);
-            $data->feedbackcomments_editor['text'] = $feedback_comments->commenttext;
-            $data->feedbackcomments_editor['format'] = $feedback_comments->commentformat;
+            if ($feedback_comments) {
+                $data->feedbackcomments_editor['text'] = $feedback_comments->commenttext;
+                $data->feedbackcomments_editor['format'] = $feedback_comments->commentformat;
+            }
         }
 
 

@@ -255,8 +255,6 @@ class assignment {
             $this->view_single_grade_page();
         } else if ($action == 'editsubmission') {
             $this->view_edit_submission_page();
-        } else if ($action == 'onlinetext'){
-           // $this->view_online_text_page();
         } else if ($action == 'grading') {
             $this->view_grading_page();
         } else if ($action == 'downloadall') {
@@ -322,7 +320,7 @@ class assignment {
                 return false;
             }
         }
-        foreach ($this->_plugins as $plugin) {
+        foreach ($this->feedback_plugins as $plugin) {
             if (!$this->update_plugin_instance($plugin)) {
                 print_error($plugin->get_error());
                 return false;
@@ -351,7 +349,11 @@ class assignment {
             $result = false;
         }
         
-        if (! $DB->delete_records('assign_submissions', array('assignment'=>$this->instance->id))) {
+        if (! $DB->delete_records('assign_submission', array('assignment'=>$this->instance->id))) {
+            $result = false;
+        }
+        
+        if (! $DB->delete_records('assign_grades', array('assignment'=>$this->instance->id))) {
             $result = false;
         }
         
@@ -453,6 +455,9 @@ class assignment {
                     $mform->addElement('header', 'general', $plugin->get_name());
                     foreach ($elements as $setting) {
                         // the editor element accepts it's arguments in a non-standard order
+                        if ($setting['type'] == 'editor') {
+                            $this->set_default_data_for_editor($setting['name'], $data);
+                        }
                         if ($setting['type'] == 'editor' || $setting['type'] == 'filemanager') {
                             $mform->addElement($setting['type'], $setting['name'], $setting['description'], null, $setting['options']);
                         } else {
@@ -1049,7 +1054,7 @@ class assignment {
     public function view_submission($submissionid=null, $plugintype=null) {
            global $OUTPUT, $CFG;
            $this->view_header();
-            echo $OUTPUT->container_start('viewonlinetext');
+            echo $OUTPUT->container_start('viewsubmission');
             echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
             
             $submission = $this->get_submission(null, $submissionid, false);
@@ -2161,10 +2166,10 @@ class assignment {
             }
         } else {
             // use simple direct grading
+            $grademenu = make_grades_menu($this->instance->grade);
             $grademenu['-1'] = get_string('nograde');
 
-            $mform->addElement('select', 'grade', get_string('grade').':', $grademenu, $attributes);
-            $mform->setDefault('grade', $this->_customdata->submission->grade ); 
+            $mform->addElement('select', 'grade', get_string('grade').':', $grademenu);
             $mform->setType('grade', PARAM_INT);
         }
 
@@ -2253,11 +2258,27 @@ class assignment {
      */
     private function get_default_submission_data() {
         $data = new stdClass();
-        $data->onlinetext = '';
-        $data->onlinetextformat = editors_get_preferred_format();        
-        $data->submissioncomment_editor['format'] = editors_get_preferred_format();
 
         return $data;
+    }
+    
+    /**
+     * Used to set the default data for an editor element.
+     * Prevents warnings being written to the page.
+     *
+     * @param string $name - The name of the element
+     * @param object $data - The default data class to modify
+     * @return None
+     */
+    private function set_default_data_for_editor($name, & $data) {
+        $textname =$name . 'editor';
+        $formatname =$name . 'format';
+        if (!isset($data->$textname)) {
+            $data->$textname = '';
+        }
+        if (!isset($data->$formatname)) {
+            $data->$formatname = editors_get_preferred_format();
+        }
     }
     
     /**
@@ -2276,6 +2297,9 @@ class assignment {
                     $mform->addElement('header', 'general', $plugin->get_name());
                     foreach ($submission_elements as $setting) {
                         // the editor element accepts it's arguments in a non-standard order
+                        if ($setting['type'] == 'editor') {
+                            $this->set_default_data_for_editor($setting['name'], $data);
+                        }
                         if ($setting['type'] == 'editor' || $setting['type'] == 'filemanager') {
                             $mform->addElement($setting['type'], $setting['name'], $setting['description'], null, $setting['options']);
                         } else {
