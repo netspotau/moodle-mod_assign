@@ -14,7 +14,8 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
+/** Include eventslib.php */
+require_once($CFG->libdir.'/eventslib.php');
 /**
  * This file contains the definition for the library class for file
  *  submission plugin 
@@ -172,7 +173,7 @@ class submission_file extends submission_plugin {
     }
 
     /**
-     * save the files
+     * save the files and trigger plagiarism plugin, if enabled, to scan the uploaded files via events trigger
      * @global object $USER
      * @global object $DB
      * @param object $submission
@@ -184,12 +185,32 @@ class submission_file extends submission_plugin {
         global $USER, $DB;
 
         $fileoptions = $this->get_file_options();
-        
+
 
         $data = file_postupdate_standard_filemanager($data, 'files', $fileoptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
 
-        
+
         $file_submission = $this->get_file_submission($submission->id);
+
+        //plagiarism code event trigger when files are uploaded
+
+        $fs = get_file_storage();
+        $files = $fs->get_area_files($this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id, "id", false);
+           
+            // send files to event system
+            // Let Moodle know that an assessable file was uploaded (eg for plagiarism detection)
+            $eventdata = new stdClass();
+            $eventdata->modulename = 'assign';
+            $eventdata->cmid = $this->assignment->get_course_module()->id;
+            $eventdata->itemid = $submission->id;
+            $eventdata->courseid = $this->assignment->get_course()->id;
+            $eventdata->userid = $USER->id;
+            if ($files) {
+                $eventdata->files = $files;
+            }
+        events_trigger('assessable_file_uploaded', $eventdata);
+
+
         if ($file_submission) {
             $file_submission->numfiles = $this->count_files($submission->id);
             return $DB->update_record('assign_submission_file', $file_submission);

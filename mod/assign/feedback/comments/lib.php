@@ -16,6 +16,7 @@ class feedback_comments extends feedback_plugin {
     public function get_form_elements($grade, & $data) {
         $elements = array();
 
+       
         $gradeid = $grade ? $grade->id : 0;
         $default_comment = '';
         if ($grade) {

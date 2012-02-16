@@ -76,6 +76,10 @@ class submission_onlinetext extends submission_plugin {
     public function get_form_elements($submission, & $data) {
         global $USER;
         
+        
+       
+        
+        
         $elements = array();
 
         $editoroptions = $this->get_edit_options();

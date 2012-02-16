@@ -15,6 +15,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/** Include eventslib.php */
+//require_once($CFG->libdir.'/eventslib.php');
+require_once('locallib.php');
 /**
  * A custom renderer class that extends the plugin_renderer_base and
  * is used by the assign module.
@@ -89,28 +92,48 @@ class assign_files implements renderable {
     public $cm;
     public $course;
     public function __construct($context, $sid, $filearea='submission') {
-        global $CFG;
+        global $CFG,$USER;
         $this->context = $context;
         list($context, $course, $cm) = get_context_info_array($context->id);
         $this->cm = $cm;
         $this->course = $course;
         $fs = get_file_storage();
         $this->dir = $fs->get_area_tree($this->context->id, 'mod_assign', $filearea, $sid);
+        
+         $files = $fs->get_area_files($this->context->id, 'mod_assign', $filearea, $sid, "timemodified", false);
+        
         if (!empty($CFG->enableportfolios)) {
             require_once($CFG->libdir . '/portfoliolib.php');
-            $files = $fs->get_area_files($this->context->id, 'mod_assign', $filearea, $sid, "timemodified", false);
+           // $files = $fs->get_area_files($this->context->id, 'mod_assign', $filearea, $sid, "timemodified", false);
             if (count($files) >= 1 && has_capability('mod/assign:exportownsubmission', $this->context)) {
                 $button = new portfolio_add_button();
                 $button->set_callback_options('assign_portfolio_caller', array('cmid' => $this->cm->id, 'sid'=>$sid, 'area'=>$filearea), '/mod/assign/portfolio_callback.php');
                 $button->reset_formats();
                 $this->portfolioform = $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
             }
-            
-            
            
-            
         }
-        $this->preprocess($this->dir, $filearea);
+        
+         // plagiarism check if it is enabled
+        $output = '';        
+        if (!empty($CFG->enableplagiarism)) {
+            require_once($CFG->libdir . '/plagiarismlib.php');
+            
+            // for plagiarism_get_links
+            $assignment = new assignment($this->context);
+            foreach ($files as $file) {
+
+               $output .= plagiarism_get_links(array('userid' => $sid,
+                   'file' => $file,
+                   'cmid' => $this->cm->id,
+                   'course' => $this->course,
+                   'assignment' => $assignment->get_instance()));
+                
+               $output .= '<br />';
+            }
+        }
+        
+       $this->preprocess($this->dir, $filearea);
     }
     public function preprocess($dir, $filearea) {
         global $CFG;

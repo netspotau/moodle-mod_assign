@@ -68,6 +68,11 @@ require_once($CFG->libdir . '/portfoliolib.php');
 require_once('feedback_plugin.php');
 require_once('submission_plugin.php');
 
+//send files to event system for plagiarism detection 
+/** Include eventslib.php */
+require_once($CFG->libdir.'/eventslib.php');
+
+
 /*
  * Standard base class for mod_assign (assignment types).
  *
@@ -472,6 +477,46 @@ class assignment {
             }
         }
     }
+    
+    
+    
+    
+    /**
+     * add elements in grading plugin form 
+     * @param object $grade
+     * @param object $mform
+     * @param object $data 
+     
+    private function add_plagiarism_elements_for_file_submission_plugin(& $mform) {
+        
+        $file_sub_plugin = $this->get_submission_plugin_by_type('file');
+            if ($file_sub_plugin->is_enabled() && $file_sub_plugin->is_visible()) {
+               
+                   // plagiarism enabling form
+        
+                   $course_context = get_context_instance(CONTEXT_COURSE, $COURSE->id);      
+                   plagiarism_get_form_elements_module($mform, $course_context);
+
+                
+            }
+        
+    }
+    
+    */
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     /**
      * Add one plugins settings to edit plugin form 
@@ -488,6 +533,7 @@ class assignment {
             // enabled
             $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
 
+            //tied add rule to this select element
             $mform->addElement('select', $plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', get_string('enabled', 'assign'), $ynoptions);
             $mform->setDefault($plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', $plugin->is_enabled());
 
@@ -505,6 +551,7 @@ class assignment {
                         }
                     } else {
                         $mform->addElement($setting['type'], $setting['name'], $setting['description']);
+                        // add rule to grey the seeting if not enabled
                     }
                     if (isset($setting['default'])) {
                         $mform->setDefault($setting['name'], $setting['default']);
@@ -525,6 +572,7 @@ class assignment {
     private function add_all_plugin_settings(& $mform) {
         foreach ($this->submission_plugins as $plugin) {
             $this->add_plugin_settings($plugin, $mform);
+            
         }
         foreach ($this->feedback_plugins as $plugin) {
             $this->add_plugin_settings($plugin, $mform);
@@ -537,6 +585,8 @@ class assignment {
      * Add settings to edit form
      *
      * Add the list of assignment specific settings to the edit form. 
+     * 
+     * Activate plagiarism plugn if it is enabled 
      *
      * @global object $CFG
      * @global object $COURSE
@@ -560,22 +610,12 @@ class assignment {
         $mform->addElement('select', 'submissiondrafts', get_string('submissiondrafts', 'assign'), $ynoptions);
         $mform->setDefault('submissiondrafts', 0);
 
-        /*
-        $mform->addElement('header', 'general', get_string('filesubmissions', 'assign'));
-    
-        $mform->addElement('select', 'maxfilessubmission', get_string('maxfilessubmission', 'assign'), $options);
-        $mform->setDefault('maxfilessubmission', 3);
-        $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
-        $choices[0] = get_string('courseuploadlimit') . ' ('.display_size($COURSE->maxbytes).')';
-        $mform->addElement('select', 'maxsubmissionsizebytes', get_string('maximumsubmissionsize', 'assign'), $choices);
-        */
-
-          // plagiarism enabling form
         
-        $course_context = get_context_instance(CONTEXT_COURSE, $COURSE->id);
+        // plagiarism enabling form
+        
+        $course_context = get_context_instance(CONTEXT_COURSE, $COURSE->id);      
         plagiarism_get_form_elements_module($mform, $course_context);
-        
-        
+               
         $mform->addElement('header', 'general', get_string('notifications', 'assign'));
         $mform->addElement('select', 'sendnotifications', get_string('sendnotifications', 'assign'), $ynoptions);
         $mform->setDefault('sendnotifications', 1);
@@ -1508,6 +1548,11 @@ class assignment {
         
         $mform->display();
         
+        // plagiarism update status apearring in the grading book
+        plagiarism_update_status($this->get_course(), $this->get_course_module());
+        
+        
+        
         // load and print the table of submissions
         $table = & $this->load_submissions_table($perpage, $filter);
         $table->print_html();
@@ -1776,10 +1821,31 @@ class assignment {
             $submission = $this->get_submission($USER->id,null, false);
             $submissionid = $submission->id;
         }
-    
+         
+       
+        
         $fs = get_file_storage();
         $browser = get_file_browser();
-
+         $files = $fs->get_area_files($this->get_context()->id, 'mod_assign', $area , $submissionid , "timemodified", false);
+        /** 
+         //plagiarism code is below ?
+        // send files to event system
+        // Let Moodle know that an assessable file was uploaded (eg for plagiarism detection)
+                    $eventdata = new stdClass();
+                    $eventdata->modulename   = 'assign';
+                    $eventdata->cmid         = $this->get_course_module()->id;
+                    $eventdata->itemid       = $submissionid;
+                    $eventdata->courseid     = $this->get_course()->id;
+                    $eventdata->userid       = $USER->id;
+                    if ($files) {
+                      $eventdata->files        = $files;
+                   }
+                    events_trigger('assessable_file_uploaded', $eventdata);
+       
+                   
+        */
+        
+        
         $renderer = $PAGE->get_renderer('mod_assign');
         return $renderer->assign_files($this->context, $submissionid, $area);
         
@@ -2188,8 +2254,8 @@ class assignment {
         $mform->setType('action', PARAM_ALPHA);
           
         $buttonarray=array();
-             
-        if (!$params['last']){
+       //  $lst = $params['last'];
+        if (! $params['last']){
             $buttonarray[] = &$mform->createElement('submit', 'saveandshownext', get_string('savenext','assign')); 
             $buttonarray[] = &$mform->createElement('submit', 'nosaveandnext', get_string('nosavebutnext', 'assign'));
         }
