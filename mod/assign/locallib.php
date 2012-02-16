@@ -2743,6 +2743,7 @@ class assignment {
         if (has_capability('mod/assign:submit', $this->context) &&
             $this->submissions_open() && ($this->is_any_submission_plugin_enabled())) {
             // submission.php test
+            echo $OUTPUT->container_start('submissionlinks');
             echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
                 array('id' => $this->get_course_module()->id, 'action' => 'editsubmission')), get_string('editsubmission', 'assign'), 'get');
 
@@ -2758,6 +2759,7 @@ class assignment {
                     echo $OUTPUT->box_end();
                 }
             }
+            echo $OUTPUT->container_end();
         }
     }
     

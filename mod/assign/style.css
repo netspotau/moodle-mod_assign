@@ -5,6 +5,7 @@ div.gradingnavigation div {
 
 
 div.submissionstatus,
+div.submissionlinks,
 div.feedback,
 div.gradingsummary {
 
@@ -14,6 +15,7 @@ div.gradingsummary {
 
 
 div.submissionstatus .generaltable,
+div.submissionlinks .generaltable,
 div.feedback .generaltable,
 div.gradingsummary .generaltable {
     width: 100%;
