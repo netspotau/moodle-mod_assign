@@ -2702,7 +2702,7 @@ class assignment {
     
         foreach ($this->feedback_plugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
-                $feedback = $plugin->view_summary($assignment_grade);
+                $feedback = $plugin->view($assignment_grade);
                 if ($feedback != '') {
                     $row = new html_table_row();
                     $cell1 = new html_table_cell($plugin->get_name());
