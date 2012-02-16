@@ -1,5 +1,12 @@
-
 div.gradingnavigation div {
     float: left;
     margin-left: 2em;
+}
+
+
+.submissionstatus .generaltable,
+.gradingsummary .generaltable {
+
+    width: 70%;
+    margin: 0 auto;
 }

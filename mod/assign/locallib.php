@@ -2171,6 +2171,13 @@ class assignment {
      */
     private function grading_disabled($userid) {
         $grading_info = grade_get_grades($this->get_course()->id, 'mod', 'assign', $this->instance->id, array($userid));
+        if (!$grading_info) {
+            return false;
+        }
+
+        if (!isset($grading_info->items[0]->grades[$userid])) {
+            return false;
+        }
         $gradingdisabled = $grading_info->items[0]->grades[$userid]->locked || $grading_info->items[0]->grades[$userid]->overridden;
         return $gradingdisabled;
     }
