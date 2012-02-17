@@ -3051,6 +3051,7 @@ class assignment {
             foreach ($this->submission_plugins as $plugin) {
                 $upgradable_plugins = $plugin->list_supported_types_for_upgrade();
                 if (in_array($oldassignment->assignmenttype, $upgradable_plugins)) {
+                    $plugin->enable();
                     if (!$plugin->upgrade_settings($oldassignment, $log)) {
                         $rollback = true;
                     }
@@ -3059,6 +3060,7 @@ class assignment {
             foreach ($this->feedback_plugins as $plugin) {
                 $upgradable_plugins = $plugin->list_supported_types_for_upgrade();
                 if (in_array($oldassignment->assignmenttype, $upgradable_plugins)) {
+                    $plugin->enable();
                     if (!$plugin->upgrade_settings($oldassignment, $log)) {
                         $rollback = true;
                     }
