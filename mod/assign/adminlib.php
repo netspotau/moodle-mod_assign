@@ -42,10 +42,13 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-
+/** Include config.php */
 require_once(dirname(__FILE__) . '/../../config.php');
+/** Include adminlib.php */
 require_once($CFG->libdir . '/adminlib.php');
+/** Include tablelib.php */
 require_once($CFG->libdir . '/tablelib.php');
+/** Include locallib.php */
 require_once('locallib.php');
 
 defined('MOODLE_INTERNAL') || die();
@@ -63,7 +66,9 @@ class admin_page_manage_assignment_plugins extends admin_externalpage {
     private $subtype = '';
 
     /**
-     * Constructor
+     *
+     * @global object $CFG
+     * @param string $subtype 
      */
     public function __construct($subtype) {
         global $CFG;
@@ -123,7 +128,8 @@ class assignment_plugin_manager {
     private $subtype = '';
 
     /**
-     * Constructor
+     *
+     * @param string $subtype 
      */
     public function __construct($subtype) {
         $this->pageurl = new moodle_url('/mod/assign/admin_manage_plugins.php', array('subtype'=>$subtype));
