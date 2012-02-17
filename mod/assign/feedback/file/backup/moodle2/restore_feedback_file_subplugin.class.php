@@ -55,7 +55,7 @@ class restore_feedback_file_subplugin extends restore_subplugin {
      */
     public function process_feedback_file_grade($data) {
         global $DB;
-
+    
         $data = (object)$data;
         $data->assignment = $this->get_new_parentid('assign');
         $oldgradeid = $data->grade;

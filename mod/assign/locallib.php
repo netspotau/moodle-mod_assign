@@ -930,16 +930,24 @@ class assignment {
     private function & load_submissions_table($perpage=10,$filter=null,$startpage=null,$onlyfirstuserid=false) {
         global $CFG, $DB, $OUTPUT,$PAGE;
                      
-        $tablecolumns = array('picture', 'fullname', 'status', 'edit', 'grade', 'timemodified', 'timemarked', 'finalgrade');
+        $tablecolumns = array('picture', 'fullname', 'status', 'edit', 'grade');
+        if ($this->is_any_submission_plugin_enabled()) {
+            $tablecolumns[] = 'timemodified';
+        }
+        $tablecolumns[] = 'timemarked';
+        $tablecolumns[] = 'finalgrade';
 
         $tableheaders = array('',
                               get_string('fullnameuser'),
                               get_string('status'),
                               get_string('edit'),
-                              get_string('grade'),
-                              get_string('lastmodified').' ('.get_string('submission', 'assign').')',
-                              get_string('lastmodified').' ('.get_string('grade').')',
-                              get_string('finalgrade', 'grades'));
+                              get_string('grade'));
+
+        if ($this->is_any_submission_plugin_enabled()) {
+            $tableheaders[] = get_string('lastmodified').' ('.get_string('submission', 'assign').')';
+        }
+        $tableheaders[] = get_string('lastmodified').' ('.get_string('grade').')';
+        $tableheaders[] = get_string('finalgrade', 'grades');
 
         // more efficient to load this here
         require_once($CFG->libdir.'/tablelib.php');
@@ -964,7 +972,9 @@ class assignment {
         $table->column_class('status', 'status');
         $table->column_class('edit', 'edit');
         $table->column_class('grade', 'grade');
-        $table->column_class('timemodified', 'timemodified');
+        if ($this->is_any_submission_plugin_enabled()) {
+            $table->column_class('timemodified', 'timemodified');
+        }
         $table->column_class('timemarked', 'timemarked');
         $table->column_class('finalgrade', 'finalgrade');
 
@@ -1069,7 +1079,11 @@ class assignment {
 
                     $renderer = $PAGE->get_renderer('mod_assign');
 
-                    $row = array($picture, $userlink, $status, $edit, $grade, $studentmodified, $teachermodified, $finalgrade);
+                    if ($this->is_any_submission_plugin_enabled()) {
+                        $row = array($picture, $userlink, $status, $edit, $grade, $studentmodified, $teachermodified, $finalgrade);
+                    } else {
+                        $row = array($picture, $userlink, $status, $edit, $grade, $teachermodified, $finalgrade);
+                    }
                     $table->add_data($row);
                 }
             }
@@ -1496,7 +1510,7 @@ class assignment {
         }
         $user = $DB->get_record('user', array('id' => $userid));
         $this->view_user($user);
-        $this->view_submission_status($userid);
+        $this->view_submission_status($userid, true);
 
         // now show the grading form
         $this->view_grade_form();
@@ -2157,6 +2171,13 @@ class assignment {
      */
     private function grading_disabled($userid) {
         $grading_info = grade_get_grades($this->get_course()->id, 'mod', 'assign', $this->instance->id, array($userid));
+        if (!$grading_info) {
+            return false;
+        }
+
+        if (!isset($grading_info->items[0]->grades[$userid])) {
+            return false;
+        }
         $gradingdisabled = $grading_info->items[0]->grades[$userid]->locked || $grading_info->items[0]->grades[$userid]->overridden;
         return $gradingdisabled;
     }
@@ -2357,7 +2378,7 @@ class assignment {
      */
     private function add_plugin_submission_elements($submission, & $mform, & $data) {
         foreach ($this->submission_plugins as $plugin) {
-            if ($plugin->is_enabled() && $plugin->is_visible()) {
+            if ($plugin->is_enabled() && $plugin->is_visible() && $plugin->allow_submissions()) {
                 $submission_elements = $plugin->get_form_elements($submission, $data);
 
                 if ($submission_elements && count($submission_elements) > 0) {
@@ -2442,7 +2463,7 @@ class assignment {
         if (!isset($this->cache['any_submission_plugin_enabled'])) {
             $this->cache['any_submission_plugin_enabled'] = false;
             foreach ($this->submission_plugins as $plugin) {
-                if ($plugin->is_enabled() && $plugin->is_visible()) {
+                if ($plugin->is_enabled() && $plugin->is_visible() && $plugin->allow_submissions()) {
                     $this->cache['any_submission_plugin_enabled'] = true;
                     break;
                 }
@@ -2458,9 +2479,10 @@ class assignment {
      * @global object $OUTPUT
      * @global object $USER
      * @param int $userid
+     * @param boolean $hide_nosubmission_warning - do not tell markers they do not need to submit anything.
      * @return mixed
      */
-    private function view_submission_status($userid=null) {
+    private function view_submission_status($userid=null, $hide_nosubmission_warning=false) {
         global $OUTPUT, $USER;
 
 
@@ -2488,7 +2510,7 @@ class assignment {
         echo $OUTPUT->container_start('submissionstatus');
         echo $OUTPUT->heading(get_string('submissionstatusheading', 'assign'), 3);
         $time = time();
-        if (!$this->is_any_submission_plugin_enabled()) {
+        if (!$this->is_any_submission_plugin_enabled() && !$hide_nosubmission_warning) {
             echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
             echo get_string('noonlinesubmissions', 'assign');
             echo $OUTPUT->box_end();
@@ -2687,7 +2709,7 @@ class assignment {
     
         foreach ($this->feedback_plugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
-                $feedback = $plugin->view_summary($assignment_grade);
+                $feedback = $plugin->view($assignment_grade);
                 if ($feedback != '') {
                     $row = new html_table_row();
                     $cell1 = new html_table_cell($plugin->get_name());
@@ -2721,6 +2743,7 @@ class assignment {
         if (has_capability('mod/assign:submit', $this->context) &&
             $this->submissions_open() && ($this->is_any_submission_plugin_enabled())) {
             // submission.php test
+            echo $OUTPUT->container_start('submissionlinks');
             echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
                 array('id' => $this->get_course_module()->id, 'action' => 'editsubmission')), get_string('editsubmission', 'assign'), 'get');
 
@@ -2736,6 +2759,7 @@ class assignment {
                     echo $OUTPUT->box_end();
                 }
             }
+            echo $OUTPUT->container_end();
         }
     }
     

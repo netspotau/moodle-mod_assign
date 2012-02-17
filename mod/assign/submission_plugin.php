@@ -42,4 +42,13 @@ abstract class submission_plugin extends assignment_plugin {
         return 'submission';
     }
 
+    /**
+     * This plugin accepts submissions from a student
+     * The comments plugin has no submission component so should not be counted 
+     * when determining whether to show the edit submission link.
+     * @return boolean
+     */
+    public function allow_submissions() {
+        return true;
+    }
 }

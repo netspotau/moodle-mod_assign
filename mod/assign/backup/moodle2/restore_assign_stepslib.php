@@ -90,7 +90,9 @@ class restore_assign_activity_structure_step extends restore_activity_structure_
         
         $newitemid = $DB->insert_record('assign_submission', $data);
 
-        $this->set_mapping('submission', $oldid, $newitemid);
+        // Note - the old contextid is required in order to be able to restore files stored in 
+        // sub plugin file areas attached to the submissionid
+        $this->set_mapping('submission', $oldid, $newitemid, false, null, $this->task->get_old_contextid());
     }
     
     /**
@@ -112,8 +114,10 @@ class restore_assign_activity_structure_step extends restore_activity_structure_
         $data->grader = $this->get_mappingid('user', $data->grader);
         
         $newitemid = $DB->insert_record('assign_grades', $data);
-
-        $this->set_mapping('grade', $oldid, $newitemid);
+        
+        // Note - the old contextid is required in order to be able to restore files stored in 
+        // sub plugin file areas attached to the gradeid
+        $this->set_mapping('grade', $oldid, $newitemid, false, null, $this->task->get_old_contextid());
     }
 
     /**

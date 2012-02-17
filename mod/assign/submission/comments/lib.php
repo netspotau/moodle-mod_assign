@@ -63,7 +63,9 @@ class submission_comments extends submission_plugin {
       */
    public function view_summary($submission) {
         
-      
+      // global $CFG;
+       
+       // if ($CFG->usecomments) {
        
        // need to used this innit() otherwise it shows up undefined !
        // require js for commenting
@@ -77,11 +79,13 @@ class submission_comments extends submission_plugin {
         
         $options->context = $this->assignment->get_context();
         $options->itemid  = $submission->id;
-       
+       // $options->itemid  = 0;
+        //$options->linktext= get_string('showcomments');
         $options->component = 'submission_comments';
         $options->showcount = true;
       
-     
+     //  $options->notoggle  = true;
+      //  $options->autostart = true;
         $options->displaycancel = true;
         
         $comment = new comment($options);
@@ -95,6 +99,9 @@ class submission_comments extends submission_plugin {
     
    
 }
+
+
+
 
          /**
           *

@@ -64,6 +64,6 @@ class restore_submission_file_subplugin extends restore_subplugin {
 
         $DB->insert_record('assign_submission_file', $data);
         
-        $this->add_related_files('mod_assign', 'submission_files', 'assign', null, $oldsubmissionid);
+        $this->add_related_files('mod_assign', 'submission_files', 'submission', null, $oldsubmissionid);
     }
 }
