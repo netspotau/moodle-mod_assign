@@ -69,7 +69,10 @@ class submission_comments extends submission_plugin {
        
         $options = new stdClass();
        
-        $options->area    = 'submission_comments';
+        // This has to be one of the mapped items for backup and restore
+        // or comments will be skipped by the restore process
+        // The valid areas are "submission" and "grade"
+        $options->area    = 'submission';
         
         $options->course    = $this->assignment->get_course();
         
