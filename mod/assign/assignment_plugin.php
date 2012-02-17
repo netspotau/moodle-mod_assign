@@ -449,4 +449,25 @@ abstract class assignment_plugin {
         return 0;
     }
 
+     /**
+     * List the supported types of the old assignment class that this plugin knows 
+     * how to upgrade.
+     * 
+     * @return array The list of supported types e.g. array('upload', 'uploadsingle')
+     */
+    public function list_supported_types_for_upgrade() {
+        return array();
+    }
+    
+     /**
+     * Upgrade the settings from the old assignment to the new one
+     * 
+     * @param object $oldassignment The data record for the old assignment
+     * @param string $log Record upgrade messages in the log
+     * @return boolean true or false - false will trigger a rollback
+     */
+    public function upgrade_settings($oldassignment, & $log) {
+        $log = $log . ' ' . get_string('upgradenotimplemented', 'mod_assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));
+        return false;
+    }
 }

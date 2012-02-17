@@ -306,9 +306,11 @@ class assignment {
      * Add this instance to the database
      * 
      * @global DB
+     * @param boolean callplugins This is used to skip the plugin code
+     * when upgrading an old assignment to a new one (the plugins get called manually)
      * @return mixed false if an error occurs or the integer id of the new instance
      */
-    public function add_instance() {
+    public function add_instance($callplugins=true) {
         global $DB;
 
         $err = '';
@@ -321,17 +323,19 @@ class assignment {
         $returnid = $DB->insert_record('assign', $this->instance);
         $this->instance->id = $returnid;
 
-        // call save_settings hook for submission plugins
-        foreach ($this->submission_plugins as $plugin) {
-            if (!$this->update_plugin_instance($plugin)) {
-                print_error($plugin->get_error());
-                return false;
+        if ($callplugins) {
+            // call save_settings hook for submission plugins
+            foreach ($this->submission_plugins as $plugin) {
+                if (!$this->update_plugin_instance($plugin)) {
+                    print_error($plugin->get_error());
+                    return false;
+                }
             }
-        }
-        foreach ($this->feedback_plugins as $plugin) {
-            if (!$this->update_plugin_instance($plugin)) {
-                print_error($plugin->get_error());
-                return false;
+            foreach ($this->feedback_plugins as $plugin) {
+                if (!$this->update_plugin_instance($plugin)) {
+                    print_error($plugin->get_error());
+                    return false;
+                }
             }
         }
         // TODO: add event to the calendar
@@ -2970,6 +2974,172 @@ class assignment {
        
         }
         
+    }
+
+    /**
+     * This function returns the master list of old assignment types that
+     * can be converted. It does this by converting all of the base settings
+     * and then relying on the plugins to upgrade the subtypes
+     * they can support. 
+     * @return array List of old assignment types.
+     */
+    public function list_supported_types_for_upgrade() {
+        $supportedtypes = array('offline');
+        foreach ($this->submission_plugins as $plugin) {
+            $plugin_types = $plugin->list_supported_types_for_upgrade();
+            $supportedtypes = array_merge($supportedtypes, $plugin_types);
+        }
+        return $supportedtypes;
+    }
+
+    
+    /**
+     * This function converts all of the base settings for an instance of
+     * the old assignment to the new format. Then it calls each of the plugins
+     * to see if they can help upgrade this assignment.
+     * @param int old assignment id (don't rely on the old assignment type even being installed)
+     * @param string log This string gets appended to during the conversion process
+     * @return boolean true or false
+     */
+    public function upgrade_assignment($oldassignmentid, & $log, $delete=true) {
+        global $DB, $CFG;
+        // steps to upgrade an assignment
+    
+        // first insert an assign instance to get the id
+        if (!$oldassignment = $DB->get_record('assignment', array('id'=>$oldassignmentid))) {
+            $log = get_string('couldnotfindassignmenttoupgrade', 'mod_assign');
+            return false;
+        }
+
+        $this->instance = new stdClass();
+        $this->instance->course = $oldassignment->course;
+        $this->instance->intro = $oldassignment->intro;
+        $this->instance->introformat = $oldassignment->introformat;
+        $this->instance->sendnotifications = $oldassignment->emailteachers;
+        $this->instance->duedate = $oldassignment->timedue;
+        $this->instance->allowsubmissionsfromdate = $oldassignment->timeavailable;
+        $this->instance->grade = $oldassignment->grade;
+        $this->instance->submissiondrafts = $oldassignment->resubmit;
+        $this->instance->preventlatesubmissions = $oldassignment->preventlate;
+        
+        if (!$this->add_instance(false)) {
+            $log = get_string('couldnotcreatenewassignmentinstance', 'mod_assign');
+            return false;
+        }
+
+        // get the module details
+        $oldmodule = $DB->get_record('modules', array('name'=>'assignment'));
+        $oldcoursemodule = $DB->get_record('course_modules', array('module'=>$oldmodule->id, 'instance'=>$oldassignmentid));
+        $newmodule = $DB->get_record('modules', array('name'=>'assign'));
+
+        // convert the base database tables (assignment, submission, grade) ignoring the 
+        // unknown fields
+
+        // from this point we want to rollback on failure
+        $rollback = false;
+        try {
+            $update = new stdClass();
+            $update->id = $oldcoursemodule->id; 
+            $update->module = $newmodule->id; 
+            $update->instance = $this->instance->id; 
+            
+            $DB->update_record('course_modules', $update);
+            $this->context = get_context_instance(CONTEXT_MODULE,$oldcoursemodule->id);
+            // the course module has now been stolen - time to update the core tables
+            // get the plugins to do their bit
+
+            foreach ($this->submission_plugins as $plugin) {
+                $upgradable_plugins = $plugin->list_supported_types_for_upgrade();
+                if (in_array($oldassignment->assignmenttype, $upgradable_plugins)) {
+                    if (!$plugin->upgrade_settings($oldassignment, $log)) {
+                        $rollback = true;
+                    }
+                }
+            }
+            foreach ($this->feedback_plugins as $plugin) {
+                $upgradable_plugins = $plugin->list_supported_types_for_upgrade();
+                if (in_array($oldassignment->assignmenttype, $upgradable_plugins)) {
+                    if (!$plugin->upgrade_settings($oldassignment, $log)) {
+                        $rollback = true;
+                    }
+                }
+            }
+
+
+            $oldsubmissions = $DB->get_records('assignment_submissions', array('assignment'=>$oldassignmentid));
+            foreach ($oldsubmissions as $oldsubmission) {
+                $submission = new stdClass();
+                $submission->assignment = $this->instance->id;
+                $submission->userid = $oldsubmission->userid;
+                $submission->timecreated = $oldsubmission->timecreated;
+                $submission->timemodified = $oldsubmission->timemodified;
+                $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+                $submission->id = $DB->insert_record('assign_submission', $submission);
+                if (!$submission->id) {
+                    $log .= get_string('couldnotinsertsubmission', 'mod_assign', $submission->userid);
+                    $rollback = true;
+                }
+                foreach ($this->submission_plugins as $plugin) {
+                    $upgradable_plugins = $plugin->list_supported_types_for_upgrade();
+                    if (in_array($oldassignment->assignmenttype, $upgradable_plugins)) {
+                        if (!$plugin->upgrade_submission($oldsubmission, $submission, $log)) {
+                            $rollback = true;
+                        }
+                    }
+                }
+                if ($oldsubmission->timemarked) {
+                    $grade = new stdClass();
+                    $grade->assignment = $this->instance->id;
+                    $grade->userid = $oldsubmission->userid;
+                    $grade->grader = $oldsubmission->teacher;
+                    $grade->timemodified = $oldsubmission->timemarked;
+                    $grade->timecreated = $oldsubmission->timecreated;
+                    $grade->locked = $oldsubmission->locked;
+                    $grade->grade = $oldsubmission->grade;
+                    $grade->mailed = $oldsubmission->mailed;
+                    $grade->id = $DB->insert_record('assign_grades', $grade);
+                    if (!$grade->id) {
+                        $log .= get_string('couldnotinsertgrade', 'mod_assign', $grade->userid);
+                        $rollback = true;
+                    }
+                    foreach ($this->feedback_plugins as $plugin) {
+                        $upgradable_plugins = $plugin->list_supported_types_for_upgrade();
+                        if (in_array($oldassignment->assignmenttype, $upgradable_plugins)) {
+                            if (!$plugin->upgrade_feedback($oldsubmission, $grade, $log)) {
+                                $rollback = true;
+                            }
+                        }
+                    }
+                }
+            }
+            
+
+        } catch (Exception $e) {
+            $rollback = true;
+            $log .= get_string('conversionexception', 'mod_assign', $e);
+            
+        }
+    
+        if ($rollback) {
+            $update = new stdClass();
+            $update->id = $oldcoursemodule->id; 
+            $update->module = $oldmodule->id; 
+            $update->instance = $oldassignmentid; 
+        
+            $DB->update_record('course_modules', $update);
+
+            $this->delete_instance();
+            
+            return false;
+        }
+        // all is well,
+        // delete the old assignment (optional) (use object delete)
+        $oldassignmentfile = '/mod/assignment/type/' . $oldassignment->assignmenttype . '/assignment.class.php';
+        $oldassignmentclass = 'assignment_' . $oldassignment->assignmenttype;
+
+        require_once($CFG->dirroot . $oldassignmentfile);
+        $instance = new $oldassignmentclass($oldassignmentid);
+        $instance->delete_instance();
     }
 
 }

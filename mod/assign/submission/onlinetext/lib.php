@@ -265,7 +265,52 @@ class submission_onlinetext extends submission_plugin {
     }
     
   
+     /**
+     * List the supported types of the old assignment class that this plugin knows 
+     * how to upgrade.
+     * 
+     * @return array The list of supported types e.g. array('upload', 'uploadsingle')
+     */
+    public function list_supported_types_for_upgrade() {
+        return array('online');
+    }
     
+     /**
+     * Upgrade the settings from the old assignment 
+     * to the new plugin based one
+     * 
+     * @param data - the database for the old assignment instance
+     * @param string log record log events here
+     * @return boolean Was it a success?
+     */
+    public function upgrade_settings($oldassignment, & $log) {
+        // first upgrade settings (nothing to do)
+        return true;
+    }
+     
+    /**
+     * Upgrade the submission from the old assignment to the new one
+     * 
+     * @param object $oldsubmission The data record for the old submission
+     * @param string $log Record upgrade messages in the log
+     * @return boolean true or false - false will trigger a rollback
+     */
+    public function upgrade_submission($oldsubmission, $submission, & $log) {
+        global $DB;
+
+        $onlinetext_submission = new stdClass();
+        $onlinetext_submission->onlinetext = $oldsubmission->data1;
+        $onlinetext_submission->onlineformat = $oldsubmission->data2;
+               
+        $onlinetext_submission->submission = $submission->id;
+        $onlinetext_submission->assignment = $this->assignment->get_instance()->id;
+        if (!$DB->insert_record('assign_submission_onlinetext', $onlinetext_submission) > 0) {
+            $log .= get_string('couldnotconvertsubmission', 'mod_assign', $submission->userid);
+            return false;
+        }
+
+        return true;
+    }
 }
 
 
