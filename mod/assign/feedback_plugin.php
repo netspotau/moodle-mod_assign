@@ -16,9 +16,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the definition for the class assign_base
+ * This file contains the function for feedback_plugin abstract class
  *
- * This class provides all the functionality for the new assign module.
  *
  * @package   mod-assign
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
@@ -27,10 +26,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+/** Include assignment_plugin.php */
 require_once('assignment_plugin.php');
 
 /*
- * Standard base class for mod_assign (assignment types).
+ * Abstract class for feedback_plugin inherited from assignment_plugin
+ * abstract class.
  *
  * @package   mod-assign
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
@@ -38,6 +39,11 @@ require_once('assignment_plugin.php');
  */
 abstract class feedback_plugin extends assignment_plugin {
 
+    /**
+     * return subtype name of the plugin
+     * 
+     * @return string
+     */
     public function get_subtype() {
         return 'feedback';
     }

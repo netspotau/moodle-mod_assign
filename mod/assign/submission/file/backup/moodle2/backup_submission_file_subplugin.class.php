@@ -32,7 +32,10 @@ defined('MOODLE_INTERNAL') || die();
 class backup_submission_file_subplugin extends backup_subplugin {
 
     /**
+     * 
+     * @access protected
      * Returns the subplugin information to attach to submission element
+     * 
      */
     protected function define_submission_subplugin_structure() {
 

@@ -33,7 +33,9 @@ class restore_submission_onlinetext_subplugin extends restore_subplugin {
     ////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Returns the paths to be handled by the subplugin at workshop level
+     * @access protected
+     * 
+     * Returns array the paths to be handled by the subplugin at workshop level     
      */
     protected function define_submission_subplugin_structure() {
 
@@ -50,8 +52,13 @@ class restore_submission_onlinetext_subplugin extends restore_subplugin {
     // defined path elements are dispatched to the following methods
     ////////////////////////////////////////////////////////////////////////////
 
+    
+    
     /**
      * Processes one submission_onlinetext element
+     * 
+     * @global object $DB
+     * @param object $data 
      */
     public function process_submission_onlinetext_submission($data) {
         global $DB;

@@ -34,6 +34,7 @@ class restore_submission_file_subplugin extends restore_subplugin {
 
     /**
      * Returns the paths to be handled by the subplugin at workshop level
+     * @access protected
      */
     protected function define_submission_subplugin_structure() {
 

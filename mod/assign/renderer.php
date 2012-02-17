@@ -15,8 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/** Include eventslib.php */
-//require_once($CFG->libdir.'/eventslib.php');
+/** Include locallib.php */
 require_once('locallib.php');
 /**
  * A custom renderer class that extends the plugin_renderer_base and
@@ -27,13 +26,25 @@ require_once('locallib.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  **/
 class mod_assign_renderer extends plugin_renderer_base {
+      
     /**
+     * rendering assignment files 
+     * 
+     * @param object $context
+     * @param int $userid
+     * @param string $filearea
      * @return string
      */
     public function assign_files($context, $userid, $filearea='submission') {
         return $this->render(new assign_files($context, $userid, $filearea));
     }
 
+    /**
+     * rendering assignment files 
+     * 
+     * @param assign_files $tree
+     * @return mixed
+     */
     public function render_assign_files(assign_files $tree) {
         $module = array('name'=>'mod_assign_files', 'fullpath'=>'/mod/assign/assign.js', 'requires'=>array('yui2-treeview'));
         $this->htmlid = 'assign_files_tree_'.uniqid();
@@ -48,8 +59,14 @@ class mod_assign_renderer extends plugin_renderer_base {
         return $html;
     }
 
+        
     /**
      * Internal function - creates htmls structure suitable for YUI tree.
+     * 
+     * @global object $CFG
+     * @param object $tree
+     * @param array $dir
+     * @return string 
      */
     protected function htmllize_tree($tree, $dir) {
         global $CFG;
@@ -85,12 +102,31 @@ class mod_assign_renderer extends plugin_renderer_base {
     }
 }
 
+/**
+ * An assign file class that extends rendererable class and
+ * is used by the assign module.
+ *
+ * @package mod-assign
+ * @copyright
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ **/
 class assign_files implements renderable {
     public $context;
     public $dir;
     public $portfolioform;
     public $cm;
     public $course;
+    
+    
+    /**
+     * The constructor 
+     * 
+     * @global object $CFG
+     * @global object $USER
+     * @param object $context
+     * @param int $sid
+     * @param string $filearea 
+     */
     public function __construct($context, $sid, $filearea='submission') {
         global $CFG,$USER;
         $this->context = $context;
@@ -135,6 +171,14 @@ class assign_files implements renderable {
         
        $this->preprocess($this->dir, $filearea);
     }
+    
+    /**
+     * preprocessing 
+     * 
+     * @global object $CFG
+     * @param array $dir
+     * @param string $filearea 
+     */
     public function preprocess($dir, $filearea) {
         global $CFG;
         foreach ($dir['subdirs'] as $subdir) {

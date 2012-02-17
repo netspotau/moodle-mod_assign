@@ -105,7 +105,7 @@ class feedback_file extends feedback_plugin {
     }
     
     /**
-     * save the settings for file submission plugin 
+     * save the settings for file feedback plugin 
      * @param object $mform
      * @return bool 
      */

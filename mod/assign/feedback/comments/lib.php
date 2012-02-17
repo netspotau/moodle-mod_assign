@@ -1,18 +1,70 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * This file contains the definition for the library class for online comment
+ *  feedback plugin 
+ * 
+ * @package   mod-assign
+ * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+ 
+ defined('MOODLE_INTERNAL') || die();
+ 
+ /*
+ * library class for comment feedback plugin extending feedback plugin
+ * base class
+ * 
+ * @package   mod-assign
+ * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class feedback_comments extends feedback_plugin {
 
+    /** @var object the assignment record that contains the global settings for this assign instance */
     private $instance;
 
+   /**
+    * get the name of the online comment feedback plugin
+    * @return string 
+    */  
     public function get_name() {
         return get_string('pluginname', 'feedback_comments');
     }
     
+    /**
+     * get the feedback comment from the database
+     *  
+     * @global object $DB
+     * @param int $gradeid
+     * @return mixed 
+     */
     private function get_feedback_comments($gradeid) {
         global $DB;
         return $DB->get_record('assign_feedback_comments', array('grade'=>$gradeid));
     }
-
+    
+    /**
+     * get form elements
+     * 
+     * @param object $grade
+     * @param object $data
+     * @return string 
+     */
     public function get_form_elements($grade, & $data) {
         $elements = array();
 
@@ -33,6 +85,15 @@ class feedback_comments extends feedback_plugin {
         return $elements;
     }
 
+    /**
+     * saving the comment content into dtabase 
+     * 
+     * @global object $USER
+     * @global object $DB
+     * @param object $grade
+     * @param object $data
+     * @return mixed
+     */
     public function save($grade, $data) {
 
         global $USER, $DB;
@@ -53,6 +114,12 @@ class feedback_comments extends feedback_plugin {
         }
     }
 
+    /**
+     * display the comment in the feedback table
+     *  
+     * @param object $grade
+     * @return string 
+     */
     public function view_summary($grade) {
         $feedback_comments = $this->get_feedback_comments($grade->id);
         if ($feedback_comments) {
@@ -61,6 +128,12 @@ class feedback_comments extends feedback_plugin {
         return '';
     }
     
+    /**
+     * display the comment in the feedback table
+     * 
+     * @param object $grade
+     * @return string
+     */
     public function view($grade) {
         $feedback_comments = $this->get_feedback_comments($grade->id);
         if ($feedback_comments) {

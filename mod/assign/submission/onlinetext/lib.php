@@ -56,6 +56,7 @@ class submission_onlinetext extends submission_plugin {
    /**
     * get onlinetext submission information from the database   
     * 
+    * @access private
     * @global object $DB
     * @param  int $submissionid
     * @return mixed 
@@ -75,9 +76,6 @@ class submission_onlinetext extends submission_plugin {
      */
     public function get_form_elements($submission, & $data) {
         global $USER;
-        
-        
-       
         
         
         $elements = array();
@@ -110,6 +108,8 @@ class submission_onlinetext extends submission_plugin {
     
     /**
      * editor format options
+     * 
+     * @access private
      * @return mixed
      */
     private function get_edit_options() {

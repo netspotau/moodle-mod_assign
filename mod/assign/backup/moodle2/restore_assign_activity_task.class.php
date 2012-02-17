@@ -15,12 +15,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/assign/backup/moodle2/restore_assign_stepslib.php'); 
 
 /**
+ * @package moodlecore
+ * @subpackage backup-moodle2
  * assign restore task that provides all the settings and steps to perform one
  * complete restore of the activity
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 class restore_assign_activity_task extends restore_activity_task {
  
     /**
@@ -41,6 +46,8 @@ class restore_assign_activity_task extends restore_activity_task {
     /**
      * Define the contents in the activity that must be
      * processed by the link decoder
+     * 
+     * @return array
      */
     static public function define_decode_contents() {
         $contents = array();
@@ -53,6 +60,8 @@ class restore_assign_activity_task extends restore_activity_task {
     /**
      * Define the decoding rules for links belonging
      * to the activity to be executed by the link decoder
+     * 
+     * @return array
      */
     static public function define_decode_rules() {
         $rules = array();
@@ -69,6 +78,8 @@ class restore_assign_activity_task extends restore_activity_task {
      * by the {@link restore_logs_processor} when restoring
      * assign logs. It must return one array
      * of {@link restore_log_rule} objects
+     * 
+     * @return array
      */
     static public function define_restore_log_rules() {
         $rules = array();
@@ -90,14 +101,11 @@ class restore_assign_activity_task extends restore_activity_task {
      * Note this rules are applied when restoring course logs
      * by the restore final task, but are defined here at
      * activity level. All them are rules not linked to any module instance (cmid = 0)
+     * 
+     * @return array
      */
     static public function define_restore_log_rules_for_course() {
         $rules = array();
- 
-        // Fix old wrong uses (missing extension)
-        //$rules[] = new restore_log_rule('assign', 'view all', 'index?id={course}', null,
- //                                       null, null, 'index.php?id={course}');
-        //$rules[] = new restore_log_rule('assign', 'view all', 'index.php?id={course}', null);
  
         return $rules;
     }

@@ -92,7 +92,9 @@ class assignment {
 
     /** @var object the course this assign instance belongs to */
     private $course;
+    
     /** @var object the course module for this assign instance */
+    
     private $coursemodule;
     /** @var array cache for things like the coursemodule name or the scale menu - only lives for a single 
         request */
@@ -143,6 +145,7 @@ class assignment {
 
     /**
      * get a specific submission plugin by its type
+     * @access private
      * @param string $type
      * @return object $plugin /null
      */
@@ -177,7 +180,7 @@ class assignment {
 
     /**
      * Load the plugins from the sub folders under subtype
-     *
+     * @access private
      * @param string subtype - either submission or feedback
      * @return array - The list of plugins
      */
@@ -374,7 +377,7 @@ class assignment {
             $result = false;
         }
 
-        // assignment_grade_item_delete($assignment);
+        
         // update all the calendar events 
 
         return $result;
@@ -446,6 +449,8 @@ class assignment {
 
     /**
      * add elements in grading plugin form 
+     * 
+     * @access private
      * @param object $grade
      * @param object $mform
      * @param object $data 
@@ -479,48 +484,11 @@ class assignment {
     }
     
     
-    
-    
-    /**
-     * add elements in grading plugin form 
-     * @param object $grade
-     * @param object $mform
-     * @param object $data 
-     
-    private function add_plagiarism_elements_for_file_submission_plugin(& $mform) {
-        
-        $file_sub_plugin = $this->get_submission_plugin_by_type('file');
-            if ($file_sub_plugin->is_enabled() && $file_sub_plugin->is_visible()) {
-               
-                   // plagiarism enabling form
-        
-                   $course_context = get_context_instance(CONTEXT_COURSE, $COURSE->id);      
-                   plagiarism_get_form_elements_module($mform, $course_context);
-
-                
-            }
-        
-    }
-    
-    */
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
     /**
      * Add one plugins settings to edit plugin form 
      *
+     * @access private
      * @param object $plugin The plugin to add the settings from
      * @param object $mform The form to add the configuration settings to. This form is modified directly (not returned)
      *  
@@ -568,6 +536,7 @@ class assignment {
     /**
      * Add settings to edit plugin form 
      *
+     * @access private
      * @param object $mform The form to add the configuration settings to. This form is modified directly (not returned)
      *  
      */
@@ -580,9 +549,7 @@ class assignment {
             $this->add_plugin_settings($plugin, $mform);
         }
     }
-
-
-    
+  
     /**
      * Add settings to edit form
      *
@@ -649,6 +616,7 @@ class assignment {
     /**
      * Get the name of the current module. 
      *
+     * @access protected
      * @return string the module name (Assignment)
      */
     protected function get_module_name() {
@@ -661,6 +629,7 @@ class assignment {
     /**
      * Get the plural name of the current module.
      *
+     * @access protected
      * @return string the module name plural (Assignments)
      */
     protected function get_module_name_plural() {
@@ -787,11 +756,14 @@ class assignment {
             return '-';
         }
     }
-    
+           
     /**
      * Load a list of users enrolled in the current course with the specified permission and group (optional)
-     *
-     * @return array List of user records
+     * 
+     * @access protected
+     * @param string $permission
+     * @param int $currentgroup
+     * @return array List of user records 
      */
     final protected function & list_enrolled_users_with_capability($permission,$currentgroup) {
         $users = & get_enrolled_users($this->context, $permission, $currentgroup);
@@ -800,7 +772,10 @@ class assignment {
 
     /**
      * Load a count of users enrolled in the current course with the specified permission and group (optional)
-     *
+     * 
+     * @access protected
+     * @param string $permission
+     * @param int $currentgroup
      * @return int number of matching users
      */
     final protected function count_enrolled_users_with_capability($permission,$currentgroup=0) {
@@ -811,6 +786,7 @@ class assignment {
     /**
      * Load a count of users enrolled in the current course with the specified permission and group (optional)
      *
+     * @access protected
      * @global object $DB
      * @param string $status The submission status - should match one of the constants 
      * @return int number of matching submissions
@@ -827,9 +803,11 @@ class assignment {
      * Utility function to add a row of data to a table with 2 columns. Modified
      * the table param and does not return a value
      * 
+     * @access private
      * @param object $t The table to append the row of data to
      * @param string $first The first column text
      * @param string $second The second column text
+     * @return None
      */
     private function add_table_row_tuple(& $t, $first, $second) {
         $row = new html_table_row();
@@ -843,6 +821,7 @@ class assignment {
      * Utility function get the userid based on the row number of the grading table.
      * This takes into account any active filters on the table.
      * 
+     * @access private
      * @param int $num The row number of the user
      * @return mixed The user id of the matching user or false if there was an error
      */
@@ -855,6 +834,7 @@ class assignment {
     /**
      * Return all assignment submissions by ENROLLED students (even empty)
      *
+     * @access private
      * @global object $CFG;
      * @global object $DB;
      * @param $sort string optional field names for the ORDER BY in the sql query
@@ -883,6 +863,7 @@ class assignment {
     /**
      * Generate zip file from array of given files
      * 
+     * @access private
      * @global object $CFG
      * @param array $filesforzipping - array of files to pass into archive_to_pathname - this array is indexed by the final file name and each element in the array is an instance of a stored_file object
      * @return path of temp file - note this returned file does not have a .zip extension - it is a temp file.
@@ -902,9 +883,10 @@ class assignment {
     /**
      * Update a grade in the grade table for the assignment and in the gradebook
      *
+     * @access private
      * @global object $DB
      * @param object $grade a grade record keyed on id
-     * @return boolean true for success
+     * @return bool true for success
      */
     private function update_grade($grade) {
         global $DB;
@@ -921,6 +903,7 @@ class assignment {
      * Load a table object with data ready to display the grading data for this assignment.
      * This takes into account any active filters on the table via user preferences.
      * 
+     * @access private
      * @param int $perpage The maximum number of results to show on one page
      * @param string $filter Any current filter that is set
      * @param int $start_page An optional param that controls the page to start from
@@ -1106,6 +1089,7 @@ class assignment {
      * @global object $CFG
      * @param int $submissionid
      * @param string $plugintype 
+     * @return None
      */
     public function view_submission($submissionid=null, $plugintype=null) {
            global $OUTPUT, $CFG;
@@ -1176,10 +1160,11 @@ class assignment {
 
     /**
      * Setup the PAGE variable and print the assignment name as a header
-     *
+     * @access private
      * @global object $PAGE
      * @global object $OUTPUT
      * @param string $subpage optional sub page for the navbar
+     * @return None
      */
     private function view_header($subpage='') {
         global $PAGE, $OUTPUT;
@@ -1201,7 +1186,9 @@ class assignment {
      * Display the assignment intro
      *
      * The prints the assignment description in a box
+     * @access private
      * @global object $OUTPUT
+     * @return None
      */
     private function view_intro() {
         global $OUTPUT;
@@ -1210,13 +1197,16 @@ class assignment {
             echo format_module_intro('assign', $this->instance, $this->get_course_module()->id);
             echo $OUTPUT->box_end();
         }
+        //print out plagiarism disclosure under the description of assignment if plagiarism plugin is enabled
         plagiarism_print_disclosure($this->get_course_module()->id);
     }
     
     /**
      * Display the page footer
      *
+     * @access private
      * @global object $OUTPUT
+     * @return None
      */
     private function view_footer() {
         global $OUTPUT;
@@ -1226,7 +1216,9 @@ class assignment {
     /**
      * View the grading summary information and a link to the grading page
      *
+     * @access private
      * @global object $OUTPUT
+     * @return none
      */
     private function view_grading_summary() {
         global $OUTPUT;
@@ -1291,7 +1283,9 @@ class assignment {
     /**
      * View a redirect to the next submission grading page
      * 
+     * @access private
      * @uses die
+     * @return None
      */
     private function view_next_single_grade() {
         $rnum = required_param('rownum', PARAM_INT);
@@ -1309,8 +1303,10 @@ class assignment {
     /**
      * Download a zip file of all assignment submissions
      *
+     * @access private
      * @global object $CFG
      * @global object $DB
+     * @return None
      */
     private function download_submissions() {
         global $CFG,$DB;
@@ -1373,10 +1369,12 @@ class assignment {
     /**
      * Util function to add a message to the log
      *
+     * @access private
      * @global object $USER
      * @param string $action The current action
      * @param string $info A detailed description of the change. But no more than 255 characters.
      * @param string $url The url to the assign module instance.
+     * @return None
      */
     private function add_to_log($action = '', $info = '', $url='') {
         global $USER; 
@@ -1438,6 +1436,7 @@ class assignment {
     /**
      * This will retrieve a grade object from the db, optionally creating it if required
      *
+     * @access private
      * @global object $DB
      * @param int $userid The user we are grading
      * @param bool $create If true the grade will be created if it does not exist
@@ -1469,8 +1468,10 @@ class assignment {
     /**
      * Print the details for a single user
      *
+     * @access private
      * @global object $CFG
      * @param object $user A user record from the database
+     * @return None
      */
     private function view_user($user=null) {
         global $OUTPUT;
@@ -1488,9 +1489,11 @@ class assignment {
     /**
      * Print the grading page for a single user submission
      *
+     * @access private
      * @global object $OUTPUT
      * @global object $DB
      * @uses die
+     * @return None
      */
     private function view_single_grade_page() {
         global $OUTPUT, $DB;
@@ -1525,7 +1528,9 @@ class assignment {
     /**
      * View a link to go back to the previous page. Uses url parameters returnaction and returnparams.
      *
+     * @access private
      * @global object $OUTPUT
+     * @return None
      */
     private function view_return_links() {
         global $OUTPUT;
@@ -1546,7 +1551,9 @@ class assignment {
     /**
      * View the grading table of all submissions for this assignment
      *
+     * @access private
      * @global object $USER
+     * @return None
      */
     private function view_grading_table() {
         global $USER;
@@ -1578,7 +1585,9 @@ class assignment {
     /**
      * View the links beneath the grading table.
      *
+     * @access private
      * @global object $OUTPUT
+     * @return None
      */
     private function view_grading_links() {
         global $OUTPUT;
@@ -1607,9 +1616,11 @@ class assignment {
     /**
      * View entire grading page.
      *
+     * @access private
      * @global object $OUTPUT
      * @global object $CFG
      * @global object $USER
+     * @return None
      */
     private function view_grading_page() {
         global $OUTPUT, $CFG, $USER;
@@ -1640,6 +1651,9 @@ class assignment {
     
     /**
      * View edit submissions page.
+     * 
+     * @access private
+     * @return None
      */
     private function view_edit_submission_page() {
         // Always require view permission to do anything
@@ -1659,7 +1673,9 @@ class assignment {
     /**
      * View submissions page (contains details of current submission).
      *
+     * @access private
      * @global object $CFG
+     * @return None
      */
     private function view_submission_page() {
         global $CFG;
@@ -1682,7 +1698,9 @@ class assignment {
     } 
     
     /**
-     * convert the final raw grade(s) in the  grading table for the gradebook  
+     * convert the final raw grade(s) in the  grading table for the gradebook 
+     * 
+     * @access private 
      * @param object $grade
      * @return object $gradebook_grade 
      */
@@ -1704,6 +1722,8 @@ class assignment {
     
     /**
      * convert submission details for the gradebook  
+     * 
+     * @access private
      * @param object $submission
      * @return object $gradebook_grade
      */
@@ -1722,6 +1742,8 @@ class assignment {
 
     /**
      * update grades in the gradebook
+     * 
+     * @access private
      * @global object $CFG
      * @param object $submission
      * @param object $grade
@@ -1759,6 +1781,8 @@ class assignment {
 
     /**
      * update grades in the gradebook based on submission time 
+     * 
+     * @access private
      * @global object $DB
      * @param object $submission
      * @param bool $updatetime
@@ -1784,6 +1808,8 @@ class assignment {
      * prevent late submissions, 
      * has this person already submitted, 
      * is the assignment locked?
+     * 
+     * @access protected
      * @global object $USER
      * @return bool 
      */
@@ -1820,6 +1846,7 @@ class assignment {
 
         return TRUE;
     }
+    
     /**
      * render the files in file area  
      * @global object $CFG
@@ -1828,7 +1855,7 @@ class assignment {
      * @global object $PAGE
      * @param string $area
      * @param int $submissionid
-     * @return object 
+     * @return string 
      */
     public function render_area_files($area, $submissionid = null) {
         global $CFG, $USER, $OUTPUT, $PAGE;
@@ -1842,26 +1869,7 @@ class assignment {
         
         $fs = get_file_storage();
         $browser = get_file_browser();
-         $files = $fs->get_area_files($this->get_context()->id, 'mod_assign', $area , $submissionid , "timemodified", false);
-        /** 
-         //plagiarism code is below ?
-        // send files to event system
-        // Let Moodle know that an assessable file was uploaded (eg for plagiarism detection)
-                    $eventdata = new stdClass();
-                    $eventdata->modulename   = 'assign';
-                    $eventdata->cmid         = $this->get_course_module()->id;
-                    $eventdata->itemid       = $submissionid;
-                    $eventdata->courseid     = $this->get_course()->id;
-                    $eventdata->userid       = $USER->id;
-                    if ($files) {
-                      $eventdata->files        = $files;
-                   }
-                    events_trigger('assessable_file_uploaded', $eventdata);
-       
-                   
-        */
-        
-        
+        $files = $fs->get_area_files($this->get_context()->id, 'mod_assign', $area , $submissionid , "timemodified", false);              
         $renderer = $PAGE->get_renderer('mod_assign');
         return $renderer->assign_files($this->context, $submissionid, $area);
         
@@ -1870,6 +1878,7 @@ class assignment {
     /**
      * Returns a list of teachers that should be grading given submission
      *
+     * @access private
      * @param object $user
      * @return array
      */
@@ -1917,7 +1926,8 @@ class assignment {
 
     /**
      * Creates the text content for emails to grader
-     *
+     * 
+     * @access private
      * @param $info object The info used by the 'emailgradermail' language string
      * @return string
      */
@@ -1934,6 +1944,7 @@ class assignment {
      /**
      * Creates the html content for emails to graders
      *
+     * @access private
      * @param $info object The info used by the 'emailgradermailhtml' language string
      * @return string
      */
@@ -1951,6 +1962,8 @@ class assignment {
     
     /**
      * email graders upon student submissions 
+     * 
+     * @access private
      * @global object $CFG
      * @global object $DB
      * @param object $submission
@@ -2002,9 +2015,13 @@ class assignment {
             }
         }
     }
+    
     /**
-     *  assignment submission is processed before grading 
+     * assignment submission is processed before grading
+     * 
+     * @access private
      * @global object $USER 
+     * @return None
      */
     private function process_submit_assignment_for_grading() {
         
@@ -2021,9 +2038,13 @@ class assignment {
         $this->add_to_log('submit for grading', $this->format_submission_for_log($submission));
         $this->email_graders($submission);
     }
+    
     /**
      * save grading options 
-     * @global object $USER 
+     * 
+     * @access private
+     * @global object $USER
+     * @return None
      */
     private function process_save_grading_options() {
         global $USER;
@@ -2048,6 +2069,8 @@ class assignment {
     * Take a grade object and print a short summary for the log file. 
     * The size limit for the log file is 255 characters, so be careful not
     * to include too much information.
+    * 
+    * @access private
     * @global object $DB
     * @param object $grade
     * @return string 
@@ -2073,34 +2096,22 @@ class assignment {
      * Take a submission object and print a short summary for the log file. 
      * The size limit for the log file is 255 characters, so be careful not
      * to include too much information.
+     * 
+     * @access private
      * @param object $submission
      * @return string 
      */
     private function format_submission_for_log($submission) {
         $info = '';
         $info .= get_string('submissionstatus', 'assign') . ': ' . get_string('submissionstatus_' . $submission->status, 'assign') . '.';
-        /*
-        if ($submission->numfiles > 0) {
-            $info .= get_string('numfiles', 'assign', $submission->numfiles);
-        } else {
-            $info .= get_string('nofiles', 'assign');
-        }
-        if ($submission->onlinetext != '') {
-            $info .= get_string('onlinetextnumwords', 'assign', count_words(format_text($submission->onlinetext)));
-        } else {
-            $info .= get_string('noonlinetext', 'assign');
-        }
-        if ($submission->submissioncommenttext != '') {
-            $info .= get_string('submissioncommentnumwords', 'assign', count_words(format_text($submission->submissioncommenttext)));
-        } else {
-            $info .= get_string('nosubmissioncomment', 'assign');
-        }
-        */
+        
         return $info;
     }
     
     /**
      * save assignment submission
+     * 
+     * @access private
      * @global object $USER
      * @return mixed 
      */
@@ -2145,6 +2156,8 @@ class assignment {
     
     /**
      * count the number of files in the file area
+     * 
+     * @access private
      * @global object $USER
      * @param int $userid
      * @param string $area
@@ -2166,6 +2179,7 @@ class assignment {
     /**
      * Determine if this users grade is locked or overridden
      * 
+     * @access private
      * @param int $userid - The student userid
      * @return boolean $grading_disabled
      */
@@ -2186,6 +2200,8 @@ class assignment {
     /**
      * Get an instance of a grading form if advanced grading is enabled
      * This is specific to the assignment, marker and student
+     * 
+     * @access private
      * @param int $userid - The student userid
      * @param object $gradingdisabled - For speed this can be passed - otherwise this is looked up
      * @return object $gradinginstance
@@ -2227,12 +2243,16 @@ class assignment {
         }
         return $gradinginstance;
     }
-
+    
     /**
-     *  add elements to grade form 
+     * add elements to grade form 
+     * 
      * @global object $USER
+     * @global object $CFG
      * @param object $mform
-     * @param object $data 
+     * @param object $data
+     * @param mixed $params 
+     * @return None
      */
     public function add_grade_form_elements(& $mform, & $data, $params) {
         global $USER, $CFG;
@@ -2277,7 +2297,7 @@ class assignment {
         $mform->setType('action', PARAM_ALPHA);
           
         $buttonarray=array();
-       //  $lst = $params['last'];
+       
         if (! $params['last']){
             $buttonarray[] = &$mform->createElement('submit', 'saveandshownext', get_string('savenext','assign')); 
             $buttonarray[] = &$mform->createElement('submit', 'nosaveandnext', get_string('nosavebutnext', 'assign'));
@@ -2292,9 +2312,11 @@ class assignment {
     /**
      * display the grade form
      * 
+     * @access private
      * @uses die
      * @global object $OUTPUT
      * @global object $USER 
+     * @return None
      */
     private function view_grade_form() {
         global $OUTPUT, $USER;
@@ -2342,7 +2364,9 @@ class assignment {
     }
 
     /**
-     *  get the default submission data 
+     * get the default submission data 
+     * 
+     * @access private
      * @return stdClass 
      */
     private function get_default_submission_data() {
@@ -2354,7 +2378,8 @@ class assignment {
     /**
      * Used to set the default data for an editor element.
      * Prevents warnings being written to the page.
-     *
+     * 
+     * @access private
      * @param string $name - The name of the element
      * @param object $data - The default data class to modify
      * @return None
@@ -2372,9 +2397,12 @@ class assignment {
     
     /**
      * add elements in submission plugin form 
+     * 
+     * @access private
      * @param object $submission
      * @param object $mform
      * @param object $data 
+     * @return None
      */
     private function add_plugin_submission_elements($submission, & $mform, & $data) {
         foreach ($this->submission_plugins as $plugin) {
@@ -2406,8 +2434,11 @@ class assignment {
     
     /**
      * display submission form 
+     * 
+     * @access private
      * @global object $OUTPUT
      * @global object $USER 
+     * @return None
      */
     private function view_submission_form() {
         global $OUTPUT, $USER;
@@ -2433,8 +2464,11 @@ class assignment {
     }
 
    /**
-    *  Show the screen for creating an assignment submission
+    * Show the screen for creating an assignment submission
+    *  
+    * @access private
     * @global object $OUTPUT 
+    * @return None
     */
     private function view_edit_submission_form() {
         global $OUTPUT;
@@ -2452,11 +2486,13 @@ class assignment {
         echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
             array('id' => $this->get_course_module()->id)), get_string('backtoassignment', 'assign'), 'get');
 
-        // plagiarism?
+        
     }
     
     /**
      * check if submission plugins installed are enabled 
+     * 
+     * @access private
      * @return bool
      */
     private function is_any_submission_plugin_enabled() {
@@ -2476,6 +2512,8 @@ class assignment {
         
     /**
      * display submission status page 
+     * 
+     * @access private
      * @global object $OUTPUT
      * @global object $USER
      * @param int $userid
@@ -2620,6 +2658,8 @@ class assignment {
     /**
      * display feedback
      * display submission status page 
+     * 
+     * @access private
      * @global object $OUTPUT
      * @global object $USER
      * @global object $PAGE
@@ -2729,9 +2769,12 @@ class assignment {
     
     /**
      * display submission links
+     * 
+     * @access private
      * @global object $OUTPUT
      * @global object $USER
      * @param int $userid 
+     * @return None
      */
     private function view_submission_links($userid = null) {
         global $OUTPUT, $USER;
@@ -2764,10 +2807,11 @@ class assignment {
     }
     
     /**
-     *  add elements to submission form 
+     * add elements to submission form 
      * @global object $USER
      * @param object $mform
      * @param object $data 
+     * @return None
      */
     public function add_submission_form_elements(& $mform, & $data) {
         global $USER;
@@ -2823,8 +2867,11 @@ class assignment {
     
     /**
      * lock  the process
+     * 
+     * @access private
      * @global object $USER
-     * @global object $DB 
+     * @global object $DB
+     * @return None
      */
     private function process_lock() {
         global $USER, $DB;
@@ -2847,8 +2894,11 @@ class assignment {
     
     /**
      * unlock the process
+     * 
+     * @access private
      * @global object $USER
      * @global object $DB 
+     * @return None
      */
     private function process_unlock() {
         global $USER, $DB;
@@ -2871,8 +2921,11 @@ class assignment {
   
     /**
      * save grade
+     * 
+     * @access private
      * @global object $USER
      * @global object $DB 
+     * @return None
      */
     private function process_save_grade() {
         global $USER, $DB;

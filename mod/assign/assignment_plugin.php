@@ -16,9 +16,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the definition for the class assign_base
+ * This file contains the functions for assignment_plugin abstract class 
  *
- * This class provides all the functionality for the new assign module.
  *
  * @package   mod-assign
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
@@ -28,7 +27,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 /*
- * Standard base class for mod_assign (assignment types).
+ * Abstract class for assignment_plugin (submission/feedback).
  *
  * @package   mod-assign
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
@@ -36,14 +35,19 @@ defined('MOODLE_INTERNAL') || die();
  */
 abstract class assignment_plugin {
 
+    /** @var object the assignment record that contains the global settings for this assign instance */
     protected $assignment;
+    /** @var string assignment plugin type */
     private $type = '';
+    /** @var string error message */
     private $error = '';
 
+        
     /**
      * Constructor for the abstract plugin type class
-     *
-     * @param object $assignment 
+     * 
+     * @param object $assignment
+     * @param string $type 
      */
     public function __construct($assignment = null, $type = null) {
         $this->assignment = $assignment;
@@ -53,7 +57,7 @@ abstract class assignment_plugin {
     /**
      * Is this the first plugin in the list?
      *
-     * @return boolean
+     * @return bool
      */
     public function is_first() {
         global $DB;
@@ -69,7 +73,7 @@ abstract class assignment_plugin {
     /**
      * Is this the last plugin in the list?
      *
-     * @return boolean
+     * @return bool
      */
     public function is_last() {
         global $DB;
@@ -95,7 +99,7 @@ abstract class assignment_plugin {
      * standard type cannot be modified. 
      * 
      * @param object $mform - the data submitted from the form
-     * @return boolean - on error the subtype should call set_error and return false.
+     * @return bool - on error the subtype should call set_error and return false.
      */
     public function save_settings($mform) {
         return true;
@@ -104,6 +108,7 @@ abstract class assignment_plugin {
     /**
      * Save the error message from the last error
      * 
+     * @access protected
      * @param string $msg - the error description
      */
     protected final function set_error($msg) {
@@ -113,6 +118,7 @@ abstract class assignment_plugin {
     /**
      * What was the last error?
      *
+     * 
      * @return string
      */
     public final function get_error() {
@@ -175,7 +181,7 @@ abstract class assignment_plugin {
      * 
      * @param object $submission_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
      * @param object $data - the data submitted from the form
-     * @return boolean - on error the subtype should call set_error and return false.
+     * @return bool - on error the subtype should call set_error and return false.
      */
     public function save($submission_grade, $data) {
         return true;   
@@ -202,7 +208,7 @@ abstract class assignment_plugin {
     /**
      * Allows hiding this plugin from the submission/feedback screen if it is not enabled.
      * 
-     * @return boolean - if false - this plugin will not accept submissions / feedback
+     * @return bool - if false - this plugin will not accept submissions / feedback
      */
     public function is_enabled() {
         return $this->get_config('enabled');
@@ -309,7 +315,7 @@ abstract class assignment_plugin {
     /**
      * Is this plugin enaled?
      *
-     * @return boolean
+     * @return bool
      */
     public function is_visible() {
         $disabled = get_config($this->get_subtype() . '_' . $this->get_type(), 'disabled');
@@ -337,7 +343,7 @@ abstract class assignment_plugin {
     /**
      * Has this plugin got a custom settings.php file?
      *
-     * @return boolean
+     * @return bool
      */
     public function has_admin_settings() {
         global $CFG;
@@ -350,7 +356,7 @@ abstract class assignment_plugin {
      *
      * @param string $name The config key
      * @param string $value The config value
-     * @return boolean
+     * @return bool
      */
     public function set_config($name, $value) {
         global $DB;
@@ -376,7 +382,7 @@ abstract class assignment_plugin {
      * Get a configuration value for this plugin
      *
      * @param string $name The config key
-     * @return string or false
+     * @return string | false
      */
     public function get_config($setting = null) {
         global $DB;

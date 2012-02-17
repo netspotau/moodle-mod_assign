@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle. If not, see <http://www.gnu.org/licenses/>.
 
+/** config.php */
 require_once('../../config.php');
+/** Include locallib.php */
 require_once('locallib.php');
 
 $id = required_param('id', PARAM_INT);  // Course Module ID

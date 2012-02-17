@@ -15,6 +15,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
+/** Include locallib.php */
 require_once('locallib.php');
 
 /**
@@ -33,7 +36,7 @@ function assign_add_instance($form_data) {
 /**
  * delete an assignment instance 
  * @param int $id
- * @return object 
+ * @return object|bool 
  */
 function assign_delete_instance($id) {
     if (!$cm = get_coursemodule_from_instance('assign', $id)) {
@@ -63,6 +66,7 @@ function assign_update_instance($form_data) {
 /**
  * @param string $feature FEATURE_xx constant for requested feature
  * @return mixed True if module supports feature, null if doesn't know
+ * @return bool|null
  */
 function assign_supports($feature) {
     switch($feature) {

@@ -59,7 +59,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
     protected $editor;
     
     
-    /**
+   /**
     * callback arg for a single file export
     */ 
     public static function expected_callbackargs() {
@@ -73,18 +73,26 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
        );
     }
 
-    
+    /**
+     * the constructor
+     * @param array $callbackargs 
+     */
     function __construct($callbackargs) {
         parent::__construct($callbackargs);
         $this->cm = get_coursemodule_from_id('assign', $this->cmid);
     }
-    
+          
     /**
+     *
      * Load data needed for the portfolio export
      *
      * If the assignment type implements portfolio_load_data(), the processing is delegated
      * to it. Otherwise, the caller must provide either fileid (to export single file) or
      * submissionid and filearea (to export all data attached to the given submission file area) via callback arguments.
+     * 
+     * @throws    
+     * @global object $DB
+     * @global object $CFG 
      */
     public function load_data() {
         global $DB, $CFG;
@@ -103,11 +111,17 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
         // the first arg is an id or null. If it is an id, the rest of the args are ignored
         // if it is null, the rest of the args are used to load a list of files from get_areafiles
         $this->set_file_and_format_data($this->fileid, $context->id, 'mod_assign', $this->area, $this->sid, 'timemodified', false);
-        
-           
-        
+               
     }
-
+ 
+    /**
+     * prepares the package up before control is passed to the portfolio plugin. 
+     * 
+     * @throws
+     * @global object $CFG
+     * @global object $DB
+     * @return mixed
+     */
     public function prepare_package() {
         global $CFG, $DB;
         
@@ -134,9 +148,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
                 $leapwriter = $this->exporter->get('format')->leap2a_writer();
                 $entry = new portfolio_format_leap2a_entry($this->area . $this->cmid, print_context_name($context), 'resource', $html);
                 
-                $entry->add_category('web', 'resource_type');
-                //$entry->published = $submission->timecreated;
-                //$entry->updated = $submission->timemodified;
+                $entry->add_category('web', 'resource_type');                
                 $entry->author = $this->user;
                 $leapwriter->add_entry($entry);
                 if ($files = $this->exporter->get('caller')->get('multifiles')) {
@@ -186,6 +198,12 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
         return $this->prepare_package_file();
     }
     
+    /**
+     * fetch the plugin by its type 
+     * 
+     * @access private
+     * @return object
+     */
     private function get_submission_plugin() {
         if (!$this->plugin || !$this->cmid) {
             return null;
@@ -199,10 +217,15 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
         return $assignment->get_submission_plugin_by_type($this->plugin); 
     }
 
+    /**
+     * get sha1 file 
+     * calculate a sha1 has of either a single file or a list
+     * of files based on the data set by load_data
+     * 
+     * @return mixed
+     */
     public function get_sha1() {
        
-        // calculate a sha1 has of either a single file or a list
-        // of files based on the data set by load_data
         if ($this->plugin && $this->editor) {
             $plugin = $this->get_submission_plugin();
             $options = portfolio_format_text_options();
@@ -218,23 +241,40 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
         }
         return $this->get_sha1_file();
     }
-
+    
+    /**
+     * calculate the time to transfer either a single file or a list
+     * of files based on the data set by load_data
+     * 
+     * @return int 
+     */
     public function expected_time() {
-        // calculate the time to transfer either a single file or a list
-        // of files based on the data set by load_data
-       
         return $this->expected_time_file();
     }
-
+    
+    /**
+     * checking the permissions 
+     * 
+     * @return mixed
+     */
     public function check_permissions() {
         $context = get_context_instance(CONTEXT_MODULE, $this->cmid);
         return has_capability('mod/assign:exportownsubmission', $context);
     }
-
+     
+    /**
+     * display a module name   
+     * 
+     * @return string
+     */
     public static function display_name() {
         return get_string('modulename', 'assign');
     }
-
+    
+    /**
+     *  return array of formats suported by this portfolio call back 
+     * @return array
+     */
     public static function base_supported_formats() {
         
         return array(PORTFOLIO_FORMAT_FILE, PORTFOLIO_FORMAT_LEAP2A);

@@ -46,7 +46,6 @@ $string['submissioncomments'] = 'Enable submission comments';
 $string['onlinetextsubmission'] = 'Allow online text submission';
 $string['minfilessubmission'] = 'Minimum number of uploaded files';
 $string['availability'] = 'Availability';
-//$string['onlinesubmissions'] = 'Online Submissions';
 $string['filesubmissions'] = 'File Submissions';
 $string['feedback'] = 'Feedback';
 $string['textinstructions'] = 'Assignment instructions';

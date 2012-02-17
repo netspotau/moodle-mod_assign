@@ -19,7 +19,6 @@
  * This file contains the definition for the library class for online comment
  *  submission plugin 
  * 
- * This class provides all the functionality for the new assign module.
  *
  * @package   mod-assign
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
@@ -53,39 +52,29 @@ class submission_comments extends submission_plugin {
     public function get_name() {
         return get_string('pluginname', 'submission_comments');
     }
-      
-  
-     /**
-      * display AJAX based comment in the submission status table 
-      * 
-      * @param object $submission
-      * @return string 
-      */
-   public function view_summary($submission) {
         
-      // global $CFG;
-       
-       // if ($CFG->usecomments) {
+   /**
+    * display AJAX based comment in the submission status table 
+    * 
+    * @param object $submission
+    * @return string 
+    */
+   public function view_summary($submission) {
        
        // need to used this innit() otherwise it shows up undefined !
        // require js for commenting
-       comment::init();
+        comment::init();
        
-       $options = new stdClass();
+        $options = new stdClass();
        
         $options->area    = 'submission_comments';
         
         $options->course    = $this->assignment->get_course();
         
         $options->context = $this->assignment->get_context();
-        $options->itemid  = $submission->id;
-       // $options->itemid  = 0;
-        //$options->linktext= get_string('showcomments');
+        $options->itemid  = $submission->id;      
         $options->component = 'submission_comments';
-        $options->showcount = true;
-      
-     //  $options->notoggle  = true;
-      //  $options->autostart = true;
+        $options->showcount = true;   
         $options->displaycancel = true;
         
         $comment = new comment($options);
@@ -100,36 +89,30 @@ class submission_comments extends submission_plugin {
    
 }
 
+/** The call back functions outside the submission_comments class */
 
+/**
+ *
+ * callback method for data validation---- required method 
+ * for AJAXmoodle based comment API
+ * 
+ * @param object $options
+ * @return bool
+ */
+function submission_comments_comment_validate($options) {
 
+    return true;
+}
 
-         /**
-          *
-          * callback method for data validation---- required method 
-          * for AJAXmoodle based comment API
-          * 
-          * @param object $options
-          * @return bool
-          */
-	 function submission_comments_comment_validate($options){
+/**
+ * permission control method for submission plugin ---- required method 
+ * for AJAXmoodle based comment API
+ * 
+ * @param object $options
+ * @return array
+ */
+function submission_comments_comment_permissions($options) {
 
-	     return true;
+    return array('post' => true, 'view' => true);
+}
 
-	}
-
-
-     
-          /**
-           * permission control method for submission plugin ---- required method 
-           * for AJAXmoodle based comment API
-           * 
-           * @param object $options
-           * @return array
-           */
-	  function submission_comments_comment_permissions($options){
-           
-	    return array('post'=>true,'view'=>true );
-
-	 }
-    
-  
