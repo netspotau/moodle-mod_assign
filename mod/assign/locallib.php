@@ -3000,6 +3000,16 @@ class assignment {
         return false;
     }
 
+    /**
+     * Create a duplicate course module record so we can create the upgraded
+     * assign module alongside the old assignment module.
+     * 
+     * @global object $CFG
+     * @global object $DB
+     * @param object $cm The old course module record
+     * @param int $moduleid The id of the new assign module
+     * @return object $newcm The new course module record or FALSE
+     */
     private function duplicate_course_module($cm, $moduleid) {
         global $DB, $CFG;
 
@@ -3042,8 +3052,66 @@ class assignment {
         // make sure visibility is set correctly (in particular in calendar)
         // note: allow them to set it even without moodle/course:activityvisibility
         set_coursemodule_visible($newcm->id, $newcm->visible);
+        rebuild_course_cache($newcm->course);
 
         return $newcm;
+    }
+
+    /**
+     * This function deletes the old assignment course module after
+     * it has been upgraded. This code is adapted from "course/mod.php".
+     * 
+     * @global object $CFG
+     * @global object $USER
+     * @global object $DB
+     * @param object $cm The course module to delete.
+     * @return boolean
+     */
+    private function delete_course_module($cm) {
+        global $CFG, $USER, $DB;
+        $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+
+        $coursecontext = get_context_instance(CONTEXT_COURSE, $course->id);
+        $modcontext = get_context_instance(CONTEXT_MODULE, $cm->id);
+
+        $modlib = "$CFG->dirroot/mod/$cm->modname/lib.php";
+
+        if (file_exists($modlib)) {
+            require_once($modlib);
+        } else {
+            print_error('modulemissingcode', '', '', $modlib);
+        }
+
+        $deleteinstancefunction = $cm->modname."_delete_instance";
+
+        if (!$deleteinstancefunction($cm->instance)) {
+            echo $OUTPUT->notification("Could not delete the $cm->modname (instance)");
+        }
+
+        // remove all module files in case modules forget to do that
+        $fs = get_file_storage();
+        $fs->delete_area_files($modcontext->id);
+
+        if (!delete_course_module($cm->id)) {
+            echo $OUTPUT->notification("Could not delete the $cm->modname (coursemodule)");
+        }
+        if (!delete_mod_from_section($cm->id, $cm->section)) {
+            echo $OUTPUT->notification("Could not delete the $cm->modname from that section");
+        }
+
+        // Trigger a mod_deleted event with information about this module.
+        $eventdata = new stdClass();
+        $eventdata->modulename = $cm->modname;
+        $eventdata->cmid       = $cm->id;
+        $eventdata->courseid   = $course->id;
+        $eventdata->userid     = $USER->id;
+        events_trigger('mod_deleted', $eventdata);
+
+        add_to_log($course->id, 'course', "delete mod",
+                   "view.php?id=$cm->course",
+                   "$cm->modname $cm->instance", $cm->id);
+
+        return true;
     }
 
     
@@ -3087,9 +3155,6 @@ class assignment {
         // get the module details
         $oldmodule = $DB->get_record('modules', array('name'=>'assignment'));
         $oldcoursemodule = $DB->get_record('course_modules', array('module'=>$oldmodule->id, 'instance'=>$oldassignmentid));
-        var_dump($oldmodule);
-        var_dump($oldassignment);
-        var_dump($oldcoursemodule);
         $newmodule = $DB->get_record('modules', array('name'=>'assign'));
         $newcoursemodule = $this->duplicate_course_module($oldcoursemodule, $newmodule->id);
         if (!$newcoursemodule) {
@@ -3103,13 +3168,9 @@ class assignment {
 
         // from this point we want to rollback on failure
         $rollback = false;
-        $oldinstance = null;
         try {
             $oldassignmentfile = '/mod/assignment/type/' . $oldassignment->assignmenttype . '/assignment.class.php';
             $oldassignmentclass = 'assignment_' . $oldassignment->assignmenttype;
-
-            require_once($CFG->dirroot . $oldassignmentfile);
-            $oldinstance = new $oldassignmentclass($oldcoursemodule->id);
 
             $this->context = get_context_instance(CONTEXT_MODULE,$newcoursemodule->id);
             // the course module has now been created - time to update the core tables
@@ -3191,7 +3252,12 @@ class assignment {
         }
         // all is well,
         // delete the old assignment (optional) (use object delete)
- //       $oldinstance->delete_instance($oldassignment);
+        if ($delete) {
+            $cm = get_coursemodule_from_id('', $oldcoursemodule->id, $oldcoursemodule->course);
+            if ($cm) {
+                $this->delete_course_module($cm);
+            }
+        }
         return true;
     }
 
