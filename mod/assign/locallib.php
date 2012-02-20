@@ -3285,7 +3285,8 @@ class assignment {
         // deleted the old files (which we don't want)
         $count = 0;
 
-        $oldfiles = $this->get_area_files($oldcontextid, $oldcomponent, $oldfilearea, $olditemid, 'id', false);
+        $fs = get_file_storage();
+        $oldfiles = $fs->get_area_files($oldcontextid, $oldcomponent, $oldfilearea, $olditemid, 'id', false);
         foreach ($oldfiles as $oldfile) {
             $filerecord = new stdClass();
             $filerecord->contextid = $newcontextid;
