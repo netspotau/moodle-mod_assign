@@ -1139,8 +1139,8 @@ class assignment {
         $text = $plugin->get_editor_text($editor, $submissionid);
         $format = $plugin->get_editor_format($editor, $submissionid);
         
-        $text = file_rewrite_pluginfile_urls($text, 'pluginfile.php', $this->get_context()->id, 'mod_assign', $filearea, $submissionid);
-        $result .= format_text($text, $format, array('overflowdiv' => true));
+        $final_text = file_rewrite_pluginfile_urls($text, 'pluginfile.php', $this->get_context()->id, 'mod_assign', $filearea, $submissionid);
+        $result .= format_text($final_text, $format, array('overflowdiv' => true));
 
         
 
@@ -3052,7 +3052,6 @@ class assignment {
         // make sure visibility is set correctly (in particular in calendar)
         // note: allow them to set it even without moodle/course:activityvisibility
         set_coursemodule_visible($newcm->id, $newcm->visible);
-        rebuild_course_cache($newcm->course);
 
         return $newcm;
     }
@@ -3263,6 +3262,7 @@ class assignment {
                 $this->delete_course_module($cm);
             }
         }
+        rebuild_course_cache($oldcoursemodule->course);
         return true;
     }
      

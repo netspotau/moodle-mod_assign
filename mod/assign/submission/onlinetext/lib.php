@@ -90,19 +90,20 @@ class submission_onlinetext extends submission_plugin {
             $data->onlinetextformat = editors_get_preferred_format();
         } 
         
+        if ($submission) {
+            $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
+            if ($onlinetext_submission) {
+                $data->onlinetext = $onlinetext_submission->onlinetext;
+                $data->onlinetextformat = $onlinetext_submission->onlineformat;
+            }
+            
+        }
+        
         
         $data = file_prepare_standard_editor($data, 'onlinetext', $editoroptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $submissionid);      
         
         $elements[] = array('type'=>'editor', 'name'=>'onlinetext_editor', 'description'=>'', 'options'=>$editoroptions);
   
-        if ($submission) {
-            $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
-            if ($onlinetext_submission) {
-                $data->onlinetext_editor['text'] = $onlinetext_submission->onlinetext;
-                $data->onlinetext_editor['format'] = $onlinetext_submission->onlineformat;
-            }
-            
-        }
         return $elements;
     }
     
@@ -136,14 +137,12 @@ class submission_onlinetext extends submission_plugin {
 
         $editoroptions = $this->get_edit_options();
         
-
         $data = file_postupdate_standard_editor($data, 'onlinetext', $editoroptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $submission->id);
 
-        
         $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
         if ($onlinetext_submission) {
             
-            $onlinetext_submission->onlinetext = $data->onlinetext_editor['text'];
+            $onlinetext_submission->onlinetext = $data->onlinetext;
             $onlinetext_submission->onlineformat = $data->onlinetext_editor['format'];
             
           
@@ -151,7 +150,7 @@ class submission_onlinetext extends submission_plugin {
         } else {
            
             $onlinetext_submission = new stdClass();
-            $onlinetext_submission->onlinetext = $data->onlinetext_editor['text'];
+            $onlinetext_submission->onlinetext = $data->onlinetext;
             $onlinetext_submission->onlineformat = $data->onlinetext_editor['format'];
                
             $onlinetext_submission->submission = $submission->id;
