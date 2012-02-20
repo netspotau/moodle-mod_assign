@@ -2722,8 +2722,6 @@ function add_mod_to_section($mod, $beforemod=NULL) {
     if ($section = $DB->get_record("course_sections", array("course"=>$mod->course, "section"=>$mod->section))) {
 
         $section->sequence = trim($section->sequence);
-        echo "SECTION:\n";
-        var_dump($section);
 
         if (empty($section->sequence)) {
             $newsequence = "$mod->coursemodule";
