@@ -3155,13 +3155,15 @@ class assignment {
         // get the module details
         $oldmodule = $DB->get_record('modules', array('name'=>'assignment'));
         $oldcoursemodule = $DB->get_record('course_modules', array('module'=>$oldmodule->id, 'instance'=>$oldassignmentid));
+        $oldcontext = get_context_instance(CONTEXT_MODULE, $oldcoursemodule->id);
+        
         $newmodule = $DB->get_record('modules', array('name'=>'assign'));
         $newcoursemodule = $this->duplicate_course_module($oldcoursemodule, $newmodule->id);
         if (!$newcoursemodule) {
             $log = get_string('couldnotcreatenewcoursemodule', 'mod_assign');
             return false;
         }
-        
+
 
         // convert the base database tables (assignment, submission, grade) ignoring the 
         // unknown fields
@@ -3174,12 +3176,15 @@ class assignment {
 
             $this->context = get_context_instance(CONTEXT_MODULE,$newcoursemodule->id);
             // the course module has now been created - time to update the core tables
-            // get the plugins to do their bit
+            $this->copy_area_files_for_upgrade($oldcontext->id, 'mod_assignment', 'intro', NULL, 
+                                            $this->get_context()->id, 'mod_assign', 'intro', NULL);
+        
 
+            // get the plugins to do their bit
             foreach ($this->submission_plugins as $plugin) {
                 if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
                     $plugin->enable();
-                    if (!$plugin->upgrade_settings($oldassignment, $log)) {
+                    if (!$plugin->upgrade_settings($oldcontext, $oldassignment, $log)) {
                         $rollback = true;
                     }
                 }
@@ -3187,7 +3192,7 @@ class assignment {
             foreach ($this->feedback_plugins as $plugin) {
                 if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
                     $plugin->enable();
-                    if (!$plugin->upgrade_settings($oldassignment, $log)) {
+                    if (!$plugin->upgrade_settings($oldcontext, $oldassignment, $log)) {
                         $rollback = true;
                     }
                 }
@@ -3209,7 +3214,7 @@ class assignment {
                 }
                 foreach ($this->submission_plugins as $plugin) {
                     if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
-                        if (!$plugin->upgrade_submission($oldassignment, $oldsubmission, $submission, $log)) {
+                        if (!$plugin->upgrade_submission($oldcontext, $oldassignment, $oldsubmission, $submission, $log)) {
                             $rollback = true;
                         }
                     }
@@ -3231,7 +3236,7 @@ class assignment {
                     }
                     foreach ($this->feedback_plugins as $plugin) {
                         if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
-                            if (!$plugin->upgrade_feedback($oldassignment, $oldsubmission, $grade, $log)) {
+                            if (!$plugin->upgrade_feedback($oldcontext, $oldassignment, $oldsubmission, $grade, $log)) {
                                 $rollback = true;
                             }
                         }
@@ -3260,5 +3265,40 @@ class assignment {
         }
         return true;
     }
+     
+    /**
+     * Copy all the files from the old assignment files area to the new one.
+     * This is used by the plugin upgrade code.
+     * 
+     * @param int $oldcontextid The old assignment context id
+     * @param int $oldcomponent The old assignment component ('assignment')
+     * @param int $oldfilearea The old assignment filearea ('submissions')
+     * @param int $olditemid The old submissionid (can be null e.g. intro)
+     * @param int $newcontextid The new assignment context id
+     * @param int $newcomponent The new assignment component ('assignment')
+     * @param int $newfilearea The new assignment filearea ('submissions')
+     * @param int $newitemid The new submissionid (can be null e.g. intro)
+     * @return int The number of files copied
+     */
+    public function copy_area_files_for_upgrade($oldcontextid, $oldcomponent, $oldfilearea, $olditemid, $newcontextid, $newcomponent, $newfilearea, $newitemid) {
+        // Note, this code is based on some code in filestorage - but that code
+        // deleted the old files (which we don't want)
+        $count = 0;
+
+        $fs = get_file_storage();
+        $oldfiles = $fs->get_area_files($oldcontextid, $oldcomponent, $oldfilearea, $olditemid, 'id', false);
+        foreach ($oldfiles as $oldfile) {
+            $filerecord = new stdClass();
+            $filerecord->contextid = $newcontextid;
+            $filerecord->component = $newcomponent;
+            $filerecord->filearea = $newfilearea;
+            $filerecord->itemid = $newitemid;
+            $this->create_file_from_storedfile($filerecord, $oldfile);
+            $count += 1;
+        }
+
+        return $count;
+    }
+
 
 }
