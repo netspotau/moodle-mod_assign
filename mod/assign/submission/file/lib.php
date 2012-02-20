@@ -265,4 +265,71 @@ class submission_file extends submission_plugin {
         return $this->view_summary($submission);
     }
     
+
+
+ /**
+     * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type
+     * and version.
+     * 
+     * @return boolean True if upgrade is possible
+     */
+    public function can_upgrade($type, $version) {
+        
+        $uploadsingle_type ='uploadsingle';
+        $upload_type ='upload';
+        
+        if (($type == $uploadsingle_type || $type == $upload_type) && $version >= 2011112900) {
+            return true;
+        }
+        return false;
+    }
+  
+    
+     /**
+     * Upgrade the settings from the old assignment 
+     * to the new plugin based one
+     * 
+     * @param data - the database for the old assignment instance
+     * @param string log record log events here
+     * @return boolean Was it a success?
+     */
+    public function upgrade_settings($oldassignment, & $log) {
+        // first upgrade settings (nothing to do)
+        return true;
+    }
+     
+    /**
+     * Upgrade the submission from the old assignment to the new one
+     * 
+     * @param object $oldsubmission The data record for the old submission
+     * @param string $log Record upgrade messages in the log
+     * @return boolean true or false - false will trigger a rollback
+     */
+    public function upgrade_submission($oldsubmission, $submission, & $log) {
+        global $DB;
+
+        $file_submission = new stdClass();
+        //$onlinetext_submission->onlinetext = $oldsubmission->data1;
+        //$onlinetext_submission->onlineformat = $oldsubmission->data2;
+           
+       // $fs = get_file_storage();
+        
+        
+      //  $oldfiles = $fs->get_area_files($this->assignment->context->id, 'mod_assignment', 'submission', $submission->id, "timemodified", false);
+        
+        $file_submission->numfiles = $oldsubmission->numfiles;
+        $file_submission->submission = $submission->id;
+        $file_submission->assignment = $this->assignment->get_instance()->id;
+        
+        
+        
+        
+        
+        if (!$DB->insert_record('assign_submission_file', $file_submission) > 0) {
+            $log .= get_string('couldnotconvertsubmission', 'mod_assign', $submission->userid);
+            return false;
+        }
+
+        return true;
+    }
 }
