@@ -3155,6 +3155,8 @@ class assignment {
         // get the module details
         $oldmodule = $DB->get_record('modules', array('name'=>'assignment'));
         $oldcoursemodule = $DB->get_record('course_modules', array('module'=>$oldmodule->id, 'instance'=>$oldassignmentid));
+        $oldcontext = get_context_instance(CONTEXT_MODULE, $oldcoursemodule->id);
+        
         $newmodule = $DB->get_record('modules', array('name'=>'assign'));
         $newcoursemodule = $this->duplicate_course_module($oldcoursemodule, $newmodule->id);
         if (!$newcoursemodule) {
@@ -3179,7 +3181,7 @@ class assignment {
             foreach ($this->submission_plugins as $plugin) {
                 if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
                     $plugin->enable();
-                    if (!$plugin->upgrade_settings($oldassignment, $log)) {
+                    if (!$plugin->upgrade_settings($oldcontext, $oldassignment, $log)) {
                         $rollback = true;
                     }
                 }
@@ -3187,7 +3189,7 @@ class assignment {
             foreach ($this->feedback_plugins as $plugin) {
                 if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
                     $plugin->enable();
-                    if (!$plugin->upgrade_settings($oldassignment, $log)) {
+                    if (!$plugin->upgrade_settings($oldcontext, $oldassignment, $log)) {
                         $rollback = true;
                     }
                 }
@@ -3209,7 +3211,7 @@ class assignment {
                 }
                 foreach ($this->submission_plugins as $plugin) {
                     if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
-                        if (!$plugin->upgrade_submission($oldassignment, $oldsubmission, $submission, $log)) {
+                        if (!$plugin->upgrade_submission($oldcontext, $oldassignment, $oldsubmission, $submission, $log)) {
                             $rollback = true;
                         }
                     }
@@ -3231,7 +3233,7 @@ class assignment {
                     }
                     foreach ($this->feedback_plugins as $plugin) {
                         if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
-                            if (!$plugin->upgrade_feedback($oldassignment, $oldsubmission, $grade, $log)) {
+                            if (!$plugin->upgrade_feedback($oldcontext, $oldassignment, $oldsubmission, $grade, $log)) {
                                 $rollback = true;
                             }
                         }

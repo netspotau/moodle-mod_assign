@@ -282,11 +282,12 @@ class submission_onlinetext extends submission_plugin {
      * Upgrade the settings from the old assignment 
      * to the new plugin based one
      * 
-     * @param data - the database for the old assignment instance
+     * @param object $oldcontext - the database for the old assignment context
+     * @param object $oldassignment - the database for the old assignment instance
      * @param string log record log events here
      * @return boolean Was it a success?
      */
-    public function upgrade_settings($oldassignment, & $log) {
+    public function upgrade_settings($oldcontext, $oldassignment, & $log) {
         // first upgrade settings (nothing to do)
         return true;
     }
@@ -294,14 +295,15 @@ class submission_onlinetext extends submission_plugin {
     /**
      * Upgrade the submission from the old assignment to the new one
      * 
+     * @param object $oldcontext - the database for the old assignment context
      * @param object $oldassignment The data record for the old assignment
      * @param object $oldsubmission The data record for the old submission
      * @param string $log Record upgrade messages in the log
      * @return boolean true or false - false will trigger a rollback
      */
-    public function upgrade_submission($oldassignment, $oldsubmission, $submission, & $log) {
+    public function upgrade_submission($oldcontext, $oldassignment, $oldsubmission, $submission, & $log) {
         global $DB;
-
+        
         $onlinetext_submission = new stdClass();
         $onlinetext_submission->onlinetext = $oldsubmission->data1;
         $onlinetext_submission->onlineformat = $oldsubmission->data2;
@@ -312,6 +314,9 @@ class submission_onlinetext extends submission_plugin {
             $log .= get_string('couldnotconvertsubmission', 'mod_assign', $submission->userid);
             return false;
         }
+
+        // now copy the area files
+        $this->copy_area_files_for_upgrade($oldassignment->);
 
         return true;
     }
