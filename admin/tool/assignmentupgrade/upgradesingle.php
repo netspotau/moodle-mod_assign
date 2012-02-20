@@ -39,6 +39,10 @@ $PAGE->navbar->add(get_string('upgradesingle', 'tool_assignmentupgrade'));
 $renderer = $PAGE->get_renderer('tool_assignmentupgrade');
 
 $assignmentinfo = tool_assignmentupgrade_get_assignment(required_param('id', PARAM_INT));
+if (!$assignmentinfo) {
+    print_error('invalidrequest');
+    die();
+}
 
 $log = '';
 $result = tool_assignmentupgrade_upgrade_assignment($assignmentinfo, $log);

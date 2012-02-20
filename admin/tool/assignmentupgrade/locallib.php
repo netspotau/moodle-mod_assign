@@ -98,14 +98,6 @@ class tool_assignmentupgrade_assignment_list {
         $this->build_sql();
         $this->assignmentlist = $DB->get_records_sql($this->sql);
 
-        $this->load_supported_types();
-    }
-
-    protected function load_supported_types() {
-        global $CFG;
-        require_once($CFG->dirroot . '/mod/assign/locallib.php');
-        $assignment = new assignment();
-        $this->supportedtypes = $assignment->list_supported_types_for_upgrade();
     }
 
     /**
@@ -114,7 +106,12 @@ class tool_assignmentupgrade_assignment_list {
      * assignment type
      */
     protected function is_upgradable($type) {
-        return in_array($type, $this->supportedtypes);
+        $version = get_config('assignment_' . $type, 'version');
+            
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/assign/locallib.php');
+        $assignment = new assignment();
+        return $assignment->can_upgrade($type, $version);
     }
 
     protected function build_sql() {

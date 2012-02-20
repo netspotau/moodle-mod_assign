@@ -450,13 +450,13 @@ abstract class assignment_plugin {
     }
 
      /**
-     * List the supported types of the old assignment class that this plugin knows 
-     * how to upgrade.
+     * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type
+     * and version.
      * 
-     * @return array The list of supported types e.g. array('upload', 'uploadsingle')
+     * @return boolean True if upgrade is possible
      */
-    public function list_supported_types_for_upgrade() {
-        return array();
+    public function can_upgrade($type, $version) {
+        return false;
     }
     
      /**

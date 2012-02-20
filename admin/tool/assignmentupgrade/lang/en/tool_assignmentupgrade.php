@@ -17,3 +17,4 @@ $string['areyousure'] = 'Are you sure?';
 $string['areyousuremessage'] = 'Are you sure you want to upgrade the assignment "{$a->name}"?';
 $string['conversioncomplete'] = 'Assignment Converted';
 $string['conversionfailed'] = 'The assignment conversion was not successful. The log from the upgrade was: <br/>{$a}';
+$string['viewcourse'] = 'View the course with the converted assignment';

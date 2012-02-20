@@ -181,3 +181,4 @@ $string['couldnotcreatenewassignmentinstance'] = 'Could not create new assignmen
 $string['couldnotconvertsubmission'] = 'Could not convert assignment submission for user {$a}.';
 $string['couldnotconvertgrade'] = 'Could not convert assignment grade for user {$a}.';
 $string['conversionexception'] = 'Could not convert assignment. Exception was: {$a}.';
+$string['couldnotcreatecoursemodule'] = 'Could not create course module.';

@@ -361,23 +361,23 @@ class assignment {
             $result = false;
         }
         
-        if (! $DB->delete_records('assign_submission', array('assignment'=>$this->instance->id))) {
+        if (! $DB->delete_records('assign_submission', array('assignment'=>$this->get_instance()->id))) {
             $result = false;
         }
         
-        if (! $DB->delete_records('assign_grades', array('assignment'=>$this->instance->id))) {
+        if (! $DB->delete_records('assign_grades', array('assignment'=>$this->get_instance()->id))) {
             $result = false;
         }
         
-        if (! $DB->delete_records('assign_plugin_config', array('assignment'=>$this->instance->id))) {
+        if (! $DB->delete_records('assign_plugin_config', array('assignment'=>$this->get_instance()->id))) {
             $result = false;
         }
 
-        if (! $DB->delete_records('event', array('modulename'=>'assign', 'instance'=>$this->instance->id))) {
+        if (! $DB->delete_records('event', array('modulename'=>'assign', 'instance'=>$this->get_instance()->id))) {
             $result = false;
         }
 
-        if (! $DB->delete_records('assign', array('id'=>$this->instance->id))) {
+        if (! $DB->delete_records('assign', array('id'=>$this->get_instance()->id))) {
             $result = false;
         }
 
@@ -2977,19 +2977,73 @@ class assignment {
     }
 
     /**
-     * This function returns the master list of old assignment types that
-     * can be converted. It does this by converting all of the base settings
-     * and then relying on the plugins to upgrade the subtypes
-     * they can support. 
-     * @return array List of old assignment types.
+     * This function returns true if it can upgrade an assignment from the 2.2
+     * module.
+     * @param string $type The plugin type
+     * @param int $version The plugin version
+     * @return boolean
      */
-    public function list_supported_types_for_upgrade() {
-        $supportedtypes = array('offline');
-        foreach ($this->submission_plugins as $plugin) {
-            $plugin_types = $plugin->list_supported_types_for_upgrade();
-            $supportedtypes = array_merge($supportedtypes, $plugin_types);
+    public function can_upgrade($type, $version) {
+        if ($type == 'offline' && $version >= 2011112900) {
+            return true;
         }
-        return $supportedtypes;
+        foreach ($this->submission_plugins as $plugin) {
+            if ($plugin->can_upgrade($type, $version)) {
+                return true;
+            }
+        }
+        foreach ($this->feedback_plugins as $plugin) {
+            if ($plugin->can_upgrade($type, $version)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function duplicate_course_module($cm, $moduleid) {
+        global $DB, $CFG;
+
+        $newcm = new stdClass();
+        $newcm->course           = $cm->course;
+        $newcm->module           = $moduleid;
+        $newcm->instance         = $this->instance->id;
+        $newcm->visible          = $cm->visible;
+        $newcm->section          = $cm->section;
+        $newcm->score            = $cm->score;
+        $newcm->indent           = $cm->indent;
+        $newcm->groupmode        = $cm->groupmode;
+        $newcm->groupingid       = $cm->groupingid;
+        $newcm->groupmembersonly = $cm->groupmembersonly;
+        $newcm->completion                = $cm->completion;
+        $newcm->completiongradeitemnumber = $cm->completiongradeitemnumber;
+        $newcm->completionview            = $cm->completionview;
+        $newcm->completionexpected        = $cm->completionexpected;
+        if(!empty($CFG->enableavailability)) {
+            $newcm->availablefrom             = $cm->availablefrom;
+            $newcm->availableuntil            = $cm->availableuntil;
+            $newcm->showavailability          = $cm->showavailability;
+        }
+        $newcm->showdescription = $cm->showdescription;
+
+        $newcmid = add_course_module($newcm);
+        $newcm = get_coursemodule_from_id('', $newcmid, $cm->course, true, MUST_EXIST);
+        if (!$newcm) {
+            return false;
+        }
+        $section = $DB->get_record("course_sections", array("id"=>$newcm->section));
+
+        $mod = new stdClass();
+        $mod->course = $newcm->course;
+        $mod->section = $section->section;
+        $mod->coursemodule = $newcm->id;
+        $mod->id = $newcm->id;
+        $newcm->section = add_mod_to_section($mod, $cm);
+
+        // make sure visibility is set correctly (in particular in calendar)
+        // note: allow them to set it even without moodle/course:activityvisibility
+        set_coursemodule_visible($newcm->id, $newcm->visible);
+
+        return $newcm;
     }
 
     
@@ -3011,8 +3065,11 @@ class assignment {
             return false;
         }
 
+        $oldversion = get_config('assignment_' . $oldassignment->assignmenttype, 'version');
+
         $this->instance = new stdClass();
         $this->instance->course = $oldassignment->course;
+        $this->instance->name = $oldassignment->name;
         $this->instance->intro = $oldassignment->intro;
         $this->instance->introformat = $oldassignment->introformat;
         $this->instance->sendnotifications = $oldassignment->emailteachers;
@@ -3030,27 +3087,36 @@ class assignment {
         // get the module details
         $oldmodule = $DB->get_record('modules', array('name'=>'assignment'));
         $oldcoursemodule = $DB->get_record('course_modules', array('module'=>$oldmodule->id, 'instance'=>$oldassignmentid));
+        var_dump($oldmodule);
+        var_dump($oldassignment);
+        var_dump($oldcoursemodule);
         $newmodule = $DB->get_record('modules', array('name'=>'assign'));
+        $newcoursemodule = $this->duplicate_course_module($oldcoursemodule, $newmodule->id);
+        if (!$newcoursemodule) {
+            $log = get_string('couldnotcreatenewcoursemodule', 'mod_assign');
+            return false;
+        }
+        
 
         // convert the base database tables (assignment, submission, grade) ignoring the 
         // unknown fields
 
         // from this point we want to rollback on failure
         $rollback = false;
+        $oldinstance = null;
         try {
-            $update = new stdClass();
-            $update->id = $oldcoursemodule->id; 
-            $update->module = $newmodule->id; 
-            $update->instance = $this->instance->id; 
-            
-            $DB->update_record('course_modules', $update);
-            $this->context = get_context_instance(CONTEXT_MODULE,$oldcoursemodule->id);
-            // the course module has now been stolen - time to update the core tables
+            $oldassignmentfile = '/mod/assignment/type/' . $oldassignment->assignmenttype . '/assignment.class.php';
+            $oldassignmentclass = 'assignment_' . $oldassignment->assignmenttype;
+
+            require_once($CFG->dirroot . $oldassignmentfile);
+            $oldinstance = new $oldassignmentclass($oldcoursemodule->id);
+
+            $this->context = get_context_instance(CONTEXT_MODULE,$newcoursemodule->id);
+            // the course module has now been created - time to update the core tables
             // get the plugins to do their bit
 
             foreach ($this->submission_plugins as $plugin) {
-                $upgradable_plugins = $plugin->list_supported_types_for_upgrade();
-                if (in_array($oldassignment->assignmenttype, $upgradable_plugins)) {
+                if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
                     $plugin->enable();
                     if (!$plugin->upgrade_settings($oldassignment, $log)) {
                         $rollback = true;
@@ -3058,8 +3124,7 @@ class assignment {
                 }
             }
             foreach ($this->feedback_plugins as $plugin) {
-                $upgradable_plugins = $plugin->list_supported_types_for_upgrade();
-                if (in_array($oldassignment->assignmenttype, $upgradable_plugins)) {
+                if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
                     $plugin->enable();
                     if (!$plugin->upgrade_settings($oldassignment, $log)) {
                         $rollback = true;
@@ -3082,8 +3147,7 @@ class assignment {
                     $rollback = true;
                 }
                 foreach ($this->submission_plugins as $plugin) {
-                    $upgradable_plugins = $plugin->list_supported_types_for_upgrade();
-                    if (in_array($oldassignment->assignmenttype, $upgradable_plugins)) {
+                    if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
                         if (!$plugin->upgrade_submission($oldsubmission, $submission, $log)) {
                             $rollback = true;
                         }
@@ -3105,8 +3169,7 @@ class assignment {
                         $rollback = true;
                     }
                     foreach ($this->feedback_plugins as $plugin) {
-                        $upgradable_plugins = $plugin->list_supported_types_for_upgrade();
-                        if (in_array($oldassignment->assignmenttype, $upgradable_plugins)) {
+                        if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
                             if (!$plugin->upgrade_feedback($oldsubmission, $grade, $log)) {
                                 $rollback = true;
                             }
@@ -3118,30 +3181,18 @@ class assignment {
 
         } catch (Exception $e) {
             $rollback = true;
-            $log .= get_string('conversionexception', 'mod_assign', $e);
-            
+            $log .= get_string('conversionexception', 'mod_assign', $e->getMessage());
         }
     
         if ($rollback) {
-            $update = new stdClass();
-            $update->id = $oldcoursemodule->id; 
-            $update->module = $oldmodule->id; 
-            $update->instance = $oldassignmentid; 
-        
-            $DB->update_record('course_modules', $update);
-
             $this->delete_instance();
             
             return false;
         }
         // all is well,
         // delete the old assignment (optional) (use object delete)
-        $oldassignmentfile = '/mod/assignment/type/' . $oldassignment->assignmenttype . '/assignment.class.php';
-        $oldassignmentclass = 'assignment_' . $oldassignment->assignmenttype;
-
-        require_once($CFG->dirroot . $oldassignmentfile);
-        $instance = new $oldassignmentclass($oldassignmentid);
-        $instance->delete_instance();
+ //       $oldinstance->delete_instance($oldassignment);
+        return true;
     }
 
 }
