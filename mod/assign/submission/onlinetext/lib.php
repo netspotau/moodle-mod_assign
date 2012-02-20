@@ -316,7 +316,15 @@ class submission_onlinetext extends submission_plugin {
         }
 
         // now copy the area files
-        $this->copy_area_files_for_upgrade($oldassignment->);
+        $this->assignment->copy_area_files_for_upgrade($oldcontext->id, 
+                                                        'mod_assignment', 
+                                                        'submission', 
+                                                        $oldsubmission->id,
+                                                        // New file area
+                                                        $this->assignment->get_context()->id, 
+                                                        'mod_assign', 
+                                                        ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, 
+                                                        $submission->id);
 
         return true;
     }

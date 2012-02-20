@@ -472,37 +472,4 @@ abstract class assignment_plugin {
         return false;
     }
 
-     /**
-     * Copy all the files from the old assignment files area to the new one.
-     * This is used by the plugin upgrade code.
-     * 
-     * @param int $oldcontextid The old assignment context id
-     * @param int $oldcomponent The old assignment component ('assignment')
-     * @param int $oldfilearea The old assignment filearea ('submissions')
-     * @param int $olditemid The old submissionid (can be null e.g. intro)
-     * @param int $newcontextid The new assignment context id
-     * @param int $newcomponent The new assignment component ('assignment')
-     * @param int $newfilearea The new assignment filearea ('submissions')
-     * @param int $newitemid The new submissionid (can be null e.g. intro)
-     * @return int The number of files copied
-     */
-    protected function copy_area_files_for_upgrade($oldcontextid, $oldcomponent, $oldfilearea, $olditemid, $newcontextid, $newcomponent, $newfilearea, $newitemid) {
-        // Note, this code is based on some code in filestorage - but that code
-        // deleted the old files (which we don't want)
-        $count = 0;
-
-        $oldfiles = $this->get_area_files($oldcontextid, $oldcomponent, $oldfilearea, $olditemid, 'id', false);
-        foreach ($oldfiles as $oldfile) {
-            $filerecord = new stdClass();
-            $filerecord->contextid = $newcontextid;
-            $filerecord->component = $newcomponent;
-            $filerecord->filearea = $newfilearea;
-            $filerecord->itemid = $newitemid;
-            $this->create_file_from_storedfile($filerecord, $oldfile);
-            $count += 1;
-        }
-
-        return $count;
-    }
-
 }
