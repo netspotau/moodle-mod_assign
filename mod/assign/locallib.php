@@ -3175,8 +3175,8 @@ class assignment {
 
             $this->context = get_context_instance(CONTEXT_MODULE,$newcoursemodule->id);
             // the course module has now been created - time to update the core tables
-            $this->copy_area_files_for_upgrade($oldcontext->id, 'mod_assignment', 'intro', NULL, 
-                                            $this->get_context()->id, 'mod_assign', 'intro', NULL);
+            $this->copy_area_files_for_upgrade($oldcontext->id, 'mod_assignment', 'intro', 0, 
+                                            $this->get_context()->id, 'mod_assign', 'intro', 0);
         
 
             // get the plugins to do their bit
@@ -3286,6 +3286,7 @@ class assignment {
         $count = 0;
 
         $fs = get_file_storage();
+    
         $oldfiles = $fs->get_area_files($oldcontextid, $oldcomponent, $oldfilearea, $olditemid, 'id', false);
         foreach ($oldfiles as $oldfile) {
             $filerecord = new stdClass();
