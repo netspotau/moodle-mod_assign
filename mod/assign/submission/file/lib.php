@@ -306,20 +306,12 @@ class submission_file extends submission_plugin {
      * @param string $log Record upgrade messages in the log
      * @return boolean true or false - false will trigger a rollback
      */
-    public function upgrade_submission($oldassignment, $oldsubmission, $submission, & $log) {
+    public function upgrade_submission($oldcontext,$oldassignment, $oldsubmission, $submission, & $log) {
         global $DB;
 
         $file_submission = new stdClass();
         
            
-       // $fs = get_file_storage();
-        
-        
-      //  $oldfile_area = $fs->get_area_files($this->context->id, 'mod_assignment', 'submission', $oldsubmission->id, "timemodified", false);
-        
-     //   $newfile_area = $fs->get_area_files($this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id, "timemodified", false);
-        
-        
         
         $file_submission->numfiles = $oldsubmission->numfiles;
         $file_submission->submission = $submission->id;
@@ -335,6 +327,24 @@ class submission_file extends submission_plugin {
             return false;
         }
 
+        
+        
+        
+        // now copy the area files
+        $this->assignment->copy_area_files_for_upgrade($oldcontext->id, 
+                                                        'mod_assignment', 
+                                                        'submission', 
+                                                        $oldsubmission->id,
+                                                        // New file area
+                                                        $this->assignment->get_context()->id, 
+                                                        'mod_assign', 
+                                                        ASSIGN_FILEAREA_SUBMISSION_FILES, 
+                                                        $submission->id);
+        
+        
+       
+        
+        
         return true;
     }
 }

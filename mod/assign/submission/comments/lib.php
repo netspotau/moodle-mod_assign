@@ -85,6 +85,89 @@ class submission_comments extends submission_plugin {
      
     }
     
+  /**
+     * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type
+     * and version.
+     * 
+     * @return boolean True if upgrade is possible
+     */
+    public function can_upgrade($type, $version) {
+        
+  
+       
+        
+        if ($type == 'upload' && $version >= 2011112900) {
+            return true;
+        }
+        return false;
+    }
+  
+    
+     /**
+     * Upgrade the settings from the old assignment 
+     * to the new plugin based one
+     * 
+     * @param data - the database for the old assignment instance
+     * @param string log record log events here
+     * @return boolean Was it a success?
+     */
+    public function upgrade_settings($oldassignment, & $log) {
+        // first upgrade settings (nothing to do)
+        return true;
+    }
+     
+    /**
+     * Upgrade the submission from the old assignment to the new one
+     * 
+     * @param object $oldassignment The data record for the old oldassignment
+     * @param object $oldsubmission The data record for the old submission
+     * @param string $log Record upgrade messages in the log
+     * @return boolean true or false - false will trigger a rollback
+     */
+    public function upgrade_submission($oldcontext,$oldassignment, $oldsubmission, $submission, & $log) {
+        global $DB;
+
+        $file_submission = new stdClass();
+        
+           
+        
+        $file_submission->numfiles = $oldsubmission->numfiles;
+        $file_submission->submission = $submission->id;
+        $file_submission->assignment = $this->assignment->get_instance()->id;
+        
+        // if note in old advanced uploading type enabled then
+        // the content of is goes to submission comment in the new one 
+        
+        
+        
+        if (!$DB->insert_record('assign_submission_file', $file_submission) > 0) {
+            $log .= get_string('couldnotconvertsubmission', 'mod_assign', $submission->userid);
+            return false;
+        }
+
+        
+        
+        
+        // now copy the area files
+        $this->assignment->copy_area_files_for_upgrade($oldcontext->id, 
+                                                        'mod_assignment', 
+                                                        'submission', 
+                                                        $oldsubmission->id,
+                                                        // New file area
+                                                        $this->assignment->get_context()->id, 
+                                                        'mod_assign', 
+                                                        ASSIGN_FILEAREA_SUBMISSION_FILES, 
+                                                        $submission->id);
+        
+        
+       
+        
+        
+        return true;
+    }
+    
+    
+    
     
    
 }

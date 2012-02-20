@@ -304,7 +304,7 @@ class submission_onlinetext extends submission_plugin {
     public function upgrade_submission($oldcontext, $oldassignment, $oldsubmission, $submission, & $log) {
         global $DB;
         
-        $onlinetext_submission = new stdClass();
+       $comments_submission = new stdClass();
         $onlinetext_submission->onlinetext = $oldsubmission->data1;
         $onlinetext_submission->onlineformat = $oldsubmission->data2;
                
@@ -325,7 +325,6 @@ class submission_onlinetext extends submission_plugin {
                                                         'mod_assign', 
                                                         ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, 
                                                         $submission->id);
-
         return true;
     }
 }

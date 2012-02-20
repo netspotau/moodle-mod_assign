@@ -3293,7 +3293,7 @@ class assignment {
             $filerecord->component = $newcomponent;
             $filerecord->filearea = $newfilearea;
             $filerecord->itemid = $newitemid;
-            $this->create_file_from_storedfile($filerecord, $oldfile);
+            $fs->create_file_from_storedfile($filerecord, $oldfile);
             $count += 1;
         }
 
