@@ -301,27 +301,32 @@ class submission_file extends submission_plugin {
     /**
      * Upgrade the submission from the old assignment to the new one
      * 
+     * @param object $oldassignment The data record for the old oldassignment
      * @param object $oldsubmission The data record for the old submission
      * @param string $log Record upgrade messages in the log
      * @return boolean true or false - false will trigger a rollback
      */
-    public function upgrade_submission($oldsubmission, $submission, & $log) {
+    public function upgrade_submission($oldassignment, $oldsubmission, $submission, & $log) {
         global $DB;
 
         $file_submission = new stdClass();
-        //$onlinetext_submission->onlinetext = $oldsubmission->data1;
-        //$onlinetext_submission->onlineformat = $oldsubmission->data2;
+        
            
        // $fs = get_file_storage();
         
         
-      //  $oldfiles = $fs->get_area_files($this->assignment->context->id, 'mod_assignment', 'submission', $submission->id, "timemodified", false);
+      //  $oldfile_area = $fs->get_area_files($this->context->id, 'mod_assignment', 'submission', $oldsubmission->id, "timemodified", false);
+        
+     //   $newfile_area = $fs->get_area_files($this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id, "timemodified", false);
+        
+        
         
         $file_submission->numfiles = $oldsubmission->numfiles;
         $file_submission->submission = $submission->id;
         $file_submission->assignment = $this->assignment->get_instance()->id;
         
-        
+        // if note in old advanced uploading type enabled then
+        // the content of is goes to submission comment in the new one 
         
         
         
