@@ -93,9 +93,7 @@ class submission_comments extends submission_plugin {
      */
     public function can_upgrade($type, $version) {
         
-  
-       
-        
+         
         if ($type == 'upload' && $version >= 2011112900) {
             return true;
         }
@@ -127,43 +125,36 @@ class submission_comments extends submission_plugin {
     public function upgrade_submission($oldcontext,$oldassignment, $oldsubmission, $submission, & $log) {
         global $DB;
 
-        $file_submission = new stdClass();
-        
            
+        if(isset($oldsubmission->data1)){
         
-        $file_submission->numfiles = $oldsubmission->numfiles;
-        $file_submission->submission = $submission->id;
-        $file_submission->assignment = $this->assignment->get_instance()->id;
+        // need to used this innit() otherwise it shows up undefined !
+       // require js for commenting
+        comment::init();
+       
+        $options = new stdClass();
+       
+        $options->area    = 'submission_comments';
         
-        // if note in old advanced uploading type enabled then
-        // the content of is goes to submission comment in the new one 
+        $options->course    = $this->assignment->get_course();
         
+        $options->context = $this->assignment->get_context();
+        $options->itemid  = $submission->id;      
+        $options->component = 'submission_comments';
+        $options->showcount = true;   
+        $options->displaycancel = true;
         
-        
-        if (!$DB->insert_record('assign_submission_file', $file_submission) > 0) {
-            $log .= get_string('couldnotconvertsubmission', 'mod_assign', $submission->userid);
-            return false;
-        }
-
-        
-        
-        
-        // now copy the area files
-        $this->assignment->copy_area_files_for_upgrade($oldcontext->id, 
-                                                        'mod_assignment', 
-                                                        'submission', 
-                                                        $oldsubmission->id,
-                                                        // New file area
-                                                        $this->assignment->get_context()->id, 
-                                                        'mod_assign', 
-                                                        ASSIGN_FILEAREA_SUBMISSION_FILES, 
-                                                        $submission->id);
-        
-        
+        $comment = new comment($options);
+        $comment->add($oldsubmission->data1);
+        $comment->set_view_permission(true);
        
         
+        return $comment->output(true);
+        }
         
-        return true;
+         $log .= get_string('couldnotconvertsubmission', 'mod_assign', $submission->userid);
+           return false;
+        
     }
     
     
