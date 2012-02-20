@@ -60,11 +60,12 @@ abstract class submission_plugin extends assignment_plugin {
     /**
      * Upgrade the submission from the old assignment to the new one
      * 
+     * @param object $oldassignment The data record for the old assignment
      * @param object $oldsubmission The data record for the old submission
      * @param string $log Record upgrade messages in the log
      * @return boolean true or false - false will trigger a rollback
      */
-    public function upgrade_submission($oldsubmission, $submission, & $log) {
+    public function upgrade_submission($oldassignment, $oldsubmission, $submission, & $log) {
         $log = $log . ' ' . get_string('upgradenotimplemented', 'mod_assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));
         return false;
     }

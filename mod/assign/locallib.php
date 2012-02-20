@@ -3209,7 +3209,7 @@ class assignment {
                 }
                 foreach ($this->submission_plugins as $plugin) {
                     if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
-                        if (!$plugin->upgrade_submission($oldsubmission, $submission, $log)) {
+                        if (!$plugin->upgrade_submission($oldassignment, $oldsubmission, $submission, $log)) {
                             $rollback = true;
                         }
                     }
@@ -3231,7 +3231,7 @@ class assignment {
                     }
                     foreach ($this->feedback_plugins as $plugin) {
                         if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
-                            if (!$plugin->upgrade_feedback($oldsubmission, $grade, $log)) {
+                            if (!$plugin->upgrade_feedback($oldassignment, $oldsubmission, $grade, $log)) {
                                 $rollback = true;
                             }
                         }
