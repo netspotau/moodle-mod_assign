@@ -3163,7 +3163,7 @@ class assignment {
             $log = get_string('couldnotcreatenewcoursemodule', 'mod_assign');
             return false;
         }
-        
+
 
         // convert the base database tables (assignment, submission, grade) ignoring the 
         // unknown fields
@@ -3176,8 +3176,11 @@ class assignment {
 
             $this->context = get_context_instance(CONTEXT_MODULE,$newcoursemodule->id);
             // the course module has now been created - time to update the core tables
-            // get the plugins to do their bit
+            $this->copy_area_files_for_upgrade($oldcontext->id, 'mod_assignment', 'intro', NULL, 
+                                            $this->get_context()->id, 'mod_assign', 'intro', NULL);
+        
 
+            // get the plugins to do their bit
             foreach ($this->submission_plugins as $plugin) {
                 if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
                     $plugin->enable();
