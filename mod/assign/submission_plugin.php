@@ -20,8 +20,8 @@
  *
  * This class provides all the functionality for submission plugins.
  *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package   mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,8 +32,8 @@ require_once('assignment_plugin.php');
 /*
  * Abstract base class for submission plugin types.
  *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package   mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class submission_plugin extends assignment_plugin {

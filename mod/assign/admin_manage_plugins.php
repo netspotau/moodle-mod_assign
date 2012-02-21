@@ -18,9 +18,8 @@
 /**
  * Allows the admin to manage assignment plugins
  *
- * @package    mod
- * @subpackage assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package    mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

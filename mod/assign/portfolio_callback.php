@@ -17,9 +17,12 @@
 //
 // this file contains all the functions that aren't needed by core moodle
 // but start becoming required once we're actually inside the assignment module.
+
 /**
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * This file contains the callback class required by the portfolio api.
+ * 
+ * @package   mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -33,8 +36,8 @@ require_once($CFG->libdir . '/portfolio/caller.php');
 /*
  * portfolio caller class for mod_assign.
  *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package   mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class assign_portfolio_caller extends portfolio_module_caller_base {

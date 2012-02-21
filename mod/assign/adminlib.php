@@ -37,8 +37,8 @@
  * This class provides an interface for enabling and configuring
  * submission plugins.
  *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package   mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -57,8 +57,8 @@ defined('MOODLE_INTERNAL') || die();
  * Admin external page that displays a list of the installed submission
  * plugins.
  *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package   mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class admin_page_manage_assignment_plugins extends admin_externalpage {

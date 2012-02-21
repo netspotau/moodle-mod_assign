@@ -15,14 +15,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * This file contains a renderer for the assignment class
+ *
+ * @package   mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 /** Include locallib.php */
 require_once('locallib.php');
+
+
 /**
  * A custom renderer class that extends the plugin_renderer_base and
  * is used by the assign module.
  *
- * @package mod-assign
- * @copyright 2010 Dongsheng Cai <dongsheng@moodle.com>
+ * @package mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  **/
 class mod_assign_renderer extends plugin_renderer_base {

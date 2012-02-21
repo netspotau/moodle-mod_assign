@@ -12,22 +12,30 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * This file is the entry point to the assign module. All pages are rendered from here
+ *
+ * @package   mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 /** config.php */
 require_once('../../config.php');
 /** Include locallib.php */
 require_once('locallib.php');
 
+
 $id = required_param('id', PARAM_INT);  // Course Module ID
-
-$url = new moodle_url('/mod/assign/view.php');
-
+$url = new moodle_url('/mod/assign/view.php'); // Base URL
 
 $cm = null;
 $assignment = null;
 $course = null;
 
+// get the request parameters
 if (!$cm = get_coursemodule_from_id('assign', $id)) {
     print_error('invalidcoursemodule');
 }
@@ -41,14 +49,16 @@ if (!$course = $DB->get_record('course', array('id' => $assignment->course))) {
 }
 $url->param('id', $id);
 
-
+// Auth
 require_login($course, true, $cm);
 $PAGE->set_url($url);
+// Javascript/css includes
 $PAGE->requires->js('/mod/assign/assign.js');
 $PAGE->requires->css('/mod/assign/style.css');
-
 
 $context = get_context_instance(CONTEXT_MODULE,$cm->id);
    
 $ass = new assignment($context,$assignment,$cm,$course);
+
+// Get the assignment to render the page
 $ass->view(optional_param('action', '', PARAM_TEXT));

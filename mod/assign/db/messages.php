@@ -18,8 +18,8 @@
 /**
  * Defines message providers (types of messages being sent)
  *
- * @package mod-assignment
- * @copyright  2010 onwards  Aparup Banerjee  http://moodle.com
+ * @package mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
