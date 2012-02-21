@@ -16,11 +16,14 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package    assign_submission
- * @subpackage file
- * @copyright  
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * This file contains the class for backup of this submission plugin
+ * 
+ * @package   mod_assign
+ * @subpackage submission_file
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -28,12 +31,16 @@ defined('MOODLE_INTERNAL') || die();
  *
  * This just adds its filearea to the annotations
  * and records the number of files
+ *
+ * @package   mod_assign
+ * @subpackage submission_file
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_submission_file_subplugin extends backup_subplugin {
 
     /**
      * 
-     * @access protected
      * Returns the subplugin information to attach to submission element
      * 
      */

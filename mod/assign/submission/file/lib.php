@@ -15,18 +15,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/** Include eventslib.php */
-require_once($CFG->libdir.'/eventslib.php');
 /**
  * This file contains the definition for the library class for file
  *  submission plugin 
  * 
  * This class provides all the functionality for the new assign module.
  *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package   mod_assign
+ * @subpackage submission_file
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+/** Include eventslib.php */
+require_once($CFG->libdir.'/eventslib.php');
 
 defined('MOODLE_INTERNAL') || die();
 /**
@@ -39,8 +41,9 @@ define('ASSIGN_FILEAREA_SUBMISSION_FILES', 'submission_files');
  * library class for file submission plugin extending submission plugin
  * base class
  * 
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package   mod_assign
+ * @subpackage submission_file
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class submission_file extends submission_plugin {
@@ -316,11 +319,6 @@ class submission_file extends submission_plugin {
         $file_submission->numfiles = $oldsubmission->numfiles;
         $file_submission->submission = $submission->id;
         $file_submission->assignment = $this->assignment->get_instance()->id;
-        
-        // if note in old advanced uploading type enabled then
-        // the content of is goes to submission comment in the new one 
-        
-        
         
         if (!$DB->insert_record('assign_submission_file', $file_submission) > 0) {
             $log .= get_string('couldnotconvertsubmission', 'mod_assign', $submission->userid);
