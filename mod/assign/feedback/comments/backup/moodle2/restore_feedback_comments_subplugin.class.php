@@ -16,15 +16,26 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package    assign/feedback
- * @subpackage comments
- * @copyright  2012 onwards Damyon Wiese {@link http://www.netspot.com.au}
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * restore subplugin class that provides the necessary information
+ * needed to restore one assign_submission subplugin.
+ * 
+ * @package   mod_assign
+ * @subpackage feedback_comments
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+defined('MOODLE_INTERNAL') || die();
+
 
 /**
  * restore subplugin class that provides the necessary information
  * needed to restore one assign_feedback subplugin.
+ *
+ * @package   mod_assign
+ * @subpackage feedback_comments
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_feedback_comments_subplugin extends restore_subplugin {
 

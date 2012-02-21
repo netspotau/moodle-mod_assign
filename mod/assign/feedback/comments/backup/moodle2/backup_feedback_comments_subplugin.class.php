@@ -16,11 +16,14 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package    assign_feedback
- * @subpackage comments
- * @copyright  
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * This file contains the class for backup of this feedback plugin
+ * 
+ * @package   mod_assign
+ * @subpackage feedback_comments
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 defined('MOODLE_INTERNAL') || die();
 
 
@@ -28,6 +31,11 @@ defined('MOODLE_INTERNAL') || die();
  * Provides the information to backup comments feedback
  *
  * This just records the text and format
+ *
+ * @package   mod_assign
+ * @subpackage feedback_comments
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_feedback_comments_subplugin extends backup_subplugin {
 

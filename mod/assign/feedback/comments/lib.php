@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -18,8 +19,10 @@
  * This file contains the definition for the library class for online comment
  *  feedback plugin 
  * 
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ *
+ * @package   mod_assign
+ * @subpackage feedback_comments
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
  
@@ -29,8 +32,9 @@
  * library class for comment feedback plugin extending feedback plugin
  * base class
  * 
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package   mod_assign
+ * @subpackage feedback_comments
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class feedback_comments extends feedback_plugin {

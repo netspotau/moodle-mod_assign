@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -17,18 +18,22 @@
 /**
  * Post-install code for the feedback_comments module.
  *
- * @package    assign
- * @subpackage feedback_comments
- * @copyright  1999 onwards Martin Dougiamas  {@link http://moodle.com}
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   mod_assign
+ * @subpackage   feedback_comments
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 
 defined('MOODLE_INTERNAL') || die();
 
 
 /**
  * Code run after the quiz module database tables have been created.
+ *
+ * @package   mod_assign
+ * @subpackage   feedback_comments
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 function xmldb_feedback_comments_install() {
     global $CFG, $DB, $OUTPUT;
