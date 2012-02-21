@@ -15,12 +15,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * This file contains the backup activity for the assign module
+ *
+ * @package   mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+defined('MOODLE_INTERNAL') || die();
+
 require_once($CFG->dirroot . '/mod/assign/backup/moodle2/backup_assign_stepslib.php'); 
 //require_once($CFG->dirroot . '/mod/assign/backup/moodle2/backup_assign_settingslib.php'); 
  
 /**
  * assign backup task that provides all the settings and steps to perform one
  * complete backup of the activity
+ *
+ * @package   mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_assign_activity_task extends backup_activity_task {
     

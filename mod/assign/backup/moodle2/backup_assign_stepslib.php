@@ -17,10 +17,20 @@
 
 /**
  * Define all the backup steps that will be used by the backup_assign_activity_task
+ *
+ * @package   mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Define the complete choice structure for backup, with file and id annotations
+ *
+ * @package   mod_assign
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */     
 class backup_assign_activity_structure_step extends backup_activity_structure_step {
  
