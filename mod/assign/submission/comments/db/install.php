@@ -17,9 +17,9 @@
 /**
  * Post-install code for the submission_comments module.
  *
- * @package    assign
+ * @package    mod_assign
  * @subpackage submission_comments
- * @copyright  1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 
 
 /**
- * Code run after the quiz module database tables have been created.
+ * Code run after the module database tables have been created.
  */
 function xmldb_submission_comments_install() {
     global $CFG, $DB, $OUTPUT;

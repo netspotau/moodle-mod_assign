@@ -20,8 +20,9 @@
  *  submission plugin 
  * 
  *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package   mod_assign
+ * @subpackage submission_comments
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
  
@@ -29,15 +30,16 @@
  
  /** Include comment core lib.php */
  require_once($CFG->dirroot . '/comment/lib.php');
- /** Include submission_plugin.php to avaid AJAX error */
+ /** Include submission_plugin.php */
  require_once($CFG->dirroot . '/mod/assign/submission_plugin.php');
  
 /*
  * library class for comment submission plugin extending submission plugin
  * base class
  * 
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package   mod_assign
+ * @subpackage submission_comments
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class submission_comments extends submission_plugin {
