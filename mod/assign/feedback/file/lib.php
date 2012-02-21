@@ -21,8 +21,9 @@
  * 
  * This class provides all the functionality for the new assign module.
  *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package   mod_assign
+ * @subpackage   feedback_file
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -37,8 +38,9 @@ define('ASSIGN_FILEAREA_FEEDBACK_FILES', 'feedback_files');
  * library class for file feedback plugin extending feedback plugin
  * base class
  * 
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package   mod_assign
+ * @subpackage   feedback_file
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class feedback_file extends feedback_plugin {

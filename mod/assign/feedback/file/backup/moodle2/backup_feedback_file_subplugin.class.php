@@ -16,9 +16,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package    assign_feedback
- * @subpackage file
- * @copyright  
+ * This file contains the backup code for the feedback_file plugin.
+ *
+ * @package    mod_assign
+ * @subpackage feedback_file
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
@@ -28,6 +30,11 @@ defined('MOODLE_INTERNAL') || die();
  *
  * This just adds its filearea to the annotations
  * and records the number of files
+ *
+ * @package    mod_assign
+ * @subpackage feedback_file
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_feedback_file_subplugin extends backup_subplugin {
 
