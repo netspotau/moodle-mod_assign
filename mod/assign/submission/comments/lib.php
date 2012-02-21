@@ -67,12 +67,9 @@ class submission_comments extends submission_plugin {
        // require js for commenting
         comment::init();
        
-        $options = new stdClass();
-       
-        $options->area    = 'submission_comments';
-        
-        $options->course    = $this->assignment->get_course();
-        
+        $options = new stdClass();       
+        $options->area    = 'submission_comments';       
+        $options->course    = $this->assignment->get_course();        
         $options->context = $this->assignment->get_context();
         $options->itemid  = $submission->id;      
         $options->component = 'submission_comments';
@@ -91,11 +88,10 @@ class submission_comments extends submission_plugin {
      * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type
      * and version.
      * 
-     * @return boolean True if upgrade is possible
+     * @return bool True if upgrade is possible
      */
     public function can_upgrade($type, $version) {
-        
-         
+               
         if ($type == 'upload' && $version >= 2011112900) {
             return true;
         }
@@ -109,7 +105,7 @@ class submission_comments extends submission_plugin {
      * 
      * @param data - the database for the old assignment instance
      * @param string log record log events here
-     * @return boolean Was it a success?
+     * @return bool was it a success?
      */
     public function upgrade_settings($oldassignment, & $log) {
         // first upgrade settings (nothing to do)
@@ -122,40 +118,35 @@ class submission_comments extends submission_plugin {
      * @param object $oldassignment The data record for the old oldassignment
      * @param object $oldsubmission The data record for the old submission
      * @param string $log Record upgrade messages in the log
-     * @return boolean true or false - false will trigger a rollback
+     * @return bool true or false - false will trigger a rollback
      */
     public function upgrade_submission($oldcontext,$oldassignment, $oldsubmission, $submission, & $log) {
         global $DB;
+    
+     if ($oldsubmission->data1 != '') {
+         
+            // need to used this innit() otherwise it shows up undefined !
+            // require js for commenting
+            comment::init();
 
-           
-     
-     if($oldsubmission->data1 != ''){
-        // need to used this innit() otherwise it shows up undefined !
-       // require js for commenting
-        comment::init();
-       
-        $options = new stdClass();
-       
-        $options->area    = 'submission_comments';
-        
-        $options->course    = $this->assignment->get_course();
-        
-        $options->context = $this->assignment->get_context();
-        $options->itemid  = $submission->id;      
-        $options->component = 'submission_comments';
-        $options->showcount = true;   
-        $options->displaycancel = true;
-        
-        $comment = new comment($options);
-        $comment->add($oldsubmission->data1);
-        $comment->set_view_permission(true);
-       
-        
-        return $comment->output(true);
-        
+            $options = new stdClass();
+            $options->area = 'submission_comments_upgrade';                     
+            $options->course = $this->assignment->get_course();
+            $options->context = $this->assignment->get_context();                     
+            $options->itemid = $submission->id;
+            $options->component = 'submission_comments';
+            $options->showcount = true;
+            $options->displaycancel = true;
+
+            $comment = new comment($options);
+            $comment->add($oldsubmission->data1);
+            $comment->set_view_permission(true);
+
+
+            return $comment->output(true);
         }
-        
-      
+
+          
         return true;
     }
     
@@ -165,7 +156,10 @@ class submission_comments extends submission_plugin {
    
 }
 
-/** The call back functions outside the submission_comments class */
+
+////////////////////////////////////////////////////////////////////////
+// The call back functions OUTSIDE the submission_comments class     ///
+///////////////////////////////////////////////////////////////////////
 
 /**
  *
@@ -190,5 +184,26 @@ function submission_comments_comment_validate($options) {
 function submission_comments_comment_permissions($options) {
 
     return array('post' => true, 'view' => true);
+}
+
+/**
+ * Callback to force the userid for all comments to be the userid of
+ * the submission and NOT the global $USER->id. This
+ * is required by the upgrade code. Note the comment area
+ * is used to identify upgrades.
+ * 
+ * @global object $DB
+ * @param object $comment
+ */
+function submission_comments_comment_add(& $comment, $param) {
+    
+    global $DB;
+    if ($comment->commentarea == 'submission_comments_upgrade') {
+        $submissionid = $comment->itemid;
+        $submission = $DB->get_record('assign_submission', array('id' => $submissionid));
+
+        $comment->userid = $submission->userid;
+        $comment->commentarea = 'submission_comments';
+    }
 }
 

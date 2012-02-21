@@ -271,7 +271,7 @@ class submission_file extends submission_plugin {
      * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type
      * and version.
      * 
-     * @return boolean True if upgrade is possible
+     * @return bool True if upgrade is possible
      */
     public function can_upgrade($type, $version) {
         
@@ -291,7 +291,7 @@ class submission_file extends submission_plugin {
      * 
      * @param data - the database for the old assignment instance
      * @param string log record log events here
-     * @return boolean Was it a success?
+     * @return bool Was it a success?
      */
     public function upgrade_settings($oldassignment, & $log) {
         // first upgrade settings (nothing to do)
@@ -304,7 +304,7 @@ class submission_file extends submission_plugin {
      * @param object $oldassignment The data record for the old oldassignment
      * @param object $oldsubmission The data record for the old submission
      * @param string $log Record upgrade messages in the log
-     * @return boolean true or false - false will trigger a rollback
+     * @return bool true or false - false will trigger a rollback
      */
     public function upgrade_submission($oldcontext,$oldassignment, $oldsubmission, $submission, & $log) {
         global $DB;

@@ -452,7 +452,7 @@ abstract class assignment_plugin {
      * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type
      * and version.
      * 
-     * @return boolean True if upgrade is possible
+     * @return bool True if upgrade is possible
      */
     public function can_upgrade($type, $version) {
         return false;
@@ -464,7 +464,7 @@ abstract class assignment_plugin {
      * @param object $oldcontext The context for the old assignment module
      * @param object $oldassignment The data record for the old assignment
      * @param string $log Record upgrade messages in the log
-     * @return boolean true or false - false will trigger a rollback
+     * @return bool true or false - false will trigger a rollback
      */
     public function upgrade_settings($oldcontext, $oldassignment, & $log) {
         $log = $log . ' ' . get_string('upgradenotimplemented', 'mod_assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));

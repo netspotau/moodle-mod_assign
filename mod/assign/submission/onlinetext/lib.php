@@ -215,7 +215,7 @@ class submission_onlinetext extends submission_plugin {
         if (!$onlinetext_submission) {
                 return get_string('numwords', '', 0);                                                     
             } else if(count_words(format_text($onlinetext_submission->onlinetext)) < 1){                           
-                return get_string('numwords', '', count_words(format_text($onlinetext_submission->onlinetext)));                                                     
+                return get_string('numwords', '', count_words(format_text($onlinetext_submission->onlinetext)));                    
             } else{    
                              
                 return $OUTPUT->action_link($link,get_string('numwords', '', count_words(format_text($onlinetext_submission->onlinetext))));
@@ -268,7 +268,7 @@ class submission_onlinetext extends submission_plugin {
      * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type
      * and version.
      * 
-     * @return boolean True if upgrade is possible
+     * @return bool True if upgrade is possible
      */
     public function can_upgrade($type, $version) {
         if ($type == 'online' && $version >= 2011112900) {
@@ -285,7 +285,7 @@ class submission_onlinetext extends submission_plugin {
      * @param object $oldcontext - the database for the old assignment context
      * @param object $oldassignment - the database for the old assignment instance
      * @param string log record log events here
-     * @return boolean Was it a success?
+     * @return bool Was it a success?
      */
     public function upgrade_settings($oldcontext, $oldassignment, & $log) {
         // first upgrade settings (nothing to do)
@@ -299,7 +299,7 @@ class submission_onlinetext extends submission_plugin {
      * @param object $oldassignment The data record for the old assignment
      * @param object $oldsubmission The data record for the old submission
      * @param string $log Record upgrade messages in the log
-     * @return boolean true or false - false will trigger a rollback
+     * @return bool true or false - false will trigger a rollback
      */
     public function upgrade_submission($oldcontext, $oldassignment, $oldsubmission, $submission, & $log) {
         global $DB;

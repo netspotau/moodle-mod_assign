@@ -1663,7 +1663,7 @@ class assignment {
 
         $perpage = get_user_preferences('assign_perpage', 10);
         $filter = get_user_preferences('assign_filter', '');
-        // print options for for changing the filter and changing the number of results per page
+        // print options  for changing the filter and changing the number of results per page
         $mform = new mod_assign_grading_options_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'userid'=>$USER->id), 'post', '', array('id'=>'gradingoptionsform'));
 
 
