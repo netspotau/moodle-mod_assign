@@ -337,12 +337,28 @@ class assignment {
                     return false;
                 }
             }
+
+            // in the case of upgrades the coursemodule has not been set so we need to wait before calling these two
+            // TODO: add event to the calendar
+            $this->update_calendar();
+            // TODO: add the item in the gradebook
+            $this->update_gradebook();
+        
         }
-        // TODO: add event to the calendar
-        
-        // TODO: add the item in the gradebook
-        
         return $this->instance->id;
+    }
+
+    /**
+     * Delete all grades from the gradebook for this assignment
+     *
+     * @global object CFG
+     * @return boolean
+     */
+    public function delete_grades() {
+        global $CFG;
+        require_once($CFG->libdir.'/gradelib.php');
+
+        return grade_update('mod/assign', $this->get_course()->id, 'mod', 'assign', $this->get_instance()->id, 0, NULL, array('deleted'=>1));
     }
     
     /**
@@ -373,16 +389,22 @@ class assignment {
             $result = false;
         }
 
+        // update all the calendar events 
         if (! $DB->delete_records('event', array('modulename'=>'assign', 'instance'=>$this->get_instance()->id))) {
             $result = false;
         }
 
+        // delete items from the gradebook
+        if (! $this->delete_grades()) {
+            $result = false;
+        }
+        
+        // delete the instance
         if (! $DB->delete_records('assign', array('id'=>$this->get_instance()->id))) {
             $result = false;
         }
-
         
-        // update all the calendar events 
+        rebuild_course_cache($this->get_instance()->course);
 
         return $result;
     }
@@ -399,17 +421,100 @@ class assignment {
             $enabled_name = $plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled';
             if ($this->instance->$enabled_name) {
                 $plugin->enable();
+                if (!$plugin->save_settings($this->instance)) {
+                    print_error($plugin->get_error());
+                    return false;
+                }
             } else {
                 $plugin->disable();
             }
-
-
-            if (!$plugin->save_settings($this->instance)) {
-                print_error($plugin->get_error());
-                return false;
-            }
         }
         return true;
+    }
+
+    /**
+     * Update the gradebook information for this assignment
+     * 
+     * @global object CFG
+     * @param boolean $reset If true, will reset all grades in the gradbook for this assignment
+     * @return boolean;
+     */
+    public function update_gradebook($reset = false) {
+        global $CFG;
+        require_once($CFG->libdir.'/gradelib.php');
+
+        $params = array('itemname'=>$this->get_instance()->name, 'idnumber'=>$this->get_course_module()->id);
+
+        if ($this->get_instance()->grade > 0) {
+            $params['gradetype'] = GRADE_TYPE_VALUE;
+            $params['grademax']  = $this->get_instance()->grade;
+            $params['grademin']  = 0;
+
+        } else if ($assignment->grade < 0) {
+            $params['gradetype'] = GRADE_TYPE_SCALE;
+            $params['scaleid']   = -$this->get_instance()->grade;
+
+        } else {
+            $params['gradetype'] = GRADE_TYPE_TEXT; // allow text comments only
+        }
+
+        if ($reset) {
+            $params['reset'] = true;
+        }
+
+        return grade_update('mod/assign', $this->get_course()->id, 'mod', 'assign', $this->get_instance()->id, 0, NULL, $params);
+    }
+
+
+    /**
+     * Update the calendar entries for this assignment
+     *
+     * @global object $DB
+     * @global object $CFG
+     * @return boolean
+     */
+    public function update_calendar() {
+        global $DB, $CFG;
+        require_once($CFG->dirroot.'/calendar/lib.php');
+
+        // special case for add_instance as the coursemodule has not been set yet. 
+        $coursemodule = '';
+        if (isset($this->get_instance()->coursemodule)) {
+            $coursemodule = $this->get_instance()->coursemodule;
+        } else {
+            $coursemodule = $this->get_course_module()->id;
+        }
+        
+        if ($this->get_instance()->duedate) {
+            $event = new stdClass();
+
+            if ($event->id = $DB->get_field('event', 'id', array('modulename'=>'assign', 'instance'=>$this->get_instance()->id))) {
+
+                $event->name        = $this->get_instance()->name;
+                
+                $event->description = format_module_intro('assign', $this->instance, $coursemodule);
+                $event->timestart   = $this->get_instance()->duedate;
+
+                $calendarevent = calendar_event::load($event->id);
+                $calendarevent->update($event);
+            } else {
+                $event = new stdClass();
+                $event->name        = $this->get_instance()->name;
+                $event->description = format_module_intro('assign', $this->get_instance(), $coursemodule);
+                $event->courseid    = $this->get_instance()->course;
+                $event->groupid     = 0;
+                $event->userid      = 0;
+                $event->modulename  = 'assign';
+                $event->instance    = $this->get_instance()->id;
+                $event->eventtype   = 'due';
+                $event->timestart   = $this->get_instance()->duedate;
+                $event->timeduration = 0;
+
+                calendar_event::create($event);
+            }
+        } else {
+            $DB->delete_records('event', array('modulename'=>'assign', 'instance'=>$this->get_instance()->id));
+        }
     }
 
 
@@ -447,7 +552,11 @@ class assignment {
         $result = $DB->update_record('assign', $this->instance);
         
         // update all the calendar events 
-        // call post_update hook (for subtypes)
+        $this->update_calendar();
+
+        $this->update_gradebook();
+
+
         return $result;
     }
 
@@ -3242,6 +3351,9 @@ class assignment {
                     }
                 }
             }
+
+            $this->update_calendar();
+            $this->update_gradebook();
             
 
         } catch (Exception $e) {
