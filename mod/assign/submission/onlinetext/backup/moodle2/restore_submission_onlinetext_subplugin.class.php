@@ -16,15 +16,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package    assign/submission
- * @subpackage onlinetext
- * @copyright  2012 onwards Damyon Wiese {@link http://www.netspot.com.au}
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * This file contains the class for restore of this submission plugin
+ * 
+ * @package   mod_assign
+ * @subpackage submission_onlinetext
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
  * restore subplugin class that provides the necessary information
  * needed to restore one assign_submission subplugin.
+ *
+ * @package   mod_assign
+ * @subpackage submission_onlinetext
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_submission_onlinetext_subplugin extends restore_subplugin {
 

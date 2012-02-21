@@ -16,11 +16,14 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package    assign_submission
- * @subpackage onlinetext
- * @copyright  
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * This file contains the class for backup of this submission plugin
+ * 
+ * @package   mod_assign
+ * @subpackage submission_onlinetext
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -28,6 +31,11 @@ defined('MOODLE_INTERNAL') || die();
  *
  * This just adds its filearea to the annotations
  * and records the submissiontext and format
+ *
+ * @package   mod_assign
+ * @subpackage submission_onlinetext
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_submission_onlinetext_subplugin extends backup_subplugin {
 

@@ -17,13 +17,11 @@
 /**
  * Post-install code for the submission_onlinetext module.
  *
- * @package    assign
+ * @package    mod_assign
  * @subpackage submission_onlinetext
- * @copyright  1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-
 defined('MOODLE_INTERNAL') || die();
 
 

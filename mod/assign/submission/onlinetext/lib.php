@@ -16,15 +16,17 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the definition for the library class file onlinetext
+ * This file contains the definition for the library class for onlinetext
  *  submission plugin 
  * 
  * This class provides all the functionality for the new assign module.
  *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package   mod_assign
+ * @subpackage submission_onlinetext
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 defined('MOODLE_INTERNAL') || die();
 /**
  * File area for online text submission assignment
@@ -35,8 +37,9 @@ define('ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT', 'submissions_onlinetext');
  * library class for onlinetext submission plugin extending submission plugin
  * base class
  * 
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @package   mod_assign
+ * @subpackage submission_onlinetext
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class submission_onlinetext extends submission_plugin {
