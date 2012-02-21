@@ -126,8 +126,8 @@ class submission_comments extends submission_plugin {
         global $DB;
 
            
-        if(isset($oldsubmission->data1)){
-        
+     
+     if($oldsubmission->data1 != ''){
         // need to used this innit() otherwise it shows up undefined !
        // require js for commenting
         comment::init();
@@ -150,11 +150,11 @@ class submission_comments extends submission_plugin {
        
         
         return $comment->output(true);
+        
         }
         
-         $log .= get_string('couldnotconvertsubmission', 'mod_assign', $submission->userid);
-           return false;
-        
+      
+        return true;
     }
     
     
