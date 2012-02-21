@@ -182,8 +182,9 @@ class tool_assignmentupgrade_assignment_list {
 function tool_assignmentupgrade_upgrade_assignment($assignmentinfo, & $log) {
     global $CFG;
     require_once($CFG->dirroot . '/mod/assign/locallib.php');
-    $assignment = new assignment();
-    return $assignment->upgrade_assignment($assignmentinfo->id, $log);
+    require_once($CFG->dirroot . '/mod/assign/upgradelib.php');
+    $assignment_upgrader = new assignment_upgrade_manager();
+    return $assignment_upgrader->upgrade_assignment($assignmentinfo->id, $log);
 }
 
 /**
