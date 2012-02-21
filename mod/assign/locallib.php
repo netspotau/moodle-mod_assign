@@ -3222,6 +3222,45 @@ class assignment {
         return true;
     }
 
+    /**
+     * This function copies the grades from the old assignment module to this one.
+     *
+     * @global object CFG
+     * @param object $oldassignment old assignment data record
+     * @return boolean true or false
+     */
+    public function copy_assignment_grades_for_upgrade($oldassignment) {
+        global $CFG;
+
+        require_once($CFG->libdir.'/gradelib.php');
+
+        // get the old and new grade items
+        $old_grade_items = grade_item::fetch_all(array('itemtype'=>'mod', 'itemmodule'=>'assignment', 'iteminstance'=>$oldassignment->id));
+        if (!$old_grade_items) {
+            return false;
+        }
+        $old_grade_item = array_pop($old_grade_items);
+        if (!$old_grade_item) {
+            return false;
+        }
+        $new_grade_items = grade_item::fetch_all(array('itemtype'=>'mod', 'itemmodule'=>'assign', 'iteminstance'=>$this->get_instance()->id));
+        if (!$new_grade_items) {
+            return false;
+        }
+        $new_grade_item = array_pop($new_grade_items);
+        if (!$new_grade_item) {
+            return false;
+        }
+
+        $grade_grades = grade_grade::fetch_all(array('itemid'=>$old_grade_item->id));
+        if ($grade_grades) {
+            foreach ($grade_grades as $gradeid=>$grade) {
+                $grade->itemid = $new_grade_item->id;
+                grade_update('mod/assign', $this->get_course()->id, 'mod', 'assign', $this->instance->id, 0, $grade, NULL);
+            }
+        }
+        return true;
+    }
     
     /**
      * This function converts all of the base settings for an instance of
@@ -3334,7 +3373,7 @@ class assignment {
                     $grade->grader = $oldsubmission->teacher;
                     $grade->timemodified = $oldsubmission->timemarked;
                     $grade->timecreated = $oldsubmission->timecreated;
-                    $grade->locked = $oldsubmission->locked;
+                    // $grade->locked = $oldsubmission->locked;
                     $grade->grade = $oldsubmission->grade;
                     $grade->mailed = $oldsubmission->mailed;
                     $grade->id = $DB->insert_record('assign_grades', $grade);
@@ -3355,6 +3394,8 @@ class assignment {
             $this->update_calendar();
             $this->update_gradebook();
             
+            // copy the grades from the old assignment to the new one
+            $this->copy_assignment_grades_for_upgrade($oldassignment);
 
         } catch (Exception $e) {
             $rollback = true;
