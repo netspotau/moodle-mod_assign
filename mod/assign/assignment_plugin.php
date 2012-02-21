@@ -108,7 +108,6 @@ abstract class assignment_plugin {
     /**
      * Save the error message from the last error
      * 
-     * @access protected
      * @param string $msg - the error description
      */
     protected final function set_error($msg) {

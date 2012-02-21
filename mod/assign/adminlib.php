@@ -142,7 +142,6 @@ class assignment_plugin_manager {
     /** 
      * Return a list of plugins sorted by the order defined in the admin interface
      * 
-     * @access private
      * @return array The list of plugins
      */
     private function get_sorted_plugins_list() {
@@ -157,7 +156,6 @@ class assignment_plugin_manager {
     /** 
      * Util function for writing an action icon link
      * 
-     * @access private
      * @global object $OUTPUT For writing to the page
      * @param string $action URL parameter to include in the link
      * @param string $plugintype URL parameter to include in the link
@@ -177,7 +175,6 @@ class assignment_plugin_manager {
     /** 
      * Write the HTML for the submission plugins table.
      * 
-     * @access private
      * @global object $OUTPUT For writing to the page
      * @return None
      */
@@ -242,7 +239,6 @@ class assignment_plugin_manager {
     /** 
      * Write the page header
      * 
-     * @access private
      * @global object $OUTPUT For writing to the page
      * @return None
      */
@@ -257,7 +253,6 @@ class assignment_plugin_manager {
     /** 
      * Write the page footer
      * 
-     * @access private
      * @global object $OUTPUT For writing to the page
      * @return None
      */
@@ -269,7 +264,6 @@ class assignment_plugin_manager {
     /** 
      * Check this user has permission to edit the list of installed plugins
      * 
-     * @access private
      * @return None
      */
     private function check_permissions() {
@@ -282,7 +276,6 @@ class assignment_plugin_manager {
     /** 
      * Delete the database and files associated with this plugin.
      * 
-     * @access private
      * @global object $CFG global config
      * @global object $DB database connection
      * @param string $plugintype - The type of the plugin to delete
@@ -324,7 +317,6 @@ class assignment_plugin_manager {
     /** 
      * Show the page that gives the details of the plugin that was just deleted
      * 
-     * @access private
      * @global object $OUTPUT For writing to the page
      * @param object $plugin - The plugin that was just deleted
      * @return None
@@ -342,7 +334,6 @@ class assignment_plugin_manager {
     /** 
      * Show the page that asks the user to confirm they want to delete a plugin
      * 
-     * @access private
      * @global object $OUTPUT For writing to the page
      * @param object $plugin - The plugin that will be deleted
      * @return None
@@ -360,7 +351,6 @@ class assignment_plugin_manager {
     /** 
      * Hide this plugin
      * 
-     * @access private
      * @param object $plugin - The plugin to hide
      * @return string The next page to display
      */
@@ -372,7 +362,6 @@ class assignment_plugin_manager {
     /** 
      * Show this plugin
      * 
-     * @access private
      * @param object $plugin - The plugin to show
      * @return string The next page to display
      */
@@ -384,7 +373,6 @@ class assignment_plugin_manager {
     /** 
      * Change the order of this plugin
      * 
-     * @access private
      * @param object $plugin - The plugin to move
      * @param string $dir - up or down
      * @return string The next page to display

@@ -40,7 +40,6 @@ class restore_submission_onlinetext_subplugin extends restore_subplugin {
     ////////////////////////////////////////////////////////////////////////////
 
     /**
-     * @access protected
      * 
      * Returns array the paths to be handled by the subplugin at workshop level     
      */

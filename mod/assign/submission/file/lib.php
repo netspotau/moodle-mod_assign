@@ -63,7 +63,6 @@ class submission_file extends submission_plugin {
     /**
      * get file submission information from the database  
      * 
-     * @access private
      * @global object $DB
      * @param int $submissionid
      * @return mixed 
@@ -124,7 +123,6 @@ class submission_file extends submission_plugin {
     /**
      * file format options 
      * 
-     * @access private
      * @return mixed
      */
     private function get_file_options() {
@@ -165,7 +163,6 @@ class submission_file extends submission_plugin {
     /**
      * count the number of files
      * 
-     * @access private
      * @global object $USER
      * @param int $submissionid
      * @param string $area

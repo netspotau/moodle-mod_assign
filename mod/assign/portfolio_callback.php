@@ -204,7 +204,6 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
     /**
      * fetch the plugin by its type 
      * 
-     * @access private
      * @return object
      */
     private function get_submission_plugin() {
