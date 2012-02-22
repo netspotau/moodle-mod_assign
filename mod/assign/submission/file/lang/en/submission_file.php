@@ -25,11 +25,11 @@
  */
 
 
+$string['allowfilesubmissions'] = 'Enabled';
+$string['configmaxbytes'] = 'Maximum file size';
 $string['file'] = 'File Submissions';
+$string['maxbytes'] = 'Maximum file size';
 $string['maxfilessubmission'] = 'Maximum number of uploaded files';
 $string['maximumsubmissionsize'] = 'Maximum submission size';
 $string['pluginname'] = 'File Submissions';
-$string['allowfilesubmissions'] = 'Enabled';
-$string['maxbytes'] = 'Maximum file size';
-$string['configmaxbytes'] = 'Maximum file size';
 $string['submissionfilearea'] = 'Uploaded submission files';
