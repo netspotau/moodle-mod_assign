@@ -198,17 +198,17 @@ class submission_file extends submission_plugin {
         $fs = get_file_storage();
         $files = $fs->get_area_files($this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id, "id", false);
            
-            // send files to event system
-            // Let Moodle know that an assessable file was uploaded (eg for plagiarism detection)
-            $eventdata = new stdClass();
-            $eventdata->modulename = 'assign';
-            $eventdata->cmid = $this->assignment->get_course_module()->id;
-            $eventdata->itemid = $submission->id;
-            $eventdata->courseid = $this->assignment->get_course()->id;
-            $eventdata->userid = $USER->id;
-            if ($files) {
-                $eventdata->files = $files;
-            }
+        // send files to event system
+        // Let Moodle know that an assessable file was uploaded (eg for plagiarism detection)
+        $eventdata = new stdClass();
+        $eventdata->modulename = 'assign';
+        $eventdata->cmid = $this->assignment->get_course_module()->id;
+        $eventdata->itemid = $submission->id;
+        $eventdata->courseid = $this->assignment->get_course()->id;
+        $eventdata->userid = $USER->id;
+        if ($files) {
+            $eventdata->files = $files;
+        }
         events_trigger('assessable_file_uploaded', $eventdata);
 
 
