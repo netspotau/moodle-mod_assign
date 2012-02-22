@@ -205,24 +205,21 @@ class submission_onlinetext extends submission_plugin {
       * @param object $submission
       * @return string 
       */
-     public function view_summary($submission) {
-         global $OUTPUT,$USER;
+    public function view_summary($submission) {
+        global $OUTPUT,$USER;
          
-         
-         
-           $link = new moodle_url ('/mod/assign/view.php?id='.$this->assignment->get_course_module()->id.'&sid='.$submission->id.'&action=viewpluginsubmission&plugin=onlinetext&returnaction='.  optional_param('action','view',PARAM_ALPHA).'&returnparams=rownum%3D'.  optional_param('rownum','', PARAM_INT));
-         $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
-        if (!$onlinetext_submission) {
-                return get_string('numwords', '', 0);                                                     
-            } else if(count_words(format_text($onlinetext_submission->onlinetext)) < 1){                           
+        $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
+
+        if ($onlinetext_submission) {
+            $text = format_text($onlinetext_submission->onlinetext);
+            $shorttext = shorten_text($text, 140);
+            if ($text != $shorttext) {  
                 return get_string('numwords', '', count_words(format_text($onlinetext_submission->onlinetext)));                    
-            } else{    
-                             
-                return $OUTPUT->action_link($link,get_string('numwords', '', count_words(format_text($onlinetext_submission->onlinetext))));
-            }    
+            } else {
+                return $shorttext;
+            }
+        }    
         return '';
-        
-       
     }
 
     /**
@@ -242,6 +239,19 @@ class submission_onlinetext extends submission_plugin {
         return array();
     }
 
+    /**
+     * Should the assignment module show a link to view the full submission or feedback for this plugin?
+     *
+     * @return bool
+     */
+    public function show_view_link($submission) {
+        $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
+        if ($onlinetext_submission) {
+            $text = format_text($onlinetext_submission->onlinetext, $onlinetext_submission->onlineformat);
+            return shorten_text($text, 140) != $text;
+        }
+        return false;
+    }
     
     /**
      * display the saved text content from the editor in the view table 

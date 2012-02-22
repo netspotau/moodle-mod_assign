@@ -33,6 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 define('ASSIGN_MAX_FEEDBACK_FILES', 20);
 define('ASSIGN_FILEAREA_FEEDBACK_FILES', 'feedback_files');
+define('ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES', 5);
 
 /*
  * library class for file feedback plugin extending feedback plugin
@@ -210,7 +211,22 @@ class feedback_file extends feedback_plugin {
      * @return string
      */
     public function view_summary($grade) {
-        return $this->assignment->render_area_files(ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id);
+        $count = $this->count_files($grade->id);
+        if ($count <= ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES) {
+            return $this->assignment->render_area_files(ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id);
+        } else {
+            return get_string('countfiles', 'feedback_file', $count);
+        }
+    }
+    
+    /**
+     * Should the assignment module show a link to view the full submission or feedback for this plugin?
+     *
+     * @return bool
+     */
+    public function show_view_link($grade) {
+        $count = $this->count_files($grade->id);
+        return $count > ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES;
     }
     
     /**
@@ -219,7 +235,7 @@ class feedback_file extends feedback_plugin {
      * @return string 
      */
     public function view($grade) {
-        return $this->view_summary($grade);
+        return $this->assignment->render_area_files(ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id);
     }
     
 }

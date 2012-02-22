@@ -277,8 +277,10 @@ class assignment {
             $this->view_next_single_grade();                        
         } else if ($action == 'grade') {
             $this->view_single_grade_page();
+        } else if ($action == 'viewpluginfeedback') {
+            $this->view_plugin_content('feedback');
         } else if ($action == 'viewpluginsubmission') {
-            $this->view_plugin_submission();
+            $this->view_plugin_content('submission');
         } else if ($action == 'editsubmission') {
             $this->view_edit_submission_page();
         } else if ($action == 'grading') {
@@ -1209,24 +1211,46 @@ class assignment {
      * @param string $plugintype 
      * @return None
      */
-    private function view_plugin_submission($submissionid=null, $plugintype=null) {
+    private function view_plugin_content($pluginsubtype) {
         global $OUTPUT, $CFG, $USER;
-        $submissionid = required_param('sid', PARAM_INT);
+        $submissionid = optional_param('sid', 0, PARAM_INT);
+        $gradeid = optional_param('gid', 0, PARAM_INT);
         $plugintype = required_param('plugin', PARAM_TEXT);
         $this->view_header();
+        $this->view_intro();
+        $item = null;
+        if ($pluginsubtype == 'submission') {
+            $plugin = $this->get_submission_plugin_by_type($plugintype);
+            if ($submissionid <= 0) {
+                print_error('invalidaccessparameter');
+                return;
+            }
+            $item = $this->get_submission(null, $submissionid, false);
+            $this->add_to_log('view submission', get_string('viewsubmissionforuser', 'assign', array($item->userid)));
+        } else {
+            $plugin = $this->get_feedback_plugin_by_type($plugintype);
+            if ($gradeid <= 0) {
+                print_error('invalidaccessparameter');
+                return;
+            }
+            $item = $this->get_grade(0, $gradeid, false);
+            $this->add_to_log('view feedback', get_string('viewfeedbackforuser', 'assign', array($item->userid)));
+        }
+        if ($plugin) {
+            echo $OUTPUT->heading($plugin->get_name(), 3);
+        }
         echo $OUTPUT->container_start('viewsubmission');
         echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
              
-        $submission = $this->get_submission(null, $submissionid, false);
         // permissions
-        if ($submission->userid != $USER->id && !has_capability('mod/assign:grade', $this->context)) {
+        if ($item->userid != $USER->id && !has_capability('mod/assign:grade', $this->context)) {
+            print_error('nopermissiontoshow');
             return;
         }
+
             
-        foreach ($this->submission_plugins as $plugin) {
-            if ($plugin->get_type() == $plugintype) {
-                echo $plugin->view($submission);
-            }
+        if ($plugin) {
+            echo $plugin->view($item);
         }
           
         echo $OUTPUT->box_end();
@@ -1237,7 +1261,6 @@ class assignment {
           
         $this->view_footer();     
           
-        $this->add_to_log('viewsubmission', get_string('viewsubmission', 'assign', array($submission->userid)));
     }
     
     /**
@@ -1412,7 +1435,6 @@ class assignment {
         $rnum +=1;
         $userid = $this->get_userid_for_row($rnum);
         if (!$userid) {
-             print_error('outofbound exception array:rownumber&userid');
              die();
         }
     
@@ -1559,10 +1581,19 @@ class assignment {
      * @param bool $create If true the grade will be created if it does not exist
      * @return object The grade record
      */
-    private function get_grade($userid, $create = false) {
+    private function get_grade($userid=0, $gradeid=0, $create = false) {
         global $DB;
 
-        $grade = $DB->get_record('assign_grades', array('assignment'=>$this->instance->id, 'userid'=>$userid));
+        if (!$userid && !$gradeid) {
+            $userid = $USER->id;
+        }
+        if ($userid){
+            
+            // if the userid is not null then use userid
+            $grade = $DB->get_record('assign_grades', array('assignment'=>$this->instance->id, 'userid'=>$userid));
+        } else{
+            $grade = $DB->get_record('assign_grades', array('assignment'=>$this->instance->id, 'id'=>$gradeid));
+        }
          
         if ($grade) {
             return $grade;
@@ -1623,7 +1654,6 @@ class assignment {
         $rownum = required_param('rownum', PARAM_INT);  
         $userid = $this->get_userid_for_row($rownum);
         if(!$userid){
-             print_error('outofbound exception array:rownumber&userid');
              die();
         }
         $user = $DB->get_record('user', array('id' => $userid));
@@ -2303,7 +2333,7 @@ class assignment {
         require_once($CFG->libdir.'/gradelib.php');
         require_once($CFG->dirroot.'/grade/grading/lib.php');
 
-        $grade = $this->get_grade($userid, false);
+        $grade = $this->get_grade($userid, 0, false);
         $grademenu = make_grades_menu($this->instance->grade);
 
         if ($gradingdisabled === null) {
@@ -2352,7 +2382,7 @@ class assignment {
 
         $rownum = $params['rownum'];
         $userid = $this->get_userid_for_row($rownum);
-        $grade = $this->get_grade($userid, false);
+        $grade = $this->get_grade($userid, 0, false);
         
         // add advanced grading
         $gradingdisabled = $this->grading_disabled($userid);
@@ -2721,9 +2751,14 @@ class assignment {
         if ($submission) {
             foreach ($this->submission_plugins as $plugin) {
                 if ($plugin->is_enabled() && $plugin->is_visible()) {
+                    $link = '';
+                    if ($plugin->show_view_link($submission)) {
+                        $link = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'sid'=>$submission->id, 'plugin'=>$plugin->get_type(), 'action'=>'viewpluginsubmission', 'returnaction'=>'view')), $OUTPUT->pix_icon('t/preview', get_string('viewsubmission', 'mod_assign')));
+                        $link .= $OUTPUT->spacer(array('width'=>15));
+                    }
                     $row = new html_table_row();
                     $cell1 = new html_table_cell($plugin->get_name());
-                    $cell2 = new html_table_cell($plugin->view_summary($submission));
+                    $cell2 = new html_table_cell($link . $plugin->view_summary($submission));
                     $row->cells = array($cell1, $cell2);
                     $t->data[] = $row;
                 }
@@ -2832,11 +2867,16 @@ class assignment {
     
         foreach ($this->feedback_plugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
-                $feedback = $plugin->view($assignment_grade);
+                $link = '';
+                if ($plugin->show_view_link($assignment_grade) != '') {
+                    $link = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'sid'=>$assignment_grade->id, 'plugin'=>$plugin->get_type(), 'action'=>'viewpluginfeedback', 'returnaction'=>'view')), $OUTPUT->pix_icon('t/preview', get_string('viewfeedback', 'mod_assign')));
+                    $link .= $OUTPUT->spacer(array('width'=>15));
+                }
+                $feedback = $plugin->view_summary($assignment_grade);
                 if ($feedback != '') {
                     $row = new html_table_row();
                     $cell1 = new html_table_cell($plugin->get_name());
-                    $cell2 = new html_table_cell($feedback);
+                    $cell2 = new html_table_cell($link . $feedback);
                     $row->cells = array($cell1, $cell2);
                     $t->data[] = $row;
                 }
@@ -2938,7 +2978,7 @@ class assignment {
         $this->update_submission($submission, false);
 
         // update the modified time on the grade (grader modified)
-        $grade = $this->get_grade($userid, true);
+        $grade = $this->get_grade($userid, 0, true);
         $this->update_grade($grade);
 
         $user = $DB->get_record('user', array('id' => $userid));
@@ -2964,7 +3004,7 @@ class assignment {
 
         $userid = required_param('userid', PARAM_INT);
 
-        $grade = $this->get_grade($userid, true);
+        $grade = $this->get_grade($userid, 0, true);
         $grade->locked = 1;
         $this->update_grade($grade);
 
@@ -2990,7 +3030,7 @@ class assignment {
 
         $userid = required_param('userid', PARAM_INT);
 
-        $grade = $this->get_grade($userid, true);
+        $grade = $this->get_grade($userid, 0, true);
         $grade->locked = 0;
         $this->update_grade($grade);
         
@@ -3020,7 +3060,7 @@ class assignment {
 
         
         if ($formdata = $mform->get_data()) {
-            $grade = $this->get_grade($userid, true);
+            $grade = $this->get_grade($userid, 0, true);
             $gradinginstance = $this->get_grading_instance($userid);
             if ($gradinginstance) {
                 $grade->grade = $gradinginstance->submit_and_get_grade($formdata->advancedgrading, $grade->id);

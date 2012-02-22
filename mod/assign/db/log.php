@@ -30,6 +30,7 @@ $logs = array(
     array('module'=>'assign', 'action'=>'add', 'mtable'=>'assign', 'field'=>'name'),
     array('module'=>'assign', 'action'=>'update', 'mtable'=>'assign', 'field'=>'name'),
     array('module'=>'assign', 'action'=>'view submission', 'mtable'=>'assign', 'field'=>'name'),
+    array('module'=>'assign', 'action'=>'view feedback', 'mtable'=>'assign', 'field'=>'name'),
     array('module'=>'assign', 'action'=>'upload', 'mtable'=>'assign', 'field'=>'name'),
     array('module'=>'assign', 'action'=>'download all submissions', 'mtable'=>'assign', 'field'=>'name'),
     array('module'=>'assign', 'action'=>'view grading form', 'mtable'=>'assign', 'field'=>'name'),

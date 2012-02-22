@@ -33,3 +33,4 @@ $string['maxfilessubmission'] = 'Maximum number of uploaded files';
 $string['maximumsubmissionsize'] = 'Maximum submission size';
 $string['pluginname'] = 'File Submissions';
 $string['submissionfilearea'] = 'Uploaded submission files';
+$string['countfiles'] = '{$a} files';

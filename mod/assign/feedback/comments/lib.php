@@ -127,9 +127,24 @@ class feedback_comments extends feedback_plugin {
     public function view_summary($grade) {
         $feedback_comments = $this->get_feedback_comments($grade->id);
         if ($feedback_comments) {
-            return shorten_text(format_text($feedback_comments->commenttext, $feedback_comments->commentformat));
+            $text = format_text($feedback_comments->commenttext, $feedback_comments->commentformat);
+            return shorten_text($text, 140);
         }
         return '';
+    }
+    
+    /**
+     * Should the assignment module show a link to view the full submission or feedback for this plugin?
+     *
+     * @return bool
+     */
+    public function show_view_link($grade) {
+        $feedback_comments = $this->get_feedback_comments($grade->id);
+        if ($feedback_comments) {
+            $text = format_text($feedback_comments->commenttext, $feedback_comments->commentformat);
+            return shorten_text($text, 140) != $text;
+        }
+        return false;
     }
     
     /**

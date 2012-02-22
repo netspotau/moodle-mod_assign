@@ -234,6 +234,15 @@ abstract class assignment_plugin {
         return '';
     }
 
+    /**
+     * Should the assignment module show a link to view the full submission or feedback for this plugin?
+     *
+     * @return bool
+     */
+    public function show_view_link($submission_grade) {
+        return true;
+    }
+
     
 
     /**

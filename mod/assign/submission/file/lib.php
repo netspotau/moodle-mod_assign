@@ -35,6 +35,7 @@ defined('MOODLE_INTERNAL') || die();
  * File areas for file submission assignment
  */
 define('ASSIGN_MAX_SUBMISSION_FILES', 20);
+define('ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES', 5);
 define('ASSIGN_FILEAREA_SUBMISSION_FILES', 'submission_files');
 
 /*
@@ -249,16 +250,36 @@ class submission_file extends submission_plugin {
      * @return string
      */
     public function view_summary($submission) {
-        return $this->assignment->render_area_files(ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
+        $count = $this->count_files($submission->id);
+        if ($count <= ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES) {
+            return $this->assignment->render_area_files(ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
+        } else {
+            return get_string('countfiles', 'submission_file', $count);
+        }
+    }
+
+    /**
+     * Should the assignment module show a link to view the full submission or feedback for this plugin?
+     *
+     * @return bool
+     */
+    public function show_view_link($submission) {
+        $count = $this->count_files($submission->id);
+        return $count > ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES;
     }
     
     /**
-     * display the list of files  in the submission status table 
+     * No full submission view - the summary contains the list of files and that is the whole submission
      * @param object $submission
      * @return string 
      */
     public function view($submission) {
-        return $this->view_summary($submission);
+        $count = $this->count_files($submission->id);
+        if ($count <= ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES) {
+            return '';
+        } else {
+            return $this->assignment->render_area_files(ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
+        }
     }
     
 
