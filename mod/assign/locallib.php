@@ -2869,7 +2869,7 @@ class assignment {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
                 $link = '';
                 if ($plugin->show_view_link($assignment_grade) != '') {
-                    $link = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'sid'=>$assignment_grade->id, 'plugin'=>$plugin->get_type(), 'action'=>'viewpluginfeedback', 'returnaction'=>'view')), $OUTPUT->pix_icon('t/preview', get_string('viewfeedback', 'mod_assign')));
+                    $link = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'gid'=>$assignment_grade->id, 'plugin'=>$plugin->get_type(), 'action'=>'viewpluginfeedback', 'returnaction'=>'view')), $OUTPUT->pix_icon('t/preview', get_string('viewfeedback', 'mod_assign')));
                     $link .= $OUTPUT->spacer(array('width'=>15));
                 }
                 $feedback = $plugin->view_summary($assignment_grade);
