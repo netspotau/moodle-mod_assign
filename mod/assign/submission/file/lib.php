@@ -48,10 +48,6 @@ define('ASSIGN_FILEAREA_SUBMISSION_FILES', 'submission_files');
  */
 class submission_file extends submission_plugin {
     
-    /** @var object the assignment record that contains the global settings for this assign instance */
-    private $instance;
-
-    
     /**
      * get the name of the file submission plugin
      * @return string 
