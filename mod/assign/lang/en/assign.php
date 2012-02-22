@@ -169,4 +169,5 @@ $string['viewgradingformforstudent'] = 'View grading page for student: (id={$a->
 $string['viewgrading'] = 'Grade Assignment';
 $string['viewownsubmissionform'] = 'View own submit assignment page.';
 $string['viewownsubmissionstatus'] = 'View own submission status page.';
+$string['viewsubmission'] = 'View Submission for user: {$a}';
 $string['viewsubmissiongradingtable'] = 'View submission grading table.';

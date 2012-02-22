@@ -135,7 +135,7 @@ class assignment_upgrade_manager {
                 }
                 foreach ($newassignment->get_submission_plugins() as $plugin) {
                     if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
-                        if (!$plugin->upgrade_submission($oldcontext, $oldassignment, $oldsubmission, $submission, $log)) {
+                        if (!$plugin->upgrade($oldcontext, $oldassignment, $oldsubmission, $submission, $log)) {
                             $rollback = true;
                         }
                     }
@@ -157,7 +157,7 @@ class assignment_upgrade_manager {
                     }
                     foreach ($newassignment->get_feedback_plugins() as $plugin) {
                         if ($plugin->can_upgrade($oldassignment->assignmenttype, $oldversion)) {
-                            if (!$plugin->upgrade_feedback($oldcontext, $oldassignment, $oldsubmission, $grade, $log)) {
+                            if (!$plugin->upgrade($oldcontext, $oldassignment, $oldsubmission, $grade, $log)) {
                                 $rollback = true;
                             }
                         }

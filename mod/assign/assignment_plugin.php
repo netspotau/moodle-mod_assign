@@ -49,7 +49,7 @@ abstract class assignment_plugin {
      * @param object $assignment
      * @param string $type 
      */
-    public function __construct($assignment = null, $type = null) {
+    public final function __construct($assignment = null, $type = null) {
         $this->assignment = $assignment;
         $this->type = $type;
     }
@@ -59,7 +59,7 @@ abstract class assignment_plugin {
      *
      * @return bool
      */
-    public function is_first() {
+    public final function is_first() {
         global $DB;
 
         $order = get_config($this->get_subtype() . '_' . $this->get_type(), 'sortorder');
@@ -75,7 +75,7 @@ abstract class assignment_plugin {
      *
      * @return bool
      */
-    public function is_last() {
+    public final function is_last() {
         global $DB;
 
         if ((count(get_plugin_list($this->get_subtype()))-1) == get_config($this->get_subtype() . '_' . $this->get_type(), 'sortorder')) {
@@ -143,7 +143,7 @@ abstract class assignment_plugin {
      * 
      * @return string - the type
      */
-    public function get_type() {
+    public final function get_type() {
         return $this->type;
     }
     
@@ -152,7 +152,7 @@ abstract class assignment_plugin {
      *
      * @return string
      */
-    public function get_version() {
+    public final function get_version() {
         $version = get_config($this->get_subtype() . '_' . $this->get_type(), 'version');
         if ($version) {
             return $version;
@@ -166,7 +166,7 @@ abstract class assignment_plugin {
      *
      * @return string
      */
-    public function get_requires() {
+    public final function get_requires() {
         $requires = get_config($this->get_subtype() . '_' . $this->get_type(), 'requires');
         if ($requires) {
             return $requires;
@@ -191,7 +191,7 @@ abstract class assignment_plugin {
      *
      * @return string
      */
-    public function enable() {
+    public final function enable() {
         return $this->set_config('enabled', 1);
     }
 
@@ -200,7 +200,7 @@ abstract class assignment_plugin {
      *
      * @return string
      */
-    public function disable() {
+    public final function disable() {
         return $this->set_config('enabled', 0);
     }
     
@@ -209,7 +209,7 @@ abstract class assignment_plugin {
      * 
      * @return bool - if false - this plugin will not accept submissions / feedback
      */
-    public function is_enabled() {
+    public final function is_enabled() {
         return $this->get_config('enabled');
     }
 
@@ -242,7 +242,7 @@ abstract class assignment_plugin {
      * @param string $dir up or down
      * @return None
      */
-    public function move($dir='down') {
+    public final function move($dir='down') {
         // get a list of the current plugins
         $plugins = array();
 
@@ -306,7 +306,7 @@ abstract class assignment_plugin {
      *
      * @return int
      */
-    public function get_sort_order() {
+    public final function get_sort_order() {
         $order = get_config($this->get_subtype() . '_' . $this->get_type(), 'sortorder');
         return $order?$order:0;
     }
@@ -316,7 +316,7 @@ abstract class assignment_plugin {
      *
      * @return bool
      */
-    public function is_visible() {
+    public final function is_visible() {
         $disabled = get_config($this->get_subtype() . '_' . $this->get_type(), 'disabled');
         return !$disabled;
     }
@@ -326,7 +326,7 @@ abstract class assignment_plugin {
      *
      * @return None
      */
-    public function show() {
+    public final function show() {
         set_config('disabled', 0, $this->get_subtype() . '_' . $this->get_type());
     }
     
@@ -335,7 +335,7 @@ abstract class assignment_plugin {
      *
      * @return None
      */
-    public function hide() {
+    public final function hide() {
         set_config('disabled', 1, $this->get_subtype() . '_' . $this->get_type());
     }
 
@@ -344,7 +344,7 @@ abstract class assignment_plugin {
      *
      * @return bool
      */
-    public function has_admin_settings() {
+    public final function has_admin_settings() {
         global $CFG;
         
         return file_exists($CFG->dirroot . '/mod/assign/' . $this->get_subtype() . '/' . $this->get_type() . '/settings.php');        
@@ -357,7 +357,7 @@ abstract class assignment_plugin {
      * @param string $value The config value
      * @return bool
      */
-    public function set_config($name, $value) {
+    public final function set_config($name, $value) {
         global $DB;
         
         $current = $DB->get_record('assign_plugin_config', array('assignment'=>$this->assignment->get_instance()->id, 'subtype'=>$this->get_subtype(), 'plugin'=>$this->get_type(), 'name'=>$name));
@@ -383,7 +383,7 @@ abstract class assignment_plugin {
      * @param string $name The config key
      * @return string | false
      */
-    public function get_config($setting = null) {
+    public final function get_config($setting = null) {
         global $DB;
 
         if ($setting) {
@@ -471,4 +471,18 @@ abstract class assignment_plugin {
         return false;
     }
 
+    /**
+     * Upgrade the submission from the old assignment to the new one
+     * 
+     * @param object $oldcontext The data record for the old context
+     * @param object $oldassignment The data record for the old assignment
+     * @param object $oldsubmission_grade The data record for the old submission
+     * @param object $submission_grade The new submission or grade
+     * @param string $log Record upgrade messages in the log
+     * @return boolean true or false - false will trigger a rollback
+     */
+    public function upgrade($oldcontext, $oldassignment, $oldsubmission_grade, $submission_grade, & $log) {
+        $log = $log . ' ' . get_string('upgradenotimplemented', 'mod_assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));
+        return false;
+    }
 }

@@ -210,7 +210,7 @@ class submission_onlinetext extends submission_plugin {
          
          
          
-           $link = new moodle_url ('/mod/assign/submission/onlinetext/onlinetext_view.php?id='.$this->assignment->get_course_module()->id.'&sid='.$submission->id.'&plugintype=onlinetext&returnaction='.  optional_param('action','view',PARAM_ALPHA).'&returnparams=rownum%3D'.  optional_param('rownum','', PARAM_INT));
+           $link = new moodle_url ('/mod/assign/view.php?id='.$this->assignment->get_course_module()->id.'&sid='.$submission->id.'&action=viewpluginsubmission&plugin=onlinetext&returnaction='.  optional_param('action','view',PARAM_ALPHA).'&returnparams=rownum%3D'.  optional_param('rownum','', PARAM_INT));
          $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
         if (!$onlinetext_submission) {
                 return get_string('numwords', '', 0);                                                     
@@ -301,7 +301,7 @@ class submission_onlinetext extends submission_plugin {
      * @param string $log Record upgrade messages in the log
      * @return bool true or false - false will trigger a rollback
      */
-    public function upgrade_submission($oldcontext, $oldassignment, $oldsubmission, $submission, & $log) {
+    public function upgrade($oldcontext, $oldassignment, $oldsubmission, $submission, & $log) {
         global $DB;
         
        $comments_submission = new stdClass();

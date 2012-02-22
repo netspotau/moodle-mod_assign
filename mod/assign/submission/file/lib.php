@@ -306,7 +306,7 @@ class submission_file extends submission_plugin {
      * @param string $log Record upgrade messages in the log
      * @return bool true or false - false will trigger a rollback
      */
-    public function upgrade_submission($oldcontext,$oldassignment, $oldsubmission, $submission, & $log) {
+    public function upgrade($oldcontext,$oldassignment, $oldsubmission, $submission, & $log) {
         global $DB;
 
         $file_submission = new stdClass();

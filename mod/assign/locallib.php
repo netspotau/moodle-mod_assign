@@ -277,6 +277,8 @@ class assignment {
             $this->view_next_single_grade();                        
         } else if ($action == 'grade') {
             $this->view_single_grade_page();
+        } else if ($action == 'viewpluginsubmission') {
+            $this->view_plugin_submission();
         } else if ($action == 'editsubmission') {
             $this->view_edit_submission_page();
         } else if ($action == 'grading') {
@@ -370,7 +372,7 @@ class assignment {
      * @global object CFG
      * @return bool
      */
-    public function delete_grades() {
+    private function delete_grades() {
         global $CFG;
         require_once($CFG->libdir.'/gradelib.php');
 
@@ -432,7 +434,7 @@ class assignment {
      * @global DB
      * @return bool false if an error occurs
      */
-    public function update_plugin_instance($plugin) {
+    private function update_plugin_instance($plugin) {
         if ($plugin->is_visible()) {
             $enabled_name = $plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled';
             if ($this->instance->$enabled_name) {
@@ -852,7 +854,7 @@ class assignment {
      * @param mixed $grade
      * @return string User-friendly representation of grade
      */
-    public function display_grade($grade) {
+    private function display_grade($grade) {
         global $DB;
 
         static $scalegrades = array();
@@ -888,7 +890,7 @@ class assignment {
      * @param int $currentgroup
      * @return array List of user records 
      */
-    protected function & list_enrolled_users_with_capability($permission,$currentgroup) {
+    private function & list_enrolled_users_with_capability($permission,$currentgroup) {
         $users = & get_enrolled_users($this->context, $permission, $currentgroup);
         return $users;
     }
@@ -900,7 +902,7 @@ class assignment {
      * @param int $currentgroup
      * @return int number of matching users
      */
-    protected function count_enrolled_users_with_capability($permission,$currentgroup=0) {
+    private function count_enrolled_users_with_capability($permission,$currentgroup=0) {
         $users = & get_enrolled_users($this->context, $permission, $currentgroup, 'u.id');
         return count($users);
     }
@@ -912,7 +914,7 @@ class assignment {
      * @param string $status The submission status - should match one of the constants 
      * @return int number of matching submissions
      */
-    protected function count_submissions_with_status($status) {
+    private function count_submissions_with_status($status) {
         global $DB;
         return $DB->count_records_sql("SELECT COUNT('x')
                                      FROM {assign_submission}
@@ -1202,32 +1204,40 @@ class assignment {
      * display the submission that is used by a plugin  
      * @global object $OUTPUT
      * @global object $CFG
+     * @global object $USER
      * @param int $submissionid
      * @param string $plugintype 
      * @return None
      */
-    public function view_submission($submissionid=null, $plugintype=null) {
-           global $OUTPUT, $CFG;
-           $this->view_header();
-            echo $OUTPUT->container_start('viewsubmission');
-            echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
+    private function view_plugin_submission($submissionid=null, $plugintype=null) {
+        global $OUTPUT, $CFG, $USER;
+        $submissionid = required_param('sid', PARAM_INT);
+        $plugintype = required_param('plugin', PARAM_TEXT);
+        $this->view_header();
+        echo $OUTPUT->container_start('viewsubmission');
+        echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
+             
+        $submission = $this->get_submission(null, $submissionid, false);
+        // permissions
+        if ($submission->userid != $USER->id && !has_capability('mod/assign:grade', $this->context)) {
+            return;
+        }
             
-            $submission = $this->get_submission(null, $submissionid, false);
-            
-            foreach ($this->submission_plugins as $plugin) {
-                if ($plugin->get_type() == $plugintype) {
-                    echo $plugin->view($submission);
-                }
+        foreach ($this->submission_plugins as $plugin) {
+            if ($plugin->get_type() == $plugintype) {
+                echo $plugin->view($submission);
             }
+        }
           
-            echo $OUTPUT->box_end();
-            echo $OUTPUT->container_end();
-            echo $OUTPUT->spacer(array('height'=>30));
+        echo $OUTPUT->box_end();
+        echo $OUTPUT->container_end();
+        echo $OUTPUT->spacer(array('height'=>30));
                  
-            $this->view_return_links();
+        $this->view_return_links();
           
-            $this->view_footer();     
+        $this->view_footer();     
           
+        $this->add_to_log('viewsubmission', get_string('viewsubmission', 'assign', array($submission->userid)));
     }
     
     /**
@@ -1484,7 +1494,7 @@ class assignment {
      * @param string $url The url to the assign module instance.
      * @return None
      */
-    private function add_to_log($action = '', $info = '', $url='') {
+    public function add_to_log($action = '', $info = '', $url='') {
         global $USER; 
     
         $fullurl = 'view.php?id=' . $this->get_course_module()->id;
@@ -1504,7 +1514,7 @@ class assignment {
      * @param bool $createnew optional Defaults to false. If set to true a new submission object will be created in the database
      * @return object The submission
      */
-    public function get_submission($userid = null,$submissionid =null, $create = false) {
+    private function get_submission($userid = null,$submissionid =null, $create = false) {
         global $DB, $USER;
 
         if (!$userid && !$submissionid) {
@@ -1907,7 +1917,7 @@ class assignment {
      * @global object $USER
      * @return bool 
      */
-    protected function submissions_open() {
+    private function submissions_open() {
         global $USER;
 
         $time = time();
