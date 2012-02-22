@@ -289,9 +289,20 @@ class submission_file extends submission_plugin {
      * @param string log record log events here
      * @return bool Was it a success?
      */
-    public function upgrade_settings($oldassignment, & $log) {
-        // first upgrade settings (nothing to do)
-        return true;
+    public function upgrade_settings($oldcontext,$oldassignment, & $log) {
+        if ($oldassignment->assignmenttype == 'uploadsingle') {
+            $this->set_config('maxfilesubmissions', 1);
+            $this->set_config('maxsubmissionsizebytes', $oldassignment->maxbytes);
+            return true;
+        }else {
+
+            $this->set_config('maxfilesubmissions', $oldassignment->var1);
+            $this->set_config('maxsubmissionsizebytes', $oldassignment->maxbytes);
+            return true;
+        }
+        
+        
+        
     }
      
     /**

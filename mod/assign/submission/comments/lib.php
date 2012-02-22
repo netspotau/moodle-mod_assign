@@ -107,7 +107,7 @@ class submission_comments extends submission_plugin {
      * @param string log record log events here
      * @return bool was it a success?
      */
-    public function upgrade_settings($oldassignment, & $log) {
+    public function upgrade_settings($oldcontext,$oldassignment, & $log) {
         // first upgrade settings (nothing to do)
         return true;
     }

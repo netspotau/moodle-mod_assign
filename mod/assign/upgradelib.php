@@ -27,6 +27,9 @@ defined('MOODLE_INTERNAL') || die();
 
 /** Include locallib.php */
 require_once($CFG->dirroot.'/mod/assign/locallib.php');
+/** Include accesslib.php */
+require_once($CFG->libdir.'/accesslib.php');
+
 
 /*
  * Class to manage upgrades from mod_assignment to mod_assign
@@ -49,6 +52,15 @@ class assignment_upgrade_manager {
         global $DB, $CFG;
         // steps to upgrade an assignment
     
+        global $DB, $CFG, $USER;
+        // steps to upgrade an assignment
+          
+        // is the user the admin? admin check goes here 
+        if (!is_siteadmin($USER->id)) {
+              return false;
+        }
+        
+        
         // first insert an assign instance to get the id
         if (!$oldassignment = $DB->get_record('assignment', array('id'=>$oldassignmentid))) {
             $log = get_string('couldnotfindassignmenttoupgrade', 'mod_assign');
