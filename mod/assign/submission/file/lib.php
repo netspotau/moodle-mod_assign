@@ -370,4 +370,20 @@ class submission_file extends submission_plugin {
         
         return true;
     }
+    
+    /**
+     * formatting for log info    
+     * @param object $submission_grade The new submission or grade
+     * 
+     * @return string
+     */
+    public function format_for_log($submission) {
+        // format the info for each submission plugin add_to_log
+        $file_count = $this->count_files($submission->id);
+        $file_log_info = '';
+        $file_log_info .= ' and the number of file(s) : ' . $file_count . " file(s).<br>";
+
+        return $file_log_info;
+    }
+
 }

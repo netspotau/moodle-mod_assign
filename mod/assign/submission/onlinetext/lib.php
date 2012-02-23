@@ -337,6 +337,22 @@ class submission_onlinetext extends submission_plugin {
                                                         $submission->id);
         return true;
     }
+    
+    /**
+     * formatting for log info    
+     * @param object $submission_grade The new submission or grade
+     * 
+     * @return string
+     */
+    public function format_for_log($submission) {
+        // format the info for each submission plugin add_to_log
+        $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
+        $onlinetext_log_info = '';
+        $onlinetext_log_info .= 'Onlinetext word count : ' . get_string('numwords', '', count_words(format_text($onlinetext_submission->onlinetext))) . " .<br>";
+
+        return $onlinetext_log_info;
+    }
+
 }
 
 

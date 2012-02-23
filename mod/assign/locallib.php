@@ -2229,8 +2229,18 @@ class assignment {
      */
     private function format_submission_for_log($submission) {
         $info = '';
-        $info .= get_string('submissionstatus', 'assign') . ': ' . get_string('submissionstatus_' . $submission->status, 'assign') . '.';
-        
+        $info .= get_string('submissionstatus', 'assign') . ': ' . get_string('submissionstatus_' . $submission->status, 'assign') . '. <br>';
+        // format_for_log here iterating every single log INFO  from either submission or grade in every assignment plugin
+
+        foreach ($this->submission_plugins as $plugin) {
+            if ($plugin->is_enabled() && $plugin->is_visible()) {
+
+
+                $info .= "<br>" . $plugin->format_for_log($submission);
+            }
+        }
+
+
         return $info;
     }
     

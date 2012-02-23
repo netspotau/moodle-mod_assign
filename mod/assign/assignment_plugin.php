@@ -494,4 +494,15 @@ abstract class assignment_plugin {
         $log = $log . ' ' . get_string('upgradenotimplemented', 'mod_assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));
         return false;
     }
+    
+    /**
+     * formatting for log info    
+     * @param object $submission_grade The new submission or grade
+     * 
+     * @return string
+     */
+    public function format_for_log($submission_grade) {
+        // format the info for each submission plugin add_to_log
+        return '';
+    }
 }
