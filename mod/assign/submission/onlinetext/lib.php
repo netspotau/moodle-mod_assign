@@ -334,7 +334,7 @@ class submission_onlinetext extends submission_plugin {
         // format the info for each submission plugin add_to_log
         $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
         $onlinetext_log_info = '';
-        $onlinetext_log_info .= 'Onlinetext word count : ' . get_string('numwords', '', count_words(format_text($onlinetext_submission->onlinetext))) . " .<br>";
+        $onlinetext_log_info .= 'Onlinetext word count : ' . get_string('numwords', '', count_words(format_text($onlinetext_submission->onlinetext))) . " <br>";
 
         return $onlinetext_log_info;
     }
