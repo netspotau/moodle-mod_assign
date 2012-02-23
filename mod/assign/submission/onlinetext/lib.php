@@ -240,20 +240,6 @@ class submission_onlinetext extends submission_plugin {
     }
 
     /**
-     * Should the assignment module show a link to view the full submission or feedback for this plugin?
-     *
-     * @return bool
-     */
-    public function show_view_link($submission) {
-        $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
-        if ($onlinetext_submission) {
-            $text = format_text($onlinetext_submission->onlinetext, $onlinetext_submission->onlineformat);
-            return shorten_text($text, 140) != $text;
-        }
-        return false;
-    }
-    
-    /**
      * display the saved text content from the editor in the view table 
      * @param object $submission
      * @return string  
