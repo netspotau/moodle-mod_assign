@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 // This file is part of Moodle - http://moodle.org/
 //
@@ -198,7 +198,7 @@ class submission_file extends submission_plugin {
 
         $fs = get_file_storage();
         $files = $fs->get_area_files($this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id, "id", false);
-           
+        $count = $this->count_files($submission->id);
         // send files to event system
         // Let Moodle know that an assessable file was uploaded (eg for plagiarism detection)
         $eventdata = new stdClass();
@@ -207,9 +207,10 @@ class submission_file extends submission_plugin {
         $eventdata->itemid = $submission->id;
         $eventdata->courseid = $this->assignment->get_course()->id;
         $eventdata->userid = $USER->id;
-        if ($files) {
+        if ($count > 1) {
             $eventdata->files = $files;
         }
+            $eventdata->file = $files;
         events_trigger('assessable_file_uploaded', $eventdata);
 
 
