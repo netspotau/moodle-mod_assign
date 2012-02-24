@@ -800,6 +800,7 @@ class assignment {
         } 
     }
 
+    
     /**
      * Get the current course module
      *
@@ -1226,7 +1227,7 @@ class assignment {
                 return;
             }
             $item = $this->get_submission(null, $submissionid, false);
-            $this->add_to_log('view submission', get_string('viewsubmissionforuser', 'assign', array($item->userid)));
+            $this->add_to_log('view submission', get_string('viewsubmissionforuser', 'assign', $item->userid));
         } else {
             $plugin = $this->get_feedback_plugin_by_type($plugintype);
             if ($gradeid <= 0) {
@@ -1234,7 +1235,7 @@ class assignment {
                 return;
             }
             $item = $this->get_grade(0, $gradeid, false);
-            $this->add_to_log('view feedback', get_string('viewfeedbackforuser', 'assign', array($item->userid)));
+            $this->add_to_log('view feedback', get_string('viewfeedbackforuser', 'assign', $item->userid));
         }
         if ($plugin) {
             echo $OUTPUT->heading($plugin->get_name(), 3);
@@ -1658,7 +1659,7 @@ class assignment {
         }
         $user = $DB->get_record('user', array('id' => $userid));
         $this->view_user($user);
-        $this->view_submission_status($userid, true);
+        $this->view_submission_status($userid, true, 'grade', array('rownum'=>$rownum));
 
         // now show the grading form
         $this->view_grade_form();
@@ -2644,7 +2645,7 @@ class assignment {
      * @param bool $hide_nosubmission_warning - do not tell markers they do not need to submit anything.
      * @return mixed
      */
-    private function view_submission_status($userid=null, $hide_nosubmission_warning=false) {
+    private function view_submission_status($userid=null, $hide_nosubmission_warning=false, $return_action='view', $return_params=array()) {
         global $OUTPUT, $USER;
 
 
@@ -2763,7 +2764,7 @@ class assignment {
                 if ($plugin->is_enabled() && $plugin->is_visible()) {
                     $link = '';
                     if ($plugin->show_view_link($submission)) {
-                        $link = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'sid'=>$submission->id, 'plugin'=>$plugin->get_type(), 'action'=>'viewpluginsubmission', 'returnaction'=>'view')), $OUTPUT->pix_icon('t/preview', get_string('viewsubmission', 'mod_assign')));
+                        $link = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'sid'=>$submission->id, 'plugin'=>$plugin->get_type(), 'action'=>'viewpluginsubmission', 'returnaction'=>$return_action, 'returnparams'=>http_build_query($return_params))), $OUTPUT->pix_icon('t/preview', get_string('viewsubmission', 'mod_assign')));
                         $link .= $OUTPUT->spacer(array('width'=>15));
                     }
                     $row = new html_table_row();

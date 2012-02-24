@@ -267,6 +267,7 @@ class submission_file extends submission_plugin {
     public function show_view_link($submission) {
         $count = $this->count_files($submission->id);
         return $count > ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES;
+        
     }
     
     /**
@@ -377,7 +378,7 @@ class submission_file extends submission_plugin {
         // format the info for each submission plugin add_to_log
         $file_count = $this->count_files($submission->id);
         $file_log_info = '';
-        $file_log_info .= ' and the number of file(s) : ' . $file_count . " file(s).<br>";
+        $file_log_info .= ' the number of file(s) : ' . $file_count . " file(s).<br>";
 
         return $file_log_info;
     }

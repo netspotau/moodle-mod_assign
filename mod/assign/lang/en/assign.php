@@ -166,3 +166,16 @@ $string['viewownsubmissionstatus'] = 'View own submission status page.';
 $string['viewsubmissionforuser'] = 'View submission for user: {$a}';
 $string['viewsubmission'] = 'View submission';
 $string['viewsubmissiongradingtable'] = 'View submission grading table.';
+
+
+$string['assignmentmail'] = '{$a->grader} has posted some feedback on your
+assignment submission for \'{$a->assignment}\'
+
+You can see it appended to your assignment submission:
+
+    {$a->url}';
+$string['assignmentmailhtml'] = '{$a->grader} has posted some feedback on your
+assignment submission for \'<i>{$a->assignment}</i>\'<br /><br />
+You can see it appended to your <a href="{$a->url}">assignment submission</a>.';
+$string['assignmentmailsmall'] = '{$a->grader} has posted some feedback on your
+assignment submission for \'{$a->assignment}\' You can see it appended to your submission';
