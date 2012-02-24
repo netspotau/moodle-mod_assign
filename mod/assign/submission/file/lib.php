@@ -275,12 +275,7 @@ class submission_file extends submission_plugin {
      * @return string 
      */
     public function view($submission) {
-        $count = $this->count_files($submission->id);
-        if ($count <= ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES) {
-            return '';
-        } else {
-            return $this->assignment->render_area_files(ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
-        }
+        return $this->assignment->render_area_files(ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
     }
     
 
