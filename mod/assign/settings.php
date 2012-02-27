@@ -43,3 +43,14 @@ $ADMIN->add('feedbackplugins', new admin_page_manage_assignment_plugins('feedbac
 assignment_plugin_manager::add_admin_assignment_plugin_settings('submission', $ADMIN, $settings, $module);
 assignment_plugin_manager::add_admin_assignment_plugin_settings('feedback', $ADMIN, $settings, $module);
 
+$assignment = new assignment();
+$menu = array();
+foreach ($assignment->get_feedback_plugins() as $plugin) {
+    if ($plugin->is_visible()) {
+        $menu['feedback_' . $plugin->get_type()] = $plugin->get_name();
+    }
+}
+
+$settings->add(new admin_setting_configselect('mod_assign_feedback_plugin_for_gradebook', 
+                      get_string('feedbackpluginforgradebook', 'mod_assign'),
+                      get_string('feedbackplugin', 'mod_assign'), 'feedback_comments', $menu));

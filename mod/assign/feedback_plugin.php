@@ -47,5 +47,40 @@ abstract class feedback_plugin extends assignment_plugin {
     public function get_subtype() {
         return 'feedback';
     }
+
+    /**
+     * If this plugin adds to the gradebook comments field, it must specify the format
+     * of the comment
+     *
+     * (From weblib.php)
+     * define('FORMAT_MOODLE',   '0');   // Does all sorts of transformations and filtering
+     * define('FORMAT_HTML',     '1');   // Plain HTML (with some tags stripped)
+     * define('FORMAT_PLAIN',    '2');   // Plain text (even tags are printed in full)
+     * define('FORMAT_WIKI',     '3');   // Wiki-formatted text
+     * define('FORMAT_MARKDOWN', '4');   // Markdown-formatted
+     *
+     * Only one feedback plugin can push comments to the gradebook and that is chosen by the assignment
+     * settings page.
+     *
+     * @param object $grade The grade
+     * @return int
+     */
+    public function format_for_gradebook($grade) {
+        return FORMAT_MOODLE;
+    }
+    
+    /**
+     * If this plugin adds to the gradebook comments field, it must format the text
+     * of the comment
+     *
+     * Only one feedback plugin can push comments to the gradebook and that is chosen by the assignment
+     * settings page.
+     *
+     * @param object $grade The grade
+     * @return string
+     */
+    public function text_for_gradebook($grade) {
+        return '';
+    }
     
 }

@@ -2056,6 +2056,12 @@ class assignment {
         $gradebook_grade['usermodified'] = $grade->grader;
         $gradebook_grade['datesubmitted'] = NULL;
         $gradebook_grade['dategraded'] = $grade->timemodified;
+        if ($grade->feedbackformat) {
+            $gradebook_grade['feedbackformat'] = $grade->feedbackformat;
+        }
+        if ($grade->feedbacktext) {
+            $gradebook_grade['feedback'] = $grade->feedbacktext;
+        }
        
         // more TODO ?
         return $gradebook_grade;
@@ -2115,6 +2121,7 @@ class assignment {
         
             $gradebook_grade = $this->convert_grade_for_gradebook($grade);
         }
+        var_dump($gradebook_grade);
         return grade_update('mod/assign', $this->get_course()->id, 'mod', 'assign', $this->instance->id, 0, $gradebook_grade, $params);
     }
 
@@ -3279,10 +3286,11 @@ class assignment {
      * 
      * @global object $USER
      * @global object $DB 
+     * @global object $CFG 
      * @return None
      */
     private function process_save_grade() {
-        global $USER, $DB;
+        global $USER, $DB, $CFG;
         
         require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
@@ -3304,7 +3312,7 @@ class assignment {
             }
             $grade->grader= $USER->id;
 
-            $this->update_grade($grade);
+            $gradebook_plugin = $CFG->mod_assign_feedback_plugin_for_gradebook;
 
             // call save in plugins
             foreach ($this->feedback_plugins as $plugin) {
@@ -3313,9 +3321,14 @@ class assignment {
                         $result = false;
                         print_error($plugin->get_error());
                     }
+                    if (('feedback_' . $plugin->get_type()) == $gradebook_plugin) {
+                        // this is the feedback plugin chose to push comments to the gradebook
+                        $grade->feedbacktext = $plugin->text_for_gradebook($grade);
+                        $grade->feedbackformat = $plugin->format_for_gradebook($grade);
+                    }
                 }
             }
-
+            $this->update_grade($grade);
 
             $user = $DB->get_record('user', array('id' => $userid));
 

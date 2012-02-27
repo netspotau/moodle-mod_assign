@@ -161,4 +161,39 @@ class feedback_comments extends feedback_plugin {
         return '';
     }
 
+    /**
+     * If this plugin adds to the gradebook comments field, it must specify the format of the text
+     * of the comment
+     *
+     * Only one feedback plugin can push comments to the gradebook and that is chosen by the assignment
+     * settings page.
+     *
+     * @param object $grade The grade
+     * @return int
+     */
+    public function format_for_gradebook($grade) {
+        $feedback_comments = $this->get_feedback_comments($grade->id);
+        if ($feedback_comments) {
+            return $feedback_comments->commentformat;
+        }
+        return FORMAT_MOODLE;
+    }
+    
+    /**
+     * If this plugin adds to the gradebook comments field, it must format the text
+     * of the comment
+     *
+     * Only one feedback plugin can push comments to the gradebook and that is chosen by the assignment
+     * settings page.
+     *
+     * @param object $grade The grade
+     * @return string
+     */
+    public function text_for_gradebook($grade) {
+        $feedback_comments = $this->get_feedback_comments($grade->id);
+        if ($feedback_comments) {
+            return $feedback_comments->commenttext;
+        }
+        return '';
+    }
 }
