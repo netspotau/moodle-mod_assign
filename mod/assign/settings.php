@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-require_once('adminlib.php');
+require_once($CFG->dirroot . '/mod/assign/adminlib.php');
 require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
 $ADMIN->add('modules', new admin_category('assignmentplugins',
@@ -52,6 +52,15 @@ foreach ($assignment->get_feedback_plugins() as $plugin) {
     }
 }
 
-$settings->add(new admin_setting_configselect('mod_assign_feedback_plugin_for_gradebook', 
+$settings->add(new admin_setting_configselect('assign/feedback_plugin_for_gradebook', 
                       get_string('feedbackpluginforgradebook', 'mod_assign'),
                       get_string('feedbackplugin', 'mod_assign'), 'feedback_comments', $menu));
+
+$settings->add(new admin_setting_configtextarea('assign/submission_statement', 
+                      get_string('submissionstatement', 'mod_assign'),
+                      get_string('submissionstatement_desc', 'mod_assign'), ''));
+
+$settings->add(new admin_setting_configcheckbox('assign/require_submission_statement',
+                      get_string('requiresubmissionstatement', 'mod_assign'), 
+                      get_string('requiresubmissionstatement_desc', 'mod_assign'), 1));
+

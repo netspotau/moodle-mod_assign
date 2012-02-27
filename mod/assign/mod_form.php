@@ -100,6 +100,39 @@ class mod_assign_submission_form extends moodleform {
 }
 
 /*
+ * Assignment submission confirm form
+ *
+ * @package   mod-assign
+ * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class mod_assign_confirm_submission_form extends moodleform {
+
+    function definition() {
+        $mform = $this->_form;
+
+        list($assignment, $data) = $this->_customdata;
+
+        $config = get_config('assign');
+    
+        if (($config->require_submission_statement || 
+             $assignment->get_instance()->requiresubmissionstatement)) {
+            
+            $mform->addElement('checkbox', 'submissionstatement', '', $config->submission_statement);
+            $mform->addRule('submissionstatement', get_string('required'), 'required', null, 'client');
+        }
+        $mform->addElement('hidden', 'id', $assignment->get_course_module()->id);
+        $mform->setType('id', PARAM_INT);
+        $mform->addElement('hidden', 'action', 'submitconfirm');
+        $mform->setType('action', PARAM_ALPHA);
+        $this->add_action_buttons(true, get_string('savechanges', 'assign'));
+        if ($data) {
+            $this->set_data($data);
+        }
+    }
+}
+
+/*
  * Assignment grade form
  *
  * @package   mod-assign

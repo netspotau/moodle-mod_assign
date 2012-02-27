@@ -284,7 +284,7 @@ class assignment {
          } else if ($action == 'unlock') {
             $this->process_unlock();
             $action = 'grading';
-         } else if ($action == 'submit') {
+         } else if ($action == 'submitconfirm') {
             $this->process_submit_assignment_for_grading();
             // save and show next button
         } else if ($action == 'submitgrade') {
@@ -322,6 +322,8 @@ class assignment {
             $this->view_plugin_content('submission');
         } else if ($action == 'editsubmission') {
             $this->view_edit_submission_page();
+        } else if ($action == 'submit') {
+            $this->view_confirm_submit_page();
         } else if ($action == 'grading') {
             $this->view_grading_page();
         } else if ($action == 'downloadall') {
@@ -576,8 +578,6 @@ class assignment {
         }
 
         
-        // update the database record
-
         $result = $DB->update_record('assign', $this->instance);
         
         // update all the calendar events 
@@ -679,6 +679,12 @@ class assignment {
         $mform->addElement('header', 'general', get_string('submissions', 'assign'));
         $mform->addElement('select', 'submissiondrafts', get_string('submissiondrafts', 'assign'), $ynoptions);
         $mform->setDefault('submissiondrafts', 0);
+        // submission statement
+        $config = get_config('assign');
+        if (!$config->require_submission_statement) {
+            $mform->addElement('select', 'requiresubmissionstatement', get_string('requiresubmissionstatement', 'assign'), $ynoptions);
+            $mform->setDefault('requiresubmissionstatement', $config->submission_statement!='');
+        }
 
         
         // plagiarism enabling form
@@ -689,6 +695,7 @@ class assignment {
         $mform->addElement('header', 'general', get_string('notifications', 'assign'));
         $mform->addElement('select', 'sendnotifications', get_string('sendnotifications', 'assign'), $ynoptions);
         $mform->setDefault('sendnotifications', 1);
+
 
         $this->add_all_plugin_settings($mform);
     }
@@ -1553,6 +1560,44 @@ class assignment {
     }
     
     /**
+     * View confirm submit page.
+     * 
+     * @global object $OUTPUT
+     * @return None
+     */
+    private function view_confirm_submit_page() {
+        global $OUTPUT;
+        // Always require view permission to do anything
+        require_capability('mod/assign:view', $this->context);
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:submit', $this->context);
+
+        if (!$this->submissions_open()) {
+            print_error('submissionsclosed', 'assign');
+            return;
+        }
+
+        $this->view_header(get_string('confirmsubmission', 'assign'));
+        $this->view_intro();
+
+        echo $OUTPUT->heading(get_string('submitassignment', 'assign'), 3);
+        echo $OUTPUT->box_start('boxaligncenter', 'intro');
+        echo get_string('submitassignment_help', 'assign');
+        echo $OUTPUT->box_end();
+
+        echo $OUTPUT->container_start('confirmsubmission');
+
+        $data = new stdClass();
+        $mform = new mod_assign_confirm_submission_form(null, array($this, $data));
+        $mform->display();
+       
+        echo $OUTPUT->container_end();
+        
+        $this->view_footer();
+        $this->add_to_log('view confirm submit assignment form', get_string('viewownsubmissionform', 'assign'));
+    }
+    
+    /**
      * View edit submissions page.
      * 
      * @return None
@@ -1978,19 +2023,24 @@ class assignment {
      * @return None
      */
     private function process_submit_assignment_for_grading() {
+        global $USER;
         
          // Always require view permission to do anything
         require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
         
-        global $USER;
-        $submission = $this->get_submission($USER->id,null, true);
-        $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+        $data = new stdClass();
+        $mform = new mod_assign_confirm_submission_form(null, array($this, $data));
+        
+        if (!$mform->is_cancelled()) {
+            $submission = $this->get_submission($USER->id,null, true);
+            $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
 
-        $this->update_submission($submission);
-        $this->add_to_log('submit for grading', $this->format_submission_for_log($submission));
-        $this->email_graders($submission);
+            $this->update_submission($submission);
+            $this->add_to_log('submit for grading', $this->format_submission_for_log($submission));
+            $this->email_graders($submission);
+        }
     }
     
     /**
@@ -2083,8 +2133,8 @@ class assignment {
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
       
-        $data = $this->get_default_submission_data();
-        $mform = new mod_assign_submission_form(null, array($this, $data));
+        $defaultdata = $this->get_default_submission_data();
+        $mform = new mod_assign_submission_form(null, array($this, $defaultdata));
         if ($mform->is_cancelled()) {
             return false;
         }
@@ -2106,6 +2156,10 @@ class assignment {
             }
            
             $this->update_submission($submission);
+
+            if ($data->submissionstatement) {
+                $this->add_to_log('submission statement accepted', get_string('submissionstatementacceptedlog', 'mod_assign', fullname($USER)));
+            }
 
             // Logging
             $this->add_to_log('submit', $this->format_submission_for_log($submission));
@@ -2385,6 +2439,15 @@ class assignment {
         // online text submissions
 
         $submission = $this->get_submission($USER->id, null, false);
+
+        // submission statement
+        $config = get_config('assign');
+        if (($config->require_submission_statement || 
+             $this->instance->requiresubmissionstatement) && 
+            !$this->instance->submissiondrafts) {
+            $mform->addElement('checkbox', 'submissionstatement', '', $config->submission_statement);
+            $mform->addRule('submissionstatement', get_string('required'), 'required', null, 'client');
+        }
         
         $this->add_plugin_submission_elements($submission, $mform, $data);
 
@@ -2515,7 +2578,8 @@ class assignment {
             }
             $grade->grader= $USER->id;
 
-            $gradebook_plugin = $CFG->mod_assign_feedback_plugin_for_gradebook;
+            $config = get_config('assign');
+            $gradebook_plugin = $config->feedback_plugin_for_gradebook;
 
             // call save in plugins
             foreach ($this->feedback_plugins as $plugin) {
