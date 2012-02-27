@@ -2056,10 +2056,10 @@ class assignment {
         $gradebook_grade['usermodified'] = $grade->grader;
         $gradebook_grade['datesubmitted'] = NULL;
         $gradebook_grade['dategraded'] = $grade->timemodified;
-        if ($grade->feedbackformat) {
+        if (isset($grade->feedbackformat)) {
             $gradebook_grade['feedbackformat'] = $grade->feedbackformat;
         }
-        if ($grade->feedbacktext) {
+        if (isset($grade->feedbacktext)) {
             $gradebook_grade['feedback'] = $grade->feedbacktext;
         }
        
