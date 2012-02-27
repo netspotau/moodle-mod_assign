@@ -2121,7 +2121,6 @@ class assignment {
         
             $gradebook_grade = $this->convert_grade_for_gradebook($grade);
         }
-        var_dump($gradebook_grade);
         return grade_update('mod/assign', $this->get_course()->id, 'mod', 'assign', $this->instance->id, 0, $gradebook_grade, $params);
     }
 
