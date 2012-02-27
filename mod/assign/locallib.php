@@ -1180,12 +1180,6 @@ class assignment {
         global $CFG, $DB, $OUTPUT,$PAGE;
                      
         $tablecolumns = array('picture', 'fullname', 'status', 'edit', 'grade');
-        if ($this->is_any_submission_plugin_enabled()) {
-            $tablecolumns[] = 'timemodified';
-        }
-        $tablecolumns[] = 'timemarked';
-        $tablecolumns[] = 'finalgrade';
-
         $tableheaders = array('',
                               get_string('fullnameuser'),
                               get_string('status'),
@@ -1193,9 +1187,30 @@ class assignment {
                               get_string('grade'));
 
         if ($this->is_any_submission_plugin_enabled()) {
+            $tablecolumns[] = 'timemodified';
             $tableheaders[] = get_string('lastmodified').' ('.get_string('submission', 'assign').')';
+
+            // add all submission plugin summaries to the table
+            foreach ($this->submission_plugins as $plugin) {
+                if ($plugin->is_visible() && $plugin->is_enabled()) {
+                    $tablecolumns[] = 'submission_' . $plugin->get_type();
+                    $tableheaders[] = $plugin->get_name();
+                }
+            }
         }
+        $tablecolumns[] = 'timemarked';
         $tableheaders[] = get_string('lastmodified').' ('.get_string('grade').')';
+
+        // add all submission plugin summaries to the table
+        foreach ($this->feedback_plugins as $plugin) {
+            if ($plugin->is_visible() && $plugin->is_enabled()) {
+                $tablecolumns[] = 'feedback_' . $plugin->get_type();
+                $tableheaders[] = $plugin->get_name();
+            }
+        }
+        
+
+        $tablecolumns[] = 'finalgrade';
         $tableheaders[] = get_string('finalgrade', 'grades');
 
         // more efficient to load this here
@@ -1223,8 +1238,18 @@ class assignment {
         $table->column_class('grade', 'grade');
         if ($this->is_any_submission_plugin_enabled()) {
             $table->column_class('timemodified', 'timemodified');
+            foreach ($this->submission_plugins as $plugin) {
+                if ($plugin->is_visible() && $plugin->is_enabled()) {
+                    $table->column_class('submission_' . $plugin->get_type(), 'submission_' . $plugin->get_type());
+                }
+            }
         }
         $table->column_class('timemarked', 'timemarked');
+        foreach ($this->feedback_plugins as $plugin) {
+            if ($plugin->is_visible() && $plugin->is_enabled()) {
+                $table->column_class('feedback_' . $plugin->get_type(), 'feedback_' . $plugin->get_type());
+            }
+        }
         $table->column_class('finalgrade', 'finalgrade');
 
         $table->set_attribute('cellspacing', '0');
@@ -1257,7 +1282,7 @@ class assignment {
         $ufields = user_picture::fields('u');
         if (!empty($users)) {
             $select = "SELECT $ufields,
-                              s.id AS submissionid, g.grade, s.status,
+                              s.id AS submissionid, g.grade, g.id as gradeid, s.status,
                               s.timemodified as timesubmitted, g.timemodified AS timemarked, g.locked ";
             $sql = 'FROM {user} u '.
                    'LEFT JOIN {assign_submission} s ON u.id = s.userid
@@ -1328,11 +1353,41 @@ class assignment {
 
                     $renderer = $PAGE->get_renderer('mod_assign');
 
+                    $row = array($picture, $userlink, $status, $edit, $grade);
+    
+                    
+
                     if ($this->is_any_submission_plugin_enabled()) {
-                        $row = array($picture, $userlink, $status, $edit, $grade, $studentmodified, $teachermodified, $finalgrade);
-                    } else {
-                        $row = array($picture, $userlink, $status, $edit, $grade, $teachermodified, $finalgrade);
+                        $row[] = $studentmodified;
+                        $submission = null;
+                        if ($auser->submissionid) {
+                            $submission = $this->get_submission(null, $auser->submissionid, false);
+                        }
+                        foreach ($this->submission_plugins as $plugin) {
+                            if ($plugin->is_visible() && $plugin->is_enabled()) {
+                                if ($submission) {
+                                    $row[] = $this->format_plugin_summary_with_link($plugin, $submission, 'grading');
+                                } else {
+                                    $row[] = '-';
+                                }
+                            }
+                        }
+                    } 
+                    $row[] = $teachermodified;
+                    $grade = null;
+                    if ($auser->gradeid) {
+                        $grade = $this->get_grade(null, $auser->gradeid, false);
                     }
+                    foreach ($this->feedback_plugins as $plugin) {
+                        if ($plugin->is_visible() && $plugin->is_enabled()) {
+                            if ($grade) {
+                                $row[] = $this->format_plugin_summary_with_link($plugin, $grade, 'grading');
+                            } else {
+                                $row[] = '-';
+                            }
+                        }
+                    }
+                    $row[] = $finalgrade;
                     $table->add_data($row);
                 }
             }
@@ -1724,12 +1779,13 @@ class assignment {
      * This will retrieve a grade object from the db, optionally creating it if required
      *
      * @global object $DB
+     * @global object $USER
      * @param int $userid The user we are grading
      * @param bool $create If true the grade will be created if it does not exist
      * @return object The grade record
      */
     private function get_grade($userid=0, $gradeid=0, $create = false) {
-        global $DB;
+        global $DB, $USER;
 
         if (!$userid && !$gradeid) {
             $userid = $USER->id;
@@ -2781,6 +2837,38 @@ class assignment {
         return $this->cache['any_submission_plugin_enabled'];
         
     }
+
+    /**
+     * Write the plugin summary with an optional link to view the full feedback/submission.
+     *
+     * @global $OUTPUT
+     * @param object $plugin Submission plugin or feedback plugin
+     * @param object $item Submission or grade
+     * @param string $returnaction The return action to pass to the view_submission page (the current page)
+     * @param string $returnparams The return params to pass to the view_submission page (the current page)
+     * @return string The summary with an optional link
+     */
+    private function format_plugin_summary_with_link($plugin, $item, $returnaction='view', $returnparams=array()) {
+        global $OUTPUT;
+        $link = '';
+    
+        if ($plugin->show_view_link($item)) {
+            $icon = $OUTPUT->pix_icon('t/preview', get_string('view' . $plugin->get_subtype(), 'mod_assign'));
+            $link = $OUTPUT->action_link(
+                                new moodle_url('/mod/assign/view.php', 
+                                               array('id' => $this->get_course_module()->id, 
+                                                     'sid'=>$item->id, 
+                                                     'gid'=>$item->id, 
+                                                     'plugin'=>$plugin->get_type(), 
+                                                     'action'=>'viewplugin' . $plugin->get_subtype(), 
+                                                     'returnaction'=>$returnaction, 
+                                                     'returnparams'=>http_build_query($returnparams))), 
+                                $icon);
+            $link .= $OUTPUT->spacer(array('width'=>15));
+        }
+
+        return $link . $plugin->view_summary($item);
+    }
         
     /**
      * display submission status page 
@@ -2908,14 +2996,9 @@ class assignment {
         if ($submission) {
             foreach ($this->submission_plugins as $plugin) {
                 if ($plugin->is_enabled() && $plugin->is_visible()) {
-                    $link = '';
-                    if ($plugin->show_view_link($submission)) {
-                        $link = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'sid'=>$submission->id, 'plugin'=>$plugin->get_type(), 'action'=>'viewpluginsubmission', 'returnaction'=>$return_action, 'returnparams'=>http_build_query($return_params))), $OUTPUT->pix_icon('t/preview', get_string('viewsubmission', 'mod_assign')));
-                        $link .= $OUTPUT->spacer(array('width'=>15));
-                    }
                     $row = new html_table_row();
                     $cell1 = new html_table_cell($plugin->get_name());
-                    $cell2 = new html_table_cell($link . $plugin->view_summary($submission));
+                    $cell2 = new html_table_cell($this->format_plugin_summary_with_link($plugin, $submission, $return_action, $return_params));
                     $row->cells = array($cell1, $cell2);
                     $t->data[] = $row;
                 }
@@ -3024,16 +3107,11 @@ class assignment {
     
         foreach ($this->feedback_plugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
-                $link = '';
-                if ($plugin->show_view_link($assignment_grade) != '') {
-                    $link = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'gid'=>$assignment_grade->id, 'plugin'=>$plugin->get_type(), 'action'=>'viewpluginfeedback', 'returnaction'=>'view')), $OUTPUT->pix_icon('t/preview', get_string('viewfeedback', 'mod_assign')));
-                    $link .= $OUTPUT->spacer(array('width'=>15));
-                }
-                $feedback = $plugin->view_summary($assignment_grade);
+                $feedback = $this->format_plugin_summary_with_link($plugin, $assignment_grade);
                 if ($feedback != '') {
                     $row = new html_table_row();
                     $cell1 = new html_table_cell($plugin->get_name());
-                    $cell2 = new html_table_cell($link . $feedback);
+                    $cell2 = new html_table_cell($feedback);
                     $row->cells = array($cell1, $cell2);
                     $t->data[] = $row;
                 }
