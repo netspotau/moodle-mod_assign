@@ -428,6 +428,17 @@ abstract class assignment_plugin {
     }
     
     /**
+     * Should not output anything - return the result as a string so it can be consumed by webservices.
+     * 
+     * mainly used for formatting plain text for an assignment submission update receipt emailed to students
+     * @param object $submission_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
+     * @return string - return a string representation of the submission in full
+     */
+    public function view_plain_text($submission_grade) {
+        return '';
+    }
+    
+    /**
      * Given a field name, should return the text of an editor field that is part of
      * this plugin. This is used when exporting to portfolio.
      *

@@ -222,6 +222,27 @@ class submission_onlinetext extends submission_plugin {
         return '';
     }
 
+    
+     /**
+     * Should not output anything - return the result as a string so it can be consumed by webservices.
+     * 
+     * mainly used for formatting plain text for an assignment submission update receipt emailed to students
+     * @param object $submission_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
+     * @return string - return a string representation of the submission in full
+     */
+    public function view_plain_text($submission) {
+        global $OUTPUT, $USER;
+
+        $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
+
+        if ($onlinetext_submission) {
+            $text = format_text($onlinetext_submission->onlinetext);
+            $shorttext = shorten_text($text, 1000);
+            return $shorttext;
+        }
+        return '';
+    }
+
     /**
      * Produce a list of files suitable for export that represent this submission
      * 

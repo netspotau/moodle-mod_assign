@@ -65,6 +65,30 @@ $string['emailgradermailhtml'] = '{$a->username} has updated their assignment su
 for <i>\'{$a->assignment}\'  at {$a->timeupdated}</i><br /><br />
 It is <a href="{$a->url}">available on the web site</a>.';
 $string['enabled'] = 'Enabled';
+
+$string['emailstudentmail'] = '{$a->username} has ##################################3
+for \'{$a->assignment}\' at {$a->timeupdated}
+
+It is available here:
+
+    {$a->url}';
+
+
+$string['emailstudentmailhtml'] = '{$a->username} has updated his/her assignment submission
+for <i>\'{$a->assignment}\'  at {$a->timeupdated}</i><br /><br />
+<a href="{$a->url}">Your submission has been updated. </a>. <br />
+----------------------------------------------------------';
+
+
+
+
+
+
+
+
+
+
+
 $string['errornosubmissions'] = 'There are no submissions to download';
 $string['feedbackcomments'] = 'Feedback Comments';
 $string['feedback'] = 'Feedback';

@@ -44,11 +44,12 @@ class mod_assign_renderer extends plugin_renderer_base {
      * 
      * @param object $context
      * @param int $userid
+     * @param bool $includelink
      * @param string $filearea
      * @return string
      */
-    public function assign_files($context, $userid, $filearea='submission') {
-        return $this->render(new assign_files($context, $userid, $filearea));
+    public function assign_files($context, $userid, $filearea='submission',$includelink=true) {
+        return $this->render(new assign_files($context, $userid, $filearea,$includelink));
     }
 
     /**
@@ -119,7 +120,7 @@ class mod_assign_renderer extends plugin_renderer_base {
  * is used by the assign module.
  *
  * @package mod-assign
- * @copyright
+ * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  **/
 class assign_files implements renderable {
@@ -137,78 +138,92 @@ class assign_files implements renderable {
      * @global object $USER
      * @param object $context
      * @param int $sid
+     * @param bool $includelink
      * @param string $filearea 
      */
-    public function __construct($context, $sid, $filearea='submission') {
-        global $CFG,$USER;
+    public function __construct($context, $sid, $filearea='submission', $includelink=true) {
+        global $CFG, $USER;
         $this->context = $context;
         list($context, $course, $cm) = get_context_info_array($context->id);
         $this->cm = $cm;
         $this->course = $course;
         $fs = get_file_storage();
         $this->dir = $fs->get_area_tree($this->context->id, 'mod_assign', $filearea, $sid);
-        
-         $files = $fs->get_area_files($this->context->id, 'mod_assign', $filearea, $sid, "timemodified", false);
-        
-        if (!empty($CFG->enableportfolios)) {
-            require_once($CFG->libdir . '/portfoliolib.php');
-           // $files = $fs->get_area_files($this->context->id, 'mod_assign', $filearea, $sid, "timemodified", false);
-            if (count($files) >= 1 && has_capability('mod/assign:exportownsubmission', $this->context)) {
-                $button = new portfolio_add_button();
-                $button->set_callback_options('assign_portfolio_caller', array('cmid' => $this->cm->id, 'sid'=>$sid, 'area'=>$filearea), '/mod/assign/portfolio_callback.php');
-                $button->reset_formats();
-                $this->portfolioform = $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
-            }
-           
-        }
-        
-         // plagiarism check if it is enabled
-        $output = '';        
-        if (!empty($CFG->enableplagiarism)) {
-            require_once($CFG->libdir . '/plagiarismlib.php');
-            
-            // for plagiarism_get_links
-            $assignment = new assignment($this->context);
-            foreach ($files as $file) {
 
-               $output .= plagiarism_get_links(array('userid' => $sid,
-                   'file' => $file,
-                   'cmid' => $this->cm->id,
-                   'course' => $this->course,
-                   'assignment' => $assignment->get_instance()));
-                
-               $output .= '<br />';
+        $files = $fs->get_area_files($this->context->id, 'mod_assign', $filearea, $sid, "timemodified", false);
+
+        if ($includelink == true) {
+
+            if (!empty($CFG->enableportfolios)) {
+                require_once($CFG->libdir . '/portfoliolib.php');
+                // $files = $fs->get_area_files($this->context->id, 'mod_assign', $filearea, $sid, "timemodified", false);
+                if (count($files) >= 1 && has_capability('mod/assign:exportownsubmission', $this->context)) {
+                    $button = new portfolio_add_button();
+                    $button->set_callback_options('assign_portfolio_caller', array('cmid' => $this->cm->id, 'sid' => $sid, 'area' => $filearea), '/mod/assign/portfolio_callback.php');
+                    $button->reset_formats();
+                    $this->portfolioform = $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
+                }
             }
+
+            // plagiarism check if it is enabled
+            $output = '';
+            if (!empty($CFG->enableplagiarism)) {
+                require_once($CFG->libdir . '/plagiarismlib.php');
+
+                // for plagiarism_get_links
+                $assignment = new assignment($this->context);
+                foreach ($files as $file) {
+
+                    $output .= plagiarism_get_links(array('userid' => $sid,
+                        'file' => $file,
+                        'cmid' => $this->cm->id,
+                        'course' => $this->course,
+                        'assignment' => $assignment->get_instance()));
+
+                    $output .= '<br />';
+                }
+            }
+
+            $this->preprocess($this->dir, $filearea, true);
+        } else {
+
+            $this->preprocess($this->dir, $filearea, false);
         }
-        
-       $this->preprocess($this->dir, $filearea);
     }
-    
+
     /**
      * preprocessing 
      * 
      * @global object $CFG
      * @param array $dir
+     * @param bool $includelink
      * @param string $filearea 
      */
-    public function preprocess($dir, $filearea) {
+    public function preprocess($dir, $filearea, $includelink =true) {
         global $CFG;
         foreach ($dir['subdirs'] as $subdir) {
             $this->preprocess($subdir, $filearea);
         }
         foreach ($dir['files'] as $file) {
             $file->portfoliobutton = '';
-            if (!empty($CFG->enableportfolios)) {
-                $button = new portfolio_add_button();
-                if (has_capability('mod/assign:exportownsubmission', $this->context)) {
-                    $button->set_callback_options('assign_portfolio_caller', array('cmid' => $this->cm->id, 'fileid' => $file->get_id()), '/mod/assign/portfolio_callback.php');
-                    $button->set_format_by_file($file);
-                    $file->portfoliobutton = $button->to_html(PORTFOLIO_ADD_ICON_LINK);
+
+            if ($includelink == true) {
+                if (!empty($CFG->enableportfolios)) {
+                    $button = new portfolio_add_button();
+                    if (has_capability('mod/assign:exportownsubmission', $this->context)) {
+                        $button->set_callback_options('assign_portfolio_caller', array('cmid' => $this->cm->id, 'fileid' => $file->get_id()), '/mod/assign/portfolio_callback.php');
+                        $button->set_format_by_file($file);
+                        $file->portfoliobutton = $button->to_html(PORTFOLIO_ADD_ICON_LINK);
+                    }
                 }
+
+                $url = file_encode_url("$CFG->wwwroot/pluginfile.php", '/' . $this->context->id . '/mod_assign/' . $filearea . '/' . $file->get_itemid() . $file->get_filepath() . $file->get_filename(), true);
+                $filename = $file->get_filename();
+                $file->fileurl = html_writer::link($url, $filename);
+            } else {
+
+                $file->fileurl = ''; // plain text with no link
             }
-            $url = file_encode_url("$CFG->wwwroot/pluginfile.php", '/'.$this->context->id.'/mod_assign/'.$filearea.'/'.$file->get_itemid(). $file->get_filepath().$file->get_filename(), true);
-            $filename = $file->get_filename();
-            $file->fileurl = html_writer::link($url, $filename);
         }
     }
 }

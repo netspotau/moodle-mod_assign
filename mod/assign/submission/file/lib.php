@@ -253,12 +253,28 @@ class submission_file extends submission_plugin {
     public function view_summary($submission) {
         $count = $this->count_files($submission->id);
         if ($count <= ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES) {
-            return $this->assignment->render_area_files(ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
+            return $this->assignment->render_area_files(ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id,true);
         } else {
             return get_string('countfiles', 'submission_file', $count);
         }
     }
 
+    
+     /**
+     * Should not output anything - return the result as a string so it can be consumed by webservices.
+     * 
+     * mainly used for formatting plain text for an assignment submission update receipt emailed to students
+     * @param object $submission_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
+     * @return string - return a string representation of the submission in full
+     */
+     public function view_plain_text($submission) {
+
+
+        return $this->assignment->render_area_files(ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id, false);
+    }
+    
+    
+    
     /**
      * Should the assignment module show a link to view the full submission or feedback for this plugin?
      *
@@ -276,7 +292,7 @@ class submission_file extends submission_plugin {
      * @return string 
      */
     public function view($submission) {
-        return $this->assignment->render_area_files(ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
+        return $this->assignment->render_area_files(ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id,true);
     }
     
 
