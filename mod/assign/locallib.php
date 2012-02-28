@@ -2302,57 +2302,7 @@ class assignment {
             }
         }
     }
-    
-    /**
-     * Returns a list of students that should be grading given submission
-     *
-     * @param object $user
-     * @return array
-     
-    private function get_students($user) {
-        //potential students using submit permission
-        $potstudents = get_users_by_capability($this->context, 'mod/assign:submit', '', '', '', '', '', '', false, false);
-
-        $students = array();
-        if (groups_get_activity_groupmode($this->get_course_module()) == SEPARATEGROUPS) {   // Separate groups are being used
-            if ($groups = groups_get_all_groups($this->get_course()->id, $user->id)) {  // Try to find all groups
-                foreach ($groups as $group) {
-                    foreach ($potstudents as $t) {
-                        if ($t->id == $user->id) {
-                            continue; // do not send self
-                        }
-                        if (groups_is_member($group->id, $t->id)) {
-                            $students[$t->id] = $t;
-                        }
-                    }
-                }
-            } else {
-                // user not in group, try to find students without group
-                foreach ($potstudents as $t) {
-                    if ($t->id == $user->id) {
-                        continue; // do not send self
-                    }
-                    if (!groups_has_membership($this->get_course_module(), $t->id)) {
-                        $students[$t->id] = $t;
-                    }
-                }
-            }
-        } else {
-            foreach ($potstudents as $t) {
-                if ($t->id == $user->id) {
-                    continue; // do not send self
-                }
-                // must be enrolled
-                if (is_enrolled($this->get_course_context(), $t->id)) {
-                    $students[$t->id] = $t;
-                }
-            }
-        }
-        return $students;
-    }
-
-    
-    */
+      
      /**
      * Creates the text content for emails to students
      * 
@@ -2375,24 +2325,19 @@ class assignment {
      * @param $info object The info used by the 'emailstudentmailhtml' language string
      * @return string
      */
-    private function format_email_student_html($info,$userid=null) {
+    private function format_email_student_html($info, $userid=null) {
         global $CFG, $OUTPUT;
-        
+
         // check with if statement if which submission plugin is enabled and the output html format accordingly
-        // 
-         $posthtml  = '<font face="sans-serif">';
-       //$posthtml  = '<p><font face="sans-serif">'.
-                   //  '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$this->get_course()->id.'">'.format_string($this->get_course()->shortname, true, array('context' => $this->get_course_context())).'</a> ->'.
-                 //    '<a href="'.$CFG->wwwroot.'/mod/assignment/index.php?id='.$this->get_course()->id.'">'.$this->get_module_name().'</a> ->'.
-                 //    '<a href="'.$CFG->wwwroot.'/mod/assignment/view.php?id='.$this->get_course_module()->id.'">'.format_string($this->instance->name, true, array('context' => $this->context)).'</a></font></p>';
+
+        $posthtml = '<font face="sans-serif">';
+
         $posthtml .= '<hr /><font face="sans-serif">';
-        
-         
-    //    $posthtml .= '<p>'.get_string('emailstudentmailhtml', 'assign', $info).'</p>';
+
         $time = time();
-         $submission = $this->get_submission($userid);
+        $submission = $this->get_submission($userid);
         $grade = $this->get_grade($userid);
-         $t = new html_table();
+        $t = new html_table();
 
         // status
         $row = new html_table_row();
@@ -2421,8 +2366,7 @@ class assignment {
         $row->cells = array($cell1, $cell2);
         $t->data[] = $row;
 
-        
-        
+
         if ($this->instance->duedate >= 1) {
             // due date
             $row = new html_table_row();
@@ -2430,13 +2374,13 @@ class assignment {
             $cell2 = new html_table_cell(userdate($this->instance->duedate));
             $row->cells = array($cell1, $cell2);
             $t->data[] = $row;
-            
+
             // time remaining
             $row = new html_table_row();
             $cell1 = new html_table_cell(get_string('timeremaining', 'assign'));
             if ($this->instance->duedate - $time <= 0) {
                 if (!$submission || $submission->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED &&
-                    $submission->status != ASSIGN_SUBMISSION_STATUS_LOCKED) {
+                        $submission->status != ASSIGN_SUBMISSION_STATUS_LOCKED) {
                     $cell2 = new html_table_cell(get_string('overdue', 'assign', format_time($time - $this->instance->duedate)));
                 } else {
                     if ($info->timeupdated > $this->instance->duedate) {
@@ -2450,7 +2394,7 @@ class assignment {
             }
             $row->cells = array($cell1, $cell2);
             $t->data[] = $row;
-        } 
+        }
 
         // last modified 
         $row = new html_table_row();
@@ -2466,10 +2410,10 @@ class assignment {
         if ($submission) {
             foreach ($this->submission_plugins as $plugin) {
                 if ($plugin->is_enabled() && $plugin->is_visible()) {
-                    
+
                     $link = '';
-                     
-                     $view_plain=$plugin->view_plain_text($submission);
+
+                    $view_plain = $plugin->view_plain_text($submission);
                     // dont list submmission comment here thuse use !empty
                     if (!empty($view_plain)) {
                         $row = new html_table_row();
@@ -2479,25 +2423,16 @@ class assignment {
                         $t->data[] = $row;
                     }
                 }
-                
-          
-                
             }
         }
-        
-       
-       
-                      
-       // echo html_writer::table($t);
-        
-        
-          $posthtml .= html_writer::table($t);
+
+
+        $posthtml .= html_writer::table($t);
         $posthtml .= '</font><hr />';
         return $posthtml;
     }
-    
-    
-     /**
+
+    /**
      * email students upon student submission updates
      * 
      * @global object $CFG
