@@ -716,9 +716,18 @@ class assignment {
         plagiarism_get_form_elements_module($mform, $course_context);
                
         $mform->addElement('header', 'general', get_string('notifications', 'assign'));
-        $mform->addElement('select', 'sendnotifications', get_string('sendnotifications', 'assign'), $ynoptions);
-        $mform->setDefault('sendnotifications', 1);
-
+        $mform->addElement('select', 'notifymarkers', get_string('notifymarkers', 'assign'), $ynoptions);
+        $mform->setDefault('notifymarkers', 0);
+        $mform->addElement('select', 'notifymarkerslate', get_string('notifymarkerslate', 'assign'), $ynoptions);
+        $mform->setDefault('notifymarkerslate', 0);
+        $mform->addElement('select', 'notifystudentsfeedback', get_string('notifystudentsfeedback', 'assign'), $ynoptions);
+        $mform->setDefault('notifystudentsfeedback', 0);
+        $mform->addElement('select', 'notifystudentownsubmission', get_string('notifystudentownsubmission', 'assign'), $ynoptions);
+        $mform->setDefault('notifystudentownsubmission', 0);
+        
+        
+        
+        
         $this->add_all_plugin_settings($mform);
     }
 
@@ -1002,28 +1011,48 @@ class assignment {
          return false;
     }
 
-    
-     /**
+    /**
+     * Return list of marked submissions that have not been mailed out for currently enrolled students
+     *
+     * @return array
+     */
+    function get_unmailed_submissions($starttime, $endtime) {
+        global $CFG, $DB;
+
+        return $DB->get_records_sql("SELECT g.*, a.course, a.name
+                                   FROM {assign_grades} g,
+                                        {assignment} a
+                                  WHERE g.mailed = 0
+                                        AND g.timecreated <= ?
+                                        AND g.timecreated >= ?
+                                        AND g.assignment = a.id", array($endtime, $starttime));
+    }
+
+    /**
      * Function to send notification periodically according to the moodle cron
      *
      * Finds all assignment notifications that have yet to be mailed out, and mails them
      */
-    public function send_notification() {
+    public function send_feedback_notification() {
 
         /// Notices older than 1 day will not be mailed.  This is to avoid the problem where
         /// cron has not been running for a long time, and then suddenly people are flooded
         /// with mail from the past few weeks or months
-
+         //notifystudentsfeedback
+        if (empty($this->instance->notifystudentsfeedback)) {          // No need to do anything
+            return;
+        }
+        
         $timenow = time();
         $endtime = $timenow - $CFG->maxeditingtime;
         $starttime = $endtime - 24 * 3600;   /// One day earlier
 
-        if ($submissions = assignment_get_unmailed_submissions($starttime, $endtime)) {
+        if ($submissions = $this->get_unmailed_submissions($starttime, $endtime)) {
 
             $realuser = clone($USER);
 
             foreach ($submissions as $key => $submission) {
-                $DB->set_field("assignment_grades", "mailed", "1", array("id" => $submission->id));
+                $DB->set_field("assign_grades", "mailed", "1", array("id" => $submission->id));
             }
 
             $timenow = time();
@@ -1103,7 +1132,7 @@ class assignment {
                 $eventdata->fullmessagehtml = $posthtml;
                 $eventdata->smallmessage = get_string('assignmentmailsmall', 'assign', $assignmentinfo);
 
-                $eventdata->name = 'assign_updates';
+                $eventdata->name = 'assign_marked';
                 $eventdata->component = 'mod_assign';
                 $eventdata->notification = 1;
                 $eventdata->contexturl = $assignmentinfo->url;
@@ -1117,16 +1146,6 @@ class assignment {
     }
 
     
-    /**
-     * Plugin cron method - do not use $this here, create new assignment instances if needed.
-     * @return void
-     */
-    function cron() {
-        //no plugin cron by default - override if needed
-        
-        
-    }
-    
    
     
     /**
@@ -1134,7 +1153,7 @@ class assignment {
      *
      * Finds all assignment notifications that have yet to be mailed out, and mails them
      */
-    function assign_cron() {
+    function cron() {
         global $CFG, $USER, $DB;
 
         /// first execute all crons in submission plugins
@@ -1154,7 +1173,7 @@ class assignment {
             }
         }
 
-        $this->send_notification();
+     //   $this->send_feedback_notification();
 
         return true;
     }
@@ -1614,9 +1633,13 @@ class assignment {
         
         // more efficient to load this here
         require_once($CFG->libdir.'/filelib.php');
-
+        
+        
+        
         // load all submissions
         $submissions = $this->get_all_submissions('','');
+        
+                
         
         if (empty($submissions)) {
             print_error('errornosubmissions', 'assign');
@@ -2259,48 +2282,98 @@ class assignment {
     private function email_graders($submission) {
         global $CFG, $DB;
 
-        if (empty($this->instance->sendnotifications)) {          // No need to do anything
-            return;
-        }
+        if (!empty($this->instance->notifymarkers)) {          
+            
+          
+             $user = $DB->get_record('user', array('id'=>$submission->userid));
 
-        $user = $DB->get_record('user', array('id'=>$submission->userid));
+            if ($teachers = $this->get_graders($user)) {
 
-        if ($teachers = $this->get_graders($user)) {
+                $strassignments = $this->get_module_name_plural();
+                $strassignment  = $this->get_module_name();
+                $strsubmitted  = get_string('submitted', 'assign');
 
-            $strassignments = $this->get_module_name_plural();
-            $strassignment  = $this->get_module_name();
-            $strsubmitted  = get_string('submitted', 'assign');
+                foreach ($teachers as $teacher) {
+                    $info = new stdClass();
+                    $info->username = fullname($user, true);
+                    $info->assignment = format_string($this->instance->name,true);
+                    $info->url = $CFG->wwwroot.'/mod/assign/view.php?id='.$this->get_course_module()->id;
+                    $info->timeupdated = strftime('%c',$submission->timemodified);
 
-            foreach ($teachers as $teacher) {
-                $info = new stdClass();
-                $info->username = fullname($user, true);
-                $info->assignment = format_string($this->instance->name,true);
-                $info->url = $CFG->wwwroot.'/mod/assign/view.php?id='.$this->get_course_module()->id;
-                $info->timeupdated = strftime('%c',$submission->timemodified);
+                    $postsubject = $strsubmitted.': '.$info->username.' -> '.$this->instance->name;
+                    $posttext = $this->format_email_grader_text($info);
+                    $posthtml = ($teacher->mailformat == 1) ? $this->format_email_grader_html($info) : '';
 
-                $postsubject = $strsubmitted.': '.$info->username.' -> '.$this->instance->name;
-                $posttext = $this->format_email_grader_text($info);
-                $posthtml = ($teacher->mailformat == 1) ? $this->format_email_grader_html($info) : '';
+                    $eventdata = new stdClass();
+                    $eventdata->modulename       = 'assign';
+                    $eventdata->userfrom         = $user;
+                    $eventdata->userto           = $teacher;
+                    $eventdata->subject          = $postsubject;
+                    $eventdata->fullmessage      = $posttext;
+                    $eventdata->fullmessageformat = FORMAT_PLAIN;
+                    $eventdata->fullmessagehtml  = $posthtml;
+                    $eventdata->smallmessage     = $postsubject;
 
-                $eventdata = new stdClass();
-                $eventdata->modulename       = 'assign';
-                $eventdata->userfrom         = $user;
-                $eventdata->userto           = $teacher;
-                $eventdata->subject          = $postsubject;
-                $eventdata->fullmessage      = $posttext;
-                $eventdata->fullmessageformat = FORMAT_PLAIN;
-                $eventdata->fullmessagehtml  = $posthtml;
-                $eventdata->smallmessage     = $postsubject;
+                    $eventdata->name            = 'assign_submitted';
+                    $eventdata->component       = 'mod_assign';
+                    $eventdata->notification    = 1;
+                    $eventdata->contexturl      = $info->url;
+                    $eventdata->contexturlname  = $info->assignment;
 
-                $eventdata->name            = 'assign_updates';
-                $eventdata->component       = 'mod_assign';
-                $eventdata->notification    = 1;
-                $eventdata->contexturl      = $info->url;
-                $eventdata->contexturlname  = $info->assignment;
-
-                message_send($eventdata);
+                    message_send($eventdata);
+                }
             }
+            
+        } else if ((empty($this->instance->notifymarkers)) and (!empty($this->instance->notifymarkerslate))){
+            
+           // $timenow = time();
+             // work out late submission
+           if (($this->instance->duedate - $submission->timecreated) < 0) {
+
+
+                $user = $DB->get_record('user', array('id' => $submission->userid));
+
+                if ($teachers = $this->get_graders($user)) {
+
+                    $strassignments = $this->get_module_name_plural();
+                    $strassignment = $this->get_module_name();
+                    $strsubmitted = get_string('submitted', 'assign');
+
+                    foreach ($teachers as $teacher) {
+                        $info = new stdClass();
+                        $info->username = fullname($user, true);
+                        $info->assignment = format_string($this->instance->name, true);
+                        $info->url = $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id;
+                        $info->timeupdated = strftime('%c', $submission->timemodified);
+
+                        $postsubject = $strsubmitted . ': ' . $info->username . ' -> ' . $this->instance->name;
+                        $posttext = $this->format_email_grader_text($info);
+                        $posthtml = ($teacher->mailformat == 1) ? $this->format_email_grader_html($info) : '';
+
+                        $eventdata = new stdClass();
+                        $eventdata->modulename = 'assign';
+                        $eventdata->userfrom = $user;
+                        $eventdata->userto = $teacher;
+                        $eventdata->subject = $postsubject;
+                        $eventdata->fullmessage = $posttext;
+                        $eventdata->fullmessageformat = FORMAT_PLAIN;
+                        $eventdata->fullmessagehtml = $posthtml;
+                        $eventdata->smallmessage = $postsubject;
+
+                        $eventdata->name = 'assign_submitted';
+                        $eventdata->component = 'mod_assign';
+                        $eventdata->notification = 1;
+                        $eventdata->contexturl = $info->url;
+                        $eventdata->contexturlname = $info->assignment;
+
+                        message_send($eventdata);
+                    }
+                }
+            }
+             return;
         }
+       // No need to do anything
+       return;
     }
       
      /**
@@ -2433,7 +2506,7 @@ class assignment {
     }
 
     /**
-     * email students upon student submission updates
+     * email a student when his assigment submission is submittted 
      * 
      * @global object $CFG
      * @global object $DB
@@ -2443,7 +2516,7 @@ class assignment {
     private function email_student($submission) {
         global $CFG, $DB;
 
-        if (empty($this->instance->sendnotifications)) {          // No need to do anything
+        if (empty($this->instance->notifystudentownsubmission)) {          // No need to do anything
             return;
         }
 
@@ -2476,7 +2549,7 @@ class assignment {
                 $eventdata->fullmessagehtml  = $posthtml;
                 $eventdata->smallmessage     = $postsubject;
 
-                $eventdata->name            = 'assign_updates';
+                $eventdata->name            = 'assign_ownsubmission';
                 $eventdata->component       = 'mod_assign';
                 $eventdata->notification    = 1;
                 $eventdata->contexturl      = $info->url;

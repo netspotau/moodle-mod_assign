@@ -117,7 +117,18 @@ $string['locksubmissionforstudent'] = 'Prevent any more submissions for student:
 $string['managefeedbackplugins'] = 'Manage Feedback Plugins';
 $string['managesubmissionplugins'] = 'Manage Submission Plugins';
 $string['maximumsize'] = 'Max';
-$string['messageprovider:assign_updates'] = 'Assignment notifications';
+$string['messageprovider:assign_submitted'] = 'Assignment notifications';
+
+$string['messageprovider:assign_ownsubmission'] = 'Assignment own submission notifications';
+
+$string['messageprovider:assign_marked'] = 'Assignment marked notifications';
+
+//$string['messageprovider:assign_updates'] = 'Assignment notifications';
+
+
+
+
+
 $string['minfilessubmission'] = 'Minimum number of uploaded files';
 $string['modulename'] = 'Assignment';
 $string['modulename_help'] = 'Assignments enable the teacher to specify a task either on or offline which can then be graded.';
@@ -148,7 +159,23 @@ $string['savecomments'] = 'Save submission comments';
 $string['savefiles'] = 'Save files';
 $string['savenext'] = 'Save and show next';
 $string['saveonlinetext'] = 'Save changes';
-$string['sendnotifications'] = 'Send notifications to graders';
+
+//$string['sendnotifications'] = 'Send notifications to graders';
+
+
+
+$string['notifymarkers'] = 'Send notifications to graders when assignment submitted';
+
+$string['notifymarkerslate'] = 'Email alerts to graders when late submission ';
+$string['notifystudentsfeedback'] = 'Send notifications to student when assignment marked ';
+
+$string['notifystudentownsubmission'] = 'Send notifications to student when assignment submitted';
+
+
+
+
+
+
 $string['submissioncommentnumwords'] = 'Number of words in submission comment: {$a}. ';
 $string['submissioncomments'] = 'Enable submission comments';
 $string['submissioncomment'] = 'Submission comments';

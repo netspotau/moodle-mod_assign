@@ -74,7 +74,7 @@ class assignment_upgrade_manager {
         $data->name = $oldassignment->name;
         $data->intro = $oldassignment->intro;
         $data->introformat = $oldassignment->introformat;
-        $data->sendnotifications = $oldassignment->emailteachers;
+        $data->notifymarkers = $oldassignment->emailteachers;
         $data->duedate = $oldassignment->timedue;
         $data->allowsubmissionsfromdate = $oldassignment->timeavailable;
         $data->grade = $oldassignment->grade;

@@ -26,7 +26,10 @@
 $messageproviders = array (
 
 /// Ordinary assignment submissions
-    'assign_updates' => array (
+    'assign_submitted' => array ( // should be 'submitted'
+    ),   
+    'assign_ownsubmission' => array (
+    ),
+    'assign_marked' => array (
     )
-
 );

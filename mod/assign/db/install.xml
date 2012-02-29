@@ -13,9 +13,12 @@
         <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="intro" NEXT="alwaysshowdescription"/>
         <FIELD NAME="alwaysshowdescription" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="introformat" NEXT="preventlatesubmissions"/>
         <FIELD NAME="preventlatesubmissions" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="alwaysshowdescription" NEXT="submissiondrafts"/>
-        <FIELD NAME="submissiondrafts" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="preventlatesubmissions" NEXT="sendnotifications"/>
-        <FIELD NAME="sendnotifications" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="submissiondrafts" NEXT="duedate"/>
-        <FIELD NAME="duedate" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="sendnotifications" NEXT="allowsubmissionsfromdate"/>
+        <FIELD NAME="submissiondrafts" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="preventlatesubmissions" NEXT="notifymarkers"/>
+        <FIELD NAME="notifymarkers" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="submissiondrafts" NEXT="notifymarkerslate"/>
+        <FIELD NAME="notifymarkerslate" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="notifymarkers" NEXT="notifystudentsfeedback"/>
+        <FIELD NAME="notifystudentsfeedback" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="notifymarkerslate" NEXT="notifystudentownsubmission"/>
+        <FIELD NAME="notifystudentownsubmission" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="notifystudentsfeedback" NEXT="duedate"/> 
+        <FIELD NAME="duedate" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="notifystudentownsubmission" NEXT="allowsubmissionsfromdate"/>
         <FIELD NAME="allowsubmissionsfromdate" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="duedate" NEXT="grade"/>
         <FIELD NAME="grade" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="allowsubmissionsfromdate" NEXT="timemodified"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="grade"/>
