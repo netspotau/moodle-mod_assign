@@ -2008,9 +2008,12 @@ class assignment {
             $submission = $this->get_submission($USER->id);
             echo $this->output->render(new submission_status($this, $submission, $this->grading_disabled($USER->id), $this->is_graded($USER->id), submission_status::STUDENT_VIEW));
         }
-        //$this->view_submission_status();
         $this->view_submission_links();
-        $this->view_feedback();
+        if ($this->can_view_submission($USER->id)) {
+            $grade = $this->get_grade($USER->id, 0, false);
+            echo $this->output->render(new feedback_status($this, $grade, feedback_status::STUDENT_VIEW));
+        }
+        
             
         $this->view_footer();
         $this->add_to_log('view', get_string('viewownsubmissionstatus', 'assign'));

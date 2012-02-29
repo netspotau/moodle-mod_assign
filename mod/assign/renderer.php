@@ -38,6 +38,9 @@ require_once('locallib.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  **/
 class mod_assign_renderer extends plugin_renderer_base {
+
+    // used to cache grade menus (and other repetitive things)
+    private $cache = array();
       
     /**
      * rendering assignment files 
@@ -98,7 +101,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o = '';
 
         if ($header->get_sub_page()) {
-            $this->navbar->add($header->get_sub_page());
+            $this->page->navbar->add($header->get_sub_page());
         }
 
         $this->page->set_title(get_string('pluginname', 'assign'));
@@ -175,6 +178,132 @@ class mod_assign_renderer extends plugin_renderer_base {
         // close the container and insert a spacer
         $o .= $this->output->container_end();
 
+        return $o;
+    }
+    
+    /**
+     *  Return a grade in user-friendly form, whether it's a scale or not
+     *
+     * @global object $DB
+     * @param mixed $grade
+     * @return string User-friendly representation of grade
+     */
+    private function format_grade($grade, $assignment) {
+        global $DB;
+
+        static $scalegrades = array();
+
+                                        
+
+        if ($assignment->get_instance()->grade >= 0) {    // Normal number
+            if ($grade == -1 || $grade === null) {
+                return '-';
+            } else {
+                return round($grade) .' / '.$assignment->get_instance()->grade;
+            }
+
+        } else {                                // Scale
+            if (empty($this->cache['scale'])) {
+                if ($scale = $DB->get_record('scale', array('id'=>-($assignment->get_instance()->grade)))) {
+                    $this->cache['scale'] = make_menu_from_list($scale->scale);
+                } else {
+                    return '-';
+                }
+            }
+            if (isset($this->cache['scale'][$grade])) {
+                return $this->cache['scale'][$grade];
+            }
+            return '-';
+        }
+    }
+    
+    /**
+     * render a table containing all the current grades and feedback
+     * 
+     * @param feedback_status $status
+     * @return string
+     */
+    public function render_feedback_status(feedback_status $status) {
+        global $DB, $CFG;
+        $o = '';
+        require_once($CFG->libdir.'/gradelib.php');
+        require_once($CFG->dirroot.'/grade/grading/lib.php');
+
+        $assignment_grade = $status->get_grade();
+        if (!$assignment_grade) {
+            return '';
+        }
+        $o .= $this->output->container_start('feedback');
+        $o .= $this->output->heading(get_string('feedback', 'assign'), 3);
+        $o .= $this->output->box_start('boxaligncenter feedbacktable');
+        $t = new html_table();
+        
+        $grading_info = grade_get_grades($status->get_assignment()->get_course()->id, 
+                                        'mod', 
+                                        'assign', 
+                                        $status->get_assignment()->get_instance()->id, 
+                                        $assignment_grade->userid);
+
+        $item = $grading_info->items[0];
+        $grade = $item->grades[$assignment_grade->userid];
+
+        if ($grade->hidden or $grade->grade === false) { // hidden or error
+            return '';
+        }
+
+        if ($grade->grade === null and empty($grade->str_feedback)) {   /// Nothing to show yet
+            return '';
+        }
+
+        $graded_date = $grade->dategraded;
+
+        $row = new html_table_row();
+        $cell1 = new html_table_cell(get_string('grade', 'assign'));
+
+        $grading_manager = get_grading_manager($status->get_assignment()->get_context(), 'mod_assign', 'submissions');
+    
+        if ($controller = $grading_manager->get_active_controller()) {
+            $controller->set_grade_range(make_grades_menu($status->get_assignment()->get_instance()->grade));
+            $cell2 = new html_table_cell($controller->render_grade($this->page, $assignment_grade->id, $item, $grade->str_long_grade, has_capability('mod/assignment:grade', $status->get_assignment()->get_context())));
+        } else {
+
+            $cell2 = new html_table_cell($this->format_grade($grade->str_long_grade, $status->get_assignment()));
+        }
+        $row->cells = array($cell1, $cell2);
+        $t->data[] = $row;
+        
+        $row = new html_table_row();
+        $cell1 = new html_table_cell(get_string('gradedon', 'assign'));
+        $cell2 = new html_table_cell(userdate($graded_date));
+        $row->cells = array($cell1, $cell2);
+        $t->data[] = $row;
+        
+        if ($grader = $DB->get_record('user', array('id'=>$grade->usermodified))) {
+            $row = new html_table_row();
+            $cell1 = new html_table_cell(get_string('gradedby', 'assign'));
+            $cell2 = new html_table_cell($this->output->user_picture($grader) . $this->output->spacer(array('width'=>30)) . fullname($grader));
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+        }
+    
+        foreach ($status->get_assignment()->get_feedback_plugins() as $plugin) {
+            if ($plugin->is_enabled() && $plugin->is_visible()) {
+                $feedback = $this->format_plugin_summary_with_link($plugin, $assignment_grade);
+                if ($feedback != '') {
+                    $row = new html_table_row();
+                    $cell1 = new html_table_cell($plugin->get_name());
+                    $cell2 = new html_table_cell($feedback);
+                    $row->cells = array($cell1, $cell2);
+                    $t->data[] = $row;
+                }
+            }
+        }
+ 
+
+        $o .= html_writer::table($t);
+        $o .= $this->output->box_end();
+        
+        $o .= $this->output->container_end();
         return $o;
     }
 

@@ -129,6 +129,88 @@ class submission_plugin_submission implements renderable {
 }
 
 /**
+ * Renderable feedback status
+ */
+class feedback_status implements renderable {
+    const STUDENT_VIEW     = 10;
+    const GRADER_VIEW      = 20;
+    
+    /** @var stdClass the grade info (may be null) */
+    protected $grade = null;
+    /** @var assignment the assignment info (may not be null) */
+    protected $assignment = null;
+    protected $view = self::STUDENT_VIEW;
+
+    public function __construct($assignment, $grade = null, $view = self::STUDENT_VIEW) {
+        $this->set_assignment($assignment);
+        $this->set_grade($grade);
+        $this->set_view($view);
+    }
+    
+    /**
+     * Returns submission view type
+     *
+     * @return int
+     */
+    public function get_view() {
+        return $this->view;
+    }
+
+    /**
+     * Sets the submission view type
+     *
+     * @param int $view
+     */
+    public function set_view($view = self::STUDENT_VIEW) {
+        if (in_array($view, array(self::STUDENT_VIEW, self::GRADER_VIEW))) {
+            $this->view = $view;
+        } else {
+            throw new coding_exception('Unknown view type.');
+        }
+    }
+    
+    /**
+     * Returns grade info
+     *
+     * @return stdClass
+     */
+    public function get_grade() {
+        return $this->grade;
+    }
+
+    /**
+     * Set the grade info (may be null)
+     *
+     * @param stdClass $grade
+     */
+    public function set_grade($grade) {
+        $this->grade = $grade;
+    }
+
+    /**
+     * Returns assignment info
+     *
+     * @return stdClass
+     */
+    public function get_assignment() {
+        return $this->assignment;
+    }
+
+    /**
+     * Set the assignment info (may not be null)
+     *
+     * @param assignment $assignment
+     */
+    public function set_assignment($assignment) {
+        if (!$assignment) {
+            throw new coding_exception('Assignment may not be null');
+        }
+        $this->assignment = $assignment;
+    }
+
+}
+
+/**
  * Renderable submission status
  */
 class submission_status implements renderable {
