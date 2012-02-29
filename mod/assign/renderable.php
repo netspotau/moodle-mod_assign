@@ -25,6 +25,115 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+/*
+ * Implements a renderable feedback plugin feedback
+ */
+class feedback_plugin_feedback implements renderable {
+    const SUMMARY                = 10;
+    const FULL                   = 20;
+    const SUMMARY_PLAIN_TEXT     = 30;
+
+    protected $assignment = null;
+    protected $plugin = null;
+    protected $grade = null;
+    protected $view = self::SUMMARY;
+    
+    public function __construct($assignment, $plugin, $grade, $view) {
+        $this->set_assignment($assignment);
+        $this->set_plugin($plugin);
+        $this->set_grade($grade);
+        $this->set_view($view);
+    }
+    
+    /**
+     * Returns assignment info
+     *
+     * @return assignment
+     */
+    public function get_assignment() {
+        return $this->assignment;
+    }
+
+    /**
+     * Set the assignment info (may not be null)
+     *
+     * @param assignment $assignment
+     */
+    public function set_assignment($assignment) {
+        if (!$assignment) {
+            throw new coding_exception('Assignment may not be null');
+        }
+        $this->assignment = $assignment;
+    }
+    
+    /**
+     * Returns grade info
+     *
+     * @return stdClass
+     */
+    public function get_grade() {
+        return $this->grade;
+    }
+
+    /**
+     * Set the grade info (may not be null)
+     *
+     * @param grade $grade
+     */
+    public function set_grade($grade) {
+        if (!$grade) {
+            throw new coding_exception('Grade may not be null');
+        }
+        $this->grade = $grade;
+    }
+
+    /**
+     * Returns plugin info
+     *
+     * @return stdClass
+     */
+    public function get_plugin() {
+        return $this->plugin;
+    }
+
+    /**
+     * Set the plugin info (may not be null)
+     *
+     * @param plugin $plugin
+     */
+    public function set_plugin($plugin) {
+        if (!$plugin) {
+            throw new coding_exception('Plugin may not be null');
+        }
+        $this->plugin = $plugin;
+    }
+    
+    /**
+     * Returns view
+     *
+     * @return string
+     */
+    public function get_view() {
+        return $this->view;
+    }
+
+    /**
+     * Set the view
+     *
+     * @param string $view
+     */
+    public function set_view($view) {
+        if (in_array($view, array(self::SUMMARY, self::FULL, self::SUMMARY_PLAIN_TEXT))) {
+            $this->view = $view;
+        } else {
+            throw new coding_exception('Unknown submission view type.');
+        }
+    }
+}
+
+/*
+ * Implements a renderable submission plugin submission
+ */
 class submission_plugin_submission implements renderable {
     const SUMMARY                = 10;
     const FULL                   = 20;

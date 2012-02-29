@@ -92,6 +92,15 @@ class mod_assign_renderer extends plugin_renderer_base {
     }
 
     /**
+     * Page is done - render the footer
+     * 
+     * @return None
+     */
+    public function render_footer() {
+        return $this->output->footer();
+    }
+
+    /**
      * render the header
      * 
      * @param assignment_header $header
@@ -288,14 +297,12 @@ class mod_assign_renderer extends plugin_renderer_base {
     
         foreach ($status->get_assignment()->get_feedback_plugins() as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
-                $feedback = $this->format_plugin_summary_with_link($plugin, $assignment_grade);
-                if ($feedback != '') {
-                    $row = new html_table_row();
-                    $cell1 = new html_table_cell($plugin->get_name());
-                    $cell2 = new html_table_cell($feedback);
-                    $row->cells = array($cell1, $cell2);
-                    $t->data[] = $row;
-                }
+                $row = new html_table_row();
+                $cell1 = new html_table_cell($plugin->get_name());
+                $plugin_feedback = new feedback_plugin_feedback($status->get_assignment(), $plugin, $status->get_grade(), feedback_plugin_feedback::SUMMARY);
+                $cell2 = new html_table_cell($this->render($plugin_feedback));
+                $row->cells = array($cell1, $cell2);
+                $t->data[] = $row;
             }
         }
  
@@ -413,7 +420,6 @@ class mod_assign_renderer extends plugin_renderer_base {
                 if ($plugin->is_enabled() && $plugin->is_visible()) {
                     $row = new html_table_row();
                     $cell1 = new html_table_cell($plugin->get_name());
-                    //$cell2 = new html_table_cell($this->format_plugin_summary_with_link($plugin, $status->get_submission(), $return_action, $return_params));
                     $plugin_submission = new submission_plugin_submission($status->get_assignment(), $plugin, $status->get_submission(), submission_plugin_submission::SUMMARY);
                     $cell2 = new html_table_cell($this->render($plugin_submission));
                     $row->cells = array($cell1, $cell2);
@@ -440,7 +446,9 @@ class mod_assign_renderer extends plugin_renderer_base {
 
         if ($submission_plugin->get_view() == submission_plugin_submission::SUMMARY) {
             $icon = $this->output->pix_icon('t/preview', get_string('view' . $submission_plugin->get_plugin()->get_subtype(), 'mod_assign'));
-            $link = $this->output->action_link(
+            $link = '';
+            if ($submission_plugin->get_plugin()->show_view_link($submission_plugin->get_submission())) {
+                $link = $this->output->action_link(
                                 new moodle_url('/mod/assign/view.php', 
                                                array('id' => $submission_plugin->get_assignment()->get_course_module()->id, 
                                                      'sid'=>$submission_plugin->get_submission()->id, 
@@ -449,7 +457,9 @@ class mod_assign_renderer extends plugin_renderer_base {
                                                      'returnaction'=>$submission_plugin->get_assignment()->get_return_action(), 
                                                      'returnparams'=>http_build_query($submission_plugin->get_assignment()->get_return_params()))), 
                                 $icon);
-            $link .= $this->output->spacer(array('width'=>15));
+            
+                $link .= $this->output->spacer(array('width'=>15));
+            }
             
             $o .= $link . $submission_plugin->get_plugin()->view_summary($submission_plugin->get_submission());
         }
@@ -457,6 +467,36 @@ class mod_assign_renderer extends plugin_renderer_base {
         return $o;
     }
 
+    /**
+     * render a feedback plugin feedback
+     * 
+     * @param feedback_plugin_feedback $feedback_plugin
+     * @return string
+     */
+    public function render_feedback_plugin_feedback(feedback_plugin_feedback $feedback_plugin) {
+        $o = '';
+
+        if ($feedback_plugin->get_view() == feedback_plugin_feedback::SUMMARY) {
+            $icon = $this->output->pix_icon('t/preview', get_string('view' . $feedback_plugin->get_plugin()->get_subtype(), 'mod_assign'));
+            $link = '';
+            if ($feedback_plugin->get_plugin()->show_view_link($feedback_plugin->get_grade())) {
+                $link = $this->output->action_link(
+                                new moodle_url('/mod/assign/view.php', 
+                                               array('id' => $feedback_plugin->get_assignment()->get_course_module()->id, 
+                                                     'gid'=>$feedback_plugin->get_grade()->id, 
+                                                     'plugin'=>$feedback_plugin->get_plugin()->get_type(), 
+                                                     'action'=>'viewplugin' . $feedback_plugin->get_plugin()->get_subtype(), 
+                                                     'returnaction'=>$feedback_plugin->get_assignment()->get_return_action(), 
+                                                     'returnparams'=>http_build_query($feedback_plugin->get_assignment()->get_return_params()))), 
+                                $icon);
+                $link .= $this->output->spacer(array('width'=>15));
+            }
+            
+            $o .= $link . $feedback_plugin->get_plugin()->view_summary($feedback_plugin->get_grade());
+        }
+
+        return $o;
+    }
     
 
         
@@ -500,5 +540,7 @@ class mod_assign_renderer extends plugin_renderer_base {
 
         return $result;
     }
+
+    
 }
 

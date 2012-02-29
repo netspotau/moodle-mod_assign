@@ -1541,8 +1541,7 @@ class assignment {
      * @return None
      */
     private function view_footer() {
-        global $OUTPUT;
-        echo $OUTPUT->footer();
+        echo $this->output->render_footer();
     }
 
     /**
@@ -2859,117 +2858,6 @@ class assignment {
         return $link . $plugin->view_summary($item);
     }
         
-    /**
-     * display feedback
-     * display submission status page 
-     * 
-     * @global object $OUTPUT
-     * @global object $USER
-     * @global object $PAGE
-     * @global object $DB
-     * @global object $CFG
-     * @param int $userid
-     * @return mixed
-     */
-    private function view_feedback($userid=null) {
-        global $OUTPUT, $USER, $PAGE, $DB, $CFG;
-        require_once($CFG->libdir.'/gradelib.php');
-        require_once($CFG->dirroot.'/grade/grading/lib.php');
-
-        if (!$userid) {
-            $userid = $USER->id;
-        }
-        
-        if ($userid == $USER->id) {
-            // Always require view permission to do anything
-            if (!has_capability('mod/assign:view', $this->context)) {
-                return;
-            }
-        } else {
-            if (!has_capability('mod/assign:view', $this->context) ||
-                !has_capability('mod/assign:grade', $this->context)) {
-                return;
-            }
-        }
-        
-        if (!is_enrolled($this->get_course_context(), $userid)) {
-            return;
-        }
-
-        $submission = null;
-
-        $assignment_grade = $this->get_grade($userid);
-        if (!$assignment_grade) {
-            return;
-        }
-        echo $OUTPUT->container_start('feedback');
-        echo $OUTPUT->heading(get_string('feedback', 'assign'), 3);
-        echo $OUTPUT->box_start('boxaligncenter', 'intro');
-        $t = new html_table();
-        
-        $grading_info = grade_get_grades($this->get_course()->id, 'mod', 'assign', $this->instance->id, $userid);
-        $item = $grading_info->items[0];
-        $grade = $item->grades[$userid];
-
-        if ($grade->hidden or $grade->grade === false) { // hidden or error
-            return;
-        }
-
-        if ($grade->grade === null and empty($grade->str_feedback)) {   /// Nothing to show yet
-            return;
-        }
-
-        $graded_date = $grade->dategraded;
-
-        $row = new html_table_row();
-        $cell1 = new html_table_cell(get_string('grade', 'assign'));
-
-        $grading_manager = get_grading_manager($this->context, 'mod_assign', 'submissions');
-    
-        if ($controller = $grading_manager->get_active_controller()) {
-            $controller->set_grade_range(make_grades_menu($this->instance->grade));
-            $cell2 = new html_table_cell($controller->render_grade($PAGE, $assignment_grade->id, $item, $grade->str_long_grade, has_capability('mod/assignment:grade', $this->context)));
-        } else {
-
-            $cell2 = new html_table_cell($this->display_grade($grade->str_long_grade));
-        }
-        $row->cells = array($cell1, $cell2);
-        $t->data[] = $row;
-        
-        $row = new html_table_row();
-        $cell1 = new html_table_cell(get_string('gradedon', 'assign'));
-        $cell2 = new html_table_cell(userdate($graded_date));
-        $row->cells = array($cell1, $cell2);
-        $t->data[] = $row;
-        
-        if ($grader = $DB->get_record('user', array('id'=>$grade->usermodified))) {
-            $row = new html_table_row();
-            $cell1 = new html_table_cell(get_string('gradedby', 'assign'));
-            $cell2 = new html_table_cell($OUTPUT->user_picture($grader) . $OUTPUT->spacer(array('width'=>30)) . fullname($grader));
-            $row->cells = array($cell1, $cell2);
-            $t->data[] = $row;
-        }
-    
-        foreach ($this->feedback_plugins as $plugin) {
-            if ($plugin->is_enabled() && $plugin->is_visible()) {
-                $feedback = $this->format_plugin_summary_with_link($plugin, $assignment_grade);
-                if ($feedback != '') {
-                    $row = new html_table_row();
-                    $cell1 = new html_table_cell($plugin->get_name());
-                    $cell2 = new html_table_cell($feedback);
-                    $row->cells = array($cell1, $cell2);
-                    $t->data[] = $row;
-                }
-            }
-        }
- 
-
-        echo html_writer::table($t);
-        echo $OUTPUT->box_end();
-        
-        echo $OUTPUT->container_end();
-    }
-    
     /**
      * display submission links
      * 
