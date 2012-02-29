@@ -70,6 +70,265 @@ class mod_assign_renderer extends plugin_renderer_base {
         }
         return $html;
     }
+    
+    /**
+     * Utility function to add a row of data to a table with 2 columns. Modified
+     * the table param and does not return a value
+     * 
+     * @param object $t The table to append the row of data to
+     * @param string $first The first column text
+     * @param string $second The second column text
+     * @return None
+     */
+    private function add_table_row_tuple(& $t, $first, $second) {
+        $row = new html_table_row();
+        $cell1 = new html_table_cell($first);
+        $cell2 = new html_table_cell($second);
+        $row->cells = array($cell1, $cell2);
+        $t->data[] = $row;
+    }
+
+    /**
+     * render the header
+     * 
+     * @param assignment_header $header
+     * @return string
+     */
+    public function render_assignment_header(assignment_header $header) {
+        $o = '';
+
+        if ($header->get_sub_page()) {
+            $this->navbar->add($header->get_sub_page());
+        }
+
+        $this->page->set_title(get_string('pluginname', 'assign'));
+        $this->page->set_heading($header->get_assignment()->get_instance()->name);
+
+        $o .= $this->output->header();
+        $o .= $this->output->heading($header->get_assignment()->get_instance()->name);
+
+        if ($header->get_show_intro()) {
+            if ($header->get_assignment()->get_instance()->alwaysshowdescription || 
+                    time() > $header->get_assignment()->get_instance()->allowsubmissionsfromdate) {
+                $o .= $this->output->box_start('generalbox boxaligncenter', 'intro');
+                $o .= format_module_intro('assign', $header->get_assignment()->get_instance(), $header->get_assignment()->get_course_module()->id);
+                $o .= $this->output->box_end();
+            }
+        }
+        return $o;
+    }
+    
+    /**
+     * render a table containing the current status of the grading process
+     * 
+     * @param grading_summary $summary
+     * @return string
+     */
+    public function render_grading_summary(grading_summary $summary) {
+        // create a table for the data
+        $o = '';
+        $o .= $this->output->container_start('gradingsummary');
+        $o .= $this->output->heading(get_string('gradingsummary', 'assign'), 3);
+        $o .= $this->output->box_start('boxaligncenter gradingsummarytable');
+        $t = new html_table();
+
+        // status
+        $this->add_table_row_tuple($t, get_string('numberofparticipants', 'assign'), 
+                                   $summary->get_assignment()->count_enrolled_users_with_capability('mod/assign:submit'));
+
+        // drafts
+        if ($summary->get_assignment()->get_instance()->submissiondrafts) {
+            $this->add_table_row_tuple($t, get_string('numberofdraftsubmissions', 'assign'), 
+                                       $summary->get_assignment()->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_DRAFT));
+       }
+
+        // submitted for grading
+        $this->add_table_row_tuple($t, get_string('numberofsubmittedassignments', 'assign'), 
+                                       $summary->get_assignment()->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_SUBMITTED));
+
+        $time = time();
+        if ($summary->get_assignment()->get_instance()->duedate) {
+            // due date
+            // submitted for grading
+            $duedate = $summary->get_assignment()->get_instance()->duedate;
+            $this->add_table_row_tuple($t, get_string('duedate', 'assign'), 
+                                       userdate($duedate));
+
+            // time remaining
+            $due = '';
+            if ($duedate - $time <= 0) {
+                $due = get_string('assignmentisdue', 'assign');
+            } else {
+                $due = format_time($duedate - $time);
+            }
+            $this->add_table_row_tuple($t, get_string('timeremaining', 'assign'), $due);
+        }
+
+        // all done - write the table
+        $o .= html_writer::table($t);
+        $o .= $this->output->box_end();
+        
+        // link to the grading page
+        $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
+            array('id' => $summary->get_assignment()->get_course_module()->id ,'action'=>'grading')), get_string('viewgrading', 'assign'), 'get');
+
+        // close the container and insert a spacer
+        $o .= $this->output->container_end();
+
+        return $o;
+    }
+
+    /**
+     * render a table containing the current status of the submission
+     * 
+     * @param submission_status $status
+     * @return string
+     */
+    public function render_submission_status(submission_status $status) {
+        $o = '';
+        $o .= $this->output->container_start('submissionstatus');
+        $o .= $this->output->heading(get_string('submissionstatusheading', 'assign'), 3);
+        $time = time();
+        if ($status->get_view() == $status::STUDENT_VIEW && 
+            !$status->get_assignment()->is_any_submission_plugin_enabled()) {
+
+            $o .= $this->output->box_start('generalbox boxaligncenter nosubmissionrequired');
+            $o .= get_string('noonlinesubmissions', 'assign');
+            $o .= $this->output->box_end();
+        }
+
+        if ($status->get_assignment()->get_instance()->allowsubmissionsfromdate &&
+                $time <= $status->get_assignment()->get_instance()->allowsubmissionsfromdate) {
+            $o .= $this->output->box_start('generalbox boxaligncenter submissionsalloweddates');
+            $o .= get_string('allowsubmissionsfromdatesummary', 'assign', userdate($this->instance->allowsubmissionsfromdate));
+            $o .= $this->output->box_end();
+        } 
+        $o .= $this->output->box_start('boxaligncenter submissionsummarytable');
+
+        $t = new html_table();
+
+        $row = new html_table_row();
+        $cell1 = new html_table_cell(get_string('submissionstatus', 'assign'));
+        if ($status->get_submission()) {
+            $cell2 = new html_table_cell(get_string('submissionstatus_' . $status->get_submission()->status, 'assign'));
+        } else {
+            $cell2 = new html_table_cell(get_string('nosubmission', 'assign'));
+        }
+        $row->cells = array($cell1, $cell2);
+        $t->data[] = $row;
+        
+        // status
+        if ($status->is_locked()) {
+            $row = new html_table_row();
+            $cell1 = new html_table_cell();
+            $cell2 = new html_table_cell(get_string('submissionslocked', 'assign'));
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+        }
+
+        // grading status
+        $row = new html_table_row();
+        $cell1 = new html_table_cell(get_string('gradingstatus', 'assign'));
+
+        if ($status->is_graded()) {
+            $cell2 = new html_table_cell(get_string('graded', 'assign'));
+        } else {
+            $cell2 = new html_table_cell(get_string('notgraded', 'assign'));
+        }
+        $row->cells = array($cell1, $cell2);
+        $t->data[] = $row;
+
+        
+        $duedate = $status->get_assignment()->get_instance()->duedate;
+        if ($duedate >= 1) {
+            $row = new html_table_row();
+            $cell1 = new html_table_cell(get_string('duedate', 'assign'));
+            $cell2 = new html_table_cell(userdate($duedate));
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+            
+            // time remaining
+            $row = new html_table_row();
+            $cell1 = new html_table_cell(get_string('timeremaining', 'assign'));
+            if ($duedate - $time <= 0) {
+                if (!$status->get_submission() || $status->get_submission()->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED &&
+                    $status->get_submission()->status != ASSIGN_SUBMISSION_STATUS_LOCKED) {
+                    $cell2 = new html_table_cell(get_string('overdue', 'assign', format_time($time - $duedate)));
+                } else {
+                    if ($status->get_submission()->timemodified > $duedate) {
+                        $cell2 = new html_table_cell(get_string('submittedlate', 'assign', format_time($status->get_submission()->timemodified - $duedate)), 'latesubmission');
+                    } else {
+                        $cell2 = new html_table_cell(get_string('submittedearly', 'assign', format_time($status->get_submission()->timemodified - $duedate)), 'submittedearly');
+                    }
+                }
+            } else {
+                $cell2 = new html_table_cell(format_time($duedate - $time));
+            }
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+        } 
+
+        // last modified 
+        $row = new html_table_row();
+        $cell1 = new html_table_cell(get_string('timemodified', 'assign'));
+        if ($status->get_submission()) {
+            $cell2 = new html_table_cell(userdate($status->get_submission()->timemodified));
+        } else {
+            $cell2 = new html_table_cell();
+        }
+        $row->cells = array($cell1, $cell2);
+        $t->data[] = $row;
+
+        if ($status->get_submission()) {
+            foreach ($status->get_assignment()->get_submission_plugins() as $plugin) {
+                if ($plugin->is_enabled() && $plugin->is_visible()) {
+                    $row = new html_table_row();
+                    $cell1 = new html_table_cell($plugin->get_name());
+                    //$cell2 = new html_table_cell($this->format_plugin_summary_with_link($plugin, $status->get_submission(), $return_action, $return_params));
+                    $plugin_submission = new submission_plugin_submission($status->get_assignment(), $plugin, $status->get_submission(), submission_plugin_submission::SUMMARY);
+                    $cell2 = new html_table_cell($this->render($plugin_submission));
+                    $row->cells = array($cell1, $cell2);
+                    $t->data[] = $row;
+                }
+            }
+        }
+        
+        $o .= html_writer::table($t);
+        $o .= $this->output->box_end();
+        
+        $o .= $this->output->container_end();
+        return $o;
+    }
+    
+    /**
+     * render a submission plugin submission
+     * 
+     * @param submission_plugin_submission $submission_plugin
+     * @return string
+     */
+    public function render_submission_plugin_submission(submission_plugin_submission $submission_plugin) {
+        $o = '';
+
+        if ($submission_plugin->get_view() == submission_plugin_submission::SUMMARY) {
+            $icon = $this->output->pix_icon('t/preview', get_string('view' . $submission_plugin->get_plugin()->get_subtype(), 'mod_assign'));
+            $link = $this->output->action_link(
+                                new moodle_url('/mod/assign/view.php', 
+                                               array('id' => $submission_plugin->get_assignment()->get_course_module()->id, 
+                                                     'sid'=>$submission_plugin->get_submission()->id, 
+                                                     'plugin'=>$submission_plugin->get_plugin()->get_type(), 
+                                                     'action'=>'viewplugin' . $submission_plugin->get_plugin()->get_subtype(), 
+                                                     'returnaction'=>$submission_plugin->get_assignment()->get_return_action(), 
+                                                     'returnparams'=>http_build_query($submission_plugin->get_assignment()->get_return_params()))), 
+                                $icon);
+            $link .= $this->output->spacer(array('width'=>15));
+            
+            $o .= $link . $submission_plugin->get_plugin()->view_summary($submission_plugin->get_submission());
+        }
+
+        return $o;
+    }
+
+    
 
         
     /**
@@ -114,101 +373,3 @@ class mod_assign_renderer extends plugin_renderer_base {
     }
 }
 
-/**
- * An assign file class that extends rendererable class and
- * is used by the assign module.
- *
- * @package mod-assign
- * @copyright
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- **/
-class assign_files implements renderable {
-    public $context;
-    public $dir;
-    public $portfolioform;
-    public $cm;
-    public $course;
-    
-    
-    /**
-     * The constructor 
-     * 
-     * @global object $CFG
-     * @global object $USER
-     * @param object $context
-     * @param int $sid
-     * @param string $filearea 
-     */
-    public function __construct($context, $sid, $filearea='submission') {
-        global $CFG,$USER;
-        $this->context = $context;
-        list($context, $course, $cm) = get_context_info_array($context->id);
-        $this->cm = $cm;
-        $this->course = $course;
-        $fs = get_file_storage();
-        $this->dir = $fs->get_area_tree($this->context->id, 'mod_assign', $filearea, $sid);
-        
-         $files = $fs->get_area_files($this->context->id, 'mod_assign', $filearea, $sid, "timemodified", false);
-        
-        if (!empty($CFG->enableportfolios)) {
-            require_once($CFG->libdir . '/portfoliolib.php');
-           // $files = $fs->get_area_files($this->context->id, 'mod_assign', $filearea, $sid, "timemodified", false);
-            if (count($files) >= 1 && has_capability('mod/assign:exportownsubmission', $this->context)) {
-                $button = new portfolio_add_button();
-                $button->set_callback_options('assign_portfolio_caller', array('cmid' => $this->cm->id, 'sid'=>$sid, 'area'=>$filearea), '/mod/assign/portfolio_callback.php');
-                $button->reset_formats();
-                $this->portfolioform = $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
-            }
-           
-        }
-        
-         // plagiarism check if it is enabled
-        $output = '';        
-        if (!empty($CFG->enableplagiarism)) {
-            require_once($CFG->libdir . '/plagiarismlib.php');
-            
-            // for plagiarism_get_links
-            $assignment = new assignment($this->context);
-            foreach ($files as $file) {
-
-               $output .= plagiarism_get_links(array('userid' => $sid,
-                   'file' => $file,
-                   'cmid' => $this->cm->id,
-                   'course' => $this->course,
-                   'assignment' => $assignment->get_instance()));
-                
-               $output .= '<br />';
-            }
-        }
-        
-       $this->preprocess($this->dir, $filearea);
-    }
-    
-    /**
-     * preprocessing 
-     * 
-     * @global object $CFG
-     * @param array $dir
-     * @param string $filearea 
-     */
-    public function preprocess($dir, $filearea) {
-        global $CFG;
-        foreach ($dir['subdirs'] as $subdir) {
-            $this->preprocess($subdir, $filearea);
-        }
-        foreach ($dir['files'] as $file) {
-            $file->portfoliobutton = '';
-            if (!empty($CFG->enableportfolios)) {
-                $button = new portfolio_add_button();
-                if (has_capability('mod/assign:exportownsubmission', $this->context)) {
-                    $button->set_callback_options('assign_portfolio_caller', array('cmid' => $this->cm->id, 'fileid' => $file->get_id()), '/mod/assign/portfolio_callback.php');
-                    $button->set_format_by_file($file);
-                    $file->portfoliobutton = $button->to_html(PORTFOLIO_ADD_ICON_LINK);
-                }
-            }
-            $url = file_encode_url("$CFG->wwwroot/pluginfile.php", '/'.$this->context->id.'/mod_assign/'.$filearea.'/'.$file->get_itemid(). $file->get_filepath().$file->get_filename(), true);
-            $filename = $file->get_filename();
-            $file->fileurl = html_writer::link($url, $filename);
-        }
-    }
-}

@@ -20,3 +20,20 @@ div.feedback .generaltable,
 div.gradingsummary .generaltable {
     width: 100%;
 }
+
+.gradingsummarytable {
+    margin-top: 1em;
+}
+
+.submissionsummarytable {
+    margin-top: 1em;
+}
+
+div.submissionsummarytable table tbody tr td.c0 {
+    width: 30%;
+}
+
+.submittedlate {
+    color: red;
+    font-weight: 900;
+}

@@ -67,6 +67,7 @@ require_once($CFG->libdir . '/portfoliolib.php');
 /** Include submission_plugin.php */
 require_once('feedback_plugin.php');
 require_once('submission_plugin.php');
+require_once('renderable.php');
 
 //send files to event system for plagiarism detection 
 /** Include eventslib.php */
@@ -93,6 +94,9 @@ class assignment {
     /** @var object the course this assign instance belongs to */
     private $course;
     
+    /** @var assign_renderer the custom renderer for this module */
+    private $output;
+    
     /** @var object the course module for this assign instance */
     
     private $coursemodule;
@@ -106,7 +110,11 @@ class assignment {
     /** @var array list of the installed feedback plugins */
     private $feedback_plugins;
 
+    /** @var string action to be used to return to this page (without repeating any form submissions etc.) */
+    private $return_action = 'view';
     
+    /** @var string params to be used to return to this page */
+    private $return_params = array();
     
     /**
      * Constructor for the base assign class
@@ -117,6 +125,7 @@ class assignment {
      * @param object $course the current course  if it was already loaded - otherwise this class will load one from the context as required
      */
     public function __construct(& $context = null, & $data = null, & $coursemodule = null, & $course = null) {
+        global $PAGE;
         $this->context = & $context;
         $this->instance = & $data;
         $this->coursemodule = & $coursemodule; 
@@ -125,7 +134,28 @@ class assignment {
 
         $this->submission_plugins = $this->load_plugins('submission');
         $this->feedback_plugins = $this->load_plugins('feedback');
+        $this->output = $PAGE->get_renderer('mod_assign');
+    }
 
+    public function register_return_link($action, $params) {
+        $this->return_action = $action;
+        $this->return_params = $params;
+    }
+
+    /** 
+     * Return an action that can be used to get back to the current page
+     * @return string action
+     */
+    public function get_return_action() {
+        return $this->return_action;
+    }
+    
+    /** 
+     * Return a list of parameters that can be used to get back to the current page
+     * @return array params
+     */
+    public function get_return_params() {
+        return $this->return_params;
     }
     
     /** 
@@ -271,6 +301,9 @@ class assignment {
             $this->process_save_grading_options();
             $action = 'grading';
         }
+
+        $returnparams = array('rownum'=>optional_param('rownum', 0, PARAM_INT));
+        $this->register_return_link($action, $returnparams);
         
         // now show the right view page
         if ($action == 'nextgrade') {
@@ -893,7 +926,7 @@ class assignment {
      * @param int $currentgroup
      * @return array List of user records 
      */
-    private function & list_enrolled_users_with_capability($permission,$currentgroup) {
+    public function & list_enrolled_users_with_capability($permission,$currentgroup) {
         $users = & get_enrolled_users($this->context, $permission, $currentgroup);
         return $users;
     }
@@ -905,7 +938,7 @@ class assignment {
      * @param int $currentgroup
      * @return int number of matching users
      */
-    private function count_enrolled_users_with_capability($permission,$currentgroup=0) {
+    public function count_enrolled_users_with_capability($permission,$currentgroup=0) {
         $users = & get_enrolled_users($this->context, $permission, $currentgroup, 'u.id');
         return count($users);
     }
@@ -917,7 +950,7 @@ class assignment {
      * @param string $status The submission status - should match one of the constants 
      * @return int number of matching submissions
      */
-    private function count_submissions_with_status($status) {
+    public function count_submissions_with_status($status) {
         global $DB;
         return $DB->count_records_sql("SELECT COUNT('x')
                                      FROM {assign_submission}
@@ -925,22 +958,6 @@ class assignment {
                                           status = ?", array($this->get_course_module()->instance, $status));
     }
 
-    /**
-     * Utility function to add a row of data to a table with 2 columns. Modified
-     * the table param and does not return a value
-     * 
-     * @param object $t The table to append the row of data to
-     * @param string $first The first column text
-     * @param string $second The second column text
-     * @return None
-     */
-    private function add_table_row_tuple(& $t, $first, $second) {
-        $row = new html_table_row();
-        $cell1 = new html_table_cell($first);
-        $cell2 = new html_table_cell($second);
-        $row->cells = array($cell1, $cell2);
-        $t->data[] = $row;
-    }
     
     /**
      * Utility function get the userid based on the row number of the grading table.
@@ -1418,8 +1435,7 @@ class assignment {
         $submissionid = optional_param('sid', 0, PARAM_INT);
         $gradeid = optional_param('gid', 0, PARAM_INT);
         $plugintype = required_param('plugin', PARAM_TEXT);
-        $this->view_header();
-        $this->view_intro();
+        echo $this->output->render(new assignment_header($this, true, ''));
         $item = null;
         if ($pluginsubtype == 'submission') {
             $plugin = $this->get_submission_plugin_by_type($plugintype);
@@ -1509,29 +1525,6 @@ class assignment {
             
 
     /**
-     * Setup the PAGE variable and print the assignment name as a header
-     * @global object $PAGE
-     * @global object $OUTPUT
-     * @param string $subpage optional sub page for the navbar
-     * @return None
-     */
-    private function view_header($subpage='') {
-        global $PAGE, $OUTPUT;
-
-        if ($subpage) {
-            $PAGE->navbar->add($subpage);
-        }
-
-        $PAGE->set_title(get_string('pluginname', 'assign'));
-        $PAGE->set_heading($this->instance->name);
-
-        echo $OUTPUT->header();
-        echo $OUTPUT->heading($this->instance->name);
-
-    }
-
-
-    /**
      * Display the assignment intro
      *
      * The prints the assignment description in a box
@@ -1539,14 +1532,6 @@ class assignment {
      * @return None
      */
     private function view_intro() {
-        global $OUTPUT;
-        if ($this->instance->alwaysshowdescription || time() > $this->instance->allowsubmissionsfromdate) {
-            echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
-            echo format_module_intro('assign', $this->instance, $this->get_course_module()->id);
-            echo $OUTPUT->box_end();
-        }
-        //print out plagiarism disclosure under the description of assignment if plagiarism plugin is enabled
-        plagiarism_print_disclosure($this->get_course_module()->id);
     }
     
     /**
@@ -1561,71 +1546,20 @@ class assignment {
     }
 
     /**
-     * View the grading summary information and a link to the grading page
+     * Does this user have grade permission for this assignment
      *
-     * @global object $OUTPUT
-     * @return none
+     * @return None
      */
-    private function view_grading_summary() {
-        global $OUTPUT;
-
+    private function can_grade() {
         // Permissions check 
         if (!has_capability('mod/assign:view', $this->context) ||
             !has_capability('mod/assign:grade', $this->context)) {
-            return;
-        }
-        
-        // create a table for the data
-        echo $OUTPUT->container_start('gradingsummary');
-        echo $OUTPUT->heading(get_string('gradingsummary', 'assign'), 3);
-        echo $OUTPUT->box_start('boxaligncenter', 'intro');
-        $t = new html_table();
-
-        // status
-        $this->add_table_row_tuple($t, get_string('numberofparticipants', 'assign'), 
-                                   $this->count_enrolled_users_with_capability('mod/assign:submit'));
-
-        // drafts
-        if ($this->instance->submissiondrafts) {
-            $this->add_table_row_tuple($t, get_string('numberofdraftsubmissions', 'assign'), 
-                                       $this->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_DRAFT));
+            return false;
         }
 
-        // submitted for grading
-        $this->add_table_row_tuple($t, get_string('numberofsubmittedassignments', 'assign'), 
-                                   $this->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_SUBMITTED));
-
-        $time = time();
-        if ($this->instance->duedate) {
-            // due date
-            // submitted for grading
-            $this->add_table_row_tuple($t, get_string('duedate', 'assign'), 
-                                       userdate($this->instance->duedate));
-
-            // time remaining
-            $due = '';
-            if ($this->instance->duedate - $time <= 0) {
-                $due = get_string('assignmentisdue', 'assign');
-            } else {
-                $due = format_time($this->instance->duedate - $time);
-            }
-            $this->add_table_row_tuple($t, get_string('timeremaining', 'assign'), $due);
-        }
-
-        // all done - write the table
-        echo html_writer::table($t);
-        echo $OUTPUT->box_end();
-        
-        // link to the grading page
-        echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
-            array('id' => $this->get_course_module()->id ,'action'=>'grading')), get_string('viewgrading', 'assign'), 'get');
-
-        // close the container and insert a spacer
-        echo $OUTPUT->container_end();
-        echo $OUTPUT->spacer(array('height'=>30));
+        return true;
     }
-    
-    
+
     /**
      * View a redirect to the next submission grading page
      * 
@@ -1852,7 +1786,7 @@ class assignment {
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
 
-        $this->view_header(get_string('grading', 'assign'));
+        echo $this->output->render(new assignment_header($this, false, get_string('grading', 'assign')));
        
         $rownum = required_param('rownum', PARAM_INT);  
         $userid = $this->get_userid_for_row($rownum);
@@ -1861,7 +1795,10 @@ class assignment {
         }
         $user = $DB->get_record('user', array('id' => $userid));
         $this->view_user($user);
-        $this->view_submission_status($userid, true, 'grade', array('rownum'=>$rownum));
+        $submission = $this->get_submission($userid);
+        if ($this->can_view_submission($userid)) {
+            echo $this->output->render(new submission_status($this, $submission, $this->grading_disabled($userid), $this->is_graded($userid), submission_status::GRADER_VIEW));
+        }
 
         // now show the grading form
         $this->view_grade_form();
@@ -1885,13 +1822,11 @@ class assignment {
         $returnaction = optional_param('returnaction','', PARAM_ALPHA);
         $returnparams = optional_param('returnparams','', PARAM_TEXT);
         
-        if ($returnaction) {
-            $params = array();
-            parse_str($returnparams, $params);
-            $params = array_merge( array('id' => $this->get_course_module()->id, 'action' => $returnaction), $params);
+        $params = array();
+        parse_str($returnparams, $params);
+        $params = array_merge( array('id' => $this->get_course_module()->id, 'action' => $returnaction), $params);
            
-            echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php', $params), get_string('back', 'assign'), 'get');
-        }
+        echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php', $params), get_string('back', 'assign'), 'get');
         
     }
    
@@ -1978,7 +1913,7 @@ class assignment {
         require_once($CFG->libdir.'/gradelib.php');
         require_once($CFG->dirroot.'/grade/grading/lib.php');
 
-        $this->view_header(get_string('grading', 'assign'));
+        echo $this->output->render(new assignment_header($this, false, get_string('grading', 'assign')));
         groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id.'&action=grading');
         
 
@@ -2005,8 +1940,8 @@ class assignment {
         require_capability('mod/assign:submit', $this->context);
 
 
-        $this->view_header(get_string('editsubmission', 'assign'));
-        $this->view_intro();
+        echo $this->output->render(new assignment_header($this, true, get_string('editsubmission', 'assign')));
+        plagiarism_print_disclosure($this->get_course_module()->id);
         $this->view_edit_submission_form();
         
         $this->view_footer();
@@ -2014,24 +1949,66 @@ class assignment {
     }
     
     /**
+     * See if this assignment has a grade yet
+     *
+     * @param int userid
+     * @return bool
+     */
+    private function is_graded($userid) {
+        $grade = $this->get_grade($userid);
+        if ($grade) {
+            return ($grade->grade);
+        }
+        return false;
+    }
+
+
+    /**
+     * Perform an access check to see if the current $USER can view this users submission
+     *
+     * @global object $USER
+     * @param int userid
+     */
+    private function can_view_submission($userid) {
+        global $USER;
+
+        if (!is_enrolled($this->get_course_context(), $userid)) {
+            return false;
+        }
+        if ($userid == $USER->id && !has_capability('mod/assign:submit', $this->context)) {
+            return false;
+        }
+        if ($userid != $USER->id && !has_capability('mod/assign:grade', $this->context)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * View submissions page (contains details of current submission).
      *
      * @global object $CFG
      * @return None
      */
     private function view_submission_page() {
-        global $CFG;
+        global $CFG, $USER;
         
          // Always require view permission to do anything
         require_capability('mod/assign:view', $this->context);
        
         
-        $this->view_header(get_string('pluginname', 'assign'));
+        echo $this->output->render(new assignment_header($this, true));
+        plagiarism_print_disclosure($this->get_course_module()->id);
         groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id);
 
-        $this->view_intro();
-        $this->view_grading_summary();
-        $this->view_submission_status();
+        if ($this->can_grade()) {
+            echo $this->output->render(new grading_summary($this));
+        }
+        if ($this->can_view_submission($USER->id)) {
+            $submission = $this->get_submission($USER->id);
+            echo $this->output->render(new submission_status($this, $submission, $this->grading_disabled($USER->id), $this->is_graded($USER->id), submission_status::STUDENT_VIEW));
+        }
+        //$this->view_submission_status();
         $this->view_submission_links();
         $this->view_feedback();
             
@@ -2526,6 +2503,9 @@ class assignment {
      * @return bool $grading_disabled
      */
     private function grading_disabled($userid) {
+        global $CFG;
+        require_once($CFG->libdir.'/gradelib.php');
+        
         $grading_info = grade_get_grades($this->get_course()->id, 'mod', 'assign', $this->instance->id, array($userid));
         if (!$grading_info) {
             return false;
@@ -2829,7 +2809,7 @@ class assignment {
      * 
      * @return bool
      */
-    private function is_any_submission_plugin_enabled() {
+    public function is_any_submission_plugin_enabled() {
         if (!isset($this->cache['any_submission_plugin_enabled'])) {
             $this->cache['any_submission_plugin_enabled'] = false;
             foreach ($this->submission_plugins as $plugin) {
@@ -2876,150 +2856,6 @@ class assignment {
         return $link . $plugin->view_summary($item);
     }
         
-    /**
-     * display submission status page 
-     * 
-     * @global object $OUTPUT
-     * @global object $USER
-     * @param int $userid
-     * @param bool $hide_nosubmission_warning - do not tell markers they do not need to submit anything.
-     * @return mixed
-     */
-    private function view_submission_status($userid=null, $hide_nosubmission_warning=false, $return_action='view', $return_params=array()) {
-        global $OUTPUT, $USER;
-
-
-         // Always require view permission to do anything
-        if (!has_capability('mod/assign:view', $this->context)) {
-            return;
-        }
-       
-       
-        if (!$userid) {
-            $userid = $USER->id;
-        }
-        
-        if (!is_enrolled($this->get_course_context(), $userid)) {
-            return;
-        }
-        if ($userid == $USER->id && !has_capability('mod/assign:submit', $this->context)) {
-            return;
-        }
-        if ($userid != $USER->id && !has_capability('mod/assign:grade', $this->context)) {
-            return;
-        }
-        $submission = null;
-
-        echo $OUTPUT->container_start('submissionstatus');
-        echo $OUTPUT->heading(get_string('submissionstatusheading', 'assign'), 3);
-        $time = time();
-        if (!$this->is_any_submission_plugin_enabled() && !$hide_nosubmission_warning) {
-            echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
-            echo get_string('noonlinesubmissions', 'assign');
-            echo $OUTPUT->box_end();
-        }
-
-        if ($this->instance->allowsubmissionsfromdate &&
-                $time <= $this->instance->allowsubmissionsfromdate) {
-            echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
-            echo get_string('allowsubmissionsfromdatesummary', 'assign', userdate($this->instance->allowsubmissionsfromdate));
-            echo $OUTPUT->box_end();
-        } 
-        $submission = $this->get_submission($userid);
-        $grade = $this->get_grade($userid);
-        echo $OUTPUT->box_start('boxaligncenter', 'intro');
-        $t = new html_table();
-
-        // status
-        $row = new html_table_row();
-        $cell1 = new html_table_cell(get_string('submissionstatus', 'assign'));
-        $locked = '';
-        if ($grade && $grade->locked) {
-            $locked = '<br/><br/>' . get_string('submissionslocked', 'assign');
-        }
-        if ($submission) {
-            $cell2 = new html_table_cell(get_string('submissionstatus_' . $submission->status, 'assign') . $locked);
-        } else {
-            $cell2 = new html_table_cell(get_string('nosubmission', 'assign') . $locked);
-        }
-        $row->cells = array($cell1, $cell2);
-        $t->data[] = $row;
-
-        // grading status
-        $row = new html_table_row();
-        $cell1 = new html_table_cell(get_string('gradingstatus', 'assign'));
-
-        if ($grade && $grade->grade > 0) {
-            $cell2 = new html_table_cell(get_string('graded', 'assign'));
-        } else {
-            $cell2 = new html_table_cell(get_string('notgraded', 'assign'));
-        }
-        $row->cells = array($cell1, $cell2);
-        $t->data[] = $row;
-
-        
-        
-        if ($this->instance->duedate >= 1) {
-            // due date
-            $row = new html_table_row();
-            $cell1 = new html_table_cell(get_string('duedate', 'assign'));
-            $cell2 = new html_table_cell(userdate($this->instance->duedate));
-            $row->cells = array($cell1, $cell2);
-            $t->data[] = $row;
-            
-            // time remaining
-            $row = new html_table_row();
-            $cell1 = new html_table_cell(get_string('timeremaining', 'assign'));
-            if ($this->instance->duedate - $time <= 0) {
-                if (!$submission || $submission->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED &&
-                    $submission->status != ASSIGN_SUBMISSION_STATUS_LOCKED) {
-                    $cell2 = new html_table_cell(get_string('overdue', 'assign', format_time($time - $this->instance->duedate)));
-                } else {
-                    if ($submission->timemodified > $this->instance->duedate) {
-                        $cell2 = new html_table_cell(get_string('submittedlate', 'assign', format_time($submission->timemodified - $this->instance->duedate)));
-                    } else {
-                        $cell2 = new html_table_cell(get_string('submittedearly', 'assign', format_time($submission->timemodified - $this->instance->duedate)));
-                    }
-                }
-            } else {
-                $cell2 = new html_table_cell(format_time($this->instance->duedate - $time));
-            }
-            $row->cells = array($cell1, $cell2);
-            $t->data[] = $row;
-        } 
-
-        // last modified 
-        $row = new html_table_row();
-        $cell1 = new html_table_cell(get_string('timemodified', 'assign'));
-        if ($submission) {
-            $cell2 = new html_table_cell(userdate($submission->timemodified));
-        } else {
-            $cell2 = new html_table_cell();
-        }
-        $row->cells = array($cell1, $cell2);
-        $t->data[] = $row;
-
-        if ($submission) {
-            foreach ($this->submission_plugins as $plugin) {
-                if ($plugin->is_enabled() && $plugin->is_visible()) {
-                    $row = new html_table_row();
-                    $cell1 = new html_table_cell($plugin->get_name());
-                    $cell2 = new html_table_cell($this->format_plugin_summary_with_link($plugin, $submission, $return_action, $return_params));
-                    $row->cells = array($cell1, $cell2);
-                    $t->data[] = $row;
-                }
-            }
-        }
-        
-       
-       
-                      
-        echo html_writer::table($t);
-        echo $OUTPUT->box_end();
-        
-        echo $OUTPUT->container_end();
-    }
-
     /**
      * display feedback
      * display submission status page 
@@ -3399,3 +3235,4 @@ class assignment {
 
 
 }
+
