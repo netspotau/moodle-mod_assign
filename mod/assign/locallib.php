@@ -269,6 +269,7 @@ class assignment {
         // handle form submissions first
         if ($action == 'savesubmission') {
             $this->process_save_submission();
+            $action = 'view';
          } else if ($action == 'lock') {
             $this->process_lock();
             $action = 'grading';
@@ -1938,11 +1939,19 @@ class assignment {
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
 
+        if (!$this->submissions_open()) {
+            print_error('submissionsclosed', 'mod_assign');
+            return;
+        }
 
         echo $this->output->render(new assignment_header($this, true, get_string('editsubmission', 'assign')));
         plagiarism_print_disclosure($this->get_course_module()->id);
-        $this->view_edit_submission_form();
-        
+        $data = new stdClass();
+
+        $mform = new mod_assign_submission_form(null, array($this, $data));
+
+        echo $this->output->render(new edit_submission_form($mform));
+    
         $this->view_footer();
         $this->add_to_log('view submit assignment form', get_string('viewownsubmissionform', 'assign'));
     }
@@ -1997,7 +2006,6 @@ class assignment {
        
         
         echo $this->output->render(new assignment_header($this, true));
-        plagiarism_print_disclosure($this->get_course_module()->id);
         groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id);
 
         if ($this->can_grade()) {
@@ -2448,12 +2456,15 @@ class assignment {
       
         $data = $this->get_default_submission_data();
         $mform = new mod_assign_submission_form(null, array($this, $data));
+        if ($mform->is_cancelled()) {
+            return false;
+        }
         if ($data = $mform->get_data()) {               
             $submission = $this->get_submission($USER->id, null, true); //create the submission if needed & its id              
             $grade = $this->get_grade($USER->id); // get the grade to check if it is locked
             if ($grade && $grade->locked) {
                 print_error('submissionslocked', 'assign');
-                return;
+                return true;
             }
           
         
@@ -2474,7 +2485,7 @@ class assignment {
                 $this->email_graders($submission);
             }
         }
-         
+        return true;
     }
     
     /**
@@ -2749,61 +2760,6 @@ class assignment {
                 }
             }
         }
-    }
-    
-    /**
-     * display submission form 
-     * 
-     * @global object $OUTPUT
-     * @global object $USER 
-     * @return None
-     */
-    private function view_submission_form() {
-        global $OUTPUT, $USER;
-        
-         // Always require view permission to do anything
-        require_capability('mod/assign:view', $this->context);
-        // Need submit permission to submit an assignment
-        require_capability('mod/assign:submit', $this->context);
-
-       
-        echo $OUTPUT->heading(get_string('submission', 'assign'), 3);
-        echo $OUTPUT->container_start('submission');
-
-        $data = $this->get_default_submission_data();
-        $submission = $this->get_submission($USER->id);
-
-        $mform = new mod_assign_submission_form(null, array($this, $data));
-
-        $mform->display();
-        
-        echo $OUTPUT->container_end();
-        echo $OUTPUT->spacer(array('height'=>30));
-    }
-
-   /**
-    * Show the screen for creating an assignment submission
-    *  
-    * @global object $OUTPUT 
-    * @return None
-    */
-    private function view_edit_submission_form() {
-        global $OUTPUT;
-         // Always require view permission to do anything
-        require_capability('mod/assign:view', $this->context);
-        // Need submit permission to submit an assignment
-        require_capability('mod/assign:submit', $this->context);
-
-       
-        // check submissions open
-
-        if ($this->submissions_open()) {
-            $this->view_submission_form();
-        }
-        echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
-            array('id' => $this->get_course_module()->id)), get_string('backtoassignment', 'assign'), 'get');
-
-        
     }
     
     /**

@@ -138,6 +138,7 @@ $string['submissionplugins'] = 'Submission Plugins';
 $string['submissionreceipts'] = 'Send submission receipts';
 $string['submissionslocked'] = 'This assignment is not accepting submissions';
 $string['submissions'] = 'Submissions';
+$string['submissionsclosed'] = 'Submissions closed';
 $string['submissionstatus_draft'] = 'Draft (not submitted)';
 $string['submissionstatusheading'] = 'Submission status';
 $string['submissionstatus_marked'] = 'Graded';

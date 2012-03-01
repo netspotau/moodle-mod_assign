@@ -26,6 +26,38 @@
 defined('MOODLE_INTERNAL') || die();
 
 /*
+ * Implements a renderable edit submission form
+ */
+class edit_submission_form implements renderable {
+    protected $form = null;
+    
+    public function __construct($form) {
+        $this->set_form($form);
+    }
+    
+    /**
+     * Returns form
+     *
+     * @return form
+     */
+    public function get_form() {
+        return $this->form;
+    }
+
+    /**
+     * Set the form
+     *
+     * @param form $form
+     */
+    public function set_form($form) {
+        if (!$form) {
+            throw new coding_exception('Form may not be null');
+        }
+        $this->form = $form;
+    }
+}
+
+/*
  * Implements a renderable feedback plugin feedback
  */
 class feedback_plugin_feedback implements renderable {

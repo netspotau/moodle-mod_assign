@@ -101,6 +101,29 @@ class mod_assign_renderer extends plugin_renderer_base {
     }
 
     /**
+     * render the edit submission form
+     *
+     * @param edit_submission_form $form
+     * @return string
+     */
+    public function render_edit_submission_form(edit_submission_form $editform) {
+        $o = '';
+    
+        $o .= $this->output->container_start('editsubmission');
+        $o .= $this->output->heading(get_string('submission', 'assign'), 3);
+        $o .= $this->output->box_start('boxaligncenter editsubmissionform');
+
+
+
+        $o .= $this->moodleform($editform->get_form());
+        
+        $o .= $this->output->box_end();
+        $o .= $this->output->container_end();
+
+        return $o;
+    }
+
+    /**
      * render the header
      * 
      * @param assignment_header $header
@@ -541,6 +564,23 @@ class mod_assign_renderer extends plugin_renderer_base {
         return $result;
     }
 
+
+    /**
+     * Helper method dealing with the fact we can not just fetch the output of moodleforms
+     *
+     * @param moodleform $mform
+     * @return string HTML
+     */
+    protected function moodleform(moodleform $mform) {
+
+        $o = '';
+        ob_start();
+        $mform->display();
+        $o = ob_get_contents();
+        ob_end_clean();
+
+        return $o;
+    }
     
 }
 
