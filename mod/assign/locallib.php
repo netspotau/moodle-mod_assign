@@ -1436,7 +1436,6 @@ class assignment {
         $submissionid = optional_param('sid', 0, PARAM_INT);
         $gradeid = optional_param('gid', 0, PARAM_INT);
         $plugintype = required_param('plugin', PARAM_TEXT);
-        echo $this->output->render(new assignment_header($this, true, ''));
         $item = null;
         if ($pluginsubtype == 'submission') {
             $plugin = $this->get_submission_plugin_by_type($plugintype);
@@ -1445,6 +1444,14 @@ class assignment {
                 return;
             }
             $item = $this->get_submission(null, $submissionid, false);
+
+            // permissions
+            if ($item->userid != $USER->id && !has_capability('mod/assign:grade', $this->context)) {
+                print_error('nopermissiontoshow');
+                return;
+            }
+            echo $this->output->render(new assignment_header($this, true, $plugin->get_name()));
+            echo $this->output->render(new submission_plugin_submission($this, $plugin, $item, submission_plugin_submission::FULL));
             $this->add_to_log('view submission', get_string('viewsubmissionforuser', 'assign', $item->userid));
         } else {
             $plugin = $this->get_feedback_plugin_by_type($plugintype);
@@ -1453,28 +1460,16 @@ class assignment {
                 return;
             }
             $item = $this->get_grade(0, $gradeid, false);
+            // permissions
+            if ($item->userid != $USER->id && !has_capability('mod/assign:grade', $this->context)) {
+                print_error('nopermissiontoshow');
+                return;
+            }
+            echo $this->output->render(new assignment_header($this, true, $plugin->get_name()));
+            echo $this->output->render(new feedback_plugin_feedback($this, $plugin, $item, feedback_plugin_feedback::FULL));
             $this->add_to_log('view feedback', get_string('viewfeedbackforuser', 'assign', $item->userid));
         }
-        if ($plugin) {
-            echo $OUTPUT->heading($plugin->get_name(), 3);
-        }
-        echo $OUTPUT->container_start('viewsubmission');
-        echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
-             
-        // permissions
-        if ($item->userid != $USER->id && !has_capability('mod/assign:grade', $this->context)) {
-            print_error('nopermissiontoshow');
-            return;
-        }
 
-            
-        if ($plugin) {
-            echo $plugin->view($item);
-        }
-          
-        echo $OUTPUT->box_end();
-        echo $OUTPUT->container_end();
-        echo $OUTPUT->spacer(array('height'=>30));
                  
         $this->view_return_links();
           
@@ -1751,26 +1746,6 @@ class assignment {
     }
     
     /**
-     * Print the details for a single user
-     *
-     * @global object $CFG
-     * @param object $user A user record from the database
-     * @return None
-     */
-    private function view_user($user=null) {
-        global $OUTPUT;
-        if (!$user) {
-            return;
-        }
-        echo $OUTPUT->container_start('userinfo');
-        echo $OUTPUT->user_picture($user);
-        echo $OUTPUT->spacer(array('width'=>30));
-        echo $OUTPUT->action_link(new moodle_url('/user/view.php', array('id' => $user->id, 'course'=>$this->get_course()->id)), fullname($user, has_capability('moodle/site:viewfullnames', $this->context)));
-        echo $OUTPUT->container_end();
-        
-    }
-   
-    /**
      * Print the grading page for a single user submission
      *
      * @global object $OUTPUT
@@ -1794,14 +1769,28 @@ class assignment {
              die();
         }
         $user = $DB->get_record('user', array('id' => $userid));
-        $this->view_user($user);
+        if ($user) {
+            echo $this->output->render(new user_summary($user, $this));
+        }
         $submission = $this->get_submission($userid);
         if ($this->can_view_submission($userid)) {
             echo $this->output->render(new submission_status($this, $submission, $this->grading_disabled($userid), $this->is_graded($userid), submission_status::GRADER_VIEW));
         }
+        // get the current grade
+        $grade = $this->get_grade($userid);
+        if ($grade) {
+            $data = new stdClass();
+            $data->grade = $grade->grade;
+            // set the grade 
+        } else {
+            $data = new stdClass();
+            $data->grade = -1;
+        }
 
         // now show the grading form
-        $this->view_grade_form();
+        $last = !$this->get_userid_for_row($rownum+1);
+        $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum, 'last'=>$last)));
+        echo $this->output->render(new grading_form($mform));
 
         $this->add_to_log('view grading form', get_string('viewgradingformforstudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user))));
         
@@ -2679,12 +2668,6 @@ class assignment {
             $data = new stdClass();
             $data->grade = -1;
         }
-
-        $options = array('subdirs'=>1,
-                                        'maxbytes'=>$this->course->maxbytes,
-                                        'maxfiles'=>EDITOR_UNLIMITED_FILES,
-                                        'accepted_types'=>'*',
-                                        'return_types'=>FILE_INTERNAL);
 
         $last = !$this->get_userid_for_row($rownum+1);
         $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum, 'last'=>$last)));

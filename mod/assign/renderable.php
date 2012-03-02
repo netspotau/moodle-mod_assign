@@ -58,12 +58,100 @@ class edit_submission_form implements renderable {
 }
 
 /*
+ * Implements a renderable grading form
+ */
+class grading_form implements renderable {
+    protected $form = null;
+    
+    public function __construct($form) {
+        $this->set_form($form);
+    }
+    
+    
+    /**
+     * Returns form
+     *
+     * @return form
+     */
+    public function get_form() {
+        return $this->form;
+    }
+
+    /**
+     * Set the form
+     *
+     * @param form $form
+     */
+    public function set_form($form) {
+        if (!$form) {
+            throw new coding_exception('Form may not be null');
+        }
+        $this->form = $form;
+    }
+    
+}
+
+/*
+ * Implements a renderable user summary
+ */
+class user_summary implements renderable {
+    protected $user = null;
+    protected $assignment = null;
+    
+    public function __construct($user, $assignment) {
+        $this->set_user($user);
+        $this->set_assignment($assignment);
+    }
+    
+    /**
+     * Returns assignment
+     *
+     * @return assignment
+     */
+    public function get_assignment() {
+        return $this->assignment;
+    }
+
+    /**
+     * Set the assignment
+     *
+     * @param assignment $assignment
+     */
+    public function set_assignment($assignment) {
+        if (!$assignment) {
+            throw new coding_exception('Assignment may not be null');
+        }
+        $this->assignment = $assignment;
+    }
+    
+    /**
+     * Returns user
+     *
+     * @return user
+     */
+    public function get_user() {
+        return $this->user;
+    }
+
+    /**
+     * Set the user
+     *
+     * @param user $user
+     */
+    public function set_user($user) {
+        if (!$user) {
+            throw new coding_exception('User may not be null');
+        }
+        $this->user = $user;
+    }
+}
+
+/*
  * Implements a renderable feedback plugin feedback
  */
 class feedback_plugin_feedback implements renderable {
     const SUMMARY                = 10;
     const FULL                   = 20;
-    const SUMMARY_PLAIN_TEXT     = 30;
 
     protected $assignment = null;
     protected $plugin = null;
@@ -155,7 +243,7 @@ class feedback_plugin_feedback implements renderable {
      * @param string $view
      */
     public function set_view($view) {
-        if (in_array($view, array(self::SUMMARY, self::FULL, self::SUMMARY_PLAIN_TEXT))) {
+        if (in_array($view, array(self::SUMMARY, self::FULL))) {
             $this->view = $view;
         } else {
             throw new coding_exception('Unknown submission view type.');
@@ -169,7 +257,6 @@ class feedback_plugin_feedback implements renderable {
 class submission_plugin_submission implements renderable {
     const SUMMARY                = 10;
     const FULL                   = 20;
-    const SUMMARY_PLAIN_TEXT     = 30;
 
     protected $assignment = null;
     protected $plugin = null;
@@ -261,7 +348,7 @@ class submission_plugin_submission implements renderable {
      * @param string $view
      */
     public function set_view($view) {
-        if (in_array($view, array(self::SUMMARY, self::FULL, self::SUMMARY_PLAIN_TEXT))) {
+        if (in_array($view, array(self::SUMMARY, self::FULL))) {
             $this->view = $view;
         } else {
             throw new coding_exception('Unknown submission view type.');

@@ -90,6 +90,39 @@ class mod_assign_renderer extends plugin_renderer_base {
         $row->cells = array($cell1, $cell2);
         $t->data[] = $row;
     }
+    
+    /**
+     * Render the grading form
+     * 
+     * @return None
+     */
+    public function render_grading_form(grading_form $form) {
+        $o = '';
+        $o .= $this->moodleform($form->get_form());
+        return $o;
+    }
+    
+    /**
+     * Render the user summary
+     * 
+     * @return None
+     */
+    public function render_user_summary(user_summary $summary) {
+        $o = '';
+
+        if (!$summary->get_user()) {
+            return;
+        }
+        $o .= $this->output->container_start('usersummary');
+        $o .= $this->output->box_start('boxaligncenter usersummarysection');
+        $o .= $this->output->user_picture($summary->get_user());
+        $o .= $this->output->spacer(array('width'=>30));
+        $o .= $this->output->action_link(new moodle_url('/user/view.php', array('id' => $summary->get_user()->id, 'course'=>$summary->get_assignment()->get_course()->id)), fullname($summary->get_user(), has_capability('moodle/site:viewfullnames', $summary->get_assignment()->get_course_context())));
+        $o .= $this->output->box_end();
+        $o .= $this->output->container_end();
+        
+        return $o;
+    }
 
     /**
      * Page is done - render the footer
@@ -486,6 +519,11 @@ class mod_assign_renderer extends plugin_renderer_base {
             
             $o .= $link . $submission_plugin->get_plugin()->view_summary($submission_plugin->get_submission());
         }
+        if ($submission_plugin->get_view() == submission_plugin_submission::FULL) {
+            $o .= $this->output->box_start('boxaligncenter submissionfull');
+            $o .= $submission_plugin->get_plugin()->view($submission_plugin->get_submission());
+            $o .= $this->output->box_end();
+        }
 
         return $o;
     }
@@ -516,6 +554,11 @@ class mod_assign_renderer extends plugin_renderer_base {
             }
             
             $o .= $link . $feedback_plugin->get_plugin()->view_summary($feedback_plugin->get_grade());
+        }
+        if ($feedback_plugin->get_view() == feedback_plugin_feedback::FULL) {
+            $o .= $this->output->box_start('boxaligncenter feedbackfull');
+            $o .= $feedback_plugin->get_plugin()->view($feedback_plugin->get_grade());
+            $o .= $this->output->box_end();
         }
 
         return $o;
