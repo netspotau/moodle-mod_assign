@@ -227,6 +227,9 @@ You can see it appended to your assignment submission:
     {$a->url}';
 $string['assignmentmailhtml'] = '{$a->grader} has posted some feedback on your
 assignment submission for \'<i>{$a->assignment}</i>\'<br /><br />
-You can see it appended to your <a href="{$a->url}">assignment submission</a>.';
+You can see  <a href="{$a->url}">the feedback </a>appended to your assignment submission.';
+
+
+
 $string['assignmentmailsmall'] = '{$a->grader} has posted some feedback on your
 assignment submission for \'{$a->assignment}\' You can see it appended to your submission';

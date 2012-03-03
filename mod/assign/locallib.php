@@ -720,8 +720,16 @@ class assignment {
         $mform->setDefault('notifymarkers', 0);
         $mform->addElement('select', 'notifymarkerslate', get_string('notifymarkerslate', 'assign'), $ynoptions);
         $mform->setDefault('notifymarkerslate', 0);
+        
         $mform->addElement('select', 'notifystudentsfeedback', get_string('notifystudentsfeedback', 'assign'), $ynoptions);
-        $mform->setDefault('notifystudentsfeedback', 0);
+      //  $courseconfig = get_config('moodlecourse');
+       
+                   
+       // if (!empty($courseconfig->showgrades)){
+        //   $mform->setDefault('notifystudentsfeedback', 1); // activate it by default
+      //  } else{
+           $mform->setDefault('notifystudentsfeedback', 0);
+      //  }
         $mform->addElement('select', 'notifystudentownsubmission', get_string('notifystudentownsubmission', 'assign'), $ynoptions);
         $mform->setDefault('notifystudentownsubmission', 0);
         
@@ -1027,14 +1035,50 @@ class assignment {
                                         AND g.timecreated >= ?
                                         AND g.assignment = a.id", array($endtime, $starttime));
     }
-
+     
+    /**
+     * Creates the text content for feedback emails to students via cron
+     * 
+     * @param $info object The info used by the 'emailgradermail' language string
+     * @return string
+     */
+    private function format_email_feedback_text($info) {
+        $posttext  = format_string($this->get_course()->shortname, true, array('context' => $this->get_course_context())).' -> '.
+                     $this->get_module_name().' -> '.
+                     format_string($this->instance->name, true, array('context' => $this->context))."\n";
+        $posttext .= '---------------------------------------------------------------------'."\n";
+        $posttext .= get_string("assignmentmail", "assign", $info)."\n";
+        $posttext .= "\n---------------------------------------------------------------------\n";
+        return $posttext;
+    }
+    
+     /**
+     * Creates the html content for feedback emails to students via cron
+     *
+     * @param $info object The info used by the 'emailgradermailhtml' language string
+     * @return string
+     */
+    private function format_email_feedback_html($info) {
+        global $CFG;
+        $posthtml  = '<p><font face="sans-serif">'.
+                     '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$this->get_course()->id.'">'.format_string($this->get_course()->shortname, true, array('context' => $this->get_course_context())).'</a> ->'.
+                     '<a href="'.$CFG->wwwroot.'/mod/assignment/index.php?id='.$this->get_course()->id.'">'.$this->get_module_name().'</a> ->'.
+                     '<a href="'.$CFG->wwwroot.'/mod/assignment/view.php?id='.$this->get_course_module()->id.'">'.format_string($this->instance->name, true, array('context' => $this->context)).'</a></font></p>';
+        $posthtml .= '<hr /><font face="sans-serif">';
+        $posthtml .= '<p>'.get_string('assignmentmailhtml', 'assign', $info).'</p>';
+        $posthtml .= '</font><hr />';
+        return $posthtml;
+    }
+    
+    
+    
     /**
      * Function to send notification periodically according to the moodle cron
      *
      * Finds all assignment notifications that have yet to be mailed out, and mails them
      */
-    public function send_feedback_notification() {
-
+    public function email_feedback_notification() {
+          global $CFG, $USER, $DB;
         /// Notices older than 1 day will not be mailed.  This is to avoid the problem where
         /// cron has not been running for a long time, and then suddenly people are flooded
         /// with mail from the past few weeks or months
@@ -1042,13 +1086,19 @@ class assignment {
         if (empty($this->instance->notifystudentsfeedback)) {          // No need to do anything
             return;
         }
-        
+    
         $timenow = time();
         $endtime = $timenow - $CFG->maxeditingtime;
         $starttime = $endtime - 24 * 3600;   /// One day earlier
 
+      
+         
+         
+        // $submissions throws empty array ? when being vardumped
         if ($submissions = $this->get_unmailed_submissions($starttime, $endtime)) {
 
+             
+            
             $realuser = clone($USER);
 
             foreach ($submissions as $key => $submission) {
@@ -1059,9 +1109,10 @@ class assignment {
 
             foreach ($submissions as $submission) {
 
+                $user = $DB->get_record("user", array("id" => $submission->userid));
                 echo "Processing assignment submission $submission->id\n";
 
-                if (!$user = $DB->get_record("user", array("id" => $submission->userid))) {
+                if (!$user) {
                     echo "Could not find user $user->id\n";
                     continue;
                 }
@@ -1074,8 +1125,11 @@ class assignment {
                 /// Override the language and timezone of the "current" user, so that
                 /// mail is customised for the receiver.
                 cron_setup_user($user, $course);
-
+                // $coursecontext = get_context_instance(CONTEXT_COURSE, $submission->course);
                 $coursecontext = $this->get_course_context();
+                
+                
+                
                 $courseshortname = format_string($course->shortname, true, array('context' => $coursecontext));
                 if (!is_enrolled($coursecontext, $user->id)) {
                     echo fullname($user) . " not an active participant in " . $courseshortname . "\n";
@@ -1096,32 +1150,18 @@ class assignment {
                     continue;
                 }
 
-                $strassignments = get_string("modulenameplural", "assign");
-                $strassignment = get_string("modulename", "assign");
+                $strassignments = $this->get_module_name_plural();
+                $strassignment  = $this->get_module_name();
 
-                $assignmentinfo = new stdClass();
-                $assignmentinfo->grader = fullname($grader);
-                $assignmentinfo->assignment = format_string($submission->name, true);
-                $assignmentinfo->url = "$CFG->wwwroot/mod/assign/view.php?id=$mod->id";
+                $assigninfo = new stdClass();
+                $assigninfo->grader = fullname($grader,true);
+                $assigninfo->assignment = format_string($submission->name, true);
+                $assigninfo->url =  $CFG->wwwroot.'/mod/assign/view.php?id='.$this->get_course_module()->id;
 
                 $postsubject = "$courseshortname: $strassignments: " . format_string($submission->name, true);
-                $posttext = "$courseshortname -> $strassignments -> " . format_string($submission->name, true) . "\n";
-                $posttext .= "---------------------------------------------------------------------\n";
-                $posttext .= get_string("assignmentmail", "assign", $assignmentinfo) . "\n";
-                $posttext .= "---------------------------------------------------------------------\n";
-
-                if ($user->mailformat == 1) {  // HTML
-                    $posthtml = "<p><font face=\"sans-serif\">" .
-                            "<a href=\"$CFG->wwwroot/course/view.php?id=$course->id\">$courseshortname</a> ->" .
-                            "<a href=\"$CFG->wwwroot/mod/assign/index.php?id=$course->id\">$strassignments</a> ->" .
-                            "<a href=\"$CFG->wwwroot/mod/assign/view.php?id=$mod->id\">" . format_string($submission->name, true) . "</a></font></p>";
-                    $posthtml .= "<hr /><font face=\"sans-serif\">";
-                    $posthtml .= "<p>" . get_string("assignmentmailhtml", "assign", $assignmentinfo) . "</p>";
-                    $posthtml .= "</font><hr />";
-                } else {
-                    $posthtml = "";
-                }
-
+                $posttext = $this->format_email_feedback_text($assigninfo);                
+                $posthtml = ($user->mailformat == 1) ? $this->format_email_feedback_html($assigninfo) : '';
+                
                 $eventdata = new stdClass();
                 $eventdata->modulename = 'assign';
                 $eventdata->userfrom = $grader;
@@ -1154,7 +1194,7 @@ class assignment {
      * Finds all assignment notifications that have yet to be mailed out, and mails them
      */
     function cron() {
-        global $CFG, $USER, $DB;
+        global $CFG;
 
         /// first execute all crons in submission plugins
         foreach ($this->submission_plugins as $plugin) {
@@ -1173,7 +1213,7 @@ class assignment {
             }
         }
 
-     //   $this->send_feedback_notification();
+      // $this->email_feedback_notification();
 
         return true;
     }
@@ -2284,9 +2324,11 @@ class assignment {
 
         if (!empty($this->instance->notifymarkers)) {          
             
-          
+              
+        
              $user = $DB->get_record('user', array('id'=>$submission->userid));
-
+          
+             
             if ($teachers = $this->get_graders($user)) {
 
                 $strassignments = $this->get_module_name_plural();
@@ -2329,7 +2371,7 @@ class assignment {
            // $timenow = time();
              // work out late submission
            if (($this->instance->duedate - $submission->timecreated) < 0) {
-
+                   
 
                 $user = $DB->get_record('user', array('id' => $submission->userid));
 
@@ -3519,8 +3561,10 @@ class assignment {
                     }
                 }
             }
-
-
+                // feedback email should be sent via cron, this is temporary one, just for testing purposes!
+               $this->email_feedback_notification();
+               
+               
             $user = $DB->get_record('user', array('id' => $userid));
 
             $this->add_to_log('grade submission', $this->format_grade_for_log($grade));
