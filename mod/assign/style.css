@@ -39,3 +39,6 @@ div.submissionsummarytable table tbody tr td.c0 {
     color: red;
     font-weight: 900;
 }
+
+.jsenabled .gradingoptionsform .hidden {display: none;}
+

@@ -555,7 +555,7 @@ class mod_assign_renderer extends plugin_renderer_base {
 
         $o .= $this->output->box_start('boxaligncenter gradingtable');
         // need to get from prefs
-        $o .= $table->out(10, true);
+        $o .= $table->out($table->get_rows_per_page(), true);
         $o .= $this->output->box_end();
 
         return $o;

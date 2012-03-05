@@ -38,6 +38,7 @@ require_once($CFG->dirroot.'/mod/assign/locallib.php');
  */
 class grading_table extends table_sql implements renderable {
     private $assignment = null;
+    private $perpage = 10;
     private $rownum = -1;
     private $output = null;
     private $grading_info = null;
@@ -47,10 +48,11 @@ class grading_table extends table_sql implements renderable {
      * 
      * @param assignment $assignment The assignment class
      */
-    function __construct($assignment) {
+    function __construct($assignment, $perpage=10, $filter='') {
         global $CFG, $PAGE;
         parent::__construct('mod_assign_grading');
         $this->assignment = $assignment;
+        $this->perpage = $perpage;
         $this->output = $PAGE->get_renderer('mod_assign');
 
         $this->define_baseurl(new moodle_url($CFG->wwwroot . '/mod/assign/view.php', array('action'=>'grading', 'id'=>$assignment->get_course_module()->id)));
@@ -61,11 +63,20 @@ class grading_table extends table_sql implements renderable {
 
         $users = array_keys( $assignment->list_enrolled_users_with_capability('mod/assign:submit',$currentgroup));
         
-        $fields = user_picture::fields('u') . ', u.id as userid, u.firstname as firstname, u.lastname as lastname, s.status as status, g.grade as grade, s.id as submissionid, s.timecreated as firstsubmission, s.timemodified as timesubmitted, g.id as gradeid, g.timemodified as timemarked, g.timecreated as firstmarked, g.mailed as mailed';
-        $from = '{user} u LEFT JOIN {assign_submission} s ON u.id = s.userid AND s.assignment = ? LEFT JOIN {assign_grades} g ON u.id = g.userid AND g.assignment = ?';
+        $fields = user_picture::fields('u') . ', u.id as userid, u.firstname as firstname, u.lastname as lastname, ';
+        $fields .= 's.status as status, s.id as submissionid, s.timecreated as firstsubmission, s.timemodified as timesubmitted, ';
+        $fields .= 'g.id as gradeid, g.grade as grade, g.timemodified as timemarked, g.timecreated as firstmarked, g.mailed as mailed';
+        $from = '{user} u LEFT JOIN {assign_submission} s ON u.id = s.userid AND s.assignment = ' . $this->assignment->get_instance()->id . 
+                        ' LEFT JOIN {assign_grades} g ON u.id = g.userid AND g.assignment = ' . $this->assignment->get_instance()->id;
         $where = 'u.id IN (' . implode(',', $users) . ')';
+        if ($filter == ASSIGN_FILTER_SUBMITTED) {
+            $where .= ' AND s.timecreated > 0 ';
+        }
+        if ($filter == ASSIGN_FILTER_REQUIRE_GRADING) {
+            $where .= ' AND s.timemodified > g.timemodified ';
+        }
         $params = array($assignment->get_instance()->id, $assignment->get_instance()->id);
-        $this->set_sql($fields, $from, $where, $params);
+        $this->set_sql($fields, $from, $where, array());
 
         $columns = array();
         $headers = array();
@@ -130,6 +141,15 @@ class grading_table extends table_sql implements renderable {
         // load the grading info for all users
         $this->grading_info = grade_get_grades($this->assignment->get_course()->id, 'mod', 'assign', $this->assignment->get_instance()->id, $users);
                
+    }
+
+    /**
+     * Return the number of rows to display on a single page
+     * 
+     * @return int The number of rows per page
+     */
+    function get_rows_per_page() {
+        return $this->perpage;
     }
 
     /**
