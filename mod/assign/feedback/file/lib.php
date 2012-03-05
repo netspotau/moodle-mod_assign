@@ -75,36 +75,29 @@ class feedback_file extends feedback_plugin {
      * @global object $CFG
      * @global object $COURSE
      * @global object $DB
-     * @return mixed
+     * @param object $mform The form to add the settings to
+     * @return void
      */
-    public function get_settings() {
+    public function get_settings(&$mform) {
         global $CFG, $COURSE, $DB;
 
-        $default_maxfiles = $this->get_config('maxfilesubmissions');
-        $default_maxsizebytes = $this->get_config('maxsubmissionsizebytes');
+        $default_maxfiles = $this->get_config('maxfiles');
+        $default_maxsizebytes = $this->get_config('maxsizebytes');
 
         $settings = array();
         $options = array();
         for($i = 1; $i <= ASSIGN_MAX_FEEDBACK_FILES; $i++) {
             $options[$i] = $i;
         }
-        $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
         
-        $settings[] = array('type' => 'select', 
-                            'name' => 'maxfiles', 
-                            'description' => get_string('maxfiles', 'feedback_file'), 
-                            'options'=>$options, 'default'=>$default_maxfiles);
+        $mform->addElement('select', 'feedback_file_maxfiles', get_string('maxfiles', 'feedback_file'), $options);
+        $mform->setDefault('feedback_file_maxfiles', $default_maxfiles);
 
         $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
         $choices[0] = get_string('courseuploadlimit') . ' ('.display_size($COURSE->maxbytes).')';
-        $settings[] = array('type' => 'select', 
-                            'name' => 'maxsizebytes', 
-                            'description' => get_string('maximumsize', 'feedback_file'), 
-                            'options'=>$choices,
-                            'default'=>$default_maxsizebytes);
-
-        return $settings;
-
+        
+        $mform->addElement('select', 'feedback_file_maxsizebytes', get_string('maximumsize', 'feedback_file'), $choices);
+        $mform->setDefault('feedback_file_maxsizebytes', $default_maxsizebytes);
     }
     
     /**
@@ -113,8 +106,8 @@ class feedback_file extends feedback_plugin {
      * @return bool 
      */
     public function save_settings($mform) {
-        $this->set_config('maxfiles', $mform->maxfiles);
-        $this->set_config('maxsizebytes', $mform->maxsizebytes);
+        $this->set_config('maxfiles', $mform->feedback_file_maxfiles);
+        $this->set_config('maxsizebytes', $mform->feedback_file_maxsizebytes);
         return true;
     }
 
@@ -138,7 +131,7 @@ class feedback_file extends feedback_plugin {
      * @param object $data
      * @return mixed 
      */
-    public function get_form_elements($grade, & $data) {
+    public function get_form_elements($grade, & $mform, & $data) {
 
         $elements = array();
 
@@ -151,10 +144,10 @@ class feedback_file extends feedback_plugin {
 
 
         $data = file_prepare_standard_filemanager($data, 'files', $fileoptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_FEEDBACK_FILES, $gradeid);
-        
-        $elements[] = array('type'=>'filemanager', 'name'=>'files_filemanager', 'description'=>'', 'options'=>$fileoptions);
 
-        return $elements;
+        $mform->addElement('filemanager', 'files_filemanager', '', null, $fileoptions);
+
+        return true;
     }
 
     /**

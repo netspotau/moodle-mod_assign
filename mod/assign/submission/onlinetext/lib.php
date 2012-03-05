@@ -76,7 +76,7 @@ class submission_onlinetext extends submission_plugin {
      * @param object $data
      * @return string 
      */
-    public function get_form_elements($submission, & $data) {
+    public function get_form_elements($submission, & $mform, & $data) {
         global $USER;
         
         
@@ -103,10 +103,8 @@ class submission_onlinetext extends submission_plugin {
         
         
         $data = file_prepare_standard_editor($data, 'onlinetext', $editoroptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $submissionid);      
-        
-        $elements[] = array('type'=>'editor', 'name'=>'onlinetext_editor', 'description'=>'', 'options'=>$editoroptions);
-  
-        return $elements;
+        $mform->addElement('editor', 'onlinetext_editor', '', null, $editoroptions);
+        return true;
     }
     
     /**

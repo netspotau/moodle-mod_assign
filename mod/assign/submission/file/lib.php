@@ -74,9 +74,10 @@ class submission_file extends submission_plugin {
      * @global object $CFG
      * @global object $COURSE
      * @global object $DB
+     * @param object $mform The form to add elements to
      * @return mixed
      */
-    public function get_settings() {
+    public function get_settings(&$mform) {
         global $CFG, $COURSE, $DB;
 
         $default_maxfilesubmissions = $this->get_config('maxfilesubmissions');
@@ -87,12 +88,9 @@ class submission_file extends submission_plugin {
         for($i = 1; $i <= ASSIGN_MAX_SUBMISSION_FILES; $i++) {
             $options[$i] = $i;
         }
-        $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
         
-        $settings[] = array('type' => 'select', 
-                            'name' => 'maxfilesubmissions', 
-                            'description' => get_string('maxfilessubmission', 'submission_file'), 
-                            'options'=>$options, 'default'=>$default_maxfilesubmissions);
+        $mform->addElement('select', 'submission_file_maxfiles', get_string('maxfilessubmission', 'submission_file'), $options);
+        $mform->setDefault('submission_file_maxfiles', $default_maxfilesubmissions);
 
         $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
         $choices[0] = get_string('courseuploadlimit') . ' ('.display_size($COURSE->maxbytes).')';
@@ -101,8 +99,10 @@ class submission_file extends submission_plugin {
                             'description' => get_string('maximumsubmissionsize', 'submission_file'), 
                             'options'=>$choices,
                             'default'=>$default_maxsubmissionsizebytes);
+        
+        $mform->addElement('select', 'submission_file_maxsizebytes', get_string('maximumsubmissionsize', 'submission_file'), $choices);
+        $mform->setDefault('submission_file_maxsizebytes', $default_maxsubmissionsizebytes);
 
-        return $settings;
 
     }
     
@@ -112,8 +112,8 @@ class submission_file extends submission_plugin {
      * @return bool 
      */
     public function save_settings($mform) {
-        $this->set_config('maxfilesubmissions', $mform->maxfilesubmissions);
-        $this->set_config('maxsubmissionsizebytes', $mform->maxsubmissionsizebytes);
+        $this->set_config('maxfilesubmissions', $mform->submission_file_maxfiles);
+        $this->set_config('maxsubmissionsizebytes', $mform->submission_file_maxsizebytes);
         return true;
     }
 
@@ -138,7 +138,7 @@ class submission_file extends submission_plugin {
      * @param object $data
      * @return mixed 
      */
-    public function get_form_elements($submission, & $data) {
+    public function get_form_elements($submission, & $mform, & $data) {
 
         $elements = array();
 
@@ -151,10 +151,8 @@ class submission_file extends submission_plugin {
 
 
         $data = file_prepare_standard_filemanager($data, 'files', $fileoptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $submissionid);
-        
-        $elements[] = array('type'=>'filemanager', 'name'=>'files_filemanager', 'description'=>'', 'options'=>$fileoptions);
-
-        return $elements;
+        $mform->addElement('filemanager', 'files_filemanager', '', null, $fileoptions); 
+        return true;
     }
 
     /**

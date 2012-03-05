@@ -88,10 +88,11 @@ abstract class assignment_plugin {
     /**
      * This function should be overridden to provide an array of elements that can be added to a moodle
      * form for display in the settings page for the assignment.
+     * @param object $mform The form to add the elements to 
      * @return $array 
      */
-    public function get_settings() {
-        return array();
+    public function get_settings(&$mform) {
+        return;
     }
 
     /**
@@ -217,11 +218,12 @@ abstract class assignment_plugin {
      * Get any additional fields for the submission/grading form for this assignment.
      * 
      * @param object $submission_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
+     * @param object $mform - This is the form
      * @param object $data - This is the form data that can be modified for example by a filemanager element
-     * @return array - a list of form elements to include in the submission/grading form
+     * @return boolean - true if we added anything to the form
      */
-    public function get_form_elements($submission, & $data) {
-        return array();
+    public function get_form_elements($submission_grade, & $mform, & $data) {
+        return false;
     }
 
     /**

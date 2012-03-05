@@ -69,7 +69,7 @@ class feedback_comments extends feedback_plugin {
      * @param object $data
      * @return string 
      */
-    public function get_form_elements($grade, & $data) {
+    public function get_form_elements($grade, & $mform, & $data) {
         $elements = array();
 
        
@@ -83,10 +83,8 @@ class feedback_comments extends feedback_plugin {
             }
         }
 
-
-        $elements[] = array('type'=>'editor', 'name'=>'feedbackcomments_editor', 'description'=>'', 'paramtype'=>PARAM_RAW, 'options'=>null);
-
-        return $elements;
+        $mform->addElement('editor', 'feedbackcomments_editor', '', null, null);
+        return true;
     }
 
     /**

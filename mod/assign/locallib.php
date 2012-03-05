@@ -627,26 +627,9 @@ class assignment {
     private function add_plugin_grade_elements($grade, & $mform, & $data) {
         foreach ($this->feedback_plugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
-                $elements = $plugin->get_form_elements($grade, $data);
-
-                if ($elements && count($elements) > 0) {
-                    // add a header for the plugin data
-                    $mform->addElement('header', 'general', $plugin->get_name());
-                    foreach ($elements as $setting) {
-                        // the editor element accepts it's arguments in a non-standard order
-                        if ($setting['type'] == 'editor') {
-                            $this->set_default_data_for_editor($setting['name'], $data);
-                        }
-                        if ($setting['type'] == 'editor' || $setting['type'] == 'filemanager') {
-                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], null, $setting['options']);
-                        } else {
-                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
-                        }
-                        if (isset($setting['default'])) {
-                            $mform->setDefault($setting['name'], $setting['default']);
-                        }
-                    }
-
+                $mform->addElement('header', 'header_' . $plugin->get_type(), $plugin->get_name());
+                if (!$plugin->get_form_elements($grade, $mform, $data)) {
+                    $mform->removeElement('header_' . $plugin->get_type());
                 }
             }
         }
@@ -673,29 +656,8 @@ class assignment {
             $mform->addElement('select', $plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', get_string('enabled', 'assign'), $ynoptions);
             $mform->setDefault($plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', $plugin->is_enabled());
 
-            $settings = $plugin->get_settings();
+            $plugin->get_settings($mform);
 
-            // settings is an array and each element of the array is a map of 'type', 'name', 'description', 'options'
-            if ($settings && count($settings) > 0) {
-                foreach ($settings as $setting) {
-                    if (isset($setting['options'])) {
-                        // the editor element accepts it's arguments in a non-standard order
-                        if ($setting['type'] == 'editor' || $setting['type'] == 'filemanager') {
-                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], null, $setting['options']);
-                        } else {
-                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
-                            // add disableIf to disable/grey the rest of the setting options if the plugin is not enabled
-                            $mform->disabledIf($setting['name'],$plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', 'eq', 0);
-                        }
-                    } else {
-                        $mform->addElement($setting['type'], $setting['name'], $setting['description']);
-                        
-                    }
-                    if (isset($setting['default'])) {
-                        $mform->setDefault($setting['name'], $setting['default']);
-                    }
-                }
-            }
         }
 
     }
@@ -2481,26 +2443,9 @@ class assignment {
     private function add_plugin_submission_elements($submission, & $mform, & $data) {
         foreach ($this->submission_plugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible() && $plugin->allow_submissions()) {
-                $submission_elements = $plugin->get_form_elements($submission, $data);
-
-                if ($submission_elements && count($submission_elements) > 0) {
-                    // add a header for the plugin data
-                    $mform->addElement('header', 'general', $plugin->get_name());
-                    foreach ($submission_elements as $setting) {
-                        // the editor element accepts it's arguments in a non-standard order
-                        if ($setting['type'] == 'editor') {
-                            $this->set_default_data_for_editor($setting['name'], $data);
-                        }
-                        if ($setting['type'] == 'editor' || $setting['type'] == 'filemanager') {
-                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], null, $setting['options']);
-                        } else {
-                            $mform->addElement($setting['type'], $setting['name'], $setting['description'], $setting['options']);
-                        }
-                        if (isset($setting['default'])) {
-                            $mform->setDefault($setting['name'], $setting['default']);
-                        }
-                    }
-                    
+                $mform->addElement('header', 'header_' . $plugin->get_type(), $plugin->get_name());
+                if (!$plugin->get_form_elements($submission, $mform, $data)) {
+                    $mform->removeElement('header_' . $plugin->get_type());
                 }
             }
         }
