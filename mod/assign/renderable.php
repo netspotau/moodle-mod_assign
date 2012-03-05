@@ -26,6 +26,38 @@
 defined('MOODLE_INTERNAL') || die();
 
 /*
+ * Implements a renderable submissions table
+ */
+class users_submissions_table implements renderable {
+    protected $data = null;
+    
+    public function __construct($data) {
+        $this->set_data($data);
+    }
+    
+    /**
+     * Returns data
+     *
+     * @return array
+     */
+    public function get_data() {
+        return $this->data;
+    }
+
+    /**
+     * Set the data
+     *
+     * @param array $data
+     */
+    public function set_data($data) {
+        if (!$data) {
+            throw new coding_exception('Data may not be null');
+        }
+        $this->data = $data;
+    }
+}
+
+/*
  * Implements a renderable edit submission form
  */
 class edit_submission_form implements renderable {
@@ -452,13 +484,54 @@ class submission_status implements renderable {
     protected $view = self::STUDENT_VIEW;
     protected $locked = false;
     protected $graded = false;
+    protected $show_edit = false;
+    protected $show_submit = false;
 
-    public function __construct($assignment, $submission = null, $locked = false, $graded = false, $view = self::STUDENT_VIEW) {
+    public function __construct($assignment, $submission = null, $locked = false, $graded = false, $view = self::STUDENT_VIEW, $show_edit = false, $show_submit = false) {
         $this->set_assignment($assignment);
         $this->set_submission($submission);
         $this->set_locked($locked);
         $this->set_view($view);
+        $this->set_show_edit($show_edit);
+        $this->set_show_submit($show_submit);
     }
+    
+    /**
+     * Returns true if the we should show the edit submission link
+     *
+     * @return bool
+     */
+    public function get_show_edit() {
+        return $this->show_edit;
+    }
+
+    /**
+     * Sets the show_edit status of the submission
+     *
+     * @param bool $show_edit
+     */
+    public function set_show_edit($show_edit = false) {
+        $this->show_edit = $show_edit;
+    }
+    
+    /**
+     * Returns true if the we should show the submit submission link
+     *
+     * @return bool
+     */
+    public function get_show_submit() {
+        return $this->show_submit;
+    }
+
+    /**
+     * Sets the show_submit status of the submission
+     *
+     * @param bool $show_submit
+     */
+    public function set_show_submit($show_submit = false) {
+        $this->show_submit = $show_submit;
+    }
+    
     
     /**
      * Returns true if the submission is graded in the gradebook

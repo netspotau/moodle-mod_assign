@@ -91,6 +91,8 @@ $string['gradingstatus'] = 'Grading status';
 $string['gradingsummary'] = 'Grading summary';
 $string['hideshow'] = 'Hide/Show';
 $string['instructionfiles'] = 'Instruction files';
+$string['lastmodifiedsubmission'] = 'Last modified (submission)';
+$string['lastmodifiedgrade'] = 'Last modified (grade)';
 $string['locksubmissionforstudent'] = 'Prevent any more submissions for student: (id={$a->id}, fullname={$a->fullname}).';
 $string['managefeedbackplugins'] = 'Manage Feedback Plugins';
 $string['managesubmissionplugins'] = 'Manage Submission Plugins';

@@ -483,9 +483,25 @@ class mod_assign_renderer extends plugin_renderer_base {
                 }
             }
         }
+
         
         $o .= html_writer::table($t);
         $o .= $this->output->box_end();
+    
+        // links
+        if ($status->get_show_edit()) {
+            $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
+                array('id' => $status->get_assignment()->get_course_module()->id, 'action' => 'editsubmission')), get_string('editsubmission', 'assign'), 'get');
+        }
+
+        if ($status->get_submission() && $status->get_submission()->status == ASSIGN_SUBMISSION_STATUS_DRAFT) {
+            // submission.php test
+            $o .= $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
+                    array('id' => $status->get_assignment()->get_course_module()->id, 'action'=>'submit')), get_string('submitassignment', 'assign'), 'get');
+            $o .= $this->output->box_start('boxaligncenter submithelp');
+            $o .= get_string('submitassignment_help', 'assign');
+            $o .= $this->output->box_end();
+        }
         
         $o .= $this->output->container_end();
         return $o;
@@ -524,6 +540,23 @@ class mod_assign_renderer extends plugin_renderer_base {
             $o .= $submission_plugin->get_plugin()->view($submission_plugin->get_submission());
             $o .= $this->output->box_end();
         }
+
+        return $o;
+    }
+    
+    /**
+     * render the grading table
+     * 
+     * @param grading_table $table
+     * @return string
+     */
+    public function render_grading_table(grading_table $table) {
+        $o = '';
+
+        $o .= $this->output->box_start('boxaligncenter gradingtable');
+        // need to get from prefs
+        $o .= $table->out(10, true);
+        $o .= $this->output->box_end();
 
         return $o;
     }

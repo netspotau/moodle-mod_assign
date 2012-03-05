@@ -64,10 +64,15 @@ require_once($CFG->dirroot . '/repository/lib.php');
 require_once('mod_form.php');
 /** Include portfoliolib.php */
 require_once($CFG->libdir . '/portfoliolib.php');
+/** gradelib.php */
+require_once($CFG->libdir.'/gradelib.php');
+/** grading lib.php */
+require_once($CFG->dirroot.'/grade/grading/lib.php');
 /** Include submission_plugin.php */
 require_once('feedback_plugin.php');
 require_once('submission_plugin.php');
 require_once('renderable.php');
+require_once('grading_table.php');
 
 //send files to event system for plagiarism detection 
 /** Include eventslib.php */
@@ -410,7 +415,6 @@ class assignment {
      */
     private function delete_grades() {
         global $CFG;
-        require_once($CFG->libdir.'/gradelib.php');
 
         return grade_update('mod/assign', $this->get_course()->id, 'mod', 'assign', $this->get_instance()->id, 0, NULL, array('deleted'=>1));
     }
@@ -495,7 +499,6 @@ class assignment {
      */
     public function update_gradebook($reset = false) {
         global $CFG;
-        require_once($CFG->libdir.'/gradelib.php');
 
         $params = array('itemname'=>$this->get_instance()->name, 'idnumber'=>$this->get_course_module()->id);
 
@@ -891,7 +894,7 @@ class assignment {
      * @param mixed $grade
      * @return string User-friendly representation of grade
      */
-    private function display_grade($grade) {
+    public function display_grade($grade) {
         global $DB;
 
         static $scalegrades = array();
@@ -968,9 +971,11 @@ class assignment {
      * @return mixed The user id of the matching user or false if there was an error
      */
     private function get_userid_for_row($num){
-        $filter = get_user_preferences('assign_filter', '');
+        $table = new grading_table($this);
+
+        $userid = $table->get_cell_data($num, 'userid');
      
-        return $this->load_submissions_table(1, $filter, $num, true);
+        return $userid;
     }
 
     /**
@@ -1182,244 +1187,6 @@ class assignment {
             $this->gradebook_item_update(null,$grade);
         }
         return $result;
-    }
-
-    /**
-     * Load a table object with data ready to display the grading data for this assignment.
-     * This takes into account any active filters on the table via user preferences.
-     * 
-     * @param int $perpage The maximum number of results to show on one page
-     * @param string $filter Any current filter that is set
-     * @param int $start_page An optional param that controls the page to start from
-     * @param bool $onlyfirstuserid An optional param that if true will change the function to only return the userid of the first row of data. This is used by {@link get_userid_for_row} to efficiently find the userid for any given row. 
-     * @return mixed Either the entire table of data or just the id for the first user if $onlyfirstuserid is set.
-     */
-    private function & load_submissions_table($perpage=10,$filter=null,$startpage=null,$onlyfirstuserid=false) {
-        global $CFG, $DB, $OUTPUT,$PAGE;
-                     
-        $tablecolumns = array('picture', 'fullname', 'status', 'edit', 'grade');
-        $tableheaders = array('',
-                              get_string('fullnameuser'),
-                              get_string('status'),
-                              get_string('edit'),
-                              get_string('grade'));
-
-        if ($this->is_any_submission_plugin_enabled()) {
-            $tablecolumns[] = 'timemodified';
-            $tableheaders[] = get_string('lastmodified').' ('.get_string('submission', 'assign').')';
-
-            // add all submission plugin summaries to the table
-            foreach ($this->submission_plugins as $plugin) {
-                if ($plugin->is_visible() && $plugin->is_enabled()) {
-                    $tablecolumns[] = 'submission_' . $plugin->get_type();
-                    $tableheaders[] = $plugin->get_name();
-                }
-            }
-        }
-        $tablecolumns[] = 'timemarked';
-        $tableheaders[] = get_string('lastmodified').' ('.get_string('grade').')';
-
-        // add all submission plugin summaries to the table
-        foreach ($this->feedback_plugins as $plugin) {
-            if ($plugin->is_visible() && $plugin->is_enabled()) {
-                $tablecolumns[] = 'feedback_' . $plugin->get_type();
-                $tableheaders[] = $plugin->get_name();
-            }
-        }
-        
-
-        $tablecolumns[] = 'finalgrade';
-        $tableheaders[] = get_string('finalgrade', 'grades');
-
-        // more efficient to load this here
-        require_once($CFG->libdir.'/tablelib.php');
-        require_once($CFG->libdir.'/gradelib.php');
-
-        // this is the class for styling
-        $table = new flexible_table('mod-assign-submissions');
-
-        $table->define_columns($tablecolumns);
-        $table->define_headers($tableheaders);
-        $table->define_baseurl($CFG->wwwroot.'/mod/assign/view.php?id='.$this->get_course_module()->id. '&action=grading');
-
-        $table->sortable(true, 'lastname');//sorted by lastname by default
-        $table->collapsible(true);
-        $table->initialbars(true);
-
-        $table->column_suppress('picture');
-        $table->column_suppress('fullname');
-
-        $table->column_class('picture', 'picture');
-        $table->column_class('fullname', 'fullname');
-        $table->column_class('status', 'status');
-        $table->column_class('edit', 'edit');
-        $table->column_class('grade', 'grade');
-        if ($this->is_any_submission_plugin_enabled()) {
-            $table->column_class('timemodified', 'timemodified');
-            foreach ($this->submission_plugins as $plugin) {
-                if ($plugin->is_visible() && $plugin->is_enabled()) {
-                    $table->column_class('submission_' . $plugin->get_type(), 'submission_' . $plugin->get_type());
-                }
-            }
-        }
-        $table->column_class('timemarked', 'timemarked');
-        foreach ($this->feedback_plugins as $plugin) {
-            if ($plugin->is_visible() && $plugin->is_enabled()) {
-                $table->column_class('feedback_' . $plugin->get_type(), 'feedback_' . $plugin->get_type());
-            }
-        }
-        $table->column_class('finalgrade', 'finalgrade');
-
-        $table->set_attribute('cellspacing', '0');
-        $table->set_attribute('id', 'attempts');
-        $table->set_attribute('class', 'submissions');
-        $table->set_attribute('width', '100%');
-
-        $table->no_sorting('edit');
-        $table->no_sorting('finalgrade');
-        $table->no_sorting('outcome');
-        $table->no_sorting('status');
-
-        $table->setup();
-       // group setting
-        $groupmode = groups_get_activity_groupmode($this->get_course_module());
-        $currentgroup = groups_get_activity_group($this->get_course_module(), true);
-        
-              
-        list($where, $params) = $table->get_sql_where();
-        if ($where) {
-            $where .= ' AND ';
-        }
-        
-        if ($sort = $table->get_sql_sort()) {
-            $sort = ' ORDER BY '.$sort;
-        }
-
-        $users = array_keys( $this->list_enrolled_users_with_capability("mod/assign:submit",$currentgroup));
-          
-        $ufields = user_picture::fields('u');
-        if (!empty($users)) {
-            $select = "SELECT $ufields,
-                              s.id AS submissionid, g.grade, g.id as gradeid, s.status,
-                              s.timemodified as timesubmitted, g.timemodified AS timemarked, g.locked ";
-            $sql = 'FROM {user} u '.
-                   'LEFT JOIN {assign_submission} s ON u.id = s.userid
-                    AND s.assignment = '.$this->instance->id.' '.
-                   'LEFT JOIN {assign_grades} g ON u.id = g.userid
-                    AND g.assignment = '.$this->instance->id.' '.                   
-                   'WHERE '.$where.'u.id IN ('.implode(',',$users).') ';
-
-            if ($filter != null) {
-                if ($filter == ASSIGN_FILTER_REQUIRE_GRADING) {
-                    $sql .= ' AND g.timemodified < s.timemodified '; 
-                    
-                } else if ($filter == ASSIGN_FILTER_SUBMITTED) {
-                    $sql .= ' AND s.timemodified > 0 '; 
-                }
-            }
-                                 
-            $count = $DB->count_records_sql("SELECT COUNT(*) AS X ".$sql, $params);
-
-            $table->pagesize($perpage, $count);
-            
-            $ausers = $DB->get_records_sql($select.$sql.$sort, $params, $startpage?$startpage:$table->get_page_start(), $table->get_page_size());
-                             
-            if ($ausers !== false) {
-                $grading_info = grade_get_grades($this->get_course()->id, 'mod', 'assign', $this->instance->id, array_keys($ausers));
-                foreach ($ausers as $auser) {
-                                       
-                    if ($onlyfirstuserid) {
-                        return $auser->id;
-                    }
-                    
-                    $picture = $OUTPUT->user_picture($auser);
-
-                    $userlink = $OUTPUT->action_link(new moodle_url('/user/view.php', array('id' => $auser->id, 'course'=>$this->get_course()->id)), fullname($auser, has_capability('moodle/site:viewfullnames', $this->context)));
-
-                    $grade = $this->display_grade($auser->grade);
-                    $studentmodified = '-';
-                    if ($auser->timesubmitted) {
-                        $studentmodified = userdate($auser->timesubmitted);
-                    }
-                    $teachermodified = '-';
-                    if ($auser->timemarked) {
-                        $teachermodified = userdate($auser->timemarked);
-                    }
-                    $status = get_string('submissionstatus_' . $auser->status, 'assign');
-                    //  get row number !
-                    $rownum = array_search($auser->id,array_keys($ausers)) + $table->get_page_start();
-                                        
-                    $status = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'rownum'=>$rownum,'action'=>'grade')), $status);
-                    
-                    $finalgrade = '-';
-                    if (isset($grading_info->items[0]) && $grading_info->items[0]->grades[$auser->id]) {
-                        // debugging
-                        $finalgrade = $this->display_grade($grading_info->items[0]->grades[$auser->id]->grade);
-                    }
-                    
-                    $edit = $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'rownum'=>$rownum,'action'=>'grade')), $OUTPUT->pix_icon('t/grades', get_string('grade')));
-                    if (!$auser->status || $auser->status == ASSIGN_SUBMISSION_STATUS_DRAFT || !$this->instance->submissiondrafts) {
-                        if (!$auser->locked) {
-                            $edit .= $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id, 'action'=>'lock')), $OUTPUT->pix_icon('t/lock', get_string('preventsubmissions', 'assign')));
-                        } else {
-                            $edit .= $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id, 'action'=>'unlock')), $OUTPUT->pix_icon('t/unlock', get_string('allowsubmissions', 'assign')));
-                        }
-                    }
-                    if ($auser->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED && $this->instance->submissiondrafts) {
-                            $edit .= $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'userid'=>$auser->id, 'action'=>'reverttodraft')), $OUTPUT->pix_icon('t/left', get_string('reverttodraft', 'assign')));
-                    }
-
-                    $renderer = $PAGE->get_renderer('mod_assign');
-
-                    $row = array($picture, $userlink, $status, $edit, $grade);
-    
-                    
-
-                    if ($this->is_any_submission_plugin_enabled()) {
-                        $row[] = $studentmodified;
-                        $submission = null;
-                        if ($auser->submissionid) {
-                            $submission = $this->get_submission(null, $auser->submissionid, false);
-                        }
-                        foreach ($this->submission_plugins as $plugin) {
-                            if ($plugin->is_visible() && $plugin->is_enabled()) {
-                                if ($submission) {
-                                    $row[] = $this->format_plugin_summary_with_link($plugin, $submission, 'grading');
-                                } else {
-                                    $row[] = '-';
-                                }
-                            }
-                        }
-                    } 
-                    $row[] = $teachermodified;
-                    $grade = null;
-                    if ($auser->gradeid) {
-                        $grade = $this->get_grade(null, $auser->gradeid, false);
-                    }
-                    foreach ($this->feedback_plugins as $plugin) {
-                        if ($plugin->is_visible() && $plugin->is_enabled()) {
-                            if ($grade) {
-                                $row[] = $this->format_plugin_summary_with_link($plugin, $grade, 'grading');
-                            } else {
-                                $row[] = '-';
-                            }
-                        }
-                    }
-                    $row[] = $finalgrade;
-                    $table->add_data($row);
-                }
-            }
-        }
-        
-        // important bit for hiding buttons for the last user in the grading section 
-        if ($onlyfirstuserid && count($ausers) == 0) {
-            $result = false;
-            // this function returns a reference so we have to use a variable in the return
-            return $result;
-        }
-
-        return $table;
-
     }
     
     /**
@@ -1847,9 +1614,7 @@ class assignment {
         
         
         // load and print the table of submissions
-        $table = & $this->load_submissions_table($perpage, $filter);
-        $table->print_html();
-        
+        echo $this->output->render(new grading_table($this));
     }
 
     /**
@@ -1899,8 +1664,6 @@ class assignment {
         require_capability('mod/assign:grade', $this->context);
 
         // only load this if it is 
-        require_once($CFG->libdir.'/gradelib.php');
-        require_once($CFG->dirroot.'/grade/grading/lib.php');
 
         echo $this->output->render(new assignment_header($this, false, get_string('grading', 'assign')));
         groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id.'&action=grading');
@@ -2002,9 +1765,11 @@ class assignment {
         }
         if ($this->can_view_submission($USER->id)) {
             $submission = $this->get_submission($USER->id);
-            echo $this->output->render(new submission_status($this, $submission, $this->grading_disabled($USER->id), $this->is_graded($USER->id), submission_status::STUDENT_VIEW));
+            $show_edit = has_capability('mod/assign:submit', $this->context) &&
+                         $this->submissions_open() && ($this->is_any_submission_plugin_enabled());
+            $show_submit = $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
+            echo $this->output->render(new submission_status($this, $submission, $this->grading_disabled($USER->id), $this->is_graded($USER->id), submission_status::STUDENT_VIEW, $show_edit, $show_submit));
         }
-        $this->view_submission_links();
         if ($this->can_view_submission($USER->id)) {
             $grade = $this->get_grade($USER->id, 0, false);
             echo $this->output->render(new feedback_status($this, $grade, feedback_status::STUDENT_VIEW));
@@ -2072,7 +1837,6 @@ class assignment {
      */
     private function gradebook_item_update($submission=NULL, $grade=NULL) {
         global $CFG;
-        require_once($CFG->libdir . '/gradelib.php');
 
         $params = array('itemname' => $this->instance->name, 'idnumber' => $this->get_course_module()->id);
 
@@ -2506,7 +2270,6 @@ class assignment {
      */
     private function grading_disabled($userid) {
         global $CFG;
-        require_once($CFG->libdir.'/gradelib.php');
         
         $grading_info = grade_get_grades($this->get_course()->id, 'mod', 'assign', $this->instance->id, array($userid));
         if (!$grading_info) {
@@ -2531,8 +2294,6 @@ class assignment {
      */
     private function get_grading_instance($userid, $gradingdisabled = null) {
         global $CFG, $USER;
-        require_once($CFG->libdir.'/gradelib.php');
-        require_once($CFG->dirroot.'/grade/grading/lib.php');
 
         $grade = $this->get_grade($userid, 0, false);
         $grademenu = make_grades_menu($this->instance->grade);
@@ -2797,44 +2558,6 @@ class assignment {
         return $link . $plugin->view_summary($item);
     }
         
-    /**
-     * display submission links
-     * 
-     * @global object $OUTPUT
-     * @global object $USER
-     * @param int $userid 
-     * @return None
-     */
-    private function view_submission_links($userid = null) {
-        global $OUTPUT, $USER;
-
-        if (!$userid) {
-            $userid = $USER->id;
-        }
-        
-        if (has_capability('mod/assign:submit', $this->context) &&
-            $this->submissions_open() && ($this->is_any_submission_plugin_enabled())) {
-            // submission.php test
-            echo $OUTPUT->container_start('submissionlinks');
-            echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
-                array('id' => $this->get_course_module()->id, 'action' => 'editsubmission')), get_string('editsubmission', 'assign'), 'get');
-
-            $submission = $this->get_submission($userid);
-
-            if ($submission) {
-                if ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT) {
-                    // submission.php test
-                    echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php',
-                        array('id' => $this->get_course_module()->id, 'action'=>'submit')), get_string('submitassignment', 'assign'), 'get');
-                    echo $OUTPUT->box_start('boxaligncenter', 'intro');
-                    echo get_string('submitassignment_help', 'assign');
-                    echo $OUTPUT->box_end();
-                }
-            }
-            echo $OUTPUT->container_end();
-        }
-    }
-    
     /**
      * add elements to submission form 
      * @global object $USER
