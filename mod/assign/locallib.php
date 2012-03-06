@@ -1426,7 +1426,7 @@ class assignment {
             $submission->id = $sid;
             return $submission;
         }
-        return FALSE;
+        return false;
     }
     
     
@@ -1468,7 +1468,7 @@ class assignment {
             $grade->id = $gid;
             return $grade;
         }
-        return FALSE;
+        return false;
     }
     
     /**
@@ -1498,11 +1498,12 @@ class assignment {
             echo $this->output->render(new user_summary($user, $this));
         }
         $submission = $this->get_submission($userid);
-        if ($this->can_view_submission($userid)) {
-            echo $this->output->render(new submission_status($this, $submission, $this->grading_disabled($userid), $this->is_graded($userid), submission_status::GRADER_VIEW));
-        }
         // get the current grade
         $grade = $this->get_grade($userid);
+        if ($this->can_view_submission($userid)) {
+            $grade_locked = ($grade && $grade->locked) || $this->grading_disabled($userid);
+            echo $this->output->render(new submission_status($this, $submission, $grade_locked, $this->is_graded($userid), submission_status::GRADER_VIEW));
+        }
         if ($grade) {
             $data = new stdClass();
             $data->grade = $grade->grade;
@@ -1683,15 +1684,17 @@ class assignment {
         if ($this->can_grade()) {
             echo $this->output->render(new grading_summary($this));
         }
+        $grade = $this->get_grade($USER->id, 0, false);
+        $submission = $this->get_submission($USER->id);
+
         if ($this->can_view_submission($USER->id)) {
-            $submission = $this->get_submission($USER->id);
             $show_edit = has_capability('mod/assign:submit', $this->context) &&
                          $this->submissions_open() && ($this->is_any_submission_plugin_enabled());
             $show_submit = $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
-            echo $this->output->render(new submission_status($this, $submission, $this->grading_disabled($USER->id), $this->is_graded($USER->id), submission_status::STUDENT_VIEW, $show_edit, $show_submit));
-        }
-        if ($this->can_view_submission($USER->id)) {
-            $grade = $this->get_grade($USER->id, 0, false);
+            $grade_locked = ($grade && $grade->locked) || $this->grading_disabled($USER->id);
+
+            echo $this->output->render(new submission_status($this, $submission, $grade_locked, $this->is_graded($USER->id), submission_status::STUDENT_VIEW, $show_edit, $show_submit));
+
             echo $this->output->render(new feedback_status($this, $grade, feedback_status::STUDENT_VIEW));
         }
         
@@ -1820,7 +1823,7 @@ class assignment {
         global $USER;
 
         $time = time();
-        $date_open = TRUE;
+        $date_open = true;
         if ($this->instance->preventlatesubmissions && $this->instance->duedate) {
             $date_open = ($this->instance->allowsubmissionsfromdate <= $time && $time <= $this->instance->duedate);
         } else {
@@ -1828,26 +1831,30 @@ class assignment {
         }
 
         if (!$date_open) {
-            return FALSE;
+            return false;
         }
 
         // now check if this user has already submitted etc.
         if (!is_enrolled($this->get_course_context(), $USER)) {
-            return FALSE;
+            return false;
         }
         if ($submission = $this->get_submission($USER->id)) {
             if ($this->instance->submissiondrafts && $submission->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
                 // drafts are tracked and the student has submitted the assignment
-                return FALSE;
+                return false;
             }
         }
         if ($grade = $this->get_grade($USER->id)) {
             if ($grade->locked) {
-                return FALSE;
+                return false;
             }
         }
 
-        return TRUE;
+        if ($this->grading_disabled($USER->id)) {
+            return false;
+        }
+
+        return true;
     }
     
     /**
@@ -2207,19 +2214,15 @@ class assignment {
      * This is specific to the assignment, marker and student
      * 
      * @param int $userid - The student userid
-     * @param object $gradingdisabled - For speed this can be passed - otherwise this is looked up
+     * @param object $gradingdisabled
      * @return object $gradinginstance
      */
-    private function get_grading_instance($userid, $gradingdisabled = null) {
+    private function get_grading_instance($userid, $gradingdisabled) {
         global $CFG, $USER;
 
         $grade = $this->get_grade($userid, 0, false);
         $grademenu = make_grades_menu($this->instance->grade);
 
-        if ($gradingdisabled === null) {
-            $gradingdisabled = $this->grading_disabled($userid);
-        }
-        
         $advancedgradingwarning = false;
         $gradingmanager = get_grading_manager($this->context, 'mod_assign', 'submissions');
         $gradinginstance = null;
@@ -2552,7 +2555,8 @@ class assignment {
         
         if ($formdata = $mform->get_data()) {
             $grade = $this->get_grade($userid, 0, true);
-            $gradinginstance = $this->get_grading_instance($userid);
+            $gradingdisabled = $this->grading_disabled($userid);
+            $gradinginstance = $this->get_grading_instance($userid, $gradingdisabled);
             if ($gradinginstance) {
                 $grade->grade = $gradinginstance->submit_and_get_grade($formdata->advancedgrading, $grade->id);
             } else {
