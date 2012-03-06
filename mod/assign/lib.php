@@ -116,26 +116,30 @@ function assign_extend_settings_navigation($settings, navigation_node $navref) {
     global $PAGE;     
 
     $cm = $PAGE->cm;
-    if ($cm) {
-        $context = $cm->context;
-
-        var_dump($context);
-    list($context, $course, $cm) = get_context_info_array($context->id);
-
-
-    // Link to gradebook
-    if (has_capability('gradereport/grader:view', $cm->context) && has_capability('moodle/grade:viewall', $cm->context)) {
-        $link = new moodle_url('/grade/report/grader/index.php', array('id' => $course->id));
-        $node = $navref->add(get_string('viewgradebook', 'assign'), $link, navigation_node::TYPE_SETTING);
+    if (!$cm) {
+        return;
     }
 
-        // Link to download all submissions
-    if (has_capability('mod/assign:grade', $context)) {
-        $link = new moodle_url('/mod/assign/view.php', array('id' => $cm->id,'action'=>'downloadall'));
-        $node = $navref->add(get_string('downloadall', 'assign'), $link, navigation_node::TYPE_SETTING);
-    }
-    }
+    $context = $cm->context;
+    $course = $PAGE->course;
         
+
+    if (!$course) {
+        return;
+    }
+
+    
+   // Link to gradebook
+   if (has_capability('gradereport/grader:view', $cm->context) && has_capability('moodle/grade:viewall', $cm->context)) {
+       $link = new moodle_url('/grade/report/grader/index.php', array('id' => $course->id));
+       $node = $navref->add(get_string('viewgradebook', 'assign'), $link, navigation_node::TYPE_SETTING);
+   }
+
+   // Link to download all submissions
+   if (has_capability('mod/assign:grade', $context)) {
+       $link = new moodle_url('/mod/assign/view.php', array('id' => $cm->id,'action'=>'downloadall'));
+       $node = $navref->add(get_string('downloadall', 'assign'), $link, navigation_node::TYPE_SETTING);
+   }
 
 }
 
