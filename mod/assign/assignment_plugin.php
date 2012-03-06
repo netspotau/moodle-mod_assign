@@ -247,70 +247,6 @@ abstract class assignment_plugin {
 
     
 
-    /**
-     * Change the display order for the plugins. Will renormalize the list.
-     *
-     * @param string $dir up or down
-     * @return None
-     */
-    public final function move($dir='down') {
-        // get a list of the current plugins
-        $plugins = array();
-
-        $names = get_plugin_list($this->get_subtype());
-        $current_index = 0;
-
-        // get a sorted list of plugins
-        foreach ($names as $name) {
-            if (file_exists($name . '/' . ASSIGN_PLUGIN_CLASS_FILE)) {
-                require_once($name . '/' . ASSIGN_PLUGIN_CLASS_FILE);
-
-                $name = basename($name);
-
-                $plugin_class = $this->get_subtype() . "_$name";
-                $plugin = new $plugin_class($this, $name);
-
-                if ($plugin instanceof assignment_plugin) {
-                    $idx = $plugin->get_sort_order();
-                    while (array_key_exists($idx, $plugins)) $idx +=1;
-                 
-                    $plugins[$idx] = $plugin;
-                }
-            }
-        }
-        ksort($plugins);
-        // throw away the keys
-
-        $plugins = array_values($plugins);
-
-        // find this plugin in the list
-        foreach ($plugins as $key => $plugin) {
-            if ($plugin->get_type() == $this->get_type()) {
-                $current_index = $key;
-                break;
-            }
-        }
-
-        // make the switch
-        if ($dir == 'up') {
-            if ($current_index > 0) {
-                $a = $plugins[$current_index - 1];
-                $plugins[$current_index - 1] = $plugins[$current_index];
-                $plugins[$current_index] = $a;
-            }
-        } else if ($dir == 'down') {
-            if ($current_index < (count($plugins) - 1)) {
-                $a = $plugins[$current_index + 1];
-                $plugins[$current_index + 1] = $plugins[$current_index];
-                $plugins[$current_index] = $a;
-            }
-        }
-
-        // save the new normal order 
-        foreach ($plugins as $key => $plugin) {
-            set_config('sortorder', $key, $this->get_subtype() . '_' . $plugin->get_type());
-        }
-    }
     
     /**
      * Get the numerical sort order for this plugin
@@ -332,23 +268,6 @@ abstract class assignment_plugin {
         return !$disabled;
     }
     
-    /**
-     * Set this plugin to visible
-     *
-     * @return None
-     */
-    public final function show() {
-        set_config('disabled', 0, $this->get_subtype() . '_' . $this->get_type());
-    }
-    
-    /**
-     * Set this plugin to hidden
-     *
-     * @return None
-     */
-    public final function hide() {
-        set_config('disabled', 1, $this->get_subtype() . '_' . $this->get_type());
-    }
 
     /**
      * Has this plugin got a custom settings.php file?

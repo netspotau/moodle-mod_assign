@@ -48,8 +48,6 @@ require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 /** Include tablelib.php */
 require_once($CFG->libdir . '/tablelib.php');
-/** Include locallib.php */
-require_once('locallib.php');
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -145,11 +143,19 @@ class assignment_plugin_manager {
      * @return array The list of plugins
      */
     private function get_sorted_plugins_list() {
-        $assignment = new assignment();
+        $names = get_plugin_list($this->subtype);
 
-        $functionname = 'get_' . $this->subtype . '_plugins';
+        $result = array();
 
-        return $assignment->$functionname();
+        foreach ($names as $path) {
+            $name = basename($path);
+            $idx = get_config($this->subtype . '_' . $name, 'sortorder');
+            while (array_key_exists($idx, $result)) $idx +=1;
+            $result[$idx] = $name;
+        }
+        ksort($result);
+            
+        return $result;
     }
     
 
@@ -176,10 +182,11 @@ class assignment_plugin_manager {
      * Write the HTML for the submission plugins table.
      * 
      * @global object $OUTPUT For writing to the page
+     * @global object $CFG Used to get the dirroot
      * @return None
      */
     private function view_plugins_table() {
-        global $OUTPUT;
+        global $OUTPUT, $CFG;
         // Set up the table.
         $this->view_header();
         $table = new flexible_table($this->subtype . 'pluginsadminttable');
@@ -196,41 +203,45 @@ class assignment_plugin_manager {
 
         $plugins = $this->get_sorted_plugins_list();
 
-        foreach ($plugins as $plugin) {
+        foreach ($plugins as $idx => $plugin) {
             $row = array();
-            $row[] = $plugin->get_name();
-            $row[] = $plugin->get_version();
+            
+            $row[] = get_string('pluginname', $this->subtype . '_' . $plugin);
+            $row[] = get_config($this->subtype . '_' . $plugin, 'version');
 
-            if ($plugin->is_visible()) {
-                $row[] = $this->format_icon_link('hide', $plugin->get_type(), 'i/hide', get_string('disable'));
+            $visible = !get_config($this->subtype . '_' . $plugin, 'disabled');
+
+            if ($visible) {
+                $row[] = $this->format_icon_link('hide', $plugin, 'i/hide', get_string('disable'));
             } else {
-                $row[] = $this->format_icon_link('show', $plugin->get_type(), 'i/show', get_string('enable'));
+                $row[] = $this->format_icon_link('show', $plugin, 'i/show', get_string('enable'));
             }
 
             $move_links = '';
-            if (!$plugin->is_first()) {
-                $move_links .= $this->format_icon_link('moveup', $plugin->get_type(), 't/up', get_string('up'));
+            if (!$idx == 0) {
+                $move_links .= $this->format_icon_link('moveup', $plugin, 't/up', get_string('up'));
             } else {
                 $move_links .= $OUTPUT->spacer(array('width'=>15));
             }
-            if (!$plugin->is_last()) {
-                $move_links .= $this->format_icon_link('movedown', $plugin->get_type(), 't/down', get_string('down'));
+            if ($idx != count($plugins) - 1) {
+                $move_links .= $this->format_icon_link('movedown', $plugin, 't/down', get_string('down'));
             }
             $row[] = $move_links;
 
-            if ($plugin->get_version() != '') {
-                $row[] = $this->format_icon_link('delete', $plugin->get_type(), 't/delete', get_string('delete'));
+            if ($row[1] != '') {
+                $row[] = $this->format_icon_link('delete', $plugin, 't/delete', get_string('delete'));
             } else {
                 $row[] = '&nbsp;';
             }   
-            if ($plugin->get_version() != '' && $plugin->has_admin_settings()) {
+            if ($row[1] != '' && file_exists($CFG->dirroot . '/mod/assign/' . $this->subtype . '/' . $plugin . '/settings.php')) {
                 $row[] = html_writer::link(new moodle_url('/admin/settings.php',
-                        array('section' => $this->subtype . '_' . $plugin->get_type())), get_string('settings'));
+                        array('section' => $this->subtype . '_' . $plugin)), get_string('settings'));
             } else {
                 $row[] = '&nbsp;';
             }
             $table->add_data($row);
         }
+
     
         $table->finish_output();
         $this->view_footer();
@@ -278,7 +289,7 @@ class assignment_plugin_manager {
      * 
      * @global object $CFG global config
      * @global object $DB database connection
-     * @param string $plugintype - The type of the plugin to delete
+     * @param string $plugin - The type of the plugin to delete
      * @return string the name of the next page to display
      */
     private function delete_plugin($plugin) {
@@ -287,23 +298,23 @@ class assignment_plugin_manager {
 
         if ($confirm) {
             // Delete any configuration records.
-            if (!unset_all_config_for_plugin('submission_' . $plugin->get_type())) {
-                $this->error = $OUTPUT->notification(get_string('errordeletingconfig', 'admin', $this->subtype . '_' . $plugin->get_type()));
+            if (!unset_all_config_for_plugin('submission_' . $plugin)) {
+                $this->error = $OUTPUT->notification(get_string('errordeletingconfig', 'admin', $this->subtype . '_' . $plugin));
             }
 
     
             // Should be covered by the previous function - but just in case
-            unset_config('disabled', $this->subtype . '_' . $plugin->get_type());
-            unset_config('sortorder', $this->subtype . '_' . $plugin->get_type());
+            unset_config('disabled', $this->subtype . '_' . $plugin);
+            unset_config('sortorder', $this->subtype . '_' . $plugin);
 
             // delete the plugin specific config settings
-            $DB->delete_records('assign_plugin_config', array('plugin'=>$plugin->get_type(), 'subtype'=>$this->subtype));
+            $DB->delete_records('assign_plugin_config', array('plugin'=>$plugin, 'subtype'=>$this->subtype));
 
             // Then the tables themselves
-            drop_plugin_tables($this->subtype . '_' . $plugin->get_type(), $CFG->dirroot . '/mod/assign/' . $this->subtype . '/' .$plugin->get_type(). '/db/install.xml', false);
+            drop_plugin_tables($this->subtype . '_' . $plugin, $CFG->dirroot . '/mod/assign/' . $this->subtype . '/' .$plugin. '/db/install.xml', false);
 
             // Remove event handlers and dequeue pending events
-            events_uninstall($this->subtype . '_' . $plugin->get_type());
+            events_uninstall($this->subtype . '_' . $plugin);
 
             // the page to display
             return 'plugindeleted';
@@ -324,9 +335,9 @@ class assignment_plugin_manager {
     private function view_plugin_deleted($plugin) {
         global $OUTPUT;
         $this->view_header();
-        echo $OUTPUT->heading(get_string('deletingplugin', 'assign', $plugin->get_name()));
+        echo $OUTPUT->heading(get_string('deletingplugin', 'assign', get_string('pluginname', $this->subtype . '_' . $plugin)));
         echo $this->error;
-        echo $OUTPUT->notification(get_string('plugindeletefiles', 'moodle', array('name'=>$plugin->get_name(), 'directory'=>('/mod/assign/' . $this->subtype . '/'.$plugin->get_type()))));
+        echo $OUTPUT->notification(get_string('plugindeletefiles', 'moodle', array('name'=>get_string('pluginname', $this->subtype . '_' . $plugin), 'directory'=>('/mod/assign/' . $this->subtype . '/'.$plugin))));
         echo $OUTPUT->continue_button($this->pageurl);
         $this->view_footer();
     }
@@ -341,12 +352,14 @@ class assignment_plugin_manager {
     private function view_confirm_delete($plugin) {
         global $OUTPUT;
         $this->view_header();
-        echo $OUTPUT->heading(get_string('deletepluginareyousure', 'assign', $plugin->get_name()));
-        echo $OUTPUT->confirm(get_string('deletepluginareyousuremessage', 'assign', $plugin->get_name()),
-                new moodle_url($this->pageurl, array('action' => 'delete', 'plugin'=>$plugin->get_type(), 'confirm' => 1)),
+        echo $OUTPUT->heading(get_string('deletepluginareyousure', 'assign', get_string('pluginname', $this->subtype . '_' . $plugin)));
+        echo $OUTPUT->confirm(get_string('deletepluginareyousuremessage', 'assign', get_string('pluginname', $this->subtype . '_' . $plugin)),
+                new moodle_url($this->pageurl, array('action' => 'delete', 'plugin'=>$plugin, 'confirm' => 1)),
                 $this->pageurl);
         $this->view_footer();
     }
+
+        
 
     /** 
      * Hide this plugin
@@ -355,18 +368,7 @@ class assignment_plugin_manager {
      * @return string The next page to display
      */
     private function hide_plugin($plugin) {
-        $plugin->hide();
-        return 'view';
-    }
-    
-    /** 
-     * Show this plugin
-     * 
-     * @param object $plugin - The plugin to show
-     * @return string The next page to display
-     */
-    private function show_plugin($plugin) {
-        $plugin->show();
+        set_config('disabled', 1, $this->subtype . '_' . $plugin);
         return 'view';
     }
     
@@ -377,10 +379,58 @@ class assignment_plugin_manager {
      * @param string $dir - up or down
      * @return string The next page to display
      */
-    private function move($plugin, $dir) {
-        $plugin->move($dir);
+    private function move_plugin($plugintomove, $dir) {
+        // get a list of the current plugins
+        $plugins = $this->get_sorted_plugins_list();
+
+        $current_index = 0;
+
+        // throw away the keys
+
+        $plugins = array_values($plugins);
+
+        // find this plugin in the list
+        foreach ($plugins as $key => $plugin) {
+            if ($plugin == $plugintomove) {
+                $current_index = $key;
+                break;
+            }
+        }
+
+        // make the switch
+        if ($dir == 'up') {
+            if ($current_index > 0) {
+                $a = $plugins[$current_index - 1];
+                $plugins[$current_index - 1] = $plugins[$current_index];
+                $plugins[$current_index] = $a;
+            }
+        } else if ($dir == 'down') {
+            if ($current_index < (count($plugins) - 1)) {
+                $a = $plugins[$current_index + 1];
+                $plugins[$current_index + 1] = $plugins[$current_index];
+                $plugins[$current_index] = $a;
+            }
+        }
+
+        // save the new normal order 
+        foreach ($plugins as $key => $plugin) {
+            set_config('sortorder', $key, $this->subtype . '_' . $plugin);
+        }
         return 'view';
     }
+            
+    
+    /** 
+     * Show this plugin
+     * 
+     * @param object $plugin - The plugin to show
+     * @return string The next page to display
+     */
+    private function show_plugin($plugin) {
+        set_config('disabled', 0, $this->subtype . '_' . $plugin);
+        return 'view';
+    }
+    
 
     /** 
      * This is the entry point for this controller class
@@ -389,19 +439,12 @@ class assignment_plugin_manager {
      * @param string $plugintype - Optional name of a plugin type to perform the action on
      * @return None
      */
-    public function execute($action = null, $plugintype = null) {
+    public function execute($action = null, $plugin = null) {
         if ($action == null) {
             $action = 'view';
         }
 
         $this->check_permissions();
-
-        $plugin = null;
-        if ($plugintype != null) {
-            $assignment = new assignment();
-            $functionname = 'get_' . $this->subtype . '_plugin_by_type';
-            $plugin = $assignment->$functionname($plugintype);        
-        }
 
         // process
         if ($action == 'delete' && $plugin != null) {
@@ -411,9 +454,9 @@ class assignment_plugin_manager {
         } else if ($action == 'show' && $plugin != null) {
             $action = $this->show_plugin($plugin);
         } else if ($action == 'moveup' && $plugin != null) {
-            $action = $this->move($plugin, 'up');
+            $action = $this->move_plugin($plugin, 'up');
         } else if ($action == 'movedown' && $plugin != null) {
-            $action = $this->move($plugin, 'down');
+            $action = $this->move_plugin($plugin, 'down');
         }
 
 
