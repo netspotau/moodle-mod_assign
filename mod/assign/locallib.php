@@ -1153,7 +1153,6 @@ class assignment {
     
     /**
      * display the submission that is used by a plugin  
-     * @global object $OUTPUT
      * @global object $CFG
      * @global object $USER
      * @param int $submissionid
@@ -1161,7 +1160,7 @@ class assignment {
      * @return None
      */
     private function view_plugin_content($pluginsubtype) {
-        global $OUTPUT, $CFG, $USER;
+        global $CFG, $USER;
         $submissionid = optional_param('sid', 0, PARAM_INT);
         $gradeid = optional_param('gid', 0, PARAM_INT);
         $plugintype = required_param('plugin', PARAM_TEXT);
@@ -1253,7 +1252,6 @@ class assignment {
      * Display the assignment intro
      *
      * The prints the assignment description in a box
-     * @global object $OUTPUT
      * @return None
      */
     private function view_intro() {
@@ -1262,7 +1260,6 @@ class assignment {
     /**
      * Display the page footer
      *
-     * @global object $OUTPUT
      * @return None
      */
     private function view_footer() {
@@ -1477,13 +1474,12 @@ class assignment {
     /**
      * Print the grading page for a single user submission
      *
-     * @global object $OUTPUT
      * @global object $DB
      * @uses die
      * @return None
      */
     private function view_single_grade_page() {
-        global $OUTPUT, $DB;
+        global $DB;
         
         // Always require view permission to do anything
         require_capability('mod/assign:view', $this->context);
@@ -1531,11 +1527,9 @@ class assignment {
     /**
      * View a link to go back to the previous page. Uses url parameters returnaction and returnparams.
      *
-     * @global object $OUTPUT
      * @return None
      */
     private function view_return_links() {
-        global $OUTPUT;
         
         $returnaction = optional_param('returnaction','', PARAM_ALPHA);
         $returnparams = optional_param('returnparams','', PARAM_TEXT);
@@ -1544,7 +1538,7 @@ class assignment {
         parse_str($returnparams, $params);
         $params = array_merge( array('id' => $this->get_course_module()->id, 'action' => $returnaction), $params);
            
-        echo $OUTPUT->single_button(new moodle_url('/mod/assign/view.php', $params), get_string('back', 'assign'), 'get');
+        echo $this->output->single_button(new moodle_url('/mod/assign/view.php', $params), get_string('back', 'assign'), 'get');
         
     }
    
@@ -1580,45 +1574,14 @@ class assignment {
     }
 
     /**
-     * View the links beneath the grading table.
-     *
-     * @global object $OUTPUT
-     * @return None
-     */
-    private function view_grading_links() {
-        global $OUTPUT;
-        // print navigation buttons
-
-        echo $OUTPUT->spacer(array('height'=>30));
-        $contextname = print_context_name($this->context);
-
-        echo $OUTPUT->container_start('gradingnavigation');
-        echo $OUTPUT->container_start('backlink');
-        echo $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id)), get_string('backto', '', $contextname));
-        echo $OUTPUT->container_end();
-        if (has_capability('gradereport/grader:view', $this->get_course_context()) && has_capability('moodle/grade:viewall', $this->get_course_context())) {
-            echo $OUTPUT->container_start('gradebooklink');
-            echo $OUTPUT->action_link(new moodle_url('/grade/report/grader/index.php', array('id' => $this->get_course()->id)), get_string('viewgradebook', 'assign'));
-            echo $OUTPUT->container_end();
-        }
-        echo $OUTPUT->container_start('downloadalllink');
-        echo $OUTPUT->action_link(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'action' => 'downloadall')), get_string('downloadall', 'assign'));
-        echo $OUTPUT->container_end();
-
-        echo $OUTPUT->container_end();
-        
-    }
-       
-    /**
      * View entire grading page.
      *
-     * @global object $OUTPUT
      * @global object $CFG
      * @global object $USER
      * @return None
      */
     private function view_grading_page() {
-        global $OUTPUT, $CFG, $USER;
+        global $CFG;
 
         // Always require view permission to do anything
         require_capability('mod/assign:view', $this->context);
@@ -1632,11 +1595,6 @@ class assignment {
         
 
         $this->view_grading_table();
-        // add a link to the grade book if this user has permission
-        
-        $this->view_grading_links();
-
-
 
         $this->view_footer();
         $this->add_to_log('view submission grading table', get_string('viewsubmissiongradingtable', 'assign'));
@@ -1894,16 +1852,14 @@ class assignment {
     
     /**
      * render the files in file area  
-     * @global object $CFG
      * @global object $USER
-     * @global object $OUTPUT
      * @global object $PAGE
      * @param string $area
      * @param int $submissionid
      * @return string 
      */
     public function render_area_files($area, $submissionid = null) {
-        global $CFG, $USER, $OUTPUT, $PAGE;
+        global $USER, $PAGE;
 
         if (!$submissionid) {
             $submission = $this->get_submission($USER->id,null, false);
@@ -2359,21 +2315,14 @@ class assignment {
      * display the grade form
      * 
      * @uses die
-     * @global object $OUTPUT
-     * @global object $USER 
      * @return None
      */
     private function view_grade_form() {
-        global $OUTPUT, $USER;
 
          // Always require view permission to do anything
         require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
-
-
-        echo $OUTPUT->heading(get_string('grade'), 3);
-        echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
 
         $rownum = required_param('rownum', PARAM_INT);
         $userid = $this->get_userid_for_row($rownum);
@@ -2398,8 +2347,6 @@ class assignment {
         // show upload form
         $mform->display();
 
-        echo $OUTPUT->box_end();
-        echo $OUTPUT->spacer(array('height'=>30));
     }
 
     /**
@@ -2471,38 +2418,6 @@ class assignment {
         
     }
 
-    /**
-     * Write the plugin summary with an optional link to view the full feedback/submission.
-     *
-     * @global $OUTPUT
-     * @param object $plugin Submission plugin or feedback plugin
-     * @param object $item Submission or grade
-     * @param string $returnaction The return action to pass to the view_submission page (the current page)
-     * @param string $returnparams The return params to pass to the view_submission page (the current page)
-     * @return string The summary with an optional link
-     */
-    private function format_plugin_summary_with_link($plugin, $item, $returnaction='view', $returnparams=array()) {
-        global $OUTPUT;
-        $link = '';
-    
-        if ($plugin->show_view_link($item)) {
-            $icon = $OUTPUT->pix_icon('t/preview', get_string('view' . $plugin->get_subtype(), 'mod_assign'));
-            $link = $OUTPUT->action_link(
-                                new moodle_url('/mod/assign/view.php', 
-                                               array('id' => $this->get_course_module()->id, 
-                                                     'sid'=>$item->id, 
-                                                     'gid'=>$item->id, 
-                                                     'plugin'=>$plugin->get_type(), 
-                                                     'action'=>'viewplugin' . $plugin->get_subtype(), 
-                                                     'returnaction'=>$returnaction, 
-                                                     'returnparams'=>http_build_query($returnparams))), 
-                                $icon);
-            $link .= $OUTPUT->spacer(array('width'=>15));
-        }
-
-        return $link . $plugin->view_summary($item);
-    }
-        
     /**
      * add elements to submission form 
      * @global object $USER

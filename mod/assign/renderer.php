@@ -98,7 +98,10 @@ class mod_assign_renderer extends plugin_renderer_base {
      */
     public function render_grading_form(grading_form $form) {
         $o = '';
+        $o .= $this->output->heading(get_string('grade'), 3);
+        $o .= $this->output->box_start('boxaligncenter gradingform');
         $o .= $this->moodleform($form->get_form());
+        $o .= $this->output->box_end();
         return $o;
     }
     
@@ -557,6 +560,26 @@ class mod_assign_renderer extends plugin_renderer_base {
         // need to get from prefs
         $o .= $table->out($table->get_rows_per_page(), true);
         $o .= $this->output->box_end();
+
+        $o .= $this->output->spacer(array('height'=>30));
+        $contextname = print_context_name($table->get_assignment()->get_context());
+
+        $o .= $this->output->container_start('gradingnavigation');
+        $o .= $this->output->container_start('backlink');
+        $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_assignment()->get_course_module()->id)), get_string('backto', '', $contextname));
+        $o .= $this->output->container_end();
+        if (has_capability('gradereport/grader:view', $table->get_assignment()->get_course_context()) && has_capability('moodle/grade:viewall', $table->get_assignment()->get_course_context())) {
+            $o .= $this->output->container_start('gradebooklink');
+            $o .= $this->output->action_link(new moodle_url('/grade/report/grader/index.php', array('id' => $table->get_assignment()->get_course()->id)), get_string('viewgradebook', 'assign'));
+            $o .= $this->output->container_end();
+        }
+        if ($table->get_assignment()->is_any_submission_plugin_enabled()) {
+            $o .= $this->output->container_start('downloadalllink');
+            $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_assignment()->get_course_module()->id, 'action' => 'downloadall')), get_string('downloadall', 'assign'));
+            $o .= $this->output->container_end();
+        }
+
+        $o .= $this->output->container_end();
 
         return $o;
     }

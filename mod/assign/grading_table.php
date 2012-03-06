@@ -318,7 +318,6 @@ class grading_table extends table_sql implements renderable {
     /**
      * Write the plugin summary with an optional link to view the full feedback/submission.
      *
-     * @global $OUTPUT
      * @param object $plugin Submission plugin or feedback plugin
      * @param object $item Submission or grade
      * @param string $returnaction The return action to pass to the view_submission page (the current page)
@@ -409,7 +408,14 @@ class grading_table extends table_sql implements renderable {
         return false;
     }
     
-    
+    /**
+     * Return the current assignemnt to the renderer
+     *
+     * @return object assignment
+     */
+    function get_assignment() {
+        return $this->assignment;
+    }
     
 
 }
