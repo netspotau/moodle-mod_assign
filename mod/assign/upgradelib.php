@@ -48,7 +48,7 @@ class assignment_upgrade_manager {
      * @param string log This string gets appended to during the conversion process
      * @return bool true or false
      */
-    public function upgrade_assignment($oldassignmentid, & $log, $delete=true) {
+    public function upgrade_assignment($oldassignmentid, $log, $delete=true) {
         global $DB, $CFG;
         // steps to upgrade an assignment
     

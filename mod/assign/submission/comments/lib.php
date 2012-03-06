@@ -107,7 +107,7 @@ class submission_comments extends submission_plugin {
      * @param string log record log events here
      * @return bool was it a success?
      */
-    public function upgrade_settings($oldcontext,$oldassignment, & $log) {
+    public function upgrade_settings($oldcontext,$oldassignment, $log) {
         // first upgrade settings (nothing to do)
         return true;
     }
@@ -120,7 +120,7 @@ class submission_comments extends submission_plugin {
      * @param string $log Record upgrade messages in the log
      * @return bool true or false - false will trigger a rollback
      */
-    public function upgrade($oldcontext,$oldassignment, $oldsubmission, $submission, & $log) {
+    public function upgrade($oldcontext,$oldassignment, $oldsubmission, $submission, $log) {
         global $DB;
     
      if ($oldsubmission->data1 != '') {
@@ -203,7 +203,7 @@ function submission_comments_comment_permissions($options) {
  * @global object $DB
  * @param object $comment
  */
-function submission_comments_comment_add(& $comment, $param) {
+function submission_comments_comment_add($comment, $param) {
     
     global $DB;
     if ($comment->commentarea == 'submission_comments_upgrade') {

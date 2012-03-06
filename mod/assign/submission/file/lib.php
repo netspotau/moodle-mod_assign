@@ -77,7 +77,7 @@ class submission_file extends submission_plugin {
      * @param object $mform The form to add elements to
      * @return mixed
      */
-    public function get_settings(&$mform) {
+    public function get_settings($mform) {
         global $CFG, $COURSE, $DB;
 
         $default_maxfilesubmissions = $this->get_config('maxfilesubmissions');
@@ -138,7 +138,7 @@ class submission_file extends submission_plugin {
      * @param object $data
      * @return mixed 
      */
-    public function get_form_elements($submission, & $mform, & $data) {
+    public function get_form_elements($submission, $mform, $data) {
 
         $elements = array();
 
@@ -305,7 +305,7 @@ class submission_file extends submission_plugin {
      * @param string log record log events here
      * @return bool Was it a success?
      */
-    public function upgrade_settings($oldcontext,$oldassignment, & $log) {
+    public function upgrade_settings($oldcontext,$oldassignment, $log) {
         if ($oldassignment->assignmenttype == 'uploadsingle') {
             $this->set_config('maxfilesubmissions', 1);
             $this->set_config('maxsubmissionsizebytes', $oldassignment->maxbytes);
@@ -329,7 +329,7 @@ class submission_file extends submission_plugin {
      * @param string $log Record upgrade messages in the log
      * @return bool true or false - false will trigger a rollback
      */
-    public function upgrade($oldcontext,$oldassignment, $oldsubmission, $submission, & $log) {
+    public function upgrade($oldcontext,$oldassignment, $oldsubmission, $submission, $log) {
         global $DB;
 
         $file_submission = new stdClass();

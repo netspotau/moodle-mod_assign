@@ -129,12 +129,12 @@ class assignment {
      * @param object $coursemodule the current course module if it was already loaded - otherwise this class will load one from the context as required
      * @param object $course the current course  if it was already loaded - otherwise this class will load one from the context as required
      */
-    public function __construct(& $context = null, & $data = null, & $coursemodule = null, & $course = null) {
+    public function __construct($context = null, $data = null, $coursemodule = null, $course = null) {
         global $PAGE;
-        $this->context = & $context;
-        $this->instance = & $data;
-        $this->coursemodule = & $coursemodule; 
-        $this->course = & $course; 
+        $this->context = $context;
+        $this->instance = $data;
+        $this->coursemodule = $coursemodule; 
+        $this->course = $course; 
         $this->cache = array(); // temporary cache only lives for a single request - used to reduce db lookups
 
         $this->submission_plugins = $this->load_plugins('submission');
@@ -167,16 +167,16 @@ class assignment {
      * Set the submitted form data
      * @param array data The form data (instance)
      */
-    public function set_instance(& $data) {
-        return $this->instance = & $data;
+    public function set_instance($data) {
+        return $this->instance = $data;
     }
     
     /** 
      * Set the context
      * @param object context The new context
      */
-    public function set_context(& $context) {
-        return $this->context = & $context;
+    public function set_context($context) {
+        return $this->context = $context;
     }
 
     /** 
@@ -332,34 +332,6 @@ class assignment {
        
     }
 
-    /**
-     * Handle a request to view a single file.
-     *
-     * @global object $USER
-     * @param string $filearea The area to serve the file from
-     * @param array $args An array of args that repesents the path to the file
-     * @return None or false. On success this function does not return
-     */
-    public function send_file($filearea, $args) {
-        global $USER;
-        $userid = (int)array_shift($args);
-
-
-        // check is users submission or has grading permission
-        if ($USER->id != $userid and !has_capability('mod/assignment:grade', $this->context)) {
-            return false;
-        }
-        
-        $relativepath = implode('/', $args);
-
-        $fullpath = "/{$this->context->id}/mod_assign/$filearea/$userid/$relativepath";
-
-        $fs = get_file_storage();
-        if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
-            return false;
-        }
-        send_stored_file($file, 0, 0, true); // download MUST be forced - security!
-    }
     
     /**
      * Add this instance to the database
@@ -624,7 +596,7 @@ class assignment {
      * @param object $mform
      * @param object $data 
      */
-    private function add_plugin_grade_elements($grade, & $mform, & $data) {
+    private function add_plugin_grade_elements($grade, $mform, $data) {
         foreach ($this->feedback_plugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
                 $mform->addElement('header', 'header_' . $plugin->get_type(), $plugin->get_name());
@@ -644,7 +616,7 @@ class assignment {
      * @param object $mform The form to add the configuration settings to. This form is modified directly (not returned)
      *  
      */
-    private function add_plugin_settings($plugin, & $mform) {
+    private function add_plugin_settings($plugin, $mform) {
         if ($plugin->is_visible()) {
             // section heading
             $mform->addElement('header', 'general', $plugin->get_name());
@@ -669,7 +641,7 @@ class assignment {
      * @param object $mform The form to add the configuration settings to. This form is modified directly (not returned)
      *  
      */
-    private function add_all_plugin_settings(& $mform) {
+    private function add_all_plugin_settings($mform) {
         foreach ($this->submission_plugins as $plugin) {
             $this->add_plugin_settings($plugin, $mform);
             
@@ -690,7 +662,7 @@ class assignment {
      * @global object $COURSE
      * @param object $mform The form to add the configuration settings to. This form is modified directly (not returned)
      */
-    public function add_settings(& $mform) {
+    public function add_settings($mform) {
         global $CFG, $COURSE;
         $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
         
@@ -719,27 +691,6 @@ class assignment {
         $mform->setDefault('sendnotifications', 1);
 
         $this->add_all_plugin_settings($mform);
-    }
-
-    /**
-     * Add menu entries to the admin menu.
-     *
-     * @param object $navref Node in the admin tree to add settings to
-     */
-    public function extend_settings_navigation(navigation_node & $navref) {
-
-        // Link to gradebook
-        if (has_capability('gradereport/grader:view', $this->get_course_context()) && has_capability('moodle/grade:viewall', $this->get_course_context())) {
-            $link = new moodle_url('/grade/report/grader/index.php', array('id' => $this->get_course()->id));
-            $node = $navref->add(get_string('viewgradebook', 'assign'), $link, navigation_node::TYPE_SETTING);
-        }
-
-        // Link to download all submissions
-        if (has_capability('mod/assign:grade', $this->get_course_context())) {
-            $link = new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id,'action'=>'downloadall'));
-            $node = $navref->add(get_string('downloadall', 'assign'), $link, navigation_node::TYPE_SETTING);
-        }
-        
     }
 
     /**
@@ -892,8 +843,8 @@ class assignment {
      * @param int $currentgroup
      * @return array List of user records 
      */
-    public function & list_enrolled_users_with_capability($permission,$currentgroup) {
-        $users = & get_enrolled_users($this->context, $permission, $currentgroup);
+    public function list_enrolled_users_with_capability($permission,$currentgroup) {
+        $users = get_enrolled_users($this->context, $permission, $currentgroup);
         return $users;
     }
 
@@ -905,7 +856,7 @@ class assignment {
      * @return int number of matching users
      */
     public function count_enrolled_users_with_capability($permission,$currentgroup=0) {
-        $users = & get_enrolled_users($this->context, $permission, $currentgroup, 'u.id');
+        $users = get_enrolled_users($this->context, $permission, $currentgroup, 'u.id');
         return count($users);
     }
 
@@ -2259,7 +2210,7 @@ class assignment {
      * @param mixed $params 
      * @return None
      */
-    public function add_grade_form_elements(& $mform, & $data, $params) {
+    public function add_grade_form_elements($mform, $data, $params) {
         global $USER, $CFG;
         $settings = $this->get_instance();
 
@@ -2304,11 +2255,11 @@ class assignment {
         $buttonarray=array();
        
         if (! $params['last']){
-            $buttonarray[] = &$mform->createElement('submit', 'saveandshownext', get_string('savenext','assign')); 
-            $buttonarray[] = &$mform->createElement('submit', 'nosaveandnext', get_string('nosavebutnext', 'assign'));
+            $buttonarray[] = $mform->createElement('submit', 'saveandshownext', get_string('savenext','assign')); 
+            $buttonarray[] = $mform->createElement('submit', 'nosaveandnext', get_string('nosavebutnext', 'assign'));
         }
-        $buttonarray[] = &$mform->createElement('submit', 'savegrade', get_string('savechanges', 'assign'));        
-        $buttonarray[] = &$mform->createElement('cancel', 'cancelbutton', get_string('cancel','assign'));     
+        $buttonarray[] = $mform->createElement('submit', 'savegrade', get_string('savechanges', 'assign'));        
+        $buttonarray[] = $mform->createElement('cancel', 'cancelbutton', get_string('cancel','assign'));     
         $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
         $mform->closeHeaderBefore('buttonar');            
     }
@@ -2371,7 +2322,7 @@ class assignment {
      * @param object $data - The default data class to modify
      * @return None
      */
-    private function set_default_data_for_editor($name, & $data) {
+    private function set_default_data_for_editor($name, $data) {
         $textname =$name . 'editor';
         $formatname =$name . 'format';
         if (!isset($data->$textname)) {
@@ -2390,7 +2341,7 @@ class assignment {
      * @param object $data 
      * @return None
      */
-    private function add_plugin_submission_elements($submission, & $mform, & $data) {
+    private function add_plugin_submission_elements($submission, $mform, $data) {
         foreach ($this->submission_plugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible() && $plugin->allow_submissions()) {
                 $mform->addElement('header', 'header_' . $plugin->get_type(), $plugin->get_name());
@@ -2428,7 +2379,7 @@ class assignment {
      * @param object $data 
      * @return None
      */
-    public function add_submission_form_elements(& $mform, & $data) {
+    public function add_submission_form_elements($mform, $data) {
         global $USER;
         
         // online text submissions

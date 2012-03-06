@@ -69,7 +69,7 @@ class feedback_comments extends feedback_plugin {
      * @param object $data
      * @return string 
      */
-    public function get_form_elements($grade, & $mform, & $data) {
+    public function get_form_elements($grade, $mform, $data) {
         $elements = array();
 
        

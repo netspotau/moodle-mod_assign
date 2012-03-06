@@ -76,7 +76,7 @@ class submission_onlinetext extends submission_plugin {
      * @param object $data
      * @return string 
      */
-    public function get_form_elements($submission, & $mform, & $data) {
+    public function get_form_elements($submission, $mform, $data) {
         global $USER;
         
         
@@ -281,7 +281,7 @@ class submission_onlinetext extends submission_plugin {
      * @param string log record log events here
      * @return bool Was it a success?
      */
-    public function upgrade_settings($oldcontext, $oldassignment, & $log) {
+    public function upgrade_settings($oldcontext, $oldassignment, $log) {
         // first upgrade settings (nothing to do)
         return true;
     }
@@ -295,7 +295,7 @@ class submission_onlinetext extends submission_plugin {
      * @param string $log Record upgrade messages in the log
      * @return bool true or false - false will trigger a rollback
      */
-    public function upgrade($oldcontext, $oldassignment, $oldsubmission, $submission, & $log) {
+    public function upgrade($oldcontext, $oldassignment, $oldsubmission, $submission, $log) {
         global $DB;
         
        $comments_submission = new stdClass();

@@ -25,9 +25,6 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-/** Include locallib.php */
-require_once('locallib.php');
-
 /**
  * Adds an assignment instance
  *
@@ -36,6 +33,8 @@ require_once('locallib.php');
  * @return object 
  */
 function assign_add_instance($form_data) {
+    require_once('locallib.php');
+
     $context = get_context_instance(CONTEXT_COURSE,$form_data->course);
     $ass = new assignment($context, $form_data);
     return $ass->add_instance();
@@ -47,6 +46,7 @@ function assign_add_instance($form_data) {
  * @return object|bool 
  */
 function assign_delete_instance($id) {
+    require_once('locallib.php');
     if (!$cm = get_coursemodule_from_instance('assign', $id)) {
         return false;
     }
@@ -66,6 +66,7 @@ function assign_delete_instance($id) {
  * @return object
  */
 function assign_update_instance($form_data) {
+    require_once('locallib.php');
     $context = get_context_instance(CONTEXT_MODULE,$form_data->coursemodule);
     $ass = new assignment($context, $form_data);
     return $ass->update_instance();
@@ -109,21 +110,39 @@ function assign_grading_areas_list() {
  * @global object $PAGE
  * @param object $settings
  * @param navigation_node $navref
- * @return object
+ * @return void
  */
 function assign_extend_settings_navigation($settings, navigation_node $navref) {
     global $PAGE;     
 
     $cm = $PAGE->cm;
-    $context = $cm->context;
+    if ($cm) {
+        $context = $cm->context;
 
-    $ass = new assignment($context);
-    return $ass->extend_settings_navigation($navref);
+        var_dump($context);
+    list($context, $course, $cm) = get_context_info_array($context->id);
+
+
+    // Link to gradebook
+    if (has_capability('gradereport/grader:view', $cm->context) && has_capability('moodle/grade:viewall', $cm->context)) {
+        $link = new moodle_url('/grade/report/grader/index.php', array('id' => $course->id));
+        $node = $navref->add(get_string('viewgradebook', 'assign'), $link, navigation_node::TYPE_SETTING);
+    }
+
+        // Link to download all submissions
+    if (has_capability('mod/assign:grade', $context)) {
+        $link = new moodle_url('/mod/assign/view.php', array('id' => $cm->id,'action'=>'downloadall'));
+        $node = $navref->add(get_string('downloadall', 'assign'), $link, navigation_node::TYPE_SETTING);
+    }
+    }
+        
+
 }
 
 /**
  * Serves assignment submissions and other files.
  *
+ * @global USER
  * @param object $course
  * @param object $cm
  * @param object $context
@@ -133,8 +152,7 @@ function assign_extend_settings_navigation($settings, navigation_node $navref) {
  * @return bool false if file not found, does not return if found - just send the file
  */
 function assign_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
-    global $CFG, $DB;
-
+    global $USER;
     
     if ($context->contextlevel != CONTEXT_MODULE) {
         return false;
@@ -142,14 +160,22 @@ function assign_pluginfile($course, $cm, $context, $filearea, $args, $forcedownl
 
 
     require_login($course, false, $cm);
-
     
-    if (!$assignment = $DB->get_record('assign', array('id'=>$cm->instance))) {
+    $userid = (int)array_shift($args);
+
+    // check is users submission or has grading permission
+    if ($USER->id != $userid and !has_capability('mod/assign:grade', $context)) {
         return false;
     }
+        
+    $relativepath = implode('/', $args);
 
-    $assignmentinstance = new assignment($context);
+    $fullpath = "/{$context->id}/mod_assign/$filearea/$userid/$relativepath";
 
-    return $assignmentinstance->send_file($filearea, $args);
+    $fs = get_file_storage();
+    if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
+        return false;
+    }
+    send_stored_file($file, 0, 0, true); // download MUST be forced - security!
 }
 

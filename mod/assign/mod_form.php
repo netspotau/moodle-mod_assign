@@ -42,7 +42,7 @@ class mod_assign_mod_form extends moodleform_mod {
 
     function definition() {
         global $CFG, $DB;
-        $mform =& $this->_form;
+        $mform = $this->_form;
 
         //-------------------------------------------------------------------------------
         $mform->addElement('header', 'general', get_string('general', 'form'));

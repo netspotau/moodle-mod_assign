@@ -91,7 +91,7 @@ abstract class assignment_plugin {
      * @param object $mform The form to add the elements to 
      * @return $array 
      */
-    public function get_settings(&$mform) {
+    public function get_settings($mform) {
         return;
     }
 
@@ -222,7 +222,7 @@ abstract class assignment_plugin {
      * @param object $data - This is the form data that can be modified for example by a filemanager element
      * @return boolean - true if we added anything to the form
      */
-    public function get_form_elements($submission_grade, & $mform, & $data) {
+    public function get_form_elements($submission_grade, $mform, $data) {
         return false;
     }
 
@@ -477,7 +477,7 @@ abstract class assignment_plugin {
      * @param string $log Record upgrade messages in the log
      * @return bool true or false - false will trigger a rollback
      */
-    public function upgrade_settings($oldcontext, $oldassignment, & $log) {
+    public function upgrade_settings($oldcontext, $oldassignment, $log) {
         $log = $log . ' ' . get_string('upgradenotimplemented', 'mod_assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));
         return false;
     }
@@ -492,7 +492,7 @@ abstract class assignment_plugin {
      * @param string $log Record upgrade messages in the log
      * @return boolean true or false - false will trigger a rollback
      */
-    public function upgrade($oldcontext, $oldassignment, $oldsubmission_grade, $submission_grade, & $log) {
+    public function upgrade($oldcontext, $oldassignment, $oldsubmission_grade, $submission_grade, $log) {
         $log = $log . ' ' . get_string('upgradenotimplemented', 'mod_assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));
         return false;
     }

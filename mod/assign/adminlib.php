@@ -437,7 +437,7 @@ class assignment_plugin_manager {
      * @param object $module - The handle to the current module
      * @return None
      */
-    static function add_admin_assignment_plugin_settings($subtype, & $admin, & $settings, $module) {
+    static function add_admin_assignment_plugin_settings($subtype, $admin, $settings, $module) {
         global $CFG;
 
         $plugins = get_plugin_list_with_file($subtype, 'settings.php', false);

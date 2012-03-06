@@ -131,7 +131,7 @@ class feedback_file extends feedback_plugin {
      * @param object $data
      * @return mixed 
      */
-    public function get_form_elements($grade, & $mform, & $data) {
+    public function get_form_elements($grade, $mform, $data) {
 
         $elements = array();
 
