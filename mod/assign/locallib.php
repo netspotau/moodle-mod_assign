@@ -1553,11 +1553,9 @@ class assignment {
     /**
      * View confirm submit page.
      * 
-     * @global object $OUTPUT
      * @return None
      */
     private function view_confirm_submit_page() {
-        global $OUTPUT;
         // Always require view permission to do anything
         require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
