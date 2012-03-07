@@ -135,6 +135,28 @@ class mod_assign_renderer extends plugin_renderer_base {
     public function render_footer() {
         return $this->output->footer();
     }
+    
+    /**
+     * render the confirm submission form
+     *
+     * @param confirm_submission_form $form
+     * @return string
+     */
+    public function render_confirm_submission_form(confirm_submission_form $confirmform) {
+        $o = '';
+    
+        $o .= $this->output->container_start('confirmsubmission');
+        $o .= $this->output->heading(get_string('submission', 'assign'), 3);
+        $o .= $this->output->box_start('boxaligncenter confirmsubmissionform');
+
+
+        $o .= $this->moodleform($confirmform->get_form());
+        
+        $o .= $this->output->box_end();
+        $o .= $this->output->container_end();
+
+        return $o;
+    }
 
     /**
      * render the edit submission form
@@ -499,10 +521,10 @@ class mod_assign_renderer extends plugin_renderer_base {
 
         if ($status->get_submission() && $status->get_submission()->status == ASSIGN_SUBMISSION_STATUS_DRAFT) {
             // submission.php test
+            $o .= get_string('submitassignment_help', 'assign');
             $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
                     array('id' => $status->get_assignment()->get_course_module()->id, 'action'=>'submit')), get_string('submitassignment', 'assign'), 'get');
             $o .= $this->output->box_start('boxaligncenter submithelp');
-            $o .= get_string('submitassignment_help', 'assign');
             $o .= $this->output->box_end();
         }
         

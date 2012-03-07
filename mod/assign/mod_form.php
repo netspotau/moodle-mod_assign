@@ -114,6 +114,7 @@ class mod_assign_confirm_submission_form extends moodleform {
         list($assignment, $data) = $this->_customdata;
 
         $config = get_config('assign');
+        $mform->addElement('static', 'confirm_help', '', get_string('submitassignment_help', 'assign'));
     
         if (($config->require_submission_statement || 
              $assignment->get_instance()->requiresubmissionstatement)) {

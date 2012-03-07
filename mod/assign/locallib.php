@@ -1207,15 +1207,6 @@ class assignment {
             
 
     /**
-     * Display the assignment intro
-     *
-     * The prints the assignment description in a box
-     * @return None
-     */
-    private function view_intro() {
-    }
-    
-    /**
      * Display the page footer
      *
      * @return None
@@ -1577,22 +1568,11 @@ class assignment {
             return;
         }
 
-        $this->view_header(get_string('confirmsubmission', 'assign'));
-        $this->view_intro();
-
-        echo $OUTPUT->heading(get_string('submitassignment', 'assign'), 3);
-        echo $OUTPUT->box_start('boxaligncenter', 'intro');
-        echo get_string('submitassignment_help', 'assign');
-        echo $OUTPUT->box_end();
-
-        echo $OUTPUT->container_start('confirmsubmission');
-
+        echo $this->output->render(new assignment_header($this, true));
         $data = new stdClass();
         $mform = new mod_assign_confirm_submission_form(null, array($this, $data));
-        $mform->display();
-       
-        echo $OUTPUT->container_end();
-        
+        echo $this->output->render(new confirm_submission_form($mform));
+
         $this->view_footer();
         $this->add_to_log('view confirm submit assignment form', get_string('viewownsubmissionform', 'assign'));
     }
