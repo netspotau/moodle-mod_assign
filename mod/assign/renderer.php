@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 /** Include locallib.php */
-require_once('locallib.php');
+require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
 
 /**
@@ -446,8 +446,7 @@ class mod_assign_renderer extends plugin_renderer_base {
             $row = new html_table_row();
             $cell1 = new html_table_cell(get_string('timeremaining', 'assign'));
             if ($duedate - $time <= 0) {
-                if (!$status->get_submission() || $status->get_submission()->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED &&
-                    $status->get_submission()->status != ASSIGN_SUBMISSION_STATUS_LOCKED) {
+                if (!$status->get_submission() || $status->get_submission()->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
                     $cell2 = new html_table_cell(get_string('overdue', 'assign', format_time($time - $duedate)));
                 } else {
                     if ($status->get_submission()->timemodified > $duedate) {
