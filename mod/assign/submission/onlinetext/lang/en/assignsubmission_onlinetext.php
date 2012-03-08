@@ -27,7 +27,7 @@
 $string['allowonlinetextsubmissions'] = 'Enabled';
 $string['back'] = 'Back';
 $string['nosubmission'] = 'Nothing has been submitted for this assignment';
-$string['onlinetext'] = 'Online Text';
+$string['onlinetext'] = 'Online text';
 $string['onlinetextfilename'] = 'onlinetext.html';
 $string['onlinetextsubmission'] = 'Allow online text submission';
-$string['pluginname'] = 'Online Text Submissions';
+$string['pluginname'] = 'Online text submissions';

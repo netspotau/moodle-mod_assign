@@ -25,4 +25,4 @@
  */
 
 $string['allowsubmissioncomments'] = 'Enabled';
-$string['pluginname'] = 'Submission Comments';
+$string['pluginname'] = 'Submission comments';

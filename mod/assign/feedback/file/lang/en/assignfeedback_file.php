@@ -26,8 +26,8 @@
 
 $string['allowfilefeedback'] = 'Enabled';
 $string['configmaxbytes'] = 'Maximum file size';
-$string['file'] = 'Feedback Files';
+$string['file'] = 'Feedback files';
 $string['maxbytes'] = 'Maximum file size';
 $string['maxfiles'] = 'Maximum number of uploaded files';
 $string['maximumsize'] = 'Maximum file size';
-$string['pluginname'] = 'File Feedback';
+$string['pluginname'] = 'File feedback';
