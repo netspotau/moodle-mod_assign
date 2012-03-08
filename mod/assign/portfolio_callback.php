@@ -100,7 +100,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
     public function load_data() {
         global $DB, $CFG;
         
-        $context = get_context_instance(CONTEXT_MODULE,$this->cmid);
+        $context = context_module::instance($this->cmid);
 
         if (empty($this->fileid)) {
             if (empty($this->sid) || empty($this->area)) {
@@ -130,7 +130,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
         
         if ($this->plugin && $this->editor) {
             $options = portfolio_format_text_options();
-            $context = get_context_instance(CONTEXT_MODULE,$this->cmid);
+            $context = context_module::instance($this->cmid);
             $options->context = $context;
           
             $plugin = $this->get_submission_plugin();
@@ -190,7 +190,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
             }
             if (count($files) > 1) {
                 $baseid = 'assign' . $this->cmid . $this->area;
-                $context = get_context_instance(CONTEXT_MODULE,$this->cmid);
+                $context = context_module::instance($this->cmid);
 
                 // if we have multiple files, they should be grouped together into a folder
                 $entry = new portfolio_format_leap2a_entry($baseid . 'group', print_context_name($context), 'selection');
@@ -214,7 +214,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
         
         require_once('locallib.php');
            
-        $context = get_context_instance(CONTEXT_MODULE,$this->cmid);
+        $context = context_module::instance($this->cmid);
 
         $assignment = new assignment($context);
         return $assignment->get_submission_plugin_by_type($this->plugin); 
@@ -232,7 +232,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
         if ($this->plugin && $this->editor) {
             $plugin = $this->get_submission_plugin();
             $options = portfolio_format_text_options();
-            $options->context = get_context_instance(CONTEXT_MODULE,$this->cmid);
+            $options->context = context_module::instance($this->cmid);
 
             $textsha1 = sha1(format_text($plugin->get_editor_text($this->editor, $this->sid), 
                                          $plugin->get_editor_format($this->editor, $this->sid), $options));
@@ -261,7 +261,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
      * @return mixed
      */
     public function check_permissions() {
-        $context = get_context_instance(CONTEXT_MODULE, $this->cmid);
+        $context = context_module::instance($this->cmid);
         return has_capability('mod/assign:exportownsubmission', $context);
     }
      

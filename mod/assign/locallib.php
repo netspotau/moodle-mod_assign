@@ -661,12 +661,9 @@ class assignment {
      * 
      * Activate plagiarism plugn if it is enabled 
      *
-     * @global object $CFG
-     * @global object $COURSE
      * @param object $mform The form to add the configuration settings to. This form is modified directly (not returned)
      */
     public function add_settings($mform) {
-        global $CFG, $COURSE;
         $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
         
         
@@ -686,7 +683,7 @@ class assignment {
         
         // plagiarism enabling form
         
-        $course_context = get_context_instance(CONTEXT_COURSE, $COURSE->id);      
+        $course_context = context_course::instance($this->get_course());
         plagiarism_get_form_elements_module($mform, $course_context);
                
         $mform->addElement('header', 'general', get_string('notifications', 'assign'));

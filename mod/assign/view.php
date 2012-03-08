@@ -49,7 +49,7 @@ require_login($course, true, $cm);
 $PAGE->set_url($url);
 // Javascript/css includes
 
-$context = get_context_instance(CONTEXT_MODULE,$cm->id);
+$context = context_module::instance($cm->id);
    
 $ass = new assignment($context,$assignment,$cm,$course);
 

@@ -36,7 +36,7 @@ function assign_add_instance($form_data) {
     global $CFG;
     require_once('locallib.php');
 
-    $context = get_context_instance(CONTEXT_COURSE,$form_data->course);
+    $context = context_course::instance($form_data->course);
     $ass = new assignment($context, $form_data);
     return $ass->add_instance();
 }
@@ -50,9 +50,7 @@ function assign_delete_instance($id) {
     global $CFG;
     require_once('locallib.php');
     $cm = get_coursemodule_from_instance('assign', $id, 0, false, MUST_EXIST);
-    if (!$context = get_context_instance(CONTEXT_MODULE, $cm->id)) {
-        return false;
-    }
+    $context = context_module::instance($cm->id);
 
     $ass = new assignment($context);
     return $ass->delete_instance();
@@ -68,7 +66,7 @@ function assign_delete_instance($id) {
 function assign_update_instance($form_data) {
     global $CFG;
     require_once('locallib.php');
-    $context = get_context_instance(CONTEXT_MODULE,$form_data->coursemodule);
+    $context = context_module::instance($form_data->coursemodule);
     $ass = new assignment($context, $form_data);
     return $ass->update_instance();
 }

@@ -89,7 +89,7 @@ class assignment_upgrade_manager {
         // get the module details
         $oldmodule = $DB->get_record('modules', array('name'=>'assignment'), '*', MUST_EXIST);
         $oldcoursemodule = $DB->get_record('course_modules', array('module'=>$oldmodule->id, 'instance'=>$oldassignmentid), '*', MUST_EXIST);
-        $oldcontext = get_context_instance(CONTEXT_MODULE, $oldcoursemodule->id);
+        $oldcontext = context_module::instance($oldcoursemodule->id);
         
         $newmodule = $DB->get_record('modules', array('name'=>'assign'), '*', MUST_EXIST);
         $newcoursemodule = $this->duplicate_course_module($oldcoursemodule, $newmodule->id, $newassignment->get_instance()->id);
@@ -104,7 +104,7 @@ class assignment_upgrade_manager {
         // from this point we want to rollback on failure
         $rollback = false;
         try {
-            $newassignment->set_context(get_context_instance(CONTEXT_MODULE,$newcoursemodule->id));
+            $newassignment->set_context(context_module::instance($newcoursemodule->id));
             // the course module has now been created - time to update the core tables
             $newassignment->copy_area_files_for_upgrade($oldcontext->id, 'mod_assignment', 'intro', 0, 
                                             $newassignment->get_context()->id, 'mod_assign', 'intro', 0);
@@ -276,8 +276,8 @@ class assignment_upgrade_manager {
         global $CFG, $USER, $DB;
         $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 
-        $coursecontext = get_context_instance(CONTEXT_COURSE, $course->id);
-        $modcontext = get_context_instance(CONTEXT_MODULE, $cm->id);
+        $coursecontext = context_course::instance($course->id);
+        $modcontext = context_module::instance($cm->id);
 
         $modlib = "$CFG->dirroot/mod/$cm->modname/lib.php";
 
