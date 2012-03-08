@@ -209,10 +209,10 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
         $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
 
         if ($onlinetext_submission) {
-            $text = format_text($onlinetext_submission->onlinetext);
+            $text = format_text($onlinetext_submission->onlinetext, $onlinetext_submission->onlineformat, array('context'=>$this->assignment->get_context()));
             $shorttext = shorten_text($text, 140);
             if ($text != $shorttext) {  
-                return get_string('numwords', '', count_words(format_text($onlinetext_submission->onlinetext)));                    
+                return get_string('numwords', '', count_words($text));                    
             } else {
                 return $shorttext;
             }
@@ -229,7 +229,7 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     public function get_files($submission) {
         $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
         if ($onlinetext_submission) {
-            $submissioncontent = "<html><body>". format_text($onlinetext_submission->onlinetext, $onlinetext_submission->onlineformat). "</body></html>";      //fetched from database
+            $submissioncontent = "<html><body>". format_text($onlinetext_submission->onlinetext, $onlinetext_submission->onlineformat, array('context'=>$this->assignment->get_context())). "</body></html>";      //fetched from database
 
             return array(get_string('onlinetextfilename', 'assignsubmission_onlinetext') => array($submissioncontent));
         }
@@ -332,7 +332,10 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
         // format the info for each submission plugin add_to_log
         $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
         $onlinetext_log_info = '';
-        $onlinetext_log_info .= 'Onlinetext word count : ' . get_string('numwords', '', count_words(format_text($onlinetext_submission->onlinetext))) . " <br>";
+        $text = format_text($onlinetext_submission->onlinetext,
+                            $onlinetext_submission->onlineformat, 
+                            array('context'=>$this->assignment->get_context()));
+        $onlinetext_log_info .= 'Onlinetext word count : ' . get_string('numwords', '', count_words($text)) . " <br>";
 
         return $onlinetext_log_info;
     }

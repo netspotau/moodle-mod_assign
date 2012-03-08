@@ -131,6 +131,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
         if ($this->plugin && $this->editor) {
             $options = portfolio_format_text_options();
             $context = get_context_instance(CONTEXT_MODULE,$this->cmid);
+            $options->context = $context;
           
             $plugin = $this->get_submission_plugin();
           

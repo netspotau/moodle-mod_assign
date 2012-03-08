@@ -1012,11 +1012,11 @@ class assignment {
 
                 $assignmentinfo = new stdClass();
                 $assignmentinfo->grader = fullname($grader);
-                $assignmentinfo->assignment = format_string($submission->name, true);
+                $assignmentinfo->assignment = format_string($submission->name, true, array('context' => $coursecontext));
                 $assignmentinfo->url = "$CFG->wwwroot/mod/assign/view.php?id=$mod->id";
 
-                $postsubject = "$courseshortname: $strassignments: " . format_string($submission->name, true);
-                $posttext = "$courseshortname -> $strassignments -> " . format_string($submission->name, true) . "\n";
+                $postsubject = "$courseshortname: $strassignments: " . format_string($submission->name, true, array('context' => $coursecontext));
+                $posttext = "$courseshortname -> $strassignments -> " . format_string($submission->name, true, array('context' => $coursecontext)) . "\n";
                 $posttext .= "---------------------------------------------------------------------\n";
                 $posttext .= get_string("assignmentmail", "assign", $assignmentinfo) . "\n";
                 $posttext .= "---------------------------------------------------------------------\n";
@@ -1025,7 +1025,7 @@ class assignment {
                     $posthtml = "<p><font face=\"sans-serif\">" .
                             "<a href=\"$CFG->wwwroot/course/view.php?id=$course->id\">$courseshortname</a> ->" .
                             "<a href=\"$CFG->wwwroot/mod/assign/index.php?id=$course->id\">$strassignments</a> ->" .
-                            "<a href=\"$CFG->wwwroot/mod/assign/view.php?id=$mod->id\">" . format_string($submission->name, true) . "</a></font></p>";
+                            "<a href=\"$CFG->wwwroot/mod/assign/view.php?id=$mod->id\">" . format_string($submission->name, true, array('context' => $coursecontext)) . "</a></font></p>";
                     $posthtml .= "<hr /><font face=\"sans-serif\">";
                     $posthtml .= "<p>" . get_string("assignmentmailhtml", "assign", $assignmentinfo) . "</p>";
                     $posthtml .= "</font><hr />";
@@ -1181,7 +1181,7 @@ class assignment {
         $format = $plugin->get_editor_format($editor, $submissionid);
         
         $final_text = file_rewrite_pluginfile_urls($text, 'pluginfile.php', $this->get_context()->id, 'mod_assign', $filearea, $submissionid);
-        $result .= format_text($final_text, $format, array('overflowdiv' => true));
+        $result .= format_text($final_text, $format, array('overflowdiv' => true, 'context' => $this->get_context()));
 
         
 
@@ -1946,7 +1946,7 @@ class assignment {
             foreach ($teachers as $teacher) {
                 $info = new stdClass();
                 $info->username = fullname($user, true);
-                $info->assignment = format_string($this->instance->name,true);
+                $info->assignment = format_string($this->instance->name,true, array('context'=>$this->get_context()));
                 $info->url = $CFG->wwwroot.'/mod/assign/view.php?id='.$this->get_course_module()->id;
                 $info->timeupdated = strftime('%c',$submission->timemodified);
 
