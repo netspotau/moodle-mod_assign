@@ -36,25 +36,18 @@ $assignment = null;
 $course = null;
 
 // get the request parameters
-if (!$cm = get_coursemodule_from_id('assign', $id)) {
-    print_error('invalidcoursemodule');
-}
+$cm = get_coursemodule_from_id('assign', $id, 0, false, MUST_EXIST);
 
-if (!$assignment = $DB->get_record('assign', array('id' => $cm->instance))) {
-    print_error('invalidid', 'assign');
-}
+$assignment = $DB->get_record('assign', array('id' => $cm->instance), '*', MUST_EXIST);
 
-if (!$course = $DB->get_record('course', array('id' => $assignment->course))) {
-    print_error('coursemisconf', 'assign');
-}
+$course = $DB->get_record('course', array('id' => $assignment->course), '*', MUST_EXIST);
+
 $url->param('id', $id);
 
 // Auth
 require_login($course, true, $cm);
 $PAGE->set_url($url);
 // Javascript/css includes
-$PAGE->requires->js('/mod/assign/assign.js');
-$PAGE->requires->css('/mod/assign/style.css');
 
 $context = get_context_instance(CONTEXT_MODULE,$cm->id);
    

@@ -49,9 +49,7 @@ function assign_add_instance($form_data) {
 function assign_delete_instance($id) {
     global $CFG;
     require_once('locallib.php');
-    if (!$cm = get_coursemodule_from_instance('assign', $id)) {
-        return false;
-    }
+    $cm = get_coursemodule_from_instance('assign', $id, 0, false, MUST_EXIST);
     if (!$context = get_context_instance(CONTEXT_MODULE, $cm->id)) {
         return false;
     }

@@ -82,7 +82,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
      */
     function __construct($callbackargs) {
         parent::__construct($callbackargs);
-        $this->cm = get_coursemodule_from_id('assign', $this->cmid);
+        $this->cm = get_coursemodule_from_id('assign', $this->cmid, 0, false, MUST_EXIST);
     }
           
     /**

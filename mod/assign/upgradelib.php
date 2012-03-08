@@ -62,10 +62,7 @@ class assignment_upgrade_manager {
         
         
         // first insert an assign instance to get the id
-        if (!$oldassignment = $DB->get_record('assignment', array('id'=>$oldassignmentid))) {
-            $log = get_string('couldnotfindassignmenttoupgrade', 'mod_assign');
-            return false;
-        }
+        $oldassignment = $DB->get_record('assignment', array('id'=>$oldassignmentid), '*', MUST_EXIST);
 
         $oldversion = get_config('assignment_' . $oldassignment->assignmenttype, 'version');
 
@@ -90,11 +87,11 @@ class assignment_upgrade_manager {
         }
 
         // get the module details
-        $oldmodule = $DB->get_record('modules', array('name'=>'assignment'));
-        $oldcoursemodule = $DB->get_record('course_modules', array('module'=>$oldmodule->id, 'instance'=>$oldassignmentid));
+        $oldmodule = $DB->get_record('modules', array('name'=>'assignment'), '*', MUST_EXIST);
+        $oldcoursemodule = $DB->get_record('course_modules', array('module'=>$oldmodule->id, 'instance'=>$oldassignmentid), '*', MUST_EXIST);
         $oldcontext = get_context_instance(CONTEXT_MODULE, $oldcoursemodule->id);
         
-        $newmodule = $DB->get_record('modules', array('name'=>'assign'));
+        $newmodule = $DB->get_record('modules', array('name'=>'assign'), '*', MUST_EXIST);
         $newcoursemodule = $this->duplicate_course_module($oldcoursemodule, $newmodule->id, $newassignment->get_instance()->id);
         if (!$newcoursemodule) {
             $log = get_string('couldnotcreatenewcoursemodule', 'mod_assign');
@@ -242,11 +239,14 @@ class assignment_upgrade_manager {
         $newcm->showdescription = $cm->showdescription;
 
         $newcmid = add_course_module($newcm);
-        $newcm = get_coursemodule_from_id('', $newcmid, $cm->course, true, MUST_EXIST);
+        $newcm = get_coursemodule_from_id('', $newcmid, $cm->course);
         if (!$newcm) {
             return false;
         }
         $section = $DB->get_record("course_sections", array("id"=>$newcm->section));
+        if (!$section) {
+            return false;
+        }
 
         $mod = new stdClass();
         $mod->course = $newcm->course;

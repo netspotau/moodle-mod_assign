@@ -731,7 +731,7 @@ class assignment {
             return $this->instance;
         }
         if ($this->get_course_module()) {
-            $this->instance = $DB->get_record('assign', array('id' => $this->get_course_module()->instance));
+            $this->instance = $DB->get_record('assign', array('id' => $this->get_course_module()->instance), '*', MUST_EXIST);
         }
         return $this->instance;
     }
@@ -768,7 +768,7 @@ class assignment {
         }
 
         if ($this->context->contextlevel == CONTEXT_MODULE) {
-            $this->coursemodule = get_coursemodule_from_id('assign', $this->context->instanceid);
+            $this->coursemodule = get_coursemodule_from_id('assign', $this->context->instanceid, 0, false, MUST_EXIST);
             return $this->coursemodule;
         }
         return null;
@@ -799,7 +799,7 @@ class assignment {
             print_error('badcontext');
             die();
         }
-        $this->course = $DB->get_record('course', array('id' => get_courseid_from_context($this->context)));
+        $this->course = $DB->get_record('course', array('id' => get_courseid_from_context($this->context)), '*', MUST_EXIST);
         return $this->course;
     }
     
@@ -1295,7 +1295,7 @@ class assignment {
             if ((groups_is_member($groupid,$a_userid) or !$groupmode or !$groupid)) {
                 // get the plugins to add their own files to the zip
 
-                $a_user = $DB->get_record("user", array("id"=>$a_userid),'id,username,firstname,lastname'); 
+                $a_user = $DB->get_record("user", array("id"=>$a_userid),'id,username,firstname,lastname', MUST_EXIST); 
 
                 $prefix = clean_filename(fullname($a_user) . "_" .$a_userid . "_");
 
@@ -1935,7 +1935,7 @@ class assignment {
             return;
         }
 
-        $user = $DB->get_record('user', array('id'=>$submission->userid));
+        $user = $DB->get_record('user', array('id'=>$submission->userid), '*', MUST_EXIST);
 
         if ($teachers = $this->get_graders($user)) {
 
@@ -2034,7 +2034,7 @@ class assignment {
     private function format_grade_for_log($grade) {
         global $DB;
 
-        $user = $DB->get_record('user', array('id' => $grade->userid));
+        $user = $DB->get_record('user', array('id' => $grade->userid), '*', MUST_EXIST);
         
         $info = get_string('gradestudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user)));
         if ($grade->grade != '') {
@@ -2429,7 +2429,7 @@ class assignment {
         $grade = $this->get_grade($userid, 0, true);
         $this->update_grade($grade);
 
-        $user = $DB->get_record('user', array('id' => $userid));
+        $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
 
         $this->add_to_log('revert submission to draft', get_string('reverttodraftforstudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user))));
         
@@ -2456,7 +2456,7 @@ class assignment {
         $grade->locked = 1;
         $this->update_grade($grade);
 
-        $user = $DB->get_record('user', array('id' => $userid));
+        $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
 
         $this->add_to_log('lock submission', get_string('locksubmissionforstudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user))));
     }
@@ -2482,7 +2482,7 @@ class assignment {
         $grade->locked = 0;
         $this->update_grade($grade);
         
-        $user = $DB->get_record('user', array('id' => $userid));
+        $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
 
         $this->add_to_log('unlock submission', get_string('unlocksubmissionforstudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user))));
     }
@@ -2537,7 +2537,7 @@ class assignment {
             }
             $this->update_grade($grade);
 
-            $user = $DB->get_record('user', array('id' => $userid));
+            $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
 
             $this->add_to_log('grade submission', $this->format_grade_for_log($grade));
              
