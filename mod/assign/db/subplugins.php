@@ -23,4 +23,4 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$subplugins = array('submission'=>'mod/assign/submission', 'feedback'=>'mod/assign/feedback');
+$subplugins = array('assignsubmission'=>'mod/assign/submission', 'assignfeedback'=>'mod/assign/feedback');

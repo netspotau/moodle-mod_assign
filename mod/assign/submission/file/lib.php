@@ -22,7 +22,7 @@
  * This class provides all the functionality for the new assign module.
  *
  * @package   mod_assign
- * @subpackage submission_file
+ * @subpackage assignsubmission_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -47,14 +47,14 @@ define('ASSIGN_FILEAREA_SUBMISSION_FILES', 'submission_files');
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class submission_file extends submission_plugin {
+class assignment_submission_file extends assignment_submission_plugin {
     
     /**
      * get the name of the file submission plugin
      * @return string 
      */
     public function get_name() {
-        return get_string('file', 'submission_file');
+        return get_string('file', 'assignsubmission_file');
     }
     
     /**
@@ -89,19 +89,19 @@ class submission_file extends submission_plugin {
             $options[$i] = $i;
         }
         
-        $mform->addElement('select', 'submission_file_maxfiles', get_string('maxfilessubmission', 'submission_file'), $options);
-        $mform->setDefault('submission_file_maxfiles', $default_maxfilesubmissions);
+        $mform->addElement('select', 'assignsubmission_file_maxfiles', get_string('maxfilessubmission', 'assignsubmission_file'), $options);
+        $mform->setDefault('assignsubmission_file_maxfiles', $default_maxfilesubmissions);
 
         $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
         $choices[0] = get_string('courseuploadlimit') . ' ('.display_size($COURSE->maxbytes).')';
         $settings[] = array('type' => 'select', 
                             'name' => 'maxsubmissionsizebytes', 
-                            'description' => get_string('maximumsubmissionsize', 'submission_file'), 
+                            'description' => get_string('maximumsubmissionsize', 'assignsubmission_file'), 
                             'options'=>$choices,
                             'default'=>$default_maxsubmissionsizebytes);
         
-        $mform->addElement('select', 'submission_file_maxsizebytes', get_string('maximumsubmissionsize', 'submission_file'), $choices);
-        $mform->setDefault('submission_file_maxsizebytes', $default_maxsubmissionsizebytes);
+        $mform->addElement('select', 'assignsubmission_file_maxsizebytes', get_string('maximumsubmissionsize', 'assignsubmission_file'), $choices);
+        $mform->setDefault('assignsubmission_file_maxsizebytes', $default_maxsubmissionsizebytes);
 
 
     }
@@ -112,8 +112,8 @@ class submission_file extends submission_plugin {
      * @return bool 
      */
     public function save_settings($mform) {
-        $this->set_config('maxfilesubmissions', $mform->submission_file_maxfiles);
-        $this->set_config('maxsubmissionsizebytes', $mform->submission_file_maxsizebytes);
+        $this->set_config('maxfilesubmissions', $mform->assignsubmission_file_maxfiles);
+        $this->set_config('maxsubmissionsizebytes', $mform->assignsubmission_file_maxsizebytes);
         return true;
     }
 
@@ -253,7 +253,7 @@ class submission_file extends submission_plugin {
         if ($count <= ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES) {
             return $this->assignment->render_area_files(ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
         } else {
-            return get_string('countfiles', 'submission_file', $count);
+            return get_string('countfiles', 'assignsubmission_file', $count);
         }
     }
 

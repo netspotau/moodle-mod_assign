@@ -36,7 +36,7 @@ require_once('assignment_plugin.php');
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class submission_plugin extends assignment_plugin {
+abstract class assignment_submission_plugin extends assignment_plugin {
     
     /**
      * return subtype name of the plugin
@@ -44,7 +44,7 @@ abstract class submission_plugin extends assignment_plugin {
      * @return string
      */
     public final function get_subtype() {
-        return 'submission';
+        return 'assignsubmission';
     }
 
     /**

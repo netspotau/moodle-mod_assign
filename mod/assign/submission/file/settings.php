@@ -19,13 +19,13 @@
  * This file defines the admin settings for this plugin
  *
  * @package   mod_assign
- * @subpackage   submission_file
+ * @subpackage   assignsubmission_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 if (isset($CFG->maxbytes)) {
-    $settings->add(new admin_setting_configselect('submission_file_maxbytes', 
-                        get_string('maximumsubmissionsize', 'submission_file'),
-                        get_string('configmaxbytes', 'submission_file'), 1048576, get_max_upload_sizes($CFG->maxbytes)));
+    $settings->add(new admin_setting_configselect('assignsubmission_file_maxbytes', 
+                        get_string('maximumsubmissionsize', 'assignsubmission_file'),
+                        get_string('configmaxbytes', 'assignsubmission_file'), 1048576, get_max_upload_sizes($CFG->maxbytes)));
 }

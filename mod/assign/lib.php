@@ -33,6 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  * @return object 
  */
 function assign_add_instance($form_data) {
+    global $CFG;
     require_once('locallib.php');
 
     $context = get_context_instance(CONTEXT_COURSE,$form_data->course);
@@ -46,6 +47,7 @@ function assign_add_instance($form_data) {
  * @return object|bool 
  */
 function assign_delete_instance($id) {
+    global $CFG;
     require_once('locallib.php');
     if (!$cm = get_coursemodule_from_instance('assign', $id)) {
         return false;
@@ -66,6 +68,7 @@ function assign_delete_instance($id) {
  * @return object
  */
 function assign_update_instance($form_data) {
+    global $CFG;
     require_once('locallib.php');
     $context = get_context_instance(CONTEXT_MODULE,$form_data->coursemodule);
     $ass = new assignment($context, $form_data);

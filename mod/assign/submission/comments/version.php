@@ -19,7 +19,7 @@
  * Version information
  *
  * @package    mod_assign
- * @package    submission_comments
+ * @package    assignsubmission_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -27,5 +27,5 @@
 
 $plugin->version   = 2012011600;
 $plugin->requires  = 2011110200;
-$plugin->component = 'submission_comments';
+$plugin->component = 'assignsubmission_comments';
 

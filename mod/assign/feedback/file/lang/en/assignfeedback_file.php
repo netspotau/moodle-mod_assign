@@ -16,18 +16,18 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Strings for component 'submission_onlinetext', language 'en'
+ * Strings for component 'feedback_file', language 'en'
  *
  * @package   mod_assign
- * @package   submission_onlinetext
+ * @package   assignfeedback_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['allowonlinetextsubmissions'] = 'Enabled';
-$string['back'] = 'Back';
-$string['nosubmission'] = 'Nothing has been submitted for this assignment';
-$string['onlinetext'] = 'Online Text';
-$string['onlinetextfilename'] = 'onlinetext.html';
-$string['onlinetextsubmission'] = 'Allow online text submission';
-$string['pluginname'] = 'Online Text Submissions';
+$string['allowfilefeedback'] = 'Enabled';
+$string['configmaxbytes'] = 'Maximum file size';
+$string['file'] = 'Feedback Files';
+$string['maxbytes'] = 'Maximum file size';
+$string['maxfiles'] = 'Maximum number of uploaded files';
+$string['maximumsize'] = 'Maximum file size';
+$string['pluginname'] = 'File Feedback';

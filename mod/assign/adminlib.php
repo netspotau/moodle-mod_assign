@@ -150,6 +150,9 @@ class assignment_plugin_manager {
         foreach ($names as $path) {
             $name = basename($path);
             $idx = get_config($this->subtype . '_' . $name, 'sortorder');
+            if (!$idx) {
+                $idx = 0;
+            }
             while (array_key_exists($idx, $result)) $idx +=1;
             $result[$idx] = $name;
         }
@@ -298,7 +301,7 @@ class assignment_plugin_manager {
 
         if ($confirm) {
             // Delete any configuration records.
-            if (!unset_all_config_for_plugin('submission_' . $plugin)) {
+            if (!unset_all_config_for_plugin('assignsubmission_' . $plugin)) {
                 $this->error = $OUTPUT->notification(get_string('errordeletingconfig', 'admin', $this->subtype . '_' . $plugin));
             }
 
@@ -498,7 +501,8 @@ class assignment_plugin_manager {
             $settings = new admin_settingpage($subtype . '_'.$pluginname,
                     $str_pluginname, 'moodle/site:config', !$module->visible);
             if ($admin->fulltree) {
-                include($CFG->dirroot . "/mod/assign/$subtype/$pluginname/settings.php");
+                $shortsubtype = substr($subtype, strlen('assign'));
+                include($CFG->dirroot . "/mod/assign/$shortsubtype/$pluginname/settings.php");
             }
                 
             $admin->add($subtype . 'plugins', $settings);

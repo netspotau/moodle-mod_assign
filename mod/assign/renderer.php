@@ -332,7 +332,7 @@ class mod_assign_renderer extends plugin_renderer_base {
     
         if ($controller = $grading_manager->get_active_controller()) {
             $controller->set_grade_range(make_grades_menu($status->get_assignment()->get_instance()->grade));
-            $cell2 = new html_table_cell($controller->render_grade($this->page, $assignment_grade->id, $item, $grade->str_long_grade, has_capability('mod/assignment:grade', $status->get_assignment()->get_context())));
+            $cell2 = new html_table_cell($controller->render_grade($this->page, $assignment_grade->id, $item, $grade->str_long_grade, has_capability('mod/assign:grade', $status->get_assignment()->get_context())));
         } else {
 
             $cell2 = new html_table_cell($this->format_grade($grade->str_long_grade, $status->get_assignment()));
@@ -519,7 +519,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o = '';
 
         if ($submission_plugin->get_view() == submission_plugin_submission::SUMMARY) {
-            $icon = $this->output->pix_icon('t/preview', get_string('view' . $submission_plugin->get_plugin()->get_subtype(), 'mod_assign'));
+            $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($submission_plugin->get_plugin()->get_subtype(), strlen('assign')), 'mod_assign'));
             $link = '';
             if ($submission_plugin->get_plugin()->show_view_link($submission_plugin->get_submission())) {
                 $link = $this->output->action_link(
@@ -593,7 +593,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o = '';
 
         if ($feedback_plugin->get_view() == feedback_plugin_feedback::SUMMARY) {
-            $icon = $this->output->pix_icon('t/preview', get_string('view' . $feedback_plugin->get_plugin()->get_subtype(), 'mod_assign'));
+            $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($feedback_plugin->get_plugin()->get_subtype(), strlen('assign')), 'mod_assign'));
             $link = '';
             if ($feedback_plugin->get_plugin()->show_view_link($feedback_plugin->get_grade())) {
                 $link = $this->output->action_link(

@@ -42,7 +42,7 @@
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class submission_comments extends submission_plugin {
+class assignment_submission_comments extends assignment_submission_plugin {
 
     /** @var object the assignment record that contains the global settings for this assign instance */
     private $instance;
@@ -52,7 +52,7 @@ class submission_comments extends submission_plugin {
     * @return string 
     */   
     public function get_name() {
-        return get_string('pluginname', 'submission_comments');
+        return get_string('pluginname', 'assignsubmission_comments');
     }
         
    /**
@@ -72,14 +72,13 @@ class submission_comments extends submission_plugin {
         $options->course    = $this->assignment->get_course();        
         $options->context = $this->assignment->get_context();
         $options->itemid  = $submission->id;      
-        $options->component = 'submission_comments';
+        $options->component = 'assignsubmission_comments';
         $options->showcount = true;   
         $options->displaycancel = true;
         
         $comment = new comment($options);
         $comment->set_view_permission(true);
        
-        
         return $comment->output(true);
      
     }
@@ -123,7 +122,7 @@ class submission_comments extends submission_plugin {
     public function upgrade($oldcontext,$oldassignment, $oldsubmission, $submission, $log) {
         global $DB;
     
-     if ($oldsubmission->data1 != '') {
+        if ($oldsubmission->data1 != '') {
          
             // need to used this innit() otherwise it shows up undefined !
             // require js for commenting
@@ -134,7 +133,7 @@ class submission_comments extends submission_plugin {
             $options->course = $this->assignment->get_course();
             $options->context = $this->assignment->get_context();                     
             $options->itemid = $submission->id;
-            $options->component = 'submission_comments';
+            $options->component = 'assignsubmission_comments';
             $options->showcount = true;
             $options->displaycancel = true;
 
@@ -177,7 +176,7 @@ class submission_comments extends submission_plugin {
  * @param object $options
  * @return bool
  */
-function submission_comments_comment_validate($options) {
+function assignsubmission_comments_comment_validate($options) {
 
     return true;
 }
@@ -189,7 +188,7 @@ function submission_comments_comment_validate($options) {
  * @param object $options
  * @return array
  */
-function submission_comments_comment_permissions($options) {
+function assignsubmission_comments_comment_permissions($options) {
 
     return array('post' => true, 'view' => true);
 }
@@ -203,7 +202,7 @@ function submission_comments_comment_permissions($options) {
  * @global object $DB
  * @param object $comment
  */
-function submission_comments_comment_add($comment, $param) {
+function assignsubmission_comments_comment_add($comment, $param) {
     
     global $DB;
     if ($comment->commentarea == 'submission_comments_upgrade') {

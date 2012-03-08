@@ -16,10 +16,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Post-install code for the feedback_file module.
+ * Post-install code for the assignfeedback_file module.
  *
  * @package    assign
- * @subpackage feedback_file
+ * @subpackage assignfeedback_file
  * @copyright  1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -31,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Code run after the quiz module database tables have been created.
  */
-function xmldb_feedback_file_install() {
+function xmldb_assignfeedback_file_install() {
     global $CFG, $DB, $OUTPUT;
 
     // do the install

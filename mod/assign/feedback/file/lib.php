@@ -22,7 +22,7 @@
  * This class provides all the functionality for the new assign module.
  *
  * @package   mod_assign
- * @subpackage   feedback_file
+ * @subpackage   assignfeedback_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -44,7 +44,7 @@ define('ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES', 5);
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class feedback_file extends feedback_plugin {
+class assignment_feedback_file extends assignment_feedback_plugin {
     
     /** @var object the assignment record that contains the global settings for this assign instance */
     private $instance;
@@ -55,7 +55,7 @@ class feedback_file extends feedback_plugin {
      * @return string 
      */
     public function get_name() {
-        return get_string('file', 'feedback_file');
+        return get_string('file', 'assignfeedback_file');
     }
     
     /**
@@ -90,14 +90,14 @@ class feedback_file extends feedback_plugin {
             $options[$i] = $i;
         }
         
-        $mform->addElement('select', 'feedback_file_maxfiles', get_string('maxfiles', 'feedback_file'), $options);
-        $mform->setDefault('feedback_file_maxfiles', $default_maxfiles);
+        $mform->addElement('select', 'assignfeedback_file_maxfiles', get_string('maxfiles', 'assignfeedback_file'), $options);
+        $mform->setDefault('assignfeedback_file_maxfiles', $default_maxfiles);
 
         $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
         $choices[0] = get_string('courseuploadlimit') . ' ('.display_size($COURSE->maxbytes).')';
         
-        $mform->addElement('select', 'feedback_file_maxsizebytes', get_string('maximumsize', 'feedback_file'), $choices);
-        $mform->setDefault('feedback_file_maxsizebytes', $default_maxsizebytes);
+        $mform->addElement('select', 'assignfeedback_file_maxsizebytes', get_string('maximumsize', 'assignfeedback_file'), $choices);
+        $mform->setDefault('assignfeedback_file_maxsizebytes', $default_maxsizebytes);
     }
     
     /**
@@ -106,8 +106,8 @@ class feedback_file extends feedback_plugin {
      * @return bool 
      */
     public function save_settings($mform) {
-        $this->set_config('maxfiles', $mform->feedback_file_maxfiles);
-        $this->set_config('maxsizebytes', $mform->feedback_file_maxsizebytes);
+        $this->set_config('maxfiles', $mform->assignfeedback_file_maxfiles);
+        $this->set_config('maxsizebytes', $mform->assignfeedback_file_maxsizebytes);
         return true;
     }
 
@@ -208,7 +208,7 @@ class feedback_file extends feedback_plugin {
         if ($count <= ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES) {
             return $this->assignment->render_area_files(ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id);
         } else {
-            return get_string('countfiles', 'feedback_file', $count);
+            return get_string('countfiles', 'assignfeedback_file', $count);
         }
     }
     

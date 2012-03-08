@@ -19,7 +19,7 @@
  * Post-install code for the feedback_comments module.
  *
  * @package   mod_assign
- * @subpackage   feedback_comments
+ * @subpackage   assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -31,11 +31,11 @@ defined('MOODLE_INTERNAL') || die();
  * Code run after the quiz module database tables have been created.
  *
  * @package   mod_assign
- * @subpackage   feedback_comments
+ * @subpackage   assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-function xmldb_feedback_comments_install() {
+function xmldb_assignfeedback_comments_install() {
     global $CFG, $DB, $OUTPUT;
 
     // do the install

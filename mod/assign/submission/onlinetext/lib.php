@@ -38,11 +38,11 @@ define('ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT', 'submissions_onlinetext');
  * base class
  * 
  * @package   mod_assign
- * @subpackage submission_onlinetext
+ * @subpackage assignsubmission_onlinetext
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class submission_onlinetext extends submission_plugin {
+class assignment_submission_onlinetext extends assignment_submission_plugin {
     
     /** @var object the assignment record that contains the global settings for this assign instance */
     private $instance;
@@ -52,7 +52,7 @@ class submission_onlinetext extends submission_plugin {
      * @return string 
      */
     public function get_name() {
-        return get_string('onlinetext', 'submission_onlinetext');
+        return get_string('onlinetext', 'assignsubmission_onlinetext');
     }
 
 
@@ -231,7 +231,7 @@ class submission_onlinetext extends submission_plugin {
         if ($onlinetext_submission) {
             $submissioncontent = "<html><body>". format_text($onlinetext_submission->onlinetext, $onlinetext_submission->onlineformat). "</body></html>";      //fetched from database
 
-            return array(get_string('onlinetextfilename', 'submission_onlinetext') => array($submissioncontent));
+            return array(get_string('onlinetextfilename', 'assignsubmission_onlinetext') => array($submissioncontent));
         }
 
         return array();

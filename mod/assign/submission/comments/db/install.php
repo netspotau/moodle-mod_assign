@@ -18,7 +18,7 @@
  * Post-install code for the submission_comments module.
  *
  * @package    mod_assign
- * @subpackage submission_comments
+ * @subpackage assignsubmission_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -30,7 +30,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Code run after the module database tables have been created.
  */
-function xmldb_submission_comments_install() {
+function xmldb_assignsubmission_comments_install() {
     global $CFG, $DB, $OUTPUT;
 
     // do the install

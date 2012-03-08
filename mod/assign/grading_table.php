@@ -110,7 +110,7 @@ class grading_table extends table_sql implements renderable {
 
             foreach ($this->assignment->get_submission_plugins() as $plugin) {
                 if ($plugin->is_visible() && $plugin->is_enabled()) {
-                    $columns[] = 'submission_' . $plugin->get_type();
+                    $columns[] = 'assignsubmission_' . $plugin->get_type();
                     $headers[] = $plugin->get_name();
                 }
             }
@@ -328,7 +328,7 @@ class grading_table extends table_sql implements renderable {
         $link = '';
 
         if ($plugin->show_view_link($item)) {
-            $icon = $this->output->pix_icon('t/preview', get_string('view' . $plugin->get_subtype(), 'mod_assign'));
+            $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($plugin->get_subtype(), strlen('assign')), 'mod_assign'));
             $link = $this->output->action_link(
                                 new moodle_url('/mod/assign/view.php',
                                                array('id' => $this->assignment->get_course_module()->id,
@@ -354,8 +354,8 @@ class grading_table extends table_sql implements renderable {
      * @return mixed string or NULL
      */
     function other_cols($colname, $row){
-        if (($pos = strpos($colname, 'submission_')) !== false) {
-            $plugin = $this->assignment->get_submission_plugin_by_type(substr($colname, strlen('submission_')));
+        if (($pos = strpos($colname, 'assignsubmission_')) !== false) {
+            $plugin = $this->assignment->get_submission_plugin_by_type(substr($colname, strlen('assignsubmission_')));
             if ($plugin->is_visible() && $plugin->is_enabled()) {
                 if ($row->submissionid) {
                     $submission = new stdClass();

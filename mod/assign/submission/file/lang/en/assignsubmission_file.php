@@ -16,10 +16,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Strings for component 'submission_file', language 'en'
+ * Strings for component 'assignsubmission_file', language 'en'
  *
  * @package   mod_assign
- * @package   submission_file
+ * @package   assignsubmission_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */

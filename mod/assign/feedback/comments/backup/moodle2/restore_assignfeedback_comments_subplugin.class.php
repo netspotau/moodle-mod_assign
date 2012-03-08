@@ -37,7 +37,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class restore_feedback_comments_subplugin extends restore_subplugin {
+class restore_assignfeedback_comments_subplugin extends restore_subplugin {
 
     ////////////////////////////////////////////////////////////////////////////
     // mappings of XML paths to the processable methods
@@ -64,7 +64,7 @@ class restore_feedback_comments_subplugin extends restore_subplugin {
     /**
      * Processes one feedback_comments element
      */
-    public function process_feedback_comments_grade($data) {
+    public function process_assignfeedback_comments_grade($data) {
         global $DB;
 
         $data = (object)$data;

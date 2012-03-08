@@ -16,12 +16,18 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Strings for component 'feedback_comments', language 'en'
+ * Strings for component 'assignsubmission_onlinetext', language 'en'
  *
  * @package   mod_assign
- * @package   feedback_comments
+ * @package   assignsubmission_onlinetext
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Feedback Comments';
+$string['allowonlinetextsubmissions'] = 'Enabled';
+$string['back'] = 'Back';
+$string['nosubmission'] = 'Nothing has been submitted for this assignment';
+$string['onlinetext'] = 'Online Text';
+$string['onlinetextfilename'] = 'onlinetext.html';
+$string['onlinetextsubmission'] = 'Allow online text submission';
+$string['pluginname'] = 'Online Text Submissions';

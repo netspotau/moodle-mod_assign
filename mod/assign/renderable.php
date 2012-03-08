@@ -491,6 +491,7 @@ class submission_status implements renderable {
         $this->set_assignment($assignment);
         $this->set_submission($submission);
         $this->set_locked($locked);
+        $this->set_graded($graded);
         $this->set_view($view);
         $this->set_show_edit($show_edit);
         $this->set_show_submit($show_submit);

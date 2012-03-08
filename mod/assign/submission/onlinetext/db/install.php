@@ -18,7 +18,7 @@
  * Post-install code for the submission_onlinetext module.
  *
  * @package    mod_assign
- * @subpackage submission_onlinetext
+ * @subpackage assignsubmission_onlinetext
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Code run after the quiz module database tables have been created.
  */
-function xmldb_submission_onlinetext_install() {
+function xmldb_assignsubmission_onlinetext_install() {
     global $CFG, $DB, $OUTPUT;
 
     // do the install

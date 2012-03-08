@@ -19,7 +19,7 @@
  * This file contains the class for restore of this submission plugin
  * 
  * @package   mod_assign
- * @subpackage submission_file
+ * @subpackage assignsubmission_onlinetext
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,25 +29,26 @@
  * needed to restore one assign_submission subplugin.
  *
  * @package   mod_assign
- * @subpackage submission_file
+ * @subpackage submission_onlinetext
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class restore_submission_file_subplugin extends restore_subplugin {
+class restore_assignsubmission_onlinetext_subplugin extends restore_subplugin {
 
     ////////////////////////////////////////////////////////////////////////////
     // mappings of XML paths to the processable methods
     ////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Returns the paths to be handled by the subplugin at workshop level
+     * 
+     * Returns array the paths to be handled by the subplugin at assignment level     
      */
     protected function define_submission_subplugin_structure() {
 
         $paths = array();
 
         $elename = $this->get_namefor('submission');
-        $elepath = $this->get_pathfor('/submission_file'); // we used get_recommended_name() so this works
+        $elepath = $this->get_pathfor('/submission_onlinetext'); // we used get_recommended_name() so this works
         $paths[] = new restore_path_element($elename, $elepath);
 
         return $paths; // And we return the interesting paths
@@ -57,10 +58,15 @@ class restore_submission_file_subplugin extends restore_subplugin {
     // defined path elements are dispatched to the following methods
     ////////////////////////////////////////////////////////////////////////////
 
+    
+    
     /**
-     * Processes one submission_file element
+     * Processes one assignsubmission_onlinetext element
+     * 
+     * @global object $DB
+     * @param object $data 
      */
-    public function process_submission_file_submission($data) {
+    public function process_assignsubmission_onlinetext_submission($data) {
         global $DB;
 
         $data = (object)$data;
@@ -69,8 +75,9 @@ class restore_submission_file_subplugin extends restore_subplugin {
         // the mapping is set in the restore for the core assign activity. When a submission node is processed
         $data->submission = $this->get_mappingid('submission', $data->submission);
 
-        $DB->insert_record('assign_submission_file', $data);
+        $DB->insert_record('assign_submission_onlinetext', $data);
         
-        $this->add_related_files('mod_assign', 'submission_files', 'submission', null, $oldsubmissionid);
+        $this->add_related_files('mod_assign', 'submissions_onlinetext', 'submission', null, $oldsubmissionid);
     }
+
 }

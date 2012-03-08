@@ -69,10 +69,10 @@ require_once($CFG->libdir.'/gradelib.php');
 /** grading lib.php */
 require_once($CFG->dirroot.'/grade/grading/lib.php');
 /** Include submission_plugin.php */
-require_once('feedback_plugin.php');
-require_once('submission_plugin.php');
-require_once('renderable.php');
-require_once('grading_table.php');
+require_once($CFG->dirroot.'/mod/assign/feedback_plugin.php');
+require_once($CFG->dirroot.'/mod/assign/submission_plugin.php');
+require_once($CFG->dirroot.'/mod/assign/renderable.php');
+require_once($CFG->dirroot.'/mod/assign/grading_table.php');
 
 //send files to event system for plagiarism detection 
 /** Include eventslib.php */
@@ -137,8 +137,8 @@ class assignment {
         $this->course = $course; 
         $this->cache = array(); // temporary cache only lives for a single request - used to reduce db lookups
 
-        $this->submission_plugins = $this->load_plugins('submission');
-        $this->feedback_plugins = $this->load_plugins('feedback');
+        $this->submission_plugins = $this->load_plugins('assignsubmission');
+        $this->feedback_plugins = $this->load_plugins('assignfeedback');
         $this->output = $PAGE->get_renderer('mod_assign');
     }
 
@@ -202,7 +202,8 @@ class assignment {
      * @return object $plugin /null
      */
     private function get_plugin_by_type($subtype, $type) {
-        $name = $subtype . '_plugins';
+        $shortsubtype = substr($subtype, strlen('assign'));
+        $name = $shortsubtype . '_plugins';
         $p = $this->$name;
         foreach ($p as $plugin) {
             if ($plugin->get_type() == $type) {
@@ -218,7 +219,7 @@ class assignment {
      * @return $plugin
      */
     public function get_feedback_plugin_by_type($type) {
-        return $this->get_plugin_by_type('feedback', $type);
+        return $this->get_plugin_by_type('assignfeedback', $type);
     }
 
     /**
@@ -227,7 +228,7 @@ class assignment {
      * @return $plugin
      */
     public function get_submission_plugin_by_type($type) {
-        return $this->get_plugin_by_type('submission', $type);
+        return $this->get_plugin_by_type('assignsubmission', $type);
     }
 
     /**
@@ -247,7 +248,9 @@ class assignment {
 
                 $name = basename($name);
 
-                $plugin_class = $subtype . '_' . $name;
+                $shortsubtype = substr($subtype, strlen('assign'));
+                $plugin_class = 'assignment_' . $shortsubtype . '_' . $name;
+                
                 $plugin = new $plugin_class($this, $name);
 
                 if ($plugin instanceof assignment_plugin) {
@@ -316,10 +319,10 @@ class assignment {
             $this->view_next_single_grade();                        
         } else if ($action == 'grade') {
             $this->view_single_grade_page();
-        } else if ($action == 'viewpluginfeedback') {
-            $this->view_plugin_content('feedback');
-        } else if ($action == 'viewpluginsubmission') {
-            $this->view_plugin_content('submission');
+        } else if ($action == 'viewpluginassignfeedback') {
+            $this->view_plugin_content('assignfeedback');
+        } else if ($action == 'viewpluginassignsubmission') {
+            $this->view_plugin_content('assignsubmission');
         } else if ($action == 'editsubmission') {
             $this->view_edit_submission_page();
         } else if ($action == 'grading') {
@@ -884,7 +887,8 @@ class assignment {
      * @return mixed The user id of the matching user or false if there was an error
      */
     private function get_userid_for_row($num){
-        $table = new grading_table($this);
+        $filter = get_user_preferences('assign_filter', '');
+        $table = new grading_table($this, 0, $filter);
 
         $userid = $table->get_cell_data($num, 'userid');
      
@@ -1116,7 +1120,7 @@ class assignment {
         $gradeid = optional_param('gid', 0, PARAM_INT);
         $plugintype = required_param('plugin', PARAM_TEXT);
         $item = null;
-        if ($pluginsubtype == 'submission') {
+        if ($pluginsubtype == 'assignsubmission') {
             $plugin = $this->get_submission_plugin_by_type($plugintype);
             if ($submissionid <= 0) {
                 print_error('invalidaccessparameter');
@@ -1589,7 +1593,7 @@ class assignment {
     private function is_graded($userid) {
         $grade = $this->get_grade($userid);
         if ($grade) {
-            return ($grade->grade);
+            return ($grade->grade != '');
         }
         return false;
     }
@@ -2524,7 +2528,7 @@ class assignment {
                         $result = false;
                         print_error($plugin->get_error());
                     }
-                    if (('feedback_' . $plugin->get_type()) == $gradebook_plugin) {
+                    if (('assignfeedback_' . $plugin->get_type()) == $gradebook_plugin) {
                         // this is the feedback plugin chose to push comments to the gradebook
                         $grade->feedbacktext = $plugin->text_for_gradebook($grade);
                         $grade->feedbackformat = $plugin->format_for_gradebook($grade);

@@ -103,8 +103,8 @@ class backup_assign_activity_structure_step extends backup_activity_structure_st
                                      array('assignment' => backup::VAR_PARENTID));
         
             // support 2 types of subplugins
-            $this->add_subplugin_structure('submission', $submission, true);
-            $this->add_subplugin_structure('feedback', $grade, true);
+            $this->add_subplugin_structure('assignsubmission', $submission, true);
+            $this->add_subplugin_structure('assignfeedback', $grade, true);
         }
 
  

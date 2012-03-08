@@ -21,7 +21,7 @@
  * 
  *
  * @package   mod_assign
- * @subpackage feedback_comments
+ * @subpackage assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -33,11 +33,11 @@
  * base class
  * 
  * @package   mod_assign
- * @subpackage feedback_comments
+ * @subpackage assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class feedback_comments extends feedback_plugin {
+class assignment_feedback_comments extends assignment_feedback_plugin {
 
     /** @var object the assignment record that contains the global settings for this assign instance */
     private $instance;
@@ -47,7 +47,7 @@ class feedback_comments extends feedback_plugin {
     * @return string 
     */  
     public function get_name() {
-        return get_string('pluginname', 'feedback_comments');
+        return get_string('pluginname', 'assignfeedback_comments');
     }
     
     /**
@@ -83,7 +83,7 @@ class feedback_comments extends feedback_plugin {
             }
         }
 
-        $mform->addElement('editor', 'feedbackcomments_editor', '', null, null);
+        $mform->addElement('editor', 'assignfeedbackcomments_editor', '', null, null);
         return true;
     }
 
@@ -103,13 +103,13 @@ class feedback_comments extends feedback_plugin {
 
         $feedback_comment = $this->get_feedback_comments($grade->id);
         if ($feedback_comment) {
-            $feedback_comment->commenttext = $data->feedbackcomments_editor['text'];
-            $feedback_comment->commentformat = $data->feedbackcomments_editor['format'];
+            $feedback_comment->commenttext = $data->assignfeedbackcomments_editor['text'];
+            $feedback_comment->commentformat = $data->assignfeedbackcomments_editor['format'];
             return $DB->update_record('assign_feedback_comments', $feedback_comment);
         } else {
             $feedback_comment = new stdClass();
-            $feedback_comment->commenttext = $data->feedbackcomments_editor['text'];
-            $feedback_comment->commentformat = $data->feedbackcomments_editor['format'];
+            $feedback_comment->commenttext = $data->assignfeedbackcomments_editor['text'];
+            $feedback_comment->commentformat = $data->assignfeedbackcomments_editor['format'];
             $feedback_comment->grade = $grade->id;
             $feedback_comment->assignment = $this->assignment->get_instance()->id;
             return $DB->insert_record('assign_feedback_comments', $feedback_comment) > 0;

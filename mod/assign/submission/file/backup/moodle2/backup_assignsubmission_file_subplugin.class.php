@@ -19,7 +19,7 @@
  * This file contains the class for backup of this submission plugin
  * 
  * @package   mod_assign
- * @subpackage submission_onlinetext
+ * @subpackage assignsubmission_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -27,37 +27,38 @@
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Provides the information to backup onlinetext submissions
+ * Provides the information to backup submission files
  *
  * This just adds its filearea to the annotations
- * and records the submissiontext and format
+ * and records the number of files
  *
  * @package   mod_assign
- * @subpackage submission_onlinetext
+ * @subpackage assignsubmission_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class backup_submission_onlinetext_subplugin extends backup_subplugin {
+class backup_assignsubmission_file_subplugin extends backup_subplugin {
 
     /**
      * 
      * Returns the subplugin information to attach to submission element
+     * 
      */
     protected function define_submission_subplugin_structure() {
 
         // create XML elements
         $subplugin = $this->get_subplugin_element(); // virtual optigroup element
         $subplugin_wrapper = new backup_nested_element($this->get_recommended_name());
-        $subplugin_element = new backup_nested_element('submission_onlinetext', null, array('onlinetext', 'onlineformat', 'submission'));
+        $subplugin_element = new backup_nested_element('submission_file', null, array('numfiles', 'submission'));
 
         // connect XML elements into the tree
         $subplugin->add_child($subplugin_wrapper);
         $subplugin_wrapper->add_child($subplugin_element);
 
         // set source to populate the data
-        $subplugin_element->set_source_table('assign_submission_onlinetext', array('submission' => backup::VAR_PARENTID));
+        $subplugin_element->set_source_table('assign_submission_file', array('submission' => backup::VAR_PARENTID));
 
-        $subplugin_element->annotate_files('mod_assign', 'submissions_onlinetext', 'submission');
+        $subplugin_element->annotate_files('mod_assign', 'submission_files', 'submission');// The parent is the submission
         return $subplugin;
     }
 }

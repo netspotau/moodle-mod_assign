@@ -16,18 +16,12 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Strings for component 'feedback_file', language 'en'
+ * Strings for component 'assignfeedback_comments', language 'en'
  *
  * @package   mod_assign
- * @package   feedback_file
+ * @package   assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['allowfilefeedback'] = 'Enabled';
-$string['configmaxbytes'] = 'Maximum file size';
-$string['file'] = 'Feedback Files';
-$string['maxbytes'] = 'Maximum file size';
-$string['maxfiles'] = 'Maximum number of uploaded files';
-$string['maximumsize'] = 'Maximum file size';
-$string['pluginname'] = 'File Feedback';
+$string['pluginname'] = 'Feedback Comments';

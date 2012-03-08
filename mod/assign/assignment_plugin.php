@@ -135,7 +135,7 @@ abstract class assignment_plugin {
     /**
      * Should return the subtype of this plugin. 
      * 
-     * @return string - either 'submission' or 'feedback'
+     * @return string - either 'assignsubmission' or 'feedback'
      */
     public abstract function get_subtype();
     
