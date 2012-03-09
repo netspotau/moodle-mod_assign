@@ -29,10 +29,14 @@ defined('MOODLE_INTERNAL') || die();
 
 
 /**
- * Code run after the quiz module database tables have been created.
+ * Code run after the assignfeedback_file module database tables have been created.
+ * Moves the feedback file plugin down
+ * 
+ * @global stdClass $CFG
+ * @return bool
  */
 function xmldb_assignfeedback_file_install() {
-    global $CFG, $DB, $OUTPUT;
+    global $CFG;
 
     // do the install
 

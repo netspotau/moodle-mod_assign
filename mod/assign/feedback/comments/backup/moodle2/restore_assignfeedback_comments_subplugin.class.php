@@ -63,6 +63,7 @@ class restore_assignfeedback_comments_subplugin extends restore_subplugin {
 
     /**
      * Processes one feedback_comments element
+     * @param object data
      */
     public function process_assignfeedback_comments_grade($data) {
         global $DB;

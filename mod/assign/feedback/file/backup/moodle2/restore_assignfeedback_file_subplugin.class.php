@@ -60,6 +60,7 @@ class restore_assignfeedback_file_subplugin extends restore_subplugin {
 
     /**
      * Processes one feedback_file element
+     * @param object $data
      */
     public function process_assignfeedback_file_grade($data) {
         global $DB;

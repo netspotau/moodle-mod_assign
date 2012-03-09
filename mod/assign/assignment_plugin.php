@@ -214,11 +214,11 @@ abstract class assignment_plugin {
      * Get any additional fields for the submission/grading form for this assignment.
      * 
      * @param mixed submission|grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
-     * @param moodleform $mform - This is the form
+     * @param MoodleQuickForm $mform - This is the form
      * @param stdClass $data - This is the form data that can be modified for example by a filemanager element
      * @return boolean - true if we added anything to the form
      */
-    public function get_form_elements($submission_grade, moodleform $mform, stdClass $data) {
+    public function get_form_elements($submission_grade, MoodleQuickForm $mform, stdClass $data) {
         return false;
     }
 
@@ -386,7 +386,7 @@ abstract class assignment_plugin {
      * and version.
      * 
      * @param string $type The old assignment subtype
-     * @param string $version The old assignment version
+     * @param int $version The old assignment version
      * @return bool True if upgrade is possible
      */
     public function can_upgrade($type, $version) {

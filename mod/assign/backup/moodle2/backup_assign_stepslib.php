@@ -34,6 +34,10 @@ defined('MOODLE_INTERNAL') || die();
  */     
 class backup_assign_activity_structure_step extends backup_activity_structure_step {
  
+    /**
+     * Define the structure for the assign activity
+     * @return void
+     */
     protected function define_structure() {
  
         // To know if we are including userinfo

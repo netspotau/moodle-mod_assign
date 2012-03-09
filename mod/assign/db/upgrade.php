@@ -24,7 +24,7 @@
 
 /**
  * upgrade this assignment instance - this function could be skipped but it will be needed later
- * @param string $oldversion The old version of the assign module
+ * @param int $oldversion The old version of the assign module
  * @return bool 
  */
 function xmldb_assign_upgrade($oldversion) {

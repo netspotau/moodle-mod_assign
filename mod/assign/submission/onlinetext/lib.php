@@ -44,9 +44,6 @@ define('ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT', 'submissions_onlinetext');
  */
 class assignment_submission_onlinetext extends assignment_submission_plugin {
     
-    /** @var object the assignment record that contains the global settings for this assign instance */
-    private $instance;
-       
     /**
      * get the name of the online text submission plugin
      * @return string 
@@ -59,7 +56,7 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
    /**
     * get onlinetext submission information from the database   
     * 
-    * @global object $DB
+    * @global moodle_database $DB
     * @param  int $submissionid
     * @return mixed 
     */
@@ -70,16 +67,14 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     }
     
     /**
-     * get submission form elements for settings
-     * @global object $USER
-     * @param object $submission
-     * @param object $data
-     * @return string 
+     * add form elements for settings
+     * 
+     * @param stdClass $submission
+     * @param MoodleQuickForm $mform
+     * @param stdClass $data
+     * @return true if elements were added to the form 
      */
-    public function get_form_elements($submission, $mform, $data) {
-        global $USER;
-        
-        
+    public function get_form_elements(stdClass $submission, MoodleQuickForm $mform, stdClass $data) {
         $elements = array();
 
         $editoroptions = $this->get_edit_options();
@@ -110,7 +105,7 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     /**
      * editor format options
      * 
-     * @return mixed
+     * @return array
      */
     private function get_edit_options() {
          $editoroptions = array(
@@ -124,15 +119,13 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
 
      /**
       * save data to the database
-      * @global object $USER
-      * @global object $DB
+      * @global moodle_database $DB
       * @param object $submission
       * @param object $data
-      * @return mixed 
+      * @return bool 
       */
-     public function save($submission, $data) {     
-       
-        global $USER, $DB;
+     public function save(stdClass $submission, stdClass $data) {     
+        global $DB;
 
         $editoroptions = $this->get_edit_options();
         
@@ -181,7 +174,7 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
      * get the content format for the editor 
      * @param string $name
      * @param int $submissionid
-     * @return bool
+     * @return int
      */
     public function get_editor_format($name, $submissionid) {
         if ($name == 'onlinetext') {
@@ -198,13 +191,10 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     
      /**
       * display onlinetext word count in the submission status table 
-      * @global object $OUTPUT
-      * @global object $USER
-      * @param object $submission
+      * @param stdClass $submission
       * @return string 
       */
-    public function view_summary($submission) {
-        global $OUTPUT,$USER;
+    public function view_summary(stdClass $submission) {
          
         $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
 
@@ -223,10 +213,10 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     /**
      * Produce a list of files suitable for export that represent this submission
      * 
-     * @param object $submission - For this is the submission data
+     * @param stdClass $submission - For this is the submission data
      * @return array - return an array of files indexed by filename
      */
-    public function get_files($submission) {
+    public function get_files(stdClass $submission) {
         $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
         if ($onlinetext_submission) {
             $submissioncontent = "<html><body>". format_text($onlinetext_submission->onlinetext, $onlinetext_submission->onlineformat, array('context'=>$this->assignment->get_context())). "</body></html>";      //fetched from database
@@ -239,10 +229,10 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
 
     /**
      * display the saved text content from the editor in the view table 
-     * @param object $submission
+     * @param stdClass $submission
      * @return string  
      */
-    public function view($submission) {
+    public function view(stdClass $submission) {
         $result = '';
         
         $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
@@ -262,6 +252,8 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
      * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type
      * and version.
      * 
+     * @param string old assignment subtype
+     * @param int old assignment version
      * @return bool True if upgrade is possible
      */
     public function can_upgrade($type, $version) {
@@ -272,16 +264,16 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     }
   
     
-     /**
+    /**
      * Upgrade the settings from the old assignment 
      * to the new plugin based one
      * 
-     * @param object $oldcontext - the database for the old assignment context
-     * @param object $oldassignment - the database for the old assignment instance
+     * @param context $oldcontext - the database for the old assignment context
+     * @param stdClass $oldassignment - the database for the old assignment instance
      * @param string log record log events here
      * @return bool Was it a success?
      */
-    public function upgrade_settings($oldcontext, $oldassignment, $log) {
+    public function upgrade_settings(context $oldcontext, stdClass $oldassignment, $log) {
         // first upgrade settings (nothing to do)
         return true;
     }
@@ -289,13 +281,15 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     /**
      * Upgrade the submission from the old assignment to the new one
      * 
-     * @param object $oldcontext - the database for the old assignment context
-     * @param object $oldassignment The data record for the old assignment
-     * @param object $oldsubmission The data record for the old submission
+     * @global moodle_database $DB
+     * @param context $oldcontext - the database for the old assignment context
+     * @param stdClass $oldassignment The data record for the old assignment
+     * @param stdClass $oldsubmission The data record for the old submission
+     * @param stdClass $submission The data record for the new submission
      * @param string $log Record upgrade messages in the log
      * @return bool true or false - false will trigger a rollback
      */
-    public function upgrade($oldcontext, $oldassignment, $oldsubmission, $submission, $log) {
+    public function upgrade(context $oldcontext, stdClass $oldassignment, stdClass $oldsubmission, stdClass $submission, $log) {
         global $DB;
         
        $comments_submission = new stdClass();
@@ -324,11 +318,11 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     
     /**
      * formatting for log info    
-     * @param object $submission_grade The new submission or grade
-     * 
+     *
+     * @param stdClass $submission The new submission 
      * @return string
      */
-    public function format_for_log($submission) {
+    public function format_for_log(stdClass $submission) {
         // format the info for each submission plugin add_to_log
         $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
         $onlinetext_log_info = '';

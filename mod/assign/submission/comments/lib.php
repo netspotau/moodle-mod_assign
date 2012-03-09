@@ -44,9 +44,6 @@
  */
 class assignment_submission_comments extends assignment_submission_plugin {
 
-    /** @var object the assignment record that contains the global settings for this assign instance */
-    private $instance;
-
    /**
     * get the name of the online comment submission plugin
     * @return string 
@@ -58,10 +55,10 @@ class assignment_submission_comments extends assignment_submission_plugin {
    /**
     * display AJAX based comment in the submission status table 
     * 
-    * @param object $submission
+    * @param stdClass $submission
     * @return string 
     */
-   public function view_summary($submission) {
+   public function view_summary(stdClass $submission) {
        
        // need to used this innit() otherwise it shows up undefined !
        // require js for commenting
@@ -87,6 +84,8 @@ class assignment_submission_comments extends assignment_submission_plugin {
      * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type
      * and version.
      * 
+     * @param string old assignment subtype
+     * @param int old assignment version
      * @return bool True if upgrade is possible
      */
     public function can_upgrade($type, $version) {
@@ -102,9 +101,10 @@ class assignment_submission_comments extends assignment_submission_plugin {
      * Upgrade the settings from the old assignment 
      * to the new plugin based one
      * 
-     * @param data - the database for the old assignment instance
-     * @param string log record log events here
-     * @return bool was it a success?
+     * @param context $oldcontext - the context for the old assignment
+     * @param stdClass $oldassignment - the data for the old assignment
+     * @param string log - can be appended to by the upgrade
+     * @return bool was it a success? (false will trigger a rollback)
      */
     public function upgrade_settings($oldcontext,$oldassignment, $log) {
         // first upgrade settings (nothing to do)
@@ -114,13 +114,13 @@ class assignment_submission_comments extends assignment_submission_plugin {
     /**
      * Upgrade the submission from the old assignment to the new one
      * 
-     * @param object $oldassignment The data record for the old oldassignment
-     * @param object $oldsubmission The data record for the old submission
+     * @param context $oldcontext The context for the old assignment
+     * @param stdClass $oldassignment The data record for the old assignment
+     * @param stdClass $oldsubmission The data record for the old submission
      * @param string $log Record upgrade messages in the log
      * @return bool true or false - false will trigger a rollback
      */
-    public function upgrade($oldcontext,$oldassignment, $oldsubmission, $submission, $log) {
-        global $DB;
+    public function upgrade(context $oldcontext, stdClass $oldassignment, stdClass $oldsubmission, stdClass $submission, $log) {
     
         if ($oldsubmission->data1 != '') {
          
@@ -151,6 +151,7 @@ class assignment_submission_comments extends assignment_submission_plugin {
     
     /**
      * Should the assignment module show a link to view the full submission or feedback for this plugin?
+     * Never do this.
      *
      * @return bool
      */
@@ -163,7 +164,6 @@ class assignment_submission_comments extends assignment_submission_plugin {
    
 }
 
-
 ////////////////////////////////////////////////////////////////////////
 // The call back functions OUTSIDE the submission_comments class     ///
 ///////////////////////////////////////////////////////////////////////
@@ -173,10 +173,10 @@ class assignment_submission_comments extends assignment_submission_plugin {
  * callback method for data validation---- required method 
  * for AJAXmoodle based comment API
  * 
- * @param object $options
+ * @param stdClass $options
  * @return bool
  */
-function assignsubmission_comments_comment_validate($options) {
+function assignsubmission_comments_comment_validate(stdClass $options) {
 
     return true;
 }
@@ -185,10 +185,10 @@ function assignsubmission_comments_comment_validate($options) {
  * permission control method for submission plugin ---- required method 
  * for AJAXmoodle based comment API
  * 
- * @param object $options
+ * @param stdClass $options
  * @return array
  */
-function assignsubmission_comments_comment_permissions($options) {
+function assignsubmission_comments_comment_permissions(stdClass $options) {
 
     return array('post' => true, 'view' => true);
 }
@@ -199,10 +199,11 @@ function assignsubmission_comments_comment_permissions($options) {
  * is required by the upgrade code. Note the comment area
  * is used to identify upgrades.
  * 
- * @global object $DB
- * @param object $comment
+ * @global moodle_database $DB
+ * @param stdClass $comment
+ * @param stdClass $param
  */
-function assignsubmission_comments_comment_add($comment, $param) {
+function assignsubmission_comments_comment_add(stdClass $comment, stdClass $param) {
     
     global $DB;
     if ($comment->commentarea == 'submission_comments_upgrade') {

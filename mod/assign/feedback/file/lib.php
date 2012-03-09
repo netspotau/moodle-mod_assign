@@ -46,10 +46,6 @@ define('ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES', 5);
  */
 class assignment_feedback_file extends assignment_feedback_plugin {
     
-    /** @var object the assignment record that contains the global settings for this assign instance */
-    private $instance;
-
-    
     /**
      * get the name of the file feedback plugin
      * @return string 
@@ -61,7 +57,7 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     /**
      * get file feedback information from the database  
      *  
-     * @global object $DB
+     * @global moodle_database $DB
      * @param int $gradeid
      * @return mixed 
      */
@@ -71,15 +67,15 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     }
     
     /**
-     * get the default setting for file feedback plugin
-     * @global object $CFG
-     * @global object $COURSE
-     * @global object $DB
-     * @param object $mform The form to add the settings to
+     * Add the settings to the assignment for this plugin
+     *
+     * @global stdClass $CFG
+     * @global stdClass $COURSE
+     * @param MoodleQuickForm $mform The form to add the settings to
      * @return void
      */
-    public function get_settings(&$mform) {
-        global $CFG, $COURSE, $DB;
+    public function get_settings(MoodleQuickForm $mform) {
+        global $CFG, $COURSE;
 
         $default_maxfiles = $this->get_config('maxfiles');
         $default_maxsizebytes = $this->get_config('maxsizebytes');
@@ -102,18 +98,18 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     
     /**
      * save the settings for file feedback plugin 
-     * @param object $mform
+     * @param stdClass $data
      * @return bool 
      */
-    public function save_settings($mform) {
-        $this->set_config('maxfiles', $mform->assignfeedback_file_maxfiles);
-        $this->set_config('maxsizebytes', $mform->assignfeedback_file_maxsizebytes);
+    public function save_settings($data) {
+        $this->set_config('maxfiles', $data->assignfeedback_file_maxfiles);
+        $this->set_config('maxsizebytes', $data->assignfeedback_file_maxsizebytes);
         return true;
     }
 
     /**
      * file format options 
-     * @return mixed
+     * @return array
      */
     private function get_file_options() {
         $fileoptions = array('subdirs'=>1,
@@ -125,10 +121,11 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     }
    
     /**
-     * get form elements for settings
+     * get form elements for grading form
      * 
-     * @param object $submission
-     * @param object $data
+     * @param stdClass $grade
+     * @param MoodleQuickForm $mform
+     * @param stdClass $data
      * @return mixed 
      */
     public function get_form_elements($grade, $mform, $data) {
@@ -158,7 +155,7 @@ class assignment_feedback_file extends assignment_feedback_plugin {
      * @param string $area
      * @return int 
      */
-    private function count_files($gradeid = 0, $area = ASSIGN_FILEAREA_FEEDBACK_FILES) {
+    private function count_files($gradeid, $area) {
         global $USER;
 
         $fs = get_file_storage();
@@ -168,16 +165,16 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     }
 
     /**
-     * save the files
-     * @global object $USER
-     * @global object $DB
-     * @param object $grade
-     * @param object $data
-     * @return mixed 
+     * save the feedback files
+     * 
+     * @global moodle_database $DB
+     * @param stdClass $grade
+     * @param stdClass $data
+     * @return bool 
      */
-    public function save($grade, $data) {
+    public function save(stdClass $grade, stdClass $data) {
 
-        global $USER, $DB;
+        global $DB;
 
         $fileoptions = $this->get_file_options();
         
@@ -187,11 +184,11 @@ class assignment_feedback_file extends assignment_feedback_plugin {
         
         $file_feedback = $this->get_file_feedback($grade->id);
         if ($file_feedback) {
-            $file_feedback->numfiles = $this->count_files($grade->id);
+            $file_feedback->numfiles = $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES);
             return $DB->update_record('assign_feedback_file', $file_feedback);
         } else {
             $file_feedback = new stdClass();
-            $file_feedback->numfiles = $this->count_files($grade->id);
+            $file_feedback->numfiles = $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES);
             $file_feedback->grade = $grade->id;
             $file_feedback->assignment = $this->assignment->get_instance()->id;
             return $DB->insert_record('assign_feedback_file', $file_feedback) > 0;
@@ -200,11 +197,12 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     
     /**
      * display the list of files  in the feedback status table 
-     * @param object $feedback
+     *
+     * @param stdClass $grade
      * @return string
      */
-    public function view_summary($grade) {
-        $count = $this->count_files($grade->id);
+    public function view_summary(stdClass $grade) {
+        $count = $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES);
         if ($count <= ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES) {
             return $this->assignment->render_area_files(ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id);
         } else {
@@ -215,19 +213,20 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     /**
      * Should the assignment module show a link to view the full submission or feedback for this plugin?
      *
+     * @param stdClass $grade
      * @return bool
      */
-    public function show_view_link($grade) {
-        $count = $this->count_files($grade->id);
+    public function show_view_link(stdClass $grade) {
+        $count = $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES);
         return $count > ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES;
     }
     
     /**
      * display the list of files  in the feedback status table 
-     * @param object $grade
+     * @param stdClass $grade
      * @return string 
      */
-    public function view($grade) {
+    public function view(stdClass $grade) {
         return $this->assignment->render_area_files(ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id);
     }
     

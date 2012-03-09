@@ -28,12 +28,16 @@ defined('MOODLE_INTERNAL') || die();
 
 
 /**
- * Code run after the quiz module database tables have been created.
+ * Code run after the feedback comments module database tables have been created.
  *
  * @package   mod_assign
  * @subpackage   assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+/**
+ * Set the initial order for the feedback comments plugin (top)
  */
 function xmldb_assignfeedback_comments_install() {
     global $CFG, $DB, $OUTPUT;

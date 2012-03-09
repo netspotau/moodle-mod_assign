@@ -59,6 +59,9 @@ class restore_assignsubmission_file_subplugin extends restore_subplugin {
 
     /**
      * Processes one submission_file element
+     * @global moodle_database $DB
+     * @param object $data
+     * @return void
      */
     public function process_assignsubmission_file_submission($data) {
         global $DB;

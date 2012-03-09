@@ -23,11 +23,13 @@
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+/**
+ * stub for upgrade code
+ * @param int $oldversion
+ * @return bool
+ */
 function xmldb_feedback_comments_upgrade($oldversion) {
-    global $CFG, $DB, $OUTPUT;
-
-    $dbman = $DB->get_manager();
-
     // do the upgrades
     return true;
 }

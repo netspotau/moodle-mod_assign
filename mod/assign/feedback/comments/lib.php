@@ -53,9 +53,9 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
     /**
      * get the feedback comment from the database
      *  
-     * @global object $DB
+     * @global moodle_database $DB
      * @param int $gradeid
-     * @return mixed 
+     * @return stdClass or false 
      */
     private function get_feedback_comments($gradeid) {
         global $DB;
@@ -63,13 +63,14 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
     }
     
     /**
-     * get form elements
+     * get form elements for the grading page
      * 
-     * @param object $grade
-     * @param object $data
-     * @return string 
+     * @param stdClass $grade
+     * @param MoodleQuickForm $mform
+     * @param stdClass $data
+     * @return bool (true if elements were added to the form) 
      */
-    public function get_form_elements($grade, $mform, $data) {
+    public function get_form_elements(stdClass $grade, MoodleQuickForm $mform, stdClass $data) {
         $elements = array();
 
        
@@ -90,15 +91,13 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
     /**
      * saving the comment content into dtabase 
      * 
-     * @global object $USER
-     * @global object $DB
-     * @param object $grade
-     * @param object $data
-     * @return mixed
+     * @global moodle_database $DB
+     * @param stdClass $grade
+     * @param stdClass $data
+     * @return bool
      */
-    public function save($grade, $data) {
-
-        global $USER, $DB;
+    public function save(stdClass $grade, stdClass $data) {
+        global $DB;
 
 
         $feedback_comment = $this->get_feedback_comments($grade->id);
@@ -119,10 +118,10 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
     /**
      * display the comment in the feedback table
      *  
-     * @param object $grade
+     * @param stdClass $grade
      * @return string 
      */
-    public function view_summary($grade) {
+    public function view_summary(stdClass $grade) {
         $feedback_comments = $this->get_feedback_comments($grade->id);
         if ($feedback_comments) {
             $text = format_text($feedback_comments->commenttext, $feedback_comments->commentformat);
@@ -134,9 +133,10 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
     /**
      * Should the assignment module show a link to view the full submission or feedback for this plugin?
      *
+     * @param stdClass $grade
      * @return bool
      */
-    public function show_view_link($grade) {
+    public function show_view_link(stdClass $grade) {
         $feedback_comments = $this->get_feedback_comments($grade->id);
         if ($feedback_comments) {
             $text = format_text($feedback_comments->commenttext, $feedback_comments->commentformat);
@@ -148,10 +148,10 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
     /**
      * display the comment in the feedback table
      * 
-     * @param object $grade
+     * @param stdClass $grade
      * @return string
      */
-    public function view($grade) {
+    public function view(stdClass $grade) {
         $feedback_comments = $this->get_feedback_comments($grade->id);
         if ($feedback_comments) {
             return format_text($feedback_comments->commenttext, $feedback_comments->commentformat);
@@ -166,10 +166,10 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
      * Only one feedback plugin can push comments to the gradebook and that is chosen by the assignment
      * settings page.
      *
-     * @param object $grade The grade
+     * @param stdClass $grade The grade
      * @return int
      */
-    public function format_for_gradebook($grade) {
+    public function format_for_gradebook(stdClass $grade) {
         $feedback_comments = $this->get_feedback_comments($grade->id);
         if ($feedback_comments) {
             return $feedback_comments->commentformat;
@@ -184,7 +184,7 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
      * Only one feedback plugin can push comments to the gradebook and that is chosen by the assignment
      * settings page.
      *
-     * @param object $grade The grade
+     * @param stdClass $grade The grade
      * @return string
      */
     public function text_for_gradebook($grade) {

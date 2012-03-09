@@ -62,10 +62,10 @@ abstract class assignment_feedback_plugin extends assignment_plugin {
      * Only one feedback plugin can push comments to the gradebook and that is chosen by the assignment
      * settings page.
      *
-     * @param object $grade The grade
+     * @param stdClass $grade The grade
      * @return int
      */
-    public function format_for_gradebook($grade) {
+    public function format_for_gradebook(stdClass $grade) {
         return FORMAT_MOODLE;
     }
     
@@ -76,10 +76,10 @@ abstract class assignment_feedback_plugin extends assignment_plugin {
      * Only one feedback plugin can push comments to the gradebook and that is chosen by the assignment
      * settings page.
      *
-     * @param object $grade The grade
+     * @param stdClass $grade The grade
      * @return string
      */
-    public function text_for_gradebook($grade) {
+    public function text_for_gradebook(stdClass $grade) {
         return '';
     }
     

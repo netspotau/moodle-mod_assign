@@ -93,12 +93,9 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
      * to it. Otherwise, the caller must provide either fileid (to export single file) or
      * submissionid and filearea (to export all data attached to the given submission file area) via callback arguments.
      * 
-     * @throws    
-     * @global object $DB
-     * @global object $CFG 
+     * @throws     portfolio_caller_exception
      */
     public function load_data() {
-        global $DB, $CFG;
         
         $context = context_module::instance($this->cmid);
 
@@ -120,13 +117,10 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
     /**
      * prepares the package up before control is passed to the portfolio plugin. 
      * 
-     * @throws
-     * @global object $CFG
-     * @global object $DB
+     * @throws portfolio_caller_exception
      * @return mixed
      */
     public function prepare_package() {
-        global $CFG, $DB;
         
         if ($this->plugin && $this->editor) {
             $options = portfolio_format_text_options();
@@ -204,15 +198,17 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
     
     /**
      * fetch the plugin by its type 
+     * @global stdClass $CFG
      * 
-     * @return object
+     * @return assignment_submission_plugin
      */
     private function get_submission_plugin() {
+        global $CFG;
         if (!$this->plugin || !$this->cmid) {
             return null;
         }
         
-        require_once('locallib.php');
+        require_once($CFG->dirroot . '/mod/assign/locallib.php');
            
         $context = context_module::instance($this->cmid);
 
@@ -225,7 +221,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
      * calculate a sha1 has of either a single file or a list
      * of files based on the data set by load_data
      * 
-     * @return mixed
+     * @return string
      */
     public function get_sha1() {
        
@@ -258,7 +254,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
     /**
      * checking the permissions 
      * 
-     * @return mixed
+     * @return bool
      */
     public function check_permissions() {
         $context = context_module::instance($this->cmid);
@@ -275,7 +271,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
     }
     
     /**
-     *  return array of formats suported by this portfolio call back 
+     * return array of formats supported by this portfolio call back 
      * @return array
      */
     public static function base_supported_formats() {

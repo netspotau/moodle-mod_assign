@@ -36,7 +36,7 @@ class restore_assign_activity_structure_step extends restore_activity_structure_
  
     /**
      * Define the structure of the restore workflow
-     * @return $structure
+     * @return restore_path_element $structure
      */
     protected function define_structure() {
  
@@ -62,7 +62,7 @@ class restore_assign_activity_structure_step extends restore_activity_structure_
     /**
      * Process an assign restore
      * @param object $data The data in object form
-     * @return None
+     * @return void
      */
     protected function process_assign($data) {
         global $DB;
@@ -84,7 +84,7 @@ class restore_assign_activity_structure_step extends restore_activity_structure_
     /**
      * Process a submission restore
      * @param object $data The data in object form
-     * @return None
+     * @return void
      */
     protected function process_assign_submission($data) {
         global $DB;
@@ -108,7 +108,7 @@ class restore_assign_activity_structure_step extends restore_activity_structure_
     /**
      * Process a grade restore
      * @param object $data The data in object form
-     * @return None
+     * @return void
      */
     protected function process_assign_grade($data) {
         global $DB;
@@ -133,7 +133,7 @@ class restore_assign_activity_structure_step extends restore_activity_structure_
     /**
      * Process a plugin-config restore
      * @param object $data The data in object form
-     * @return None
+     * @return void
      */
     protected function process_assign_plugin_config($data) {
         global $DB;
@@ -149,7 +149,7 @@ class restore_assign_activity_structure_step extends restore_activity_structure_
 
     /**
      * Once the database tables have been fully restored, restore the files
-     * @return None
+     * @return void
      */
     protected function after_execute() {
         $this->add_related_files('mod_assign', 'intro', null);

@@ -491,12 +491,12 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o .= $this->output->box_end();
     
         // links
-        if ($status->get_show_edit()) {
+        if ($status->can_edit()) {
             $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
                 array('id' => $status->get_assignment()->get_course_module()->id, 'action' => 'editsubmission')), get_string('editsubmission', 'assign'), 'get');
         }
 
-        if ($status->get_submission() && $status->get_submission()->status == ASSIGN_SUBMISSION_STATUS_DRAFT) {
+        if ($status->can_submit()) {
             // submission.php test
             $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
                     array('id' => $status->get_assignment()->get_course_module()->id, 'action'=>'submit')), get_string('submitassignment', 'assign'), 'get');

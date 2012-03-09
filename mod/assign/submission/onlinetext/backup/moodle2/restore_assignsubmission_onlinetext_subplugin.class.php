@@ -63,7 +63,7 @@ class restore_assignsubmission_onlinetext_subplugin extends restore_subplugin {
     /**
      * Processes one assignsubmission_onlinetext element
      * 
-     * @global object $DB
+     * @global moodle_database $DB
      * @param object $data 
      */
     public function process_assignsubmission_onlinetext_submission($data) {

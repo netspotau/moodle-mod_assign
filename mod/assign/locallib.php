@@ -1492,7 +1492,7 @@ class assignment {
         $grade = $this->get_grade($userid, 0, false);
         if ($this->can_view_submission($userid)) {
             $grade_locked = ($grade && $grade->locked) || $this->grading_disabled($userid);
-            echo $this->output->render(new submission_status($this, $submission, $grade_locked, $this->is_graded($userid), submission_status::GRADER_VIEW));
+            echo $this->output->render(new submission_status($this, $submission, $grade_locked, $this->is_graded($userid), submission_status::GRADER_VIEW, false, false));
         }
         if ($grade) {
             $data = new stdClass();
@@ -2511,8 +2511,8 @@ class assignment {
 
         $rownum = required_param('rownum', PARAM_INT);
         $userid = $this->get_userid_for_row($rownum);
-
-        $mform = new mod_assign_grade_form(null, array($this, null, array('rownum'=>$rownum, 'last'=>false)));
+        $data = new stdClass();
+        $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum, 'last'=>false)));
 
         
         if ($formdata = $mform->get_data()) {

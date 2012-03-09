@@ -29,9 +29,12 @@ defined('MOODLE_INTERNAL') || die();
 
 /**
  * Code run after the module database tables have been created.
+ * Moves the comments plugin to the bottom 
+ * @global stdClass $CFG
+ * @return bool
  */
 function xmldb_assignsubmission_comments_install() {
-    global $CFG, $DB, $OUTPUT;
+    global $CFG;
 
     // do the install
 
