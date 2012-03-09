@@ -64,12 +64,12 @@ function assign_delete_instance($id) {
  * @param mod_assign_mod_form $form_data
  * @return object
  */
-function assign_update_instance(mod_assign_mod_form $form_data) {
+function assign_update_instance(stdClass $data, mod_assign_mod_form $form) {
     global $CFG;
     require_once($CFG->dirroot . '/mod/assign/locallib.php');
-    $context = context_module::instance($form_data->coursemodule);
+    $context = context_module::instance($data->coursemodule);
     $assignment = new assignment($context);
-    return $ass->update_instance($form_data);
+    return $assignment->update_instance($data);
 }
 
 /**
