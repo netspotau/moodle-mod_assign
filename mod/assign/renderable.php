@@ -66,21 +66,21 @@ class users_submissions_table implements renderable {
  * Implements a renderable edit submission form
  */
 class edit_submission_form implements renderable {
-    /** @var mod_assign_submission_form $form is the edit submission form */
+    /** @var moodleform $form is the edit submission form */
     protected $form = null;
     
     /*
      * Constructor
-     * @param mod_assign_submission_form $form
+     * @param moodleform $form
      */
-    public function __construct(mod_assign_submission_form $form) {
+    public function __construct(moodleform $form) {
         $this->set_form($form);
     }
     
     /**
      * Returns form
      *
-     * @return mod_assign_submission_form $form
+     * @return moodleform $form
      */
     public function get_form() {
         return $this->form;
@@ -89,10 +89,10 @@ class edit_submission_form implements renderable {
     /**
      * Set the form
      *
-     * @param mod_assign_submission_form $form
+     * @param moodleform $form
      * @return void
      */
-    public function set_form(mod_assign_submission_form $form) {
+    public function set_form(moodleform $form) {
         if (!$form) {
             throw new coding_exception('Form may not be null');
         }
@@ -104,14 +104,14 @@ class edit_submission_form implements renderable {
  * Implements a renderable grading form
  */
 class grading_form implements renderable {
-    /** @var mod_assign_grade_form $form */
+    /** @var moodleform $form */
     protected $form = null;
     
     /**
-     * A grading form is a mod_assign_grade_form setup to grade a user submission
-     * @param mod_assign_grade_form $form
+     * A grading form is a moodleform setup to grade a user submission
+     * @param moodleform $form
      */
-    public function __construct(mod_assign_grade_form $form) {
+    public function __construct(moodleform $form) {
         $this->set_form($form);
     }
     
@@ -119,7 +119,7 @@ class grading_form implements renderable {
     /**
      * Returns form
      *
-     * @return mod_assign_grade_form
+     * @return moodleform
      */
     public function get_form() {
         return $this->form;
@@ -128,10 +128,10 @@ class grading_form implements renderable {
     /**
      * Set the form
      *
-     * @param mod_assign_grade_form $form
+     * @param moodleform $form
      * @return void
      */
-    public function set_form(mod_assign_grade_form $form) {
+    public function set_form(moodleform $form) {
         $this->form = $form;
     }
     

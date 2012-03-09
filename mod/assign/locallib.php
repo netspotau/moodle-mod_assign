@@ -837,7 +837,7 @@ class assignment {
         if (!$this->context) {
             return null;
         }
-        $this->course = $DB->get_record('course', array('id' => get_courseid_from_context($this->context)), '*', MUST_EXIST);
+        $this->course = $DB->get_record('course', array('id' => $this->get_course_context()->instanceid), '*', MUST_EXIST);
         return $this->course;
     }
     
