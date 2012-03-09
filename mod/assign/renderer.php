@@ -206,7 +206,7 @@ class mod_assign_renderer extends plugin_renderer_base {
 
         // status
         $this->add_table_row_tuple($t, get_string('numberofparticipants', 'assign'), 
-                                   $summary->get_assignment()->count_enrolled_users_with_capability('mod/assign:submit'));
+                                   $summary->get_assignment()->count_participants(0));
 
         // drafts
         if ($summary->get_assignment()->get_instance()->submissiondrafts) {

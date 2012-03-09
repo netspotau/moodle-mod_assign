@@ -70,7 +70,7 @@ class grading_table extends table_sql implements renderable {
 
         $currentgroup = groups_get_activity_group($assignment->get_course_module(), true);
 
-        $users = array_keys( $assignment->list_enrolled_users_with_capability('mod/assign:submit',$currentgroup));
+        $users = array_keys( $assignment->list_participants($currentgroup));
         
         $fields = user_picture::fields('u') . ', u.id as userid, u.firstname as firstname, u.lastname as lastname, ';
         $fields .= 's.status as status, s.id as submissionid, s.timecreated as firstsubmission, s.timemodified as timesubmitted, ';

@@ -878,27 +878,24 @@ class assignment {
     }
            
     /**
-     * Load a list of users enrolled in the current course with the specified permission and group (optional)
+     * Load a list of users enrolled in the current course with the specified permission and group (0 for no group)
      * 
-     * @param string $permission
      * @param int $currentgroup
      * @return array List of user records 
      */
-    public function list_enrolled_users_with_capability($permission,$currentgroup) {
-        $users = get_enrolled_users($this->context, $permission, $currentgroup);
-        return $users;
+    public function list_participants($currentgroup) {
+        return get_enrolled_users($this->context, "mod/assign:submit", $currentgroup);
     }
 
     /**
-     * Load a count of users enrolled in the current course with the specified permission and group (optional)
+     * Load a count of users enrolled in the current course with the specified permission and group (0 for no group)
      * 
      * @param string $permission
      * @param int $currentgroup
      * @return int number of matching users
      */
-    public function count_enrolled_users_with_capability($permission,$currentgroup=0) {
-        $users = get_enrolled_users($this->context, $permission, $currentgroup, 'u.id');
-        return count($users);
+    public function count_participants($currentgroup) {
+        return count_enrolled_users($this->context, "mod/assign:submit", $currentgroup);
     }
 
     /**
