@@ -142,8 +142,7 @@ class assignment_plugin_manager {
 
         $result = array();
 
-        foreach ($names as $path) {
-            $name = basename($path);
+        foreach ($names as $name => $path) {
             $idx = get_config($this->subtype . '_' . $name, 'sortorder');
             if (!$idx) {
                 $idx = 0;

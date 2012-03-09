@@ -42,7 +42,6 @@ define('ASSIGN_FILTER_REQUIRE_GRADING', 'require_grading');
 /**
  * File areas for the assignment
  */
-define('ASSIGN_PLUGIN_CLASS_FILE', 'lib.php');
 
 /**
  * File areas for assignment portfolio if enabled
@@ -257,11 +256,9 @@ class assignment {
 
         $names = get_plugin_list($subtype);
 
-        foreach ($names as $name) {
-            if (file_exists($name . '/' . ASSIGN_PLUGIN_CLASS_FILE)) {
-                require_once($name . '/' . ASSIGN_PLUGIN_CLASS_FILE);
-
-                $name = basename($name);
+        foreach ($names as $name => $path) {
+            if (file_exists($path . '/lib.php')) {
+                require_once($path . '/lib.php');
 
                 $shortsubtype = substr($subtype, strlen('assign'));
                 $plugin_class = 'assignment_' . $shortsubtype . '_' . $name;
@@ -434,6 +431,8 @@ class assignment {
     public function delete_instance() {
         global $DB;
         $result = true;
+
+        // TODO - should call delete on each of the plugins
         
         // delete files associated with this assignment
         $fs = get_file_storage();
@@ -453,11 +452,6 @@ class assignment {
             $result = false;
         }
 
-        // update all the calendar events 
-        if (! $DB->delete_records('event', array('modulename'=>'assign', 'instance'=>$this->get_instance()->id))) {
-            $result = false;
-        }
-
         // delete items from the gradebook
         if (! $this->delete_grades()) {
             $result = false;
@@ -468,8 +462,6 @@ class assignment {
             $result = false;
         }
         
-        rebuild_course_cache($this->get_instance()->course);
-
         return $result;
     }
 
@@ -1858,13 +1850,12 @@ class assignment {
     /**
      * render the files in file area  
      * @global stdClass $USER
-     * @global moodle_page $PAGE
      * @param string $area
      * @param int $submissionid
      * @return string 
      */
     public function render_area_files($area, $submissionid) {
-        global $USER, $PAGE;
+        global $USER;
 
         if (!$submissionid) {
             $submission = $this->get_submission($USER->id,0, false);
@@ -1876,8 +1867,7 @@ class assignment {
         $fs = get_file_storage();
         $browser = get_file_browser();
         $files = $fs->get_area_files($this->get_context()->id, 'mod_assign', $area , $submissionid , "timemodified", false);              
-        $renderer = $PAGE->get_renderer('mod_assign');
-        return $renderer->assign_files($this->context, $submissionid, $area);
+        return $this->output->assign_files($this->context, $submissionid, $area);
         
     }
 
