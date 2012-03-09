@@ -883,8 +883,12 @@ class assignment {
      * @param int $currentgroup
      * @return array List of user records 
      */
-    public function list_participants($currentgroup) {
-        return get_enrolled_users($this->context, "mod/assign:submit", $currentgroup);
+    public function list_participants($currentgroup, $idsonly) {
+        if ($idsonly) { 
+            return get_enrolled_users($this->context, "mod/assign:submit", $currentgroup, 'u.id');
+        } else {
+            return get_enrolled_users($this->context, "mod/assign:submit", $currentgroup);
+        }
     }
 
     /**
