@@ -78,7 +78,7 @@ class assignment_upgrade_manager {
         $data->submissiondrafts = $oldassignment->resubmit;
         $data->preventlatesubmissions = $oldassignment->preventlate;
 
-        $newassignment = new assignment();
+        $newassignment = new assignment(null, null, null);
         
         if (!$newassignment->add_instance($data, false)) {
             $log = get_string('couldnotcreatenewassignmentinstance', 'mod_assign');
@@ -206,13 +206,13 @@ class assignment_upgrade_manager {
      * Create a duplicate course module record so we can create the upgraded
      * assign module alongside the old assignment module.
      * 
-     * @global object $CFG
-     * @global object $DB
-     * @param object $cm The old course module record
+     * @global stdClass $CFG
+     * @global moodle_database $DB
+     * @param stdClass $cm The old course module record
      * @param int $moduleid The id of the new assign module
-     * @return object $newcm The new course module record or FALSE
+     * @return mixed stdClass|bool The new course module record or FALSE
      */
-    private function duplicate_course_module($cm, $moduleid, $newinstanceid) {
+    private function duplicate_course_module(stdClass $cm, $moduleid, $newinstanceid) {
         global $DB, $CFG;
 
         $newcm = new stdClass();
@@ -265,10 +265,10 @@ class assignment_upgrade_manager {
      * This function deletes the old assignment course module after
      * it has been upgraded. This code is adapted from "course/mod.php".
      * 
-     * @global object $CFG
-     * @global object $USER
-     * @global object $DB
-     * @param object $cm The course module to delete.
+     * @global stdClass $CFG
+     * @global stdClass $USER
+     * @global moodle_database $DB
+     * @param stdClass $cm The course module to delete.
      * @return bool
      */
     private function delete_course_module($cm) {
@@ -322,7 +322,8 @@ class assignment_upgrade_manager {
      * This function copies the grades from the old assignment module to this one.
      *
      * @global object CFG
-     * @param object $oldassignment old assignment data record
+     * @param stdClass $oldassignment old assignment data record
+     * @param assignment $newassignment the new assignment class
      * @return bool true or false
      */
     public function copy_grades_for_upgrade($oldassignment, $newassignment) {

@@ -45,12 +45,12 @@ class mod_assign_renderer extends plugin_renderer_base {
     /**
      * rendering assignment files 
      * 
-     * @param object $context
+     * @param context $context
      * @param int $userid
      * @param string $filearea
      * @return string
      */
-    public function assign_files($context, $userid, $filearea='submission') {
+    public function assign_files(context $context, $userid, $filearea) {
         return $this->render(new assign_files($context, $userid, $filearea));
     }
 
@@ -58,7 +58,7 @@ class mod_assign_renderer extends plugin_renderer_base {
      * rendering assignment files 
      * 
      * @param assign_files $tree
-     * @return mixed
+     * @return string
      */
     public function render_assign_files(assign_files $tree) {
         $module = array('name'=>'mod_assign_files', 'fullpath'=>'/mod/assign/assign.js', 'requires'=>array('yui2-treeview'));
@@ -78,12 +78,12 @@ class mod_assign_renderer extends plugin_renderer_base {
      * Utility function to add a row of data to a table with 2 columns. Modified
      * the table param and does not return a value
      * 
-     * @param object $t The table to append the row of data to
+     * @param html_table $table The table to append the row of data to
      * @param string $first The first column text
      * @param string $second The second column text
-     * @return None
+     * @return void
      */
-    private function add_table_row_tuple($table, $first, $second) {
+    private function add_table_row_tuple(html_table $table, $first, $second) {
         $row = new html_table_row();
         $cell1 = new html_table_cell($first);
         $cell2 = new html_table_cell($second);
@@ -93,8 +93,8 @@ class mod_assign_renderer extends plugin_renderer_base {
     
     /**
      * Render the grading form
-     * 
-     * @return None
+     * @param grading_form $form The grading form to render
+     * @return string
      */
     public function render_grading_form(grading_form $form) {
         $o = '';
@@ -108,7 +108,8 @@ class mod_assign_renderer extends plugin_renderer_base {
     /**
      * Render the user summary
      * 
-     * @return None
+     * @param user_summary $summary The user summary to render
+     * @return string
      */
     public function render_user_summary(user_summary $summary) {
         $o = '';
@@ -130,7 +131,7 @@ class mod_assign_renderer extends plugin_renderer_base {
     /**
      * Page is done - render the footer
      * 
-     * @return None
+     * @return void
      */
     public function render_footer() {
         return $this->output->footer();
@@ -252,11 +253,12 @@ class mod_assign_renderer extends plugin_renderer_base {
     /**
      *  Return a grade in user-friendly form, whether it's a scale or not
      *
-     * @global object $DB
-     * @param mixed $grade
+     * @global moodle_database $DB
+     * @param mixed $grade null|int
+     * @param assignment $assignment The assignment instance
      * @return string User-friendly representation of grade
      */
-    private function format_grade($grade, $assignment) {
+    private function format_grade($grade, assignment $assignment) {
         global $DB;
 
         static $scalegrades = array();
@@ -288,6 +290,8 @@ class mod_assign_renderer extends plugin_renderer_base {
     /**
      * render a table containing all the current grades and feedback
      * 
+     * @global moodle_database $DB
+     * @global stdClass $CFG
      * @param feedback_status $status
      * @return string
      */
@@ -620,12 +624,12 @@ class mod_assign_renderer extends plugin_renderer_base {
     /**
      * Internal function - creates htmls structure suitable for YUI tree.
      * 
-     * @global object $CFG
-     * @param object $tree
+     * @global stdClass $CFG
+     * @param assign_files $tree
      * @param array $dir
      * @return string 
      */
-    protected function htmllize_tree($tree, $dir) {
+    protected function htmllize_tree(assign_files $tree, $dir) {
         global $CFG;
         $yuiconfig = array();
         $yuiconfig['type'] = 'html';

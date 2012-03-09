@@ -89,22 +89,22 @@ require_once($CFG->libdir.'/eventslib.php');
 class assignment {
    
     
-    /** @var object the assignment record that contains the global settings for this assign instance */
+    /** @var stdClass the assignment record that contains the global settings for this assign instance */
     private $instance;
 
-    /** @var object the context of the course module for this assign instance (or just the course if we are 
+    /** @var context the context of the course module for this assign instance (or just the course if we are 
         creating a new one) */
     private $context;
 
-    /** @var object the course this assign instance belongs to */
+    /** @var stdClass the course this assign instance belongs to */
     private $course;
     
     /** @var assign_renderer the custom renderer for this module */
     private $output;
     
-    /** @var object the course module for this assign instance */
-    
+    /** @var stdClass the course module for this assign instance */
     private $coursemodule;
+
     /** @var array cache for things like the coursemodule name or the scale menu - only lives for a single 
         request */
     private $cache;
@@ -118,18 +118,17 @@ class assignment {
     /** @var string action to be used to return to this page (without repeating any form submissions etc.) */
     private $return_action = 'view';
     
-    /** @var string params to be used to return to this page */
+    /** @var array params to be used to return to this page */
     private $return_params = array();
     
     /**
      * Constructor for the base assign class
      *
-     * @param object $context the course module context (or the course context if the coursemodule has not been created yet)
-     * @param object $data the submitted form data
-     * @param object $coursemodule the current course module if it was already loaded - otherwise this class will load one from the context as required
-     * @param object $course the current course  if it was already loaded - otherwise this class will load one from the context as required
+     * @param mixed context|null $context the course module context (or the course context if the coursemodule has not been created yet)
+     * @param mixed stdClass|null $coursemodule the current course module if it was already loaded - otherwise this class will load one from the context as required
+     * @param mixed stdClass|null $course the current course  if it was already loaded - otherwise this class will load one from the context as required
      */
-    public function __construct($coursemodulecontext = null, $coursemodule = null, $course = null) {
+    public function __construct($coursemodulecontext, $coursemodule, $course) {
         global $PAGE;
         
         $this->context = $coursemodulecontext;
@@ -142,6 +141,13 @@ class assignment {
         $this->output = $PAGE->get_renderer('mod_assign');
     }
 
+    /**
+     * Set the action and parameters that can be used to return to the current page
+     *
+     * @param string $action The action for the current page
+     * @param array $params An array of name value pairs which form the parameters to return to the current page
+     * @return void
+     */
     public function register_return_link($action, $params) {
         $this->return_action = $action;
         $this->return_params = $params;
@@ -165,17 +171,17 @@ class assignment {
     
     /** 
      * Set the submitted form data
-     * @param array data The form data (instance)
+     * @param stdClass data The form data (instance)
      */
-    public function set_instance($data) {
+    public function set_instance(stdClass $data) {
         return $this->instance = $data;
     }
     
     /** 
      * Set the context
-     * @param object context The new context
+     * @param context context The new context
      */
-    public function set_context($context) {
+    public function set_context(context $context) {
         return $this->context = $context;
     }
     
@@ -207,7 +213,7 @@ class assignment {
     /**
      * get a specific submission plugin by its type
      * @param string $type
-     * @return object $plugin /null
+     * @return mixed assignment_plugin|null
      */
     private function get_plugin_by_type($subtype, $type) {
         $shortsubtype = substr($subtype, strlen('assign'));
@@ -224,7 +230,7 @@ class assignment {
     /**
      * Get a feedback plugin by type
      * @param string $type - The type of plugin e.g comments
-     * @return $plugin
+     * @return mixed assignment_feedback_plugin|null
      */
     public function get_feedback_plugin_by_type($type) {
         return $this->get_plugin_by_type('assignfeedback', $type);
@@ -233,7 +239,7 @@ class assignment {
     /**
      * Get a submission plugin by type
      * @param string $type - The type of plugin e.g comments
-     * @return $plugin
+     * @return mixed assignment_submission_plugin|null
      */
     public function get_submission_plugin_by_type($type) {
         return $this->get_plugin_by_type('assignsubmission', $type);
@@ -242,7 +248,7 @@ class assignment {
     /**
      * Load the plugins from the sub folders under subtype
      * @param string subtype - either submission or feedback
-     * @return array - The list of plugins
+     * @return array - The sorted list of plugins
      */
     private function load_plugins($subtype) {
         global $CFG;
@@ -279,6 +285,7 @@ class assignment {
      * The assignment is displayed differently depending on your role, 
      * the settings for the assignment and the status of the assignment.
      * @param string $action The current action if any.
+     * @return void
      */
     public function view($action='') {
 
@@ -353,7 +360,6 @@ class assignment {
      * when upgrading an old assignment to a new one (the plugins get called manually)
      * @return mixed false if an error occurs or the int id of the new instance
      */
-    // TODO - add_instance should take form as a parameter
     public function add_instance(stdClass $formdata, $callplugins) {
         global $DB;
 
@@ -386,16 +392,12 @@ class assignment {
             foreach ($this->submission_plugins as $plugin) {
                 if (!$this->update_plugin_instance($plugin, $formdata)) {
                     print_error($plugin->get_error());
-                    var_dump($plugin->get_error());
-                    die();
                     return false;
                 }
             }
             foreach ($this->feedback_plugins as $plugin) {
                 if (!$this->update_plugin_instance($plugin, $formdata)) {
                     print_error($plugin->get_error());
-                    var_dump($plugin->get_error());
-                    die();
                     return false;
                 }
             }
@@ -413,7 +415,7 @@ class assignment {
     /**
      * Delete all grades from the gradebook for this assignment
      *
-     * @global object CFG
+     * @global stdClass CFG
      * @return bool
      */
     private function delete_grades() {
@@ -425,7 +427,7 @@ class assignment {
     /**
      * Delete this instance from the database
      * 
-     * @global DB
+     * @global moodle_database DB
      * @return bool false if an error occurs
      */
     public function delete_instance() {
@@ -473,11 +475,12 @@ class assignment {
     /**
      * Update the settings for a single plugin
      * 
-     * @param object $plugin The plugin to update
      * @global DB
+     * @param assignment_plugin $plugin The plugin to update
+     * @param stdClass $formdata The form data
      * @return bool false if an error occurs
      */
-    private function update_plugin_instance($plugin, $formdata) {
+    private function update_plugin_instance(assignment_plugin $plugin, stdClass $formdata) {
         if ($plugin->is_visible()) {
             $enabled_name = $plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled';
             if ($formdata->$enabled_name) {
@@ -496,9 +499,10 @@ class assignment {
     /**
      * Update the gradebook information for this assignment
      * 
-     * @global object CFG
+     * @global stdClass $CFG
      * @param bool $reset If true, will reset all grades in the gradbook for this assignment
-     * @return bool;
+     * @param int coursemoduleid This is required because it might not exist in the database yet
+     * @return bool
      */
     public function update_gradebook($reset, $coursemoduleid) {
         global $CFG;
@@ -529,8 +533,8 @@ class assignment {
     /**
      * Update the calendar entries for this assignment
      *
-     * @global object $DB
-     * @global object $CFG
+     * @global moodle_database $DB
+     * @global stdClass $CFG
      * @param int coursemoduleid - Required to pass this in because it might not exist in the database yet
      * @return bool
      */
@@ -576,7 +580,8 @@ class assignment {
     /**
      * Update this instance in the database
      * 
-     * @global DB
+     * @global moodle_database DB
+     * @param stdClass formdata - the data submitted from the form
      * @return bool false if an error occurs
      */
     public function update_instance($formdata) {
@@ -632,11 +637,12 @@ class assignment {
     /**
      * add elements in grading plugin form 
      * 
-     * @param object $grade
-     * @param object $mform
-     * @param object $data 
+     * @param mixed stdClass|null $grade
+     * @param MoodleQuickForm $mform
+     * @param stdClass $data 
+     * @return void
      */
-    private function add_plugin_grade_elements($grade, $mform, $data) {
+    private function add_plugin_grade_elements($grade, MoodleQuickForm $mform, stdClass $data) {
         foreach ($this->feedback_plugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
                 $mform->addElement('header', 'header_' . $plugin->get_type(), $plugin->get_name());
@@ -652,11 +658,11 @@ class assignment {
     /**
      * Add one plugins settings to edit plugin form 
      *
-     * @param object $plugin The plugin to add the settings from
-     * @param object $mform The form to add the configuration settings to. This form is modified directly (not returned)
-     *  
+     * @param assignment_plugin $plugin The plugin to add the settings from
+     * @param MoodleQuickForm $mform The form to add the configuration settings to. This form is modified directly (not returned)
+     * @return void  
      */
-    private function add_plugin_settings($plugin, $mform) {
+    private function add_plugin_settings(assignment_plugin $plugin, MoodleQuickForm $mform) {
         if ($plugin->is_visible()) {
             // section heading
             $mform->addElement('header', 'general', $plugin->get_name());
@@ -678,10 +684,10 @@ class assignment {
     /**
      * Add settings to edit plugin form 
      *
-     * @param object $mform The form to add the configuration settings to. This form is modified directly (not returned)
-     *  
+     * @param MoodleQuickForm $mform The form to add the configuration settings to. This form is modified directly (not returned)
+     * @return void
      */
-    private function add_all_plugin_settings($mform) {
+    private function add_all_plugin_settings(MoodleQuickForm $mform) {
         foreach ($this->submission_plugins as $plugin) {
             $this->add_plugin_settings($plugin, $mform);
             
@@ -698,9 +704,10 @@ class assignment {
      * 
      * Activate plagiarism plugn if it is enabled 
      *
-     * @param object $mform The form to add the configuration settings to. This form is modified directly (not returned)
+     * @param MoodleQuickForm object $mform The form to add the configuration settings to. This form is modified directly (not returned)
+     * @return void
      */
-    public function add_settings($mform) {
+    public function add_settings(MoodleQuickForm $mform) {
         $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
         
         $mform->addElement('header', 'general', get_string('availability', 'assign'));
@@ -754,7 +761,8 @@ class assignment {
     /**
      * Get the settings for the current instance of this assignment
      *
-     * @return object The settings
+     * @global moodle_database $DB
+     * @return stdClass The settings
      */
     public function get_instance() {
         global $DB;
@@ -769,13 +777,12 @@ class assignment {
     
     /**
      * Get the context of the current course
-     * @uses die
-     * @return object The course context
+     * @return mixed context|null The course context
      */
     public function get_course_context() {
         if (!$this->context && !$this->course) {
             print_error('badcontext');
-            die();
+            return null;
         }
         if ($this->context && $this->context->contextlevel == CONTEXT_COURSE) {
             return $this->context;
@@ -790,7 +797,7 @@ class assignment {
     /**
      * Get the current course module
      *
-     * @return object The course module
+     * @return mixed stdClass|null The course module
      */
     public function get_course_module() {
         if ($this->coursemodule) {
@@ -810,7 +817,7 @@ class assignment {
     /**
      * Get context module
      * 
-     * @return object 
+     * @return context 
      */
     public function get_context() {
         return $this->context;
@@ -819,8 +826,8 @@ class assignment {
     /**
      * Get the current course
      * @uses die
-     * @global object
-     * @return object The course
+     * @global moodle_database $DB
+     * @return mixed stdClass|null The course
      */
     public function get_course() {
         global $DB;
@@ -829,8 +836,7 @@ class assignment {
         }
 
         if (!$this->context) {
-            print_error('badcontext');
-            die();
+            return null;
         }
         $this->course = $DB->get_record('course', array('id' => get_courseid_from_context($this->context)), '*', MUST_EXIST);
         return $this->course;
@@ -840,7 +846,7 @@ class assignment {
      *  Return a grade in user-friendly form, whether it's a scale or not
      *
      * @global object $DB
-     * @param mixed $grade
+     * @param mixed int|null $grade 
      * @return string User-friendly representation of grade
      */
     public function display_grade($grade) {
@@ -899,7 +905,7 @@ class assignment {
     /**
      * Load a count of users enrolled in the current course with the specified permission and group (optional)
      *
-     * @global object $DB
+     * @global moodle_database $DB
      * @param string $status The submission status - should match one of the constants 
      * @return int number of matching submissions
      */
@@ -931,8 +937,8 @@ class assignment {
     /**
      * Return all assignment submissions by ENROLLED students (even empty)
      *
-     * @global object $CFG;
-     * @global object $DB;
+     * @global stdClass $CFG;
+     * @global moodle_database $DB;
      * @param $sort string optional field names for the ORDER BY in the sql query
      * @param $dir string optional specifying the sort direction, defaults to DESC
      * @return array The submission objects indexed by id
@@ -959,7 +965,7 @@ class assignment {
     /**
      * Generate zip file from array of given files
      * 
-     * @global object $CFG
+     * @global stdClass $CFG
      * @param array $filesforzipping - array of files to pass into archive_to_pathname - this array is indexed by the final file name and each element in the array is an instance of a stored_file object
      * @return path of temp file - note this returned file does not have a .zip extension - it is a temp file.
      */
@@ -1091,8 +1097,12 @@ class assignment {
 
     /**
      *  Cron function to be run periodically according to the moodle cron
+     *  Finds all assignment notifications that have yet to be mailed out, and mails them
      *
-     * Finds all assignment notifications that have yet to be mailed out, and mails them
+     * @global stdClass $CFG
+     * @global stdClass $USER
+     * @global stdClass $DB
+     * @return bool
      */
     function cron() {
         global $CFG, $USER, $DB;
@@ -1124,8 +1134,8 @@ class assignment {
     /**
      * Update a grade in the grade table for the assignment and in the gradebook
      *
-     * @global object $DB
-     * @param object $grade a grade record keyed on id
+     * @global moodle_database $DB
+     * @param stdClass $grade a grade record keyed on id
      * @return bool true for success
      */
     private function update_grade($grade) {
@@ -1141,11 +1151,11 @@ class assignment {
     
     /**
      * display the submission that is used by a plugin  
-     * @global object $CFG
-     * @global object $USER
-     * @param int $submissionid
+     * Uses url parameters 'sid', 'gid' and 'plugin'
+     * @global stdClass $CFG
+     * @global stdClass $USER
      * @param string $plugintype 
-     * @return None
+     * @return void
      */
     private function view_plugin_content($pluginsubtype) {
         global $CFG, $USER;
@@ -1159,7 +1169,7 @@ class assignment {
                 print_error('invalidaccessparameter');
                 return;
             }
-            $item = $this->get_submission(null, $submissionid, false);
+            $item = $this->get_submission(0, $submissionid, false);
 
             // permissions
             if ($item->userid != $USER->id && !has_capability('mod/assign:grade', $this->context)) {
@@ -1196,7 +1206,7 @@ class assignment {
     /**
      * render the content in editor that is often used by plugin
      *  
-     * @global object $CFG
+     * @global stdClass $CFG
      * @param string $filearea
      * @param int  $submissionid
      * @param string $plugintype
@@ -1237,15 +1247,6 @@ class assignment {
             
 
     /**
-     * Display the assignment intro
-     *
-     * The prints the assignment description in a box
-     * @return None
-     */
-    private function view_intro() {
-    }
-    
-    /**
      * Display the page footer
      *
      * @return None
@@ -1257,7 +1258,7 @@ class assignment {
     /**
      * Does this user have grade permission for this assignment
      *
-     * @return None
+     * @return bool
      */
     private function can_grade() {
         // Permissions check 
@@ -1273,14 +1274,15 @@ class assignment {
      * View a redirect to the next submission grading page
      * 
      * @uses die
-     * @return None
+     * @return never returns
      */
     private function view_next_single_grade() {
         $rnum = required_param('rownum', PARAM_INT);
         $rnum +=1;
         $userid = $this->get_userid_for_row($rnum);
         if (!$userid) {
-             die();
+            print_error('outofbound exception array:rownumber&userid');
+            die();
         }
     
         redirect('view.php?id=' . $this->get_course_module()->id . '&rownum=' . $rnum . '&action=grade');
@@ -1290,9 +1292,9 @@ class assignment {
     /**
      * Download a zip file of all assignment submissions
      *
-     * @global object $CFG
-     * @global object $DB
-     * @return None
+     * @global stdClass $CFG
+     * @global moodle_database $DB
+     * @return void
      */
     private function download_submissions() {
         global $CFG,$DB;
@@ -1354,11 +1356,11 @@ class assignment {
     /**
      * Util function to add a message to the log
      *
-     * @global object $USER
+     * @global stdClass $USER
      * @param string $action The current action
      * @param string $info A detailed description of the change. But no more than 255 characters.
      * @param string $url The url to the assign module instance.
-     * @return None
+     * @return void
      */
     public function add_to_log($action = '', $info = '', $url='') {
         global $USER; 
@@ -1374,13 +1376,13 @@ class assignment {
     /**
      * Load the submission object for a particular user, optionally creating it if required
      *
-     * @global object $DB
-     * @global object $USER
+     * @global moodle_database $DB
+     * @global stdClass $USER
      * @param int $userid The id of the user whose submission we want or 0 in which case USER->id is used
      * @param bool $createnew optional Defaults to false. If set to true a new submission object will be created in the database
-     * @return object The submission
+     * @return stdClass The submission
      */
-    private function get_submission($userid = null,$submissionid =null, $create = false) {
+    private function get_submission($userid,$submissionid, $create) {
         global $DB, $USER;
 
         if (!$userid && !$submissionid) {
@@ -1420,13 +1422,13 @@ class assignment {
     /**
      * This will retrieve a grade object from the db, optionally creating it if required
      *
-     * @global object $DB
-     * @global object $USER
+     * @global moodle_database $DB
+     * @global stdClass $USER
      * @param int $userid The user we are grading
      * @param bool $create If true the grade will be created if it does not exist
-     * @return object The grade record
+     * @return stdClass The grade record
      */
-    private function get_grade($userid=0, $gradeid=0, $create = false) {
+    private function get_grade($userid, $gradeid, $create) {
         global $DB, $USER;
 
         if (!$userid && !$gradeid) {
@@ -1461,9 +1463,9 @@ class assignment {
     /**
      * Print the grading page for a single user submission
      *
-     * @global object $DB
+     * @global moodle_database $DB
      * @uses die
-     * @return None
+     * @return void
      */
     private function view_single_grade_page() {
         global $DB;
@@ -1478,15 +1480,16 @@ class assignment {
         $rownum = required_param('rownum', PARAM_INT);  
         $userid = $this->get_userid_for_row($rownum);
         if(!$userid){
-             die();
+            print_error('invalidaccessparameter');
+            die();
         }
         $user = $DB->get_record('user', array('id' => $userid));
         if ($user) {
             echo $this->output->render(new user_summary($user, $this));
         }
-        $submission = $this->get_submission($userid);
+        $submission = $this->get_submission($userid, 0, false);
         // get the current grade
-        $grade = $this->get_grade($userid);
+        $grade = $this->get_grade($userid, 0, false);
         if ($this->can_view_submission($userid)) {
             $grade_locked = ($grade && $grade->locked) || $this->grading_disabled($userid);
             echo $this->output->render(new submission_status($this, $submission, $grade_locked, $this->is_graded($userid), submission_status::GRADER_VIEW));
@@ -1515,7 +1518,7 @@ class assignment {
     /**
      * View a link to go back to the previous page. Uses url parameters returnaction and returnparams.
      *
-     * @return None
+     * @return void
      */
     private function view_return_links() {
         
@@ -1533,8 +1536,8 @@ class assignment {
     /**
      * View the grading table of all submissions for this assignment
      *
-     * @global object $USER
-     * @return None
+     * @global stdClass $USER
+     * @return void
      */
     private function view_grading_table() {
         global $USER;
@@ -1564,9 +1567,9 @@ class assignment {
     /**
      * View entire grading page.
      *
-     * @global object $CFG
-     * @global object $USER
-     * @return None
+     * @global stdClass $CFG
+     * @global stdClass $USER
+     * @return void
      */
     private function view_grading_page() {
         global $CFG;
@@ -1591,7 +1594,7 @@ class assignment {
     /**
      * View edit submissions page.
      * 
-     * @return None
+     * @return void
      */
     private function view_edit_submission_page() {
         // Always require view permission to do anything
@@ -1623,7 +1626,7 @@ class assignment {
      * @return bool
      */
     private function is_graded($userid) {
-        $grade = $this->get_grade($userid);
+        $grade = $this->get_grade($userid, 0, false);
         if ($grade) {
             return ($grade->grade != '');
         }
@@ -1636,6 +1639,7 @@ class assignment {
      *
      * @global object $USER
      * @param int userid
+     * @return bool
      */
     private function can_view_submission($userid) {
         global $USER;
@@ -1655,8 +1659,9 @@ class assignment {
     /**
      * View submissions page (contains details of current submission).
      *
-     * @global object $CFG
-     * @return None
+     * @global stdClass $CFG
+     * @global stdClass $USER
+     * @return void
      */
     private function view_submission_page() {
         global $CFG, $USER;
@@ -1672,7 +1677,7 @@ class assignment {
             echo $this->output->render(new grading_summary($this));
         }
         $grade = $this->get_grade($USER->id, 0, false);
-        $submission = $this->get_submission($USER->id);
+        $submission = $this->get_submission($USER->id, 0, false);
 
         if ($this->can_view_submission($USER->id)) {
             $show_edit = has_capability('mod/assign:submit', $this->context) &&
@@ -1693,10 +1698,10 @@ class assignment {
     /**
      * convert the final raw grade(s) in the  grading table for the gradebook 
      * 
-     * @param object $grade
-     * @return object $gradebook_grade 
+     * @param stdClass $grade
+     * @return array $gradebook_grade 
      */
-    private function convert_grade_for_gradebook($grade) {
+    private function convert_grade_for_gradebook(stdClass $grade) {
         $gradebook_grade = array();
         
         // trying to match those array keys in grade update function in gradelib.php
@@ -1714,39 +1719,34 @@ class assignment {
             $gradebook_grade['feedback'] = $grade->feedbacktext;
         }
        
-        // more TODO ?
         return $gradebook_grade;
     }
     
     /**
      * convert submission details for the gradebook  
      * 
-     * @param object $submission
-     * @return object $gradebook_grade
+     * @param stdClass $submission
+     * @return array $gradebook_grade
      */
-    private function convert_submission_for_gradebook($submission) {
+    private function convert_submission_for_gradebook(stdClass $submission) {
         $gradebook_grade = array();
         
         
         $gradebook_grade['userid'] = $submission->userid;
         $gradebook_grade['usermodified'] = $submission->userid;
         $gradebook_grade['datesubmitted'] = $submission->timemodified;
-        
        
-        // more TODO ?
         return $gradebook_grade;
     }
 
     /**
      * update grades in the gradebook
      * 
-     * @global object $CFG
-     * @param object $submission
-     * @param object $grade
-     * @return mixed 
+     * @param mixed stdClass|null $submission
+     * @param mixed stdClass|null $grade
+     * @return bool 
      */
     private function gradebook_item_update($submission=NULL, $grade=NULL) {
-        global $CFG;
 
         $params = array('itemname' => $this->get_instance()->name, 'idnumber' => $this->get_course_module()->id);
 
@@ -1777,12 +1777,12 @@ class assignment {
     /**
      * update grades in the gradebook based on submission time 
      * 
-     * @global object $DB
-     * @param object $submission
+     * @global moodle_database $DB
+     * @param stdClass $submission
      * @param bool $updatetime
-     * @return mixed 
+     * @return bool 
      */
-    private function update_submission($submission, $updatetime=true) {
+    private function update_submission(stdClass $submission, $updatetime=true) {
         global $DB;
 
         if ($updatetime) {
@@ -1803,7 +1803,7 @@ class assignment {
      * has this person already submitted, 
      * is the assignment locked?
      * 
-     * @global object $USER
+     * @global stdClass $USER
      * @return bool 
      */
     private function submissions_open() {
@@ -1825,13 +1825,13 @@ class assignment {
         if (!is_enrolled($this->get_course_context(), $USER)) {
             return false;
         }
-        if ($submission = $this->get_submission($USER->id)) {
+        if ($submission = $this->get_submission($USER->id, 0, false)) {
             if ($this->get_instance()->submissiondrafts && $submission->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
                 // drafts are tracked and the student has submitted the assignment
                 return false;
             }
         }
-        if ($grade = $this->get_grade($USER->id)) {
+        if ($grade = $this->get_grade($USER->id, 0, false)) {
             if ($grade->locked) {
                 return false;
             }
@@ -1846,17 +1846,17 @@ class assignment {
     
     /**
      * render the files in file area  
-     * @global object $USER
-     * @global object $PAGE
+     * @global stdClass $USER
+     * @global moodle_page $PAGE
      * @param string $area
      * @param int $submissionid
      * @return string 
      */
-    public function render_area_files($area, $submissionid = null) {
+    public function render_area_files($area, $submissionid) {
         global $USER, $PAGE;
 
         if (!$submissionid) {
-            $submission = $this->get_submission($USER->id,null, false);
+            $submission = $this->get_submission($USER->id,0, false);
             $submissionid = $submission->id;
         }
          
@@ -1873,10 +1873,10 @@ class assignment {
     /**
      * Returns a list of teachers that should be grading given submission
      *
-     * @param object $user
+     * @param stdClass $user
      * @return array
      */
-    private function get_graders($user) {
+    private function get_graders(stdClass $user) {
         //potential graders
         $potentialgraders = get_users_by_capability($this->context, 'mod/assign:grade', '', '', '', '', '', '', false, false);
 
@@ -1921,7 +1921,7 @@ class assignment {
     /**
      * Creates the text content for emails to grader
      * 
-     * @param $info object The info used by the 'emailgradermail' language string
+     * @param array $info The info used by the 'emailgradermail' language string
      * @return string
      */
     private function format_email_grader_text($info) {
@@ -1937,7 +1937,7 @@ class assignment {
      /**
      * Creates the html content for emails to graders
      *
-     * @param $info object The info used by the 'emailgradermailhtml' language string
+     * @param array $info The info used by the 'emailgradermailhtml' language string
      * @return string
      */
     private function format_email_grader_html($info) {
@@ -1955,12 +1955,12 @@ class assignment {
     /**
      * email graders upon student submissions 
      * 
-     * @global object $CFG
-     * @global object $DB
-     * @param object $submission
-     * @return mixed 
+     * @global stdClass $CFG
+     * @global moodle_database $DB
+     * @param stdClass $submission
+     * @return void 
      */
-    private function email_graders($submission) {
+    private function email_graders(stdClass $submission) {
         global $CFG, $DB;
 
         if (empty($this->get_instance()->sendnotifications)) {          // No need to do anything
@@ -2010,18 +2010,18 @@ class assignment {
     /**
      * assignment submission is processed before grading
      * 
-     * @global object $USER 
-     * @return None
+     * @global stdClass $USER 
+     * @return void
      */
     private function process_submit_assignment_for_grading() {
+        global $USER;
         
          // Always require view permission to do anything
         require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
         
-        global $USER;
-        $submission = $this->get_submission($USER->id,null, true);
+        $submission = $this->get_submission($USER->id,0, true);
         $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
 
         $this->update_submission($submission);
@@ -2032,8 +2032,8 @@ class assignment {
     /**
      * save grading options 
      * 
-     * @global object $USER
-     * @return None
+     * @global stdClass $USER
+     * @return void
      */
     private function process_save_grading_options() {
         global $USER;
@@ -2059,11 +2059,11 @@ class assignment {
     * The size limit for the log file is 255 characters, so be careful not
     * to include too much information.
     * 
-    * @global object $DB
-    * @param object $grade
+    * @global moodle_database $DB
+    * @param stdClass $grade
     * @return string 
     */
-    private function format_grade_for_log($grade) {
+    private function format_grade_for_log(stdClass $grade) {
         global $DB;
 
         $user = $DB->get_record('user', array('id' => $grade->userid), '*', MUST_EXIST);
@@ -2085,10 +2085,10 @@ class assignment {
      * The size limit for the log file is 255 characters, so be careful not
      * to include too much information.
      * 
-     * @param object $submission
+     * @param stdClass $submission
      * @return string 
      */
-    private function format_submission_for_log($submission) {
+    private function format_submission_for_log(stdClass $submission) {
         $info = '';
         $info .= get_string('submissionstatus', 'assign') . ': ' . get_string('submissionstatus_' . $submission->status, 'assign') . '. <br>';
         // format_for_log here iterating every single log INFO  from either submission or grade in every assignment plugin
@@ -2108,8 +2108,8 @@ class assignment {
     /**
      * save assignment submission
      * 
-     * @global object $USER
-     * @return mixed 
+     * @global stdClass $USER
+     * @return bool 
      */
     private function process_save_submission() {       
         global $USER;
@@ -2119,14 +2119,14 @@ class assignment {
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
       
-        $data = $this->get_default_submission_data();
+        $data = new stdClass();
         $mform = new mod_assign_submission_form(null, array($this, $data));
         if ($mform->is_cancelled()) {
             return false;
         }
         if ($data = $mform->get_data()) {               
-            $submission = $this->get_submission($USER->id, null, true); //create the submission if needed & its id              
-            $grade = $this->get_grade($USER->id); // get the grade to check if it is locked
+            $submission = $this->get_submission($USER->id, 0, true); //create the submission if needed & its id              
+            $grade = $this->get_grade($USER->id, 0, false); // get the grade to check if it is locked
             if ($grade && $grade->locked) {
                 print_error('submissionslocked', 'assign');
                 return true;
@@ -2156,7 +2156,7 @@ class assignment {
     /**
      * count the number of files in the file area
      * 
-     * @global object $USER
+     * @global stdClass $USER
      * @param int $userid
      * @param string $area
      * @return int  
@@ -2177,6 +2177,7 @@ class assignment {
     /**
      * Determine if this users grade is locked or overridden
      * 
+     * @global stdClass $CFG
      * @param int $userid - The student userid
      * @return bool $grading_disabled
      */
@@ -2200,9 +2201,11 @@ class assignment {
      * Get an instance of a grading form if advanced grading is enabled
      * This is specific to the assignment, marker and student
      * 
+     * @global stdClass $CFG
+     * @global stdClass $USER
      * @param int $userid - The student userid
-     * @param object $gradingdisabled
-     * @return object $gradinginstance
+     * @param bool $gradingdisabled
+     * @return mixed gradingform_instance|null $gradinginstance
      */
     private function get_grading_instance($userid, $gradingdisabled) {
         global $CFG, $USER;
@@ -2239,14 +2242,14 @@ class assignment {
     /**
      * add elements to grade form 
      * 
-     * @global object $USER
-     * @global object $CFG
-     * @param object $mform
-     * @param object $data
-     * @param mixed $params 
-     * @return None
+     * @global stdClass $USER
+     * @global stdClass $CFG
+     * @param MoodleQuickForm $mform
+     * @param stdClass $data
+     * @param array $params 
+     * @return void
      */
-    public function add_grade_form_elements($mform, $data, $params) {
+    public function add_grade_form_elements(MoodleQuickForm $mform, stdClass $data, $params) {
         global $USER, $CFG;
         $settings = $this->get_instance();
 
@@ -2305,7 +2308,7 @@ class assignment {
      * display the grade form
      * 
      * @uses die
-     * @return None
+     * @return void
      */
     private function view_grade_form() {
 
@@ -2317,11 +2320,11 @@ class assignment {
         $rownum = required_param('rownum', PARAM_INT);
         $userid = $this->get_userid_for_row($rownum);
         if(!$userid){
-             print_error('outofbound exception array:rownumber&userid');
-             die();
+            print_error('invalidaccessparameter');
+            die();
         }
 
-        $grade = $this->get_grade($userid);
+        $grade = $this->get_grade($userid, 0, false);
         if ($grade) {
             $data = new stdClass();
             $data->grade = $grade->grade;
@@ -2339,45 +2342,16 @@ class assignment {
 
     }
 
-    /**
-     * get the default submission data 
-     * 
-     * @return stdClass 
-     */
-    private function get_default_submission_data() {
-        $data = new stdClass();
-
-        return $data;
-    }
-    
-    /**
-     * Used to set the default data for an editor element.
-     * Prevents warnings being written to the page.
-     * 
-     * @param string $name - The name of the element
-     * @param object $data - The default data class to modify
-     * @return None
-     */
-    private function set_default_data_for_editor($name, $data) {
-        $textname =$name . 'editor';
-        $formatname =$name . 'format';
-        if (!isset($data->$textname)) {
-            $data->$textname = '';
-        }
-        if (!isset($data->$formatname)) {
-            $data->$formatname = editors_get_preferred_format();
-        }
-    }
     
     /**
      * add elements in submission plugin form 
      * 
-     * @param object $submission
-     * @param object $mform
-     * @param object $data 
-     * @return None
+     * @param stdClass $submission
+     * @param MoodleQuickForm $mform
+     * @param stdClass $data 
+     * @return void
      */
-    private function add_plugin_submission_elements($submission, $mform, $data) {
+    private function add_plugin_submission_elements(stdClass $submission, MoodleQuickForm $mform, stdClass $data) {
         foreach ($this->submission_plugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible() && $plugin->allow_submissions()) {
                 $mform->addElement('header', 'header_' . $plugin->get_type(), $plugin->get_name());
@@ -2410,17 +2384,17 @@ class assignment {
 
     /**
      * add elements to submission form 
-     * @global object $USER
-     * @param object $mform
-     * @param object $data 
-     * @return None
+     * @global stdClass $USER
+     * @param MoodleQuickForm $mform
+     * @param stdClass $data 
+     * @return void
      */
-    public function add_submission_form_elements($mform, $data) {
+    public function add_submission_form_elements(MoodleQuickForm $mform, stdClass $data) {
         global $USER;
         
         // online text submissions
 
-        $submission = $this->get_submission($USER->id, null, false);
+        $submission = $this->get_submission($USER->id, 0, false);
         
         $this->add_plugin_submission_elements($submission, $mform, $data);
 
@@ -2436,9 +2410,10 @@ class assignment {
 
     /**
      * revert to draft
-     * @global object $USER
-     * @global object $DB
-     * @return mixed
+     * Uses url parameter userid
+     * @global stdClass $USER
+     * @global moodle_database $DB
+     * @return void
      */
     private function process_revert_to_draft() {
         global $USER, $DB;
@@ -2450,7 +2425,7 @@ class assignment {
 
         $userid = required_param('userid', PARAM_INT);
 
-        $submission = $this->get_submission($userid, null, false);
+        $submission = $this->get_submission($userid, 0, false);
         if (!$submission) {
             return;
         }
@@ -2469,10 +2444,10 @@ class assignment {
     
     /**
      * lock  the process
-     * 
-     * @global object $USER
-     * @global object $DB
-     * @return None
+     * Uses url parameter userid
+     * @global stdClass $USER
+     * @global moodle_database $DB
+     * @return void
      */
     private function process_lock() {
         global $USER, $DB;
@@ -2496,9 +2471,9 @@ class assignment {
     /**
      * unlock the process
      * 
-     * @global object $USER
-     * @global object $DB 
-     * @return None
+     * @global stdClass $USER
+     * @global moodle_database $DB 
+     * @return void
      */
     private function process_unlock() {
         global $USER, $DB;
@@ -2522,10 +2497,10 @@ class assignment {
     /**
      * save grade
      * 
-     * @global object $USER
-     * @global object $DB 
-     * @global object $CFG 
-     * @return None
+     * @global stdClass $USER
+     * @global moodle_database $DB 
+     * @global stdClass $CFG 
+     * @return void
      */
     private function process_save_grade() {
         global $USER, $DB, $CFG;

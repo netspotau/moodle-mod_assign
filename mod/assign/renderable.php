@@ -796,7 +796,7 @@ class assign_files implements renderable {
             require_once($CFG->libdir . '/plagiarismlib.php');
             
             // for plagiarism_get_links
-            $assignment = new assignment($this->context);
+            $assignment = new assignment($this->context, null, null);
             foreach ($files as $file) {
 
                $output .= plagiarism_get_links(array('userid' => $sid,

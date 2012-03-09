@@ -22,13 +22,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+/**
+ * upgrade this assignment instance - this function could be skipped but it will be needed later
+ * @param string $oldversion The old version of the assign module
+ * @return bool 
+ */
 function xmldb_assign_upgrade($oldversion) {
-    global $CFG, $DB, $OUTPUT;
-
-    $dbman = $DB->get_manager();
-
-    // do the upgrades
-    // enable all existing plugins
     return true;
 }
 

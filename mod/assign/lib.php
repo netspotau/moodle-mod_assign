@@ -30,14 +30,15 @@ defined('MOODLE_INTERNAL') || die();
  *
  * This is done by calling the add_instance() method of the assignment type class
  * @global stdClass CFG
- * @param mod_assign_mod_form $form_data
+ * @param stdClass $data
+ * @param mod_assign_mod_form $form
  * @return int The instance id of the new assignment 
  */
 function assign_add_instance(stdClass $data, mod_assign_mod_form $form) {
     global $CFG;
     require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
-    $assignment = new assignment(context_module::instance($data->coursemodule));
+    $assignment = new assignment(context_module::instance($data->coursemodule), null, null);
     return $assignment->add_instance($data, true);
 }
 
@@ -45,7 +46,7 @@ function assign_add_instance(stdClass $data, mod_assign_mod_form $form) {
  * delete an assignment instance 
  * @global stdClass CFG
  * @param int $id
- * @return object|bool 
+ * @return bool 
  */
 function assign_delete_instance($id) {
     global $CFG;
@@ -53,7 +54,7 @@ function assign_delete_instance($id) {
     $cm = get_coursemodule_from_instance('assign', $id, 0, false, MUST_EXIST);
     $context = context_module::instance($cm->id);
 
-    $assignment = new assignment($context);
+    $assignment = new assignment($context, null, null);
     return $assignment->delete_instance();
 }
 
@@ -61,14 +62,16 @@ function assign_delete_instance($id) {
  * Update an assignment instance
  *
  * This is done by calling the update_instance() method of the assignment type class
- * @param mod_assign_mod_form $form_data
+ * @global stdClass CFG
+ * @param stdClass $data
+ * @param mod_assign_mod_form $form
  * @return object
  */
 function assign_update_instance(stdClass $data, mod_assign_mod_form $form) {
     global $CFG;
     require_once($CFG->dirroot . '/mod/assign/locallib.php');
     $context = context_module::instance($data->coursemodule);
-    $assignment = new assignment($context);
+    $assignment = new assignment($context, null, null);
     return $assignment->update_instance($data);
 }
 
@@ -106,12 +109,12 @@ function assign_grading_areas_list() {
 /**
  * extend an assigment navigation settings   
  * 
- * @global object $PAGE
- * @param object $settings
+ * @global moodle_page $PAGE
+ * @param settings_navigation $settings
  * @param navigation_node $navref
  * @return void
  */
-function assign_extend_settings_navigation($settings, navigation_node $navref) {
+function assign_extend_settings_navigation(settings_navigation $settings, navigation_node $navref) {
     global $PAGE;     
 
     $cm = $PAGE->cm;
@@ -145,16 +148,16 @@ function assign_extend_settings_navigation($settings, navigation_node $navref) {
 /**
  * Serves assignment submissions and other files.
  *
- * @global USER
- * @param object $course
- * @param object $cm
- * @param object $context
+ * @global stdClass USER
+ * @param mixed $course course or id of the course
+ * @param mixed $cm course module or id of the course module
+ * @param context $context
  * @param string $filearea
  * @param array $args
  * @param bool $forcedownload
  * @return bool false if file not found, does not return if found - just send the file
  */
-function assign_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
+function assign_pluginfile($course, $cm, context $context, $filearea, $args, $forcedownload) {
     global $USER;
     
     if ($context->contextlevel != CONTEXT_MODULE) {

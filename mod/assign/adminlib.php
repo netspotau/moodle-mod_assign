@@ -67,11 +67,9 @@ class admin_page_manage_assignment_plugins extends admin_externalpage {
     /**
      *  the constructor 
      * 
-     * @global object $CFG
      * @param string $subtype 
      */
     public function __construct($subtype) {
-        global $CFG;
         $this->subtype = $subtype;
         parent::__construct('manage' . $subtype . 'plugins', get_string('manage' . $subtype . 'plugins', 'assign'),
                 new moodle_url('/mod/assign/admin_manage_plugins.php', array('subtype'=>$subtype)));
@@ -84,7 +82,6 @@ class admin_page_manage_assignment_plugins extends admin_externalpage {
      * @return array
      */
     public function search($query) {
-        global $CFG;
         if ($result = parent::search($query)) {
             return $result;
         }
@@ -128,8 +125,8 @@ class assignment_plugin_manager {
     private $subtype = '';
 
     /**
-     *
-     * @param string $subtype 
+     * Constructor for this assignment plugin manager
+     * @param string $subtype - either assignsubmission or assignfeedback
      */
     public function __construct($subtype) {
         $this->pageurl = new moodle_url('/mod/assign/admin_manage_plugins.php', array('subtype'=>$subtype));
@@ -165,7 +162,7 @@ class assignment_plugin_manager {
     /** 
      * Util function for writing an action icon link
      * 
-     * @global object $OUTPUT For writing to the page
+     * @global renderer_base $OUTPUT For writing to the page
      * @param string $action URL parameter to include in the link
      * @param string $plugintype URL parameter to include in the link
      * @param string $icon The key to the icon to use (e.g. 't/up')
@@ -184,8 +181,8 @@ class assignment_plugin_manager {
     /** 
      * Write the HTML for the submission plugins table.
      * 
-     * @global object $OUTPUT For writing to the page
-     * @global object $CFG Used to get the dirroot
+     * @global renderer_base $OUTPUT For writing to the page
+     * @global stdClass $CFG Used to get the dirroot
      * @return None
      */
     private function view_plugins_table() {
@@ -253,7 +250,7 @@ class assignment_plugin_manager {
     /** 
      * Write the page header
      * 
-     * @global object $OUTPUT For writing to the page
+     * @global renderer_base $OUTPUT For writing to the page
      * @return None
      */
     private function view_header() {
@@ -267,7 +264,7 @@ class assignment_plugin_manager {
     /** 
      * Write the page footer
      * 
-     * @global object $OUTPUT For writing to the page
+     * @global renderer_base $OUTPUT For writing to the page
      * @return None
      */
     private function view_footer() {
@@ -290,8 +287,8 @@ class assignment_plugin_manager {
     /** 
      * Delete the database and files associated with this plugin.
      * 
-     * @global object $CFG global config
-     * @global object $DB database connection
+     * @global stdClass $CFG global config
+     * @global moodle_database $DB database connection
      * @param string $plugin - The type of the plugin to delete
      * @return string the name of the next page to display
      */
@@ -331,8 +328,8 @@ class assignment_plugin_manager {
     /** 
      * Show the page that gives the details of the plugin that was just deleted
      * 
-     * @global object $OUTPUT For writing to the page
-     * @param object $plugin - The plugin that was just deleted
+     * @global renderer_base $OUTPUT For writing to the page
+     * @param string $plugin - The plugin that was just deleted
      * @return None
      */
     private function view_plugin_deleted($plugin) {
@@ -348,8 +345,8 @@ class assignment_plugin_manager {
     /** 
      * Show the page that asks the user to confirm they want to delete a plugin
      * 
-     * @global object $OUTPUT For writing to the page
-     * @param object $plugin - The plugin that will be deleted
+     * @global renderer_base $OUTPUT For writing to the page
+     * @param string $plugin - The plugin that will be deleted
      * @return None
      */
     private function view_confirm_delete($plugin) {
@@ -367,7 +364,7 @@ class assignment_plugin_manager {
     /** 
      * Hide this plugin
      * 
-     * @param object $plugin - The plugin to hide
+     * @param string $plugin - The plugin to hide
      * @return string The next page to display
      */
     public function hide_plugin($plugin) {
@@ -378,7 +375,7 @@ class assignment_plugin_manager {
     /** 
      * Change the order of this plugin
      * 
-     * @param object $plugin - The plugin to move
+     * @param string $plugin - The plugin to move
      * @param string $dir - up or down
      * @return string The next page to display
      */
@@ -426,7 +423,7 @@ class assignment_plugin_manager {
     /** 
      * Show this plugin
      * 
-     * @param object $plugin - The plugin to show
+     * @param string $plugin - The plugin to show
      * @return string The next page to display
      */
     public function show_plugin($plugin) {
@@ -442,7 +439,7 @@ class assignment_plugin_manager {
      * @param string $plugintype - Optional name of a plugin type to perform the action on
      * @return None
      */
-    public function execute($action = null, $plugin = null) {
+    public function execute($action, $plugin) {
         if ($action == null) {
             $action = 'view';
         }
@@ -478,12 +475,12 @@ class assignment_plugin_manager {
      * 
      * @static
      * @param string $subtype - The type of plugin (submission or feedback)
-     * @param object $admin - The handle to the admin menu
-     * @param object $settings - The handle to current node in the navigation tree
-     * @param object $module - The handle to the current module
+     * @param part_of_admin_tree $admin - The handle to the admin menu
+     * @param admin_settingpage $settings - The handle to current node in the navigation tree
+     * @param stdClass $module - The handle to the current module
      * @return None
      */
-    static function add_admin_assignment_plugin_settings($subtype, $admin, $settings, $module) {
+    static function add_admin_assignment_plugin_settings($subtype, part_of_admin_tree $admin, admin_settingpage $settings, stdClass $module) {
         global $CFG;
 
         $plugins = get_plugin_list_with_file($subtype, 'settings.php', false);
