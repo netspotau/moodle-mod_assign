@@ -785,10 +785,8 @@ class assignment {
             print_error('badcontext');
             return null;
         }
-        if ($this->context && $this->context->contextlevel == CONTEXT_COURSE) {
-            return $this->context;
-        } else if ($this->context && $this->context->contextlevel == CONTEXT_MODULE) {
-            return $this->context->get_parent_context();
+        if ($this->context) {
+            return $this->context->get_course_context();
         } else {
             return context_course::instance($this->course->id);
         } 
