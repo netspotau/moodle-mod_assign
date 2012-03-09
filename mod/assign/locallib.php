@@ -44,7 +44,6 @@ define('ASSIGN_FILTER_REQUIRE_GRADING', 'require_grading');
  */
 define('ASSIGN_PLUGIN_CLASS_FILE', 'lib.php');
 
-
 /**
  * File areas for assignment portfolio if enabled
  */
@@ -55,7 +54,6 @@ define('ASSIGN_FILEAREA_PORTFOLIO_FILES', 'portfolio_files');
 require_once($CFG->libdir.'/accesslib.php');
 /** Include formslib.php */
 require_once($CFG->libdir.'/formslib.php');
-require_once('HTML/QuickForm/input.php');
 /** Include plagiarismlib.php */
 require_once($CFG->libdir . '/plagiarismlib.php');
 /** Include repository/lib.php */
@@ -68,10 +66,13 @@ require_once($CFG->libdir . '/portfoliolib.php');
 require_once($CFG->libdir.'/gradelib.php');
 /** grading lib.php */
 require_once($CFG->dirroot.'/grade/grading/lib.php');
-/** Include submission_plugin.php */
+/** Include feedback_plugin.php */
 require_once($CFG->dirroot.'/mod/assign/feedback_plugin.php');
+/** Include submission_plugin.php */
 require_once($CFG->dirroot.'/mod/assign/submission_plugin.php');
+/** Include renderable.php */
 require_once($CFG->dirroot.'/mod/assign/renderable.php');
+/** Include grading_table.php */
 require_once($CFG->dirroot.'/mod/assign/grading_table.php');
 
 //send files to event system for plagiarism detection 
@@ -1468,7 +1469,10 @@ class assignment {
      * @return void
      */
     private function view_single_grade_page() {
-        global $DB;
+        global $DB, $CFG;
+
+        // Include grade form 
+        require_once($CFG->dirroot . '/mod/assign/grade_form.php');
         
         // Always require view permission to do anything
         require_capability('mod/assign:view', $this->context);
@@ -1537,10 +1541,13 @@ class assignment {
      * View the grading table of all submissions for this assignment
      *
      * @global stdClass $USER
+     * @global stdClass $CFG
      * @return void
      */
     private function view_grading_table() {
-        global $USER;
+        global $USER, $CFG;
+        // Include grading options form 
+        require_once($CFG->dirroot . '/mod/assign/grading_options_form.php');
 
         $perpage = get_user_preferences('assign_perpage', 10);
         $filter = get_user_preferences('assign_filter', '');
@@ -1594,9 +1601,14 @@ class assignment {
     /**
      * View edit submissions page.
      * 
+     * @global stdClass $CFG
      * @return void
      */
     private function view_edit_submission_page() {
+        global $CFG;
+
+        // Include submission form 
+        require_once($CFG->dirroot . '/mod/assign/submission_form.php');
         // Always require view permission to do anything
         require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
@@ -2033,11 +2045,14 @@ class assignment {
      * save grading options 
      * 
      * @global stdClass $USER
+     * @global stdClass $CFG
      * @return void
      */
     private function process_save_grading_options() {
-        global $USER;
+        global $USER, $CFG;
 
+        // Include grading options form 
+        require_once($CFG->dirroot . '/mod/assign/grading_options_form.php');
         
          // Always require view permission to do anything
         require_capability('mod/assign:view', $this->context);
@@ -2109,11 +2124,15 @@ class assignment {
      * save assignment submission
      * 
      * @global stdClass $USER
+     * @global stdClass $CFG
      * @return bool 
      */
     private function process_save_submission() {       
-        global $USER;
+        global $USER, $CFG;
         
+        // Include submission form 
+        require_once($CFG->dirroot . '/mod/assign/submission_form.php');
+
         // Always require view permission to do anything
         require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
@@ -2307,10 +2326,14 @@ class assignment {
     /**
      * display the grade form
      * 
+     * @global stdClass $CFG
      * @uses die
      * @return void
      */
     private function view_grade_form() {
+        global $CFG;
+        // Include grade form 
+        require_once($CFG->dirroot . '/mod/assign/grade_form.php');
 
          // Always require view permission to do anything
         require_capability('mod/assign:view', $this->context);
@@ -2504,6 +2527,8 @@ class assignment {
      */
     private function process_save_grade() {
         global $USER, $DB, $CFG;
+        // Include grade form 
+        require_once($CFG->dirroot . '/mod/assign/grade_form.php');
         
         require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment

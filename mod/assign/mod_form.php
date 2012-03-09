@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the forms used by the assign module.
+ * This file contains the forms to create and edit an instance of this module
  *
  * @package   mod_assign
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die('Direct access to this script is forbidden.');
 /** Include moodleform_mod.php */
 require_once ($CFG->dirroot.'/course/moodleform_mod.php');
 /** Include locallib.php */
-require_once('locallib.php');
+require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
 /*
  * Assignment settings form. 
@@ -75,84 +75,3 @@ class mod_assign_mod_form extends moodleform_mod {
     }
 
 }
-
-/*
- * Assignment submission form
- *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class mod_assign_submission_form extends moodleform {
-
-    function definition() {
-        $mform = $this->_form;
-
-        list($assignment, $data) = $this->_customdata;
-
-        $assignment->add_submission_form_elements($mform, $data);
-
-        $this->add_action_buttons(true, get_string('savechanges', 'assign'));
-        if ($data) {
-            $this->set_data($data);
-        }
-    }
-}
-
-/*
- * Assignment grade form
- *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class mod_assign_grade_form extends moodleform {         
-    function definition() {
-        $mform = $this->_form;
-        
-        list($assignment, $data, $params) = $this->_customdata;
-        // visible elements
-        $assignment->add_grade_form_elements($mform, $data, $params);
-
-        if ($data) {
-            $this->set_data($data);
-        }
-    }
-          
-}
-
-/*
- * Assignment grading options form
- *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class mod_assign_grading_options_form extends moodleform {
-    function definition() {
-        $mform = $this->_form;
-        $instance = $this->_customdata;
-
-        $mform->addElement('header', 'general', get_string('gradingoptions', 'assign'));
-        // visible elements
-        $options = array(-1=>'All',10=>'10', 20=>'20', 50=>'50', 100=>'100');
-        $autosubmit = array('onchange'=>'form.submit();');
-        $mform->addElement('select', 'perpage', get_string('assignmentsperpage', 'assign'), $options, $autosubmit);
-        $options = array(''=>get_string('filternone', 'assign'), ASSIGN_FILTER_SUBMITTED=>get_string('filtersubmitted', 'assign'), ASSIGN_FILTER_REQUIRE_GRADING=>get_string('filterrequiregrading', 'assign'));
-        $mform->addElement('select', 'filter', get_string('filter', 'assign'), $options, $autosubmit);
-    
-        // hidden params
-        $mform->addElement('hidden', 'contextid', $instance['contextid']);
-        $mform->setType('contextid', PARAM_INT);
-        $mform->addElement('hidden', 'id', $instance['cm']);
-        $mform->setType('id', PARAM_INT);
-        $mform->addElement('hidden', 'userid', $instance['userid']);
-        $mform->setType('userid', PARAM_INT);
-        $mform->addElement('hidden', 'action', 'saveoptions');
-        $mform->setType('action', PARAM_ALPHA);
-
-        // buttons
-        $this->add_action_buttons(false, get_string('updatetable', 'assign'));
-    }
-}
-

@@ -42,8 +42,6 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/** Include config.php */
-require_once(dirname(__FILE__) . '/../../config.php');
 /** Include adminlib.php */
 require_once($CFG->libdir . '/adminlib.php');
 /** Include tablelib.php */

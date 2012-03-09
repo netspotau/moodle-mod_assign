@@ -25,7 +25,7 @@
 /** config.php */
 require_once('../../config.php');
 /** Include locallib.php */
-require_once('locallib.php');
+require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
 
 $id = required_param('id', PARAM_INT);  // Course Module ID

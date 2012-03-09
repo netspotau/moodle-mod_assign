@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-require_once('adminlib.php');
+require_once($CFG->dirroot . '/mod/assign/adminlib.php');
 require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
 $ADMIN->add('modules', new admin_category('assignmentplugins',
