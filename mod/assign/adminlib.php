@@ -403,15 +403,15 @@ class assignment_plugin_manager {
         // make the switch
         if ($dir == 'up') {
             if ($current_index > 0) {
-                $a = $plugins[$current_index - 1];
+                $tmp_plugin = $plugins[$current_index - 1];
                 $plugins[$current_index - 1] = $plugins[$current_index];
-                $plugins[$current_index] = $a;
+                $plugins[$current_index] = $tmp_plugin;
             }
         } else if ($dir == 'down') {
             if ($current_index < (count($plugins) - 1)) {
-                $a = $plugins[$current_index + 1];
+                $tmp_plugin = $plugins[$current_index + 1];
                 $plugins[$current_index + 1] = $plugins[$current_index];
-                $plugins[$current_index] = $a;
+                $plugins[$current_index] = $tmp_plugin;
             }
         }
 

@@ -212,8 +212,8 @@ class assignment {
     private function get_plugin_by_type($subtype, $type) {
         $shortsubtype = substr($subtype, strlen('assign'));
         $name = $shortsubtype . '_plugins';
-        $p = $this->$name;
-        foreach ($p as $plugin) {
+        $plugin_list = $this->$name;
+        foreach ($plugin_list as $plugin) {
             if ($plugin->get_type() == $type) {
                 return $plugin;
             }
@@ -1324,13 +1324,13 @@ class assignment {
     
         // get all the files for each submission
         foreach ($submissions as $submission) {
-            $a_userid = $submission->userid; //get userid
-            if ((groups_is_member($groupid,$a_userid) or !$groupmode or !$groupid)) {
+            $userid = $submission->userid; //get userid
+            if ((groups_is_member($groupid,$userid) or !$groupmode or !$groupid)) {
                 // get the plugins to add their own files to the zip
 
-                $a_user = $DB->get_record("user", array("id"=>$a_userid),'id,username,firstname,lastname', MUST_EXIST); 
+                $user = $DB->get_record("user", array("id"=>$userid),'id,username,firstname,lastname', MUST_EXIST); 
 
-                $prefix = clean_filename(fullname($a_user) . "_" .$a_userid . "_");
+                $prefix = clean_filename(fullname($user) . "_" .$userid . "_");
 
                 foreach ($this->submission_plugins as $plugin) {
                     if ($plugin->is_enabled() && $plugin->is_visible()) {
@@ -1878,40 +1878,40 @@ class assignment {
      */
     private function get_graders($user) {
         //potential graders
-        $potgraders = get_users_by_capability($this->context, 'mod/assign:grade', '', '', '', '', '', '', false, false);
+        $potentialgraders = get_users_by_capability($this->context, 'mod/assign:grade', '', '', '', '', '', '', false, false);
 
         $graders = array();
         if (groups_get_activity_groupmode($this->get_course_module()) == SEPARATEGROUPS) {   // Separate groups are being used
             if ($groups = groups_get_all_groups($this->get_course()->id, $user->id)) {  // Try to find all groups
                 foreach ($groups as $group) {
-                    foreach ($potgraders as $t) {
-                        if ($t->id == $user->id) {
+                    foreach ($potentialgraders as $grader) {
+                        if ($grader->id == $user->id) {
                             continue; // do not send self
                         }
-                        if (groups_is_member($group->id, $t->id)) {
-                            $graders[$t->id] = $t;
+                        if (groups_is_member($group->id, $grader->id)) {
+                            $graders[$grader->id] = $grader;
                         }
                     }
                 }
             } else {
                 // user not in group, try to find graders without group
-                foreach ($potgraders as $t) {
-                    if ($t->id == $user->id) {
+                foreach ($potentialgraders as $grader) {
+                    if ($grader->id == $user->id) {
                         continue; // do not send self
                     }
-                    if (!groups_has_membership($this->get_course_module(), $t->id)) {
-                        $graders[$t->id] = $t;
+                    if (!groups_has_membership($this->get_course_module(), $grader->id)) {
+                        $graders[$grader->id] = $grader;
                     }
                 }
             }
         } else {
-            foreach ($potgraders as $t) {
-                if ($t->id == $user->id) {
+            foreach ($potentialgraders as $grader) {
+                if ($grader->id == $user->id) {
                     continue; // do not send self
                 }
                 // must be enrolled
-                if (is_enrolled($this->get_course_context(), $t->id)) {
-                    $graders[$t->id] = $t;
+                if (is_enrolled($this->get_course_context(), $grader->id)) {
+                    $graders[$grader->id] = $grader;
                 }
             }
         }

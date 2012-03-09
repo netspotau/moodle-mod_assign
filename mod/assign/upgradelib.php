@@ -179,9 +179,9 @@ class assignment_upgrade_manager {
             // copy the grades from the old assignment to the new one
             $this->copy_grades_for_upgrade($oldassignment, $newassignment);
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             $rollback = true;
-            $log .= get_string('conversionexception', 'mod_assign', $e->getMessage());
+            $log .= get_string('conversionexception', 'mod_assign', $exception->getMessage());
         }
     
         if ($rollback) {

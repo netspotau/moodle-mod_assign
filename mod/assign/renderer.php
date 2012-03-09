@@ -83,12 +83,12 @@ class mod_assign_renderer extends plugin_renderer_base {
      * @param string $second The second column text
      * @return None
      */
-    private function add_table_row_tuple($t, $first, $second) {
+    private function add_table_row_tuple($table, $first, $second) {
         $row = new html_table_row();
         $cell1 = new html_table_cell($first);
         $cell2 = new html_table_cell($second);
         $row->cells = array($cell1, $cell2);
-        $t->data[] = $row;
+        $table->data[] = $row;
     }
     
     /**

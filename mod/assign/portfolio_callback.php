@@ -143,8 +143,8 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
             
             if (in_array($this->exporter->get('formatclass'), array(PORTFOLIO_FORMAT_PLAINHTML, PORTFOLIO_FORMAT_RICHHTML))) {
                 if ($files = $this->exporter->get('caller')->get('multifiles')) {
-                    foreach ($files as $f) {
-                        $this->exporter->copy_existing_file($f);
+                    foreach ($files as $file) {
+                        $this->exporter->copy_existing_file($file);
                     }
                 }
                 return $this->exporter->write_new_file($html, 'assignment.html', !empty($files));
@@ -157,8 +157,8 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
                 $leapwriter->add_entry($entry);
                 if ($files = $this->exporter->get('caller')->get('multifiles')) {
                     $leapwriter->link_files($entry, $files, $this->area . $this->cmid . 'file');
-                    foreach ($files as $f) {
-                        $this->exporter->copy_existing_file($f);
+                    foreach ($files as $file) {
+                        $this->exporter->copy_existing_file($file);
                     }
                 }
                 return $this->exporter->write_new_file($leapwriter->to_xml(), $this->exporter->get('format')->manifest_name(), true);
