@@ -62,9 +62,11 @@ class mod_assign_mod_form extends moodleform_mod {
             $cm = get_coursemodule_from_instance('assign', $this->current->id, 0, false, MUST_EXIST);
             $ctx = context_module::instance($cm->id);
         }
-        $instance = new assignment($ctx);
-        
-        $instance->add_settings($mform);
+        $assignment = new assignment($ctx);
+        if ($this->current && $this->current->course) {
+            $assignment->set_course($DB->get_record('course', array('id'=>$this->current->course), '*', MUST_EXIST));
+        }
+        $assignment->add_settings($mform);
         
         $this->standard_grading_coursemodule_elements();
         $this->standard_coursemodule_elements();

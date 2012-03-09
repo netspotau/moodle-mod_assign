@@ -40,14 +40,11 @@ function xmldb_assignfeedback_comments_install() {
 
     // do the install
 
-    require_once($CFG->dirroot . '/mod/assign/locallib.php');
+    require_once($CFG->dirroot . '/mod/assign/adminlib.php');
     // set the correct initial order for the plugins
-    $assignment = new assignment();
-    $plugin = $assignment->get_feedback_plugin_by_type('comments');
-    if ($plugin) {
-        $plugin->move('down');
-        $plugin->move('down');
-    }
+    $plugin_manager = new assignment_plugin_manager('assignfeedback');
+
+    $plugin_manager->move_plugin('comments', 'up');
         
     // do the upgrades
     return true;

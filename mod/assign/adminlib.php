@@ -142,7 +142,7 @@ class assignment_plugin_manager {
      * 
      * @return array The list of plugins
      */
-    private function get_sorted_plugins_list() {
+    public function get_sorted_plugins_list() {
         $names = get_plugin_list($this->subtype);
 
         $result = array();
@@ -295,7 +295,7 @@ class assignment_plugin_manager {
      * @param string $plugin - The type of the plugin to delete
      * @return string the name of the next page to display
      */
-    private function delete_plugin($plugin) {
+    public function delete_plugin($plugin) {
         global $CFG, $DB;
         $confirm = optional_param('confirm', null, PARAM_BOOL);
 
@@ -370,7 +370,7 @@ class assignment_plugin_manager {
      * @param object $plugin - The plugin to hide
      * @return string The next page to display
      */
-    private function hide_plugin($plugin) {
+    public function hide_plugin($plugin) {
         set_config('disabled', 1, $this->subtype . '_' . $plugin);
         return 'view';
     }
@@ -382,7 +382,7 @@ class assignment_plugin_manager {
      * @param string $dir - up or down
      * @return string The next page to display
      */
-    private function move_plugin($plugintomove, $dir) {
+    public function move_plugin($plugintomove, $dir) {
         // get a list of the current plugins
         $plugins = $this->get_sorted_plugins_list();
 
@@ -429,7 +429,7 @@ class assignment_plugin_manager {
      * @param object $plugin - The plugin to show
      * @return string The next page to display
      */
-    private function show_plugin($plugin) {
+    public function show_plugin($plugin) {
         set_config('disabled', 0, $this->subtype . '_' . $plugin);
         return 'view';
     }

@@ -29,52 +29,52 @@ defined('MOODLE_INTERNAL') || die();
  * Adds an assignment instance
  *
  * This is done by calling the add_instance() method of the assignment type class
- * @param object $form_data
- * @return object 
+ * @global stdClass CFG
+ * @param mod_assign_mod_form $form_data
+ * @return int The instance id of the new assignment 
  */
-function assign_add_instance($form_data) {
+function assign_add_instance(stdClass $data, mod_assign_mod_form $form) {
     global $CFG;
-    require_once('locallib.php');
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
-    $context = context_course::instance($form_data->course);
-    $ass = new assignment($context, $form_data);
-    return $ass->add_instance();
+    $assignment = new assignment(context_module::instance($data->coursemodule));
+    return $assignment->add_instance($data, true);
 }
 
 /**
  * delete an assignment instance 
+ * @global stdClass CFG
  * @param int $id
  * @return object|bool 
  */
 function assign_delete_instance($id) {
     global $CFG;
-    require_once('locallib.php');
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
     $cm = get_coursemodule_from_instance('assign', $id, 0, false, MUST_EXIST);
     $context = context_module::instance($cm->id);
 
-    $ass = new assignment($context);
-    return $ass->delete_instance();
+    $assignment = new assignment($context);
+    return $assignment->delete_instance();
 }
 
 /**
  * Update an assignment instance
  *
  * This is done by calling the update_instance() method of the assignment type class
- * @param object $form_data
+ * @param mod_assign_mod_form $form_data
  * @return object
  */
-function assign_update_instance($form_data) {
+function assign_update_instance(mod_assign_mod_form $form_data) {
     global $CFG;
-    require_once('locallib.php');
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
     $context = context_module::instance($form_data->coursemodule);
-    $ass = new assignment($context, $form_data);
-    return $ass->update_instance();
+    $assignment = new assignment($context);
+    return $ass->update_instance($form_data);
 }
 
 /**
  * @param string $feature FEATURE_xx constant for requested feature
  * @return mixed True if module supports feature, null if doesn't know
- * @return bool|null
  */
 function assign_supports($feature) {
     switch($feature) {
@@ -96,7 +96,7 @@ function assign_supports($feature) {
 /**
  * Lists all gradable areas for the advanced grading methods gramework
  *
- * @return array
+ * @return array('string'=>'string') An array with area names as keys and descriptions as values
  */
 function assign_grading_areas_list() {
     return array('submissions'=>get_string('submissions', 'assign'));

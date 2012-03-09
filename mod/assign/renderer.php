@@ -463,17 +463,13 @@ class mod_assign_renderer extends plugin_renderer_base {
         } 
 
         // last modified 
-        $row = new html_table_row();
-        $cell1 = new html_table_cell(get_string('timemodified', 'assign'));
         if ($status->get_submission()) {
+            $row = new html_table_row();
+            $cell1 = new html_table_cell(get_string('timemodified', 'assign'));
             $cell2 = new html_table_cell(userdate($status->get_submission()->timemodified));
-        } else {
-            $cell2 = new html_table_cell();
-        }
-        $row->cells = array($cell1, $cell2);
-        $t->data[] = $row;
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
 
-        if ($status->get_submission()) {
             foreach ($status->get_assignment()->get_submission_plugins() as $plugin) {
                 if ($plugin->is_enabled() && $plugin->is_visible()) {
                     $row = new html_table_row();

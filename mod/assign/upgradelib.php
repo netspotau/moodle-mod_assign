@@ -79,9 +79,8 @@ class assignment_upgrade_manager {
         $data->preventlatesubmissions = $oldassignment->preventlate;
 
         $newassignment = new assignment();
-        $newassignment->set_instance($data);
         
-        if (!$newassignment->add_instance(false)) {
+        if (!$newassignment->add_instance($data, false)) {
             $log = get_string('couldnotcreatenewassignmentinstance', 'mod_assign');
             return false;
         }

@@ -33,14 +33,12 @@ function xmldb_assignsubmission_onlinetext_install() {
 
     // do the install
 
-    require_once($CFG->dirroot . '/mod/assign/locallib.php');
+    require_once($CFG->dirroot . '/mod/assign/adminlib.php');
     // set the correct initial order for the plugins
-    $assignment = new assignment();
-    $plugin = $assignment->get_submission_plugin_by_type('onlinetext');
-    if ($plugin) {
-        $plugin->move('up');
-        $plugin->move('up');
-    }
+    $plugin_manager = new assignment_plugin_manager('assignsubmission');
+
+    $plugin_manager->move_plugin('onlinetext', 'up');
+    $plugin_manager->move_plugin('onlinetext', 'up');
         
     // do the upgrades
     return true;

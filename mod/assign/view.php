@@ -38,9 +38,8 @@ $course = null;
 // get the request parameters
 $cm = get_coursemodule_from_id('assign', $id, 0, false, MUST_EXIST);
 
-$assignment = $DB->get_record('assign', array('id' => $cm->instance), '*', MUST_EXIST);
+$course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 
-$course = $DB->get_record('course', array('id' => $assignment->course), '*', MUST_EXIST);
 
 $url->param('id', $id);
 
@@ -51,7 +50,7 @@ $PAGE->set_url($url);
 
 $context = context_module::instance($cm->id);
    
-$ass = new assignment($context,$assignment,$cm,$course);
+$assignment = new assignment($context,$cm,$course);
 
 // Get the assignment to render the page
-$ass->view(optional_param('action', '', PARAM_TEXT));
+$assignment->view(optional_param('action', '', PARAM_TEXT));
