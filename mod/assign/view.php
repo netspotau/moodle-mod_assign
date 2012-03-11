@@ -46,9 +46,10 @@ $url->param('id', $id);
 // Auth
 require_login($course, true, $cm);
 $PAGE->set_url($url);
-// Javascript/css includes
 
 $context = context_module::instance($cm->id);
+
+require_capability('mod/assign:view', $this->context);
    
 $assignment = new assignment($context,$cm,$course);
 

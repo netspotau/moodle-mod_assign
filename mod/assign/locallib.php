@@ -1254,8 +1254,7 @@ class assignment {
      */
     private function can_grade() {
         // Permissions check 
-        if (!has_capability('mod/assign:view', $this->context) ||
-            !has_capability('mod/assign:grade', $this->context)) {
+        if (!has_capability('mod/assign:grade', $this->context)) {
             return false;
         }
 
@@ -1465,8 +1464,6 @@ class assignment {
         // Include grade form 
         require_once($CFG->dirroot . '/mod/assign/grade_form.php');
         
-        // Always require view permission to do anything
-        require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
 
@@ -1572,8 +1569,6 @@ class assignment {
     private function view_grading_page() {
         global $CFG;
 
-        // Always require view permission to do anything
-        require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
 
@@ -1600,8 +1595,6 @@ class assignment {
 
         // Include submission form 
         require_once($CFG->dirroot . '/mod/assign/submission_form.php');
-        // Always require view permission to do anything
-        require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
 
@@ -1668,10 +1661,6 @@ class assignment {
      */
     private function view_submission_page() {
         global $CFG, $USER;
-        
-         // Always require view permission to do anything
-        require_capability('mod/assign:view', $this->context);
-       
         
         echo $this->output->render(new assignment_header($this, true));
         groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id);
@@ -2017,8 +2006,6 @@ class assignment {
     private function process_submit_assignment_for_grading() {
         global $USER;
         
-         // Always require view permission to do anything
-        require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
         
@@ -2043,8 +2030,6 @@ class assignment {
         // Include grading options form 
         require_once($CFG->dirroot . '/mod/assign/grading_options_form.php');
         
-         // Always require view permission to do anything
-        require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
         
@@ -2122,8 +2107,6 @@ class assignment {
         // Include submission form 
         require_once($CFG->dirroot . '/mod/assign/submission_form.php');
 
-        // Always require view permission to do anything
-        require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
       
@@ -2324,8 +2307,6 @@ class assignment {
         // Include grade form 
         require_once($CFG->dirroot . '/mod/assign/grade_form.php');
 
-         // Always require view permission to do anything
-        require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
 
@@ -2430,8 +2411,6 @@ class assignment {
     private function process_revert_to_draft() {
         global $USER, $DB;
         
-        // Need view permission
-        require_capability('mod/assign:view', $this->context);
         // Need grade permission
         require_capability('mod/assign:grade', $this->context);
 
@@ -2464,8 +2443,6 @@ class assignment {
     private function process_lock() {
         global $USER, $DB;
         
-        // Need view permission
-        require_capability('mod/assign:view', $this->context);
         // Need grade permission
         require_capability('mod/assign:grade', $this->context);
 
@@ -2490,8 +2467,6 @@ class assignment {
     private function process_unlock() {
         global $USER, $DB;
 
-        // Need view permission
-        require_capability('mod/assign:view', $this->context);
         // Need grade permission
         require_capability('mod/assign:grade', $this->context);
 
@@ -2519,7 +2494,6 @@ class assignment {
         // Include grade form 
         require_once($CFG->dirroot . '/mod/assign/grade_form.php');
         
-        require_capability('mod/assign:view', $this->context);
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
 
