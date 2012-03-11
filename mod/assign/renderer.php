@@ -92,6 +92,19 @@ class mod_assign_renderer extends plugin_renderer_base {
     }
     
     /**
+     * Render the grading options form
+     * @param grading_options_form $form The grading options form to render
+     * @return string
+     */
+    public function render_grading_options_form(grading_options_form $form) {
+        $o = '';
+        $o .= $this->output->box_start('boxaligncenter gradingoptionsform');
+        $o .= $this->moodleform($form->get_form());
+        $o .= $this->output->box_end();
+        return $o;
+    }
+    
+    /**
      * Render the grading form
      * @param grading_form $form The grading form to render
      * @return string
@@ -557,7 +570,7 @@ class mod_assign_renderer extends plugin_renderer_base {
 
         $o .= $this->output->box_start('boxaligncenter gradingtable');
         // need to get from prefs
-        $o .= $table->out($table->get_rows_per_page(), true);
+        $o .= $this->flexible_table($table, $table->get_rows_per_page(), true);
         $o .= $this->output->box_end();
 
         $o .= $this->output->spacer(array('height'=>30));
@@ -662,6 +675,22 @@ class mod_assign_renderer extends plugin_renderer_base {
         return $result;
     }
 
+    /**
+     * Helper method dealing with the fact we can not just fetch the output of flexible_table
+     *
+     * @param flexible_table $table
+     * @return string HTML
+     */
+    protected function flexible_table(flexible_table $table, $rowsperpage, $displaylinks) {
+
+        $o = '';
+        ob_start();
+        $table->out($rowsperpage, $displaylinks);
+        $o = ob_get_contents();
+        ob_end_clean();
+
+        return $o;
+    }
 
     /**
      * Helper method dealing with the fact we can not just fetch the output of moodleforms

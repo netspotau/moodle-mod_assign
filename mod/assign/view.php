@@ -54,4 +54,4 @@ require_capability('mod/assign:view', $context);
 $assignment = new assignment($context,$cm,$course);
 
 // Get the assignment to render the page
-$assignment->view(optional_param('action', '', PARAM_TEXT));
+echo $assignment->view(optional_param('action', '', PARAM_TEXT));

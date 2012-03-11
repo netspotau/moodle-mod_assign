@@ -293,6 +293,8 @@ class assignment {
      */
     public function view($action='') {
 
+        $o = '';
+
         // handle form submissions first
         if ($action == 'savesubmission') {
             $this->process_save_submission();
@@ -335,23 +337,24 @@ class assignment {
         
         // now show the right view page
         if ($action == 'nextgrade') {
-            $this->view_next_single_grade();                        
+            $o .= $this->view_next_single_grade();                        
         } else if ($action == 'grade') {
-            $this->view_single_grade_page();
+            $o .= $this->view_single_grade_page();
         } else if ($action == 'viewpluginassignfeedback') {
-            $this->view_plugin_content('assignfeedback');
+            $o .= $this->view_plugin_content('assignfeedback');
         } else if ($action == 'viewpluginassignsubmission') {
-            $this->view_plugin_content('assignsubmission');
+            $o .= $this->view_plugin_content('assignsubmission');
         } else if ($action == 'editsubmission') {
-            $this->view_edit_submission_page();
+            $o .= $this->view_edit_submission_page();
         } else if ($action == 'grading') {
-            $this->view_grading_page();
+            $o .= $this->view_grading_page();
         } else if ($action == 'downloadall') {
-            $this->download_submissions();
+            $o .= $this->download_submissions();
         } else {
-            $this->view_submission_page();
+            $o .= $this->view_submission_page();
         }
        
+        return $o;
     }
 
     
@@ -1132,10 +1135,13 @@ class assignment {
      * @global stdClass $CFG
      * @global stdClass $USER
      * @param string $plugintype 
-     * @return void
+     * @return string
      */
     private function view_plugin_content($pluginsubtype) {
         global $CFG, $USER;
+
+        $o = '';
+        
         $submissionid = optional_param('sid', 0, PARAM_INT);
         $gradeid = optional_param('gid', 0, PARAM_INT);
         $plugintype = required_param('plugin', PARAM_TEXT);
@@ -1144,7 +1150,6 @@ class assignment {
             $plugin = $this->get_submission_plugin_by_type($plugintype);
             if ($submissionid <= 0) {
                 throw new coding_exception('Submission id should not be 0');
-                return;
             }
             $item = $this->get_submission($submissionid);
 
@@ -1152,30 +1157,29 @@ class assignment {
             if ($item->userid != $USER->id) {
                 require_capability('mod/assign:grade', $this->context);
             }
-            echo $this->output->render(new assignment_header($this, true, $plugin->get_name()));
-            echo $this->output->render(new submission_plugin_submission($this, $plugin, $item, submission_plugin_submission::FULL));
+            $o .= $this->output->render(new assignment_header($this, true, $plugin->get_name()));
+            $o .= $this->output->render(new submission_plugin_submission($this, $plugin, $item, submission_plugin_submission::FULL));
             $this->add_to_log('view submission', get_string('viewsubmissionforuser', 'assign', $item->userid));
         } else {
             $plugin = $this->get_feedback_plugin_by_type($plugintype);
             if ($gradeid <= 0) {
                 throw new coding_exception('Grade id should not be 0');
-                return;
             }
             $item = $this->get_grade($gradeid);
             // permissions
             if ($item->userid != $USER->id) {
                 require_capability('mod/assign:grade', $this->context);
             }
-            echo $this->output->render(new assignment_header($this, true, $plugin->get_name()));
-            echo $this->output->render(new feedback_plugin_feedback($this, $plugin, $item, feedback_plugin_feedback::FULL));
+            $o .= $this->output->render(new assignment_header($this, true, $plugin->get_name()));
+            $o .= $this->output->render(new feedback_plugin_feedback($this, $plugin, $item, feedback_plugin_feedback::FULL));
             $this->add_to_log('view feedback', get_string('viewfeedbackforuser', 'assign', $item->userid));
         }
 
                  
-        $this->view_return_links();
+        $o .= $this->view_return_links();
           
-        $this->view_footer();     
-          
+        $o .= $this->view_footer();     
+        return $o;
     }
     
     /**
@@ -1227,7 +1231,7 @@ class assignment {
      * @return None
      */
     private function view_footer() {
-        echo $this->output->render_footer();
+        return $this->output->render_footer();
     }
 
     /**
@@ -1458,10 +1462,12 @@ class assignment {
      *
      * @global moodle_database $DB
      * @uses die
-     * @return void
+     * @return string
      */
     private function view_single_grade_page() {
         global $DB, $CFG;
+
+        $o = '';
 
         // Include grade form 
         require_once($CFG->dirroot . '/mod/assign/grade_form.php');
@@ -1469,7 +1475,7 @@ class assignment {
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
 
-        echo $this->output->render(new assignment_header($this, false, get_string('grading', 'assign')));
+        $o .= $this->output->render(new assignment_header($this, false, get_string('grading', 'assign')));
        
         $rownum = required_param('rownum', PARAM_INT);  
         $last = false;
@@ -1479,14 +1485,14 @@ class assignment {
         }
         $user = $DB->get_record('user', array('id' => $userid));
         if ($user) {
-            echo $this->output->render(new user_summary($user, $this));
+            $o .= $this->output->render(new user_summary($user, $this));
         }
         $submission = $this->get_user_submission($userid, false);
         // get the current grade
         $grade = $this->get_user_grade($userid, false);
         if ($this->can_view_submission($userid)) {
             $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($userid);
-            echo $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($userid), submission_status::GRADER_VIEW, false, false));
+            $o .= $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($userid), submission_status::GRADER_VIEW, false, false));
         }
         if ($grade) {
             $data = new stdClass();
@@ -1499,11 +1505,12 @@ class assignment {
 
         // now show the grading form
         $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum)));
-        echo $this->output->render(new grading_form($mform));
+        $o .= $this->output->render(new grading_form($mform));
 
         $this->add_to_log('view grading form', get_string('viewgradingformforstudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user))));
         
-        $this->view_footer();
+        $o .= $this->view_footer();
+        return $o;
     }
 
    
@@ -1511,7 +1518,7 @@ class assignment {
     /**
      * View a link to go back to the previous page. Uses url parameters returnaction and returnparams.
      *
-     * @return void
+     * @return string
      */
     private function view_return_links() {
         
@@ -1522,7 +1529,7 @@ class assignment {
         parse_str($returnparams, $params);
         $params = array_merge( array('id' => $this->get_course_module()->id, 'action' => $returnaction), $params);
            
-        echo $this->output->single_button(new moodle_url('/mod/assign/view.php', $params), get_string('back', 'assign'), 'get');
+        return $this->output->single_button(new moodle_url('/mod/assign/view.php', $params), get_string('back', 'assign'), 'get');
         
     }
    
@@ -1531,12 +1538,13 @@ class assignment {
      *
      * @global stdClass $USER
      * @global stdClass $CFG
-     * @return void
+     * @return string
      */
     private function view_grading_table() {
         global $USER, $CFG;
         // Include grading options form 
         require_once($CFG->dirroot . '/mod/assign/grading_options_form.php');
+        $o = '';
 
         $perpage = get_user_preferences('assign_perpage', 10);
         $filter = get_user_preferences('assign_filter', '');
@@ -1549,7 +1557,7 @@ class assignment {
         $data->filter = $filter;
         $mform->set_data($data);
         
-        $mform->display();
+        $o .= $this->output->render(new grading_options_form($mform));
         
         // plagiarism update status apearring in the grading book
         plagiarism_update_status($this->get_course(), $this->get_course_module());
@@ -1557,7 +1565,8 @@ class assignment {
         
         
         // load and print the table of submissions
-        echo $this->output->render(new grading_table($this, $perpage, $filter));
+        $o .= $this->output->render(new grading_table($this, $perpage, $filter));
+        return $o;
     }
 
     /**
@@ -1565,24 +1574,42 @@ class assignment {
      *
      * @global stdClass $CFG
      * @global stdClass $USER
-     * @return void
+     * @return string
      */
     private function view_grading_page() {
         global $CFG;
 
+        $o = '';
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
 
         // only load this if it is 
 
-        echo $this->output->render(new assignment_header($this, false, get_string('grading', 'assign')));
-        groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id.'&action=grading');
+        $o .= $this->output->render(new assignment_header($this, false, get_string('grading', 'assign')));
+        $o .= groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id.'&action=grading', true);
         
 
-        $this->view_grading_table();
+        $o .= $this->view_grading_table();
 
-        $this->view_footer();
+        $o .= $this->view_footer();
         $this->add_to_log('view submission grading table', get_string('viewsubmissiongradingtable', 'assign'));
+        return $o;
+    }
+
+    /**
+     * Capture the output of the plagiarism plugins disclosures and return it as a string
+     * 
+     * @return void
+     */
+    private function plagiarism_print_disclosure() {
+        $o = '';
+        ob_start();
+        
+        plagiarism_print_disclosure($this->get_course_module()->id);
+        $o = ob_get_contents();
+        ob_end_clean();
+
+        return $o;
     }
     
     /**
@@ -1594,6 +1621,7 @@ class assignment {
     private function view_edit_submission_page() {
         global $CFG;
 
+        $o = '';
         // Include submission form 
         require_once($CFG->dirroot . '/mod/assign/submission_form.php');
         // Need submit permission to submit an assignment
@@ -1604,16 +1632,18 @@ class assignment {
             return;
         }
 
-        echo $this->output->render(new assignment_header($this, true, get_string('editsubmission', 'assign')));
-        plagiarism_print_disclosure($this->get_course_module()->id);
+        $o .= $this->output->render(new assignment_header($this, true, get_string('editsubmission', 'assign')));
+        $o .= $this->plagiarism_print_disclosure();
         $data = new stdClass();
 
         $mform = new mod_assign_submission_form(null, array($this, $data));
 
-        echo $this->output->render(new edit_submission_form($mform));
+        $o .= $this->output->render(new edit_submission_form($mform));
     
-        $this->view_footer();
+        $o .= $this->view_footer();
         $this->add_to_log('view submit assignment form', get_string('viewownsubmissionform', 'assign'));
+
+        return $o;
     }
     
     /**
@@ -1658,16 +1688,17 @@ class assignment {
      *
      * @global stdClass $CFG
      * @global stdClass $USER
-     * @return void
+     * @return string
      */
     private function view_submission_page() {
         global $CFG, $USER;
         
-        echo $this->output->render(new assignment_header($this, true));
-        groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id);
+        $o = '';
+        $o .= $this->output->render(new assignment_header($this, true));
+        $o .= groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id, true);
 
         if ($this->can_grade()) {
-            echo $this->output->render(new grading_summary($this));
+            $o .= $this->output->render(new grading_summary($this));
         }
         $grade = $this->get_user_grade($USER->id, false);
         $submission = $this->get_user_submission($USER->id, false);
@@ -1678,14 +1709,15 @@ class assignment {
             $showsubmit = $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
             $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($USER->id);
 
-            echo $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($USER->id), submission_status::STUDENT_VIEW, $showedit, $showsubmit));
+            $o .= $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($USER->id), submission_status::STUDENT_VIEW, $showedit, $showsubmit));
 
-            echo $this->output->render(new feedback_status($this, $grade, feedback_status::STUDENT_VIEW));
+            $o .= $this->output->render(new feedback_status($this, $grade, feedback_status::STUDENT_VIEW));
         }
         
             
-        $this->view_footer();
+        $o .= $this->view_footer();
         $this->add_to_log('view', get_string('viewownsubmissionstatus', 'assign'));
+        return $o;
     } 
     
     /**
@@ -2294,46 +2326,6 @@ class assignment {
         $buttonarray[] = $mform->createElement('cancel', 'cancelbutton', get_string('cancel','assign'));     
         $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
         $mform->closeHeaderBefore('buttonar');            
-    }
-
-    
-    /**
-     * display the grade form
-     * 
-     * @global stdClass $CFG
-     * @uses die
-     * @return void
-     */
-    private function view_grade_form() {
-        global $CFG;
-        // Include grade form 
-        require_once($CFG->dirroot . '/mod/assign/grade_form.php');
-
-        // Need submit permission to submit an assignment
-        require_capability('mod/assign:grade', $this->context);
-
-        $rownum = required_param('rownum', PARAM_INT);
-        $last = false;
-        $userid = $this->get_userid_for_row($rownum, $last);
-        if(!$userid){
-            throw new coding_exception('Row is out of bounds for the current grading table: ' . $rnum);
-        }
-
-        $grade = $this->get_user_grade($userid, false);
-        if ($grade) {
-            $data = new stdClass();
-            $data->grade = $grade->grade;
-            // set the grade 
-        } else {
-            $data = new stdClass();
-            $data->grade = -1;
-        }
-
-        $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum)));
-
-        // show upload form
-        $mform->display();
-
     }
 
     
