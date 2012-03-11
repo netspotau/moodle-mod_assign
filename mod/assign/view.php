@@ -49,7 +49,7 @@ $PAGE->set_url($url);
 
 $context = context_module::instance($cm->id);
 
-require_capability('mod/assign:view', $this->context);
+require_capability('mod/assign:view', $context);
    
 $assignment = new assignment($context,$cm,$course);
 

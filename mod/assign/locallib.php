@@ -680,7 +680,7 @@ class assignment {
      * @param MoodleQuickForm $mform The form to add the configuration settings to. This form is modified directly (not returned)
      * @return void
      */
-    private function add_all_plugin_settings(MoodleQuickForm $mform) {
+    public function add_all_plugin_settings(MoodleQuickForm $mform) {
         foreach ($this->submissionplugins as $plugin) {
             $this->add_plugin_settings($plugin, $mform);
             
@@ -690,43 +690,6 @@ class assignment {
         }
     }
   
-    /**
-     * Add settings to edit form
-     *
-     * Add the list of assignment specific settings to the edit form. 
-     * 
-     * Activate plagiarism plugn if it is enabled 
-     *
-     * @param MoodleQuickForm object $mform The form to add the configuration settings to. This form is modified directly (not returned)
-     * @return void
-     */
-    public function add_settings(MoodleQuickForm $mform) {
-        $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
-        
-        $mform->addElement('header', 'general', get_string('availability', 'assign'));
-        $mform->addElement('date_time_selector', 'allowsubmissionsfromdate', get_string('allowsubmissionsfromdate', 'assign'), array('optional'=>true));
-        $mform->setDefault('allowsubmissionsfromdate', time());
-        $mform->addElement('date_time_selector', 'duedate', get_string('duedate', 'assign'), array('optional'=>true));
-        $mform->setDefault('duedate', time()+7*24*3600);
-        $mform->addElement('select', 'alwaysshowdescription', get_string('alwaysshowdescription', 'assign'), $ynoptions);
-        $mform->setDefault('alwaysshowdescription', 1);
-        $mform->addElement('select', 'preventlatesubmissions', get_string('preventlatesubmissions', 'assign'), $ynoptions);
-        $mform->setDefault('preventlatesubmissions', 0);
-        $mform->addElement('header', 'general', get_string('submissions', 'assign'));
-        $mform->addElement('select', 'submissiondrafts', get_string('submissiondrafts', 'assign'), $ynoptions);
-        $mform->setDefault('submissiondrafts', 0);
-
-        
-        // plagiarism enabling form
-        plagiarism_get_form_elements_module($mform, $this->get_course_context());
-               
-        $mform->addElement('header', 'general', get_string('notifications', 'assign'));
-        $mform->addElement('select', 'sendnotifications', get_string('sendnotifications', 'assign'), $ynoptions);
-        $mform->setDefault('sendnotifications', 1);
-
-        $this->add_all_plugin_settings($mform);
-    }
-
     /**
      * Get the name of the current module. 
      *
@@ -917,12 +880,21 @@ class assignment {
      * @param int $num The row number of the user
      * @return mixed The user id of the matching user or false if there was an error
      */
-    private function get_userid_for_row($num){
+    private function get_userid_for_row($num, $last){
+        if (!array_key_exists('userid_for_row', $this->cache)) {
+            $this->cache['userid_for_row'] = array();
+        }
+        if (array_key_exists($num, $this->cache['userid_for_row'])) {
+            list($userid, $last) = $this->cache['userid_for_row'][$num];
+            return $userid;
+        }
+        
         $filter = get_user_preferences('assign_filter', '');
         $table = new grading_table($this, 0, $filter);
 
-        $userid = $table->get_cell_data($num, 'userid');
+        $userid = $table->get_cell_data($num, 'userid', $last);
      
+        $this->cache['userid_for_row'][$num] = array($userid, $last);
         return $userid;
     }
 
@@ -1270,7 +1242,8 @@ class assignment {
     private function view_next_single_grade() {
         $rnum = required_param('rownum', PARAM_INT);
         $rnum +=1;
-        $userid = $this->get_userid_for_row($rnum);
+        $last = false;
+        $userid = $this->get_userid_for_row($rnum, $last);
         if (!$userid) {
             print_error('outofbound exception array:rownumber&userid');
             die();
@@ -1470,7 +1443,8 @@ class assignment {
         echo $this->output->render(new assignment_header($this, false, get_string('grading', 'assign')));
        
         $rownum = required_param('rownum', PARAM_INT);  
-        $userid = $this->get_userid_for_row($rownum);
+        $last = false;
+        $userid = $this->get_userid_for_row($rownum, $last);
         if(!$userid){
             print_error('invalidaccessparameter');
             die();
@@ -1496,8 +1470,7 @@ class assignment {
         }
 
         // now show the grading form
-        $last = !$this->get_userid_for_row($rownum+1);
-        $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum, 'last'=>$last)));
+        $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum)));
         echo $this->output->render(new grading_form($mform));
 
         $this->add_to_log('view grading form', get_string('viewgradingformforstudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user))));
@@ -2245,7 +2218,8 @@ class assignment {
         $settings = $this->get_instance();
 
         $rownum = $params['rownum'];
-        $userid = $this->get_userid_for_row($rownum);
+        $last = false;
+        $userid = $this->get_userid_for_row($rownum, $last);
         $grade = $this->get_grade($userid, 0, false);
         
         // add advanced grading
@@ -2284,7 +2258,7 @@ class assignment {
           
         $buttonarray=array();
        
-        if (! $params['last']){
+        if (!$last){
             $buttonarray[] = $mform->createElement('submit', 'saveandshownext', get_string('savenext','assign')); 
             $buttonarray[] = $mform->createElement('submit', 'nosaveandnext', get_string('nosavebutnext', 'assign'));
         }
@@ -2311,7 +2285,8 @@ class assignment {
         require_capability('mod/assign:grade', $this->context);
 
         $rownum = required_param('rownum', PARAM_INT);
-        $userid = $this->get_userid_for_row($rownum);
+        $last = false;
+        $userid = $this->get_userid_for_row($rownum, $last);
         if(!$userid){
             print_error('invalidaccessparameter');
             die();
@@ -2327,8 +2302,7 @@ class assignment {
             $data->grade = -1;
         }
 
-        $last = !$this->get_userid_for_row($rownum+1);
-        $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum, 'last'=>$last)));
+        $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum)));
 
         // show upload form
         $mform->display();
@@ -2498,7 +2472,8 @@ class assignment {
         require_capability('mod/assign:grade', $this->context);
 
         $rownum = required_param('rownum', PARAM_INT);
-        $userid = $this->get_userid_for_row($rownum);
+        $last = false;
+        $userid = $this->get_userid_for_row($rownum, $last);
         $data = new stdClass();
         $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum, 'last'=>false)));
 

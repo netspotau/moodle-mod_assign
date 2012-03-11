@@ -69,12 +69,12 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     /**
      * add form elements for settings
      * 
-     * @param stdClass $submission
+     * @param mixed $submission|null
      * @param MoodleQuickForm $mform
      * @param stdClass $data
      * @return true if elements were added to the form 
      */
-    public function get_form_elements(stdClass $submission, MoodleQuickForm $mform, stdClass $data) {
+    public function get_form_elements($submission, MoodleQuickForm $mform, stdClass $data) {
         $elements = array();
 
         $editoroptions = $this->get_edit_options();

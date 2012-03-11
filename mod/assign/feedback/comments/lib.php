@@ -65,12 +65,12 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
     /**
      * get form elements for the grading page
      * 
-     * @param stdClass $grade
+     * @param mixed stdClass|null $grade
      * @param MoodleQuickForm $mform
      * @param stdClass $data
      * @return bool (true if elements were added to the form) 
      */
-    public function get_form_elements(stdClass $grade, MoodleQuickForm $mform, stdClass $data) {
+    public function get_form_elements($grade, MoodleQuickForm $mform, stdClass $data) {
         $elements = array();
 
        

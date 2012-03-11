@@ -123,12 +123,12 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     /**
      * get form elements for grading form
      * 
-     * @param stdClass $grade
+     * @param mixed stdClass | null $grade
      * @param MoodleQuickForm $mform
      * @param stdClass $data
      * @return mixed 
      */
-    public function get_form_elements($grade, $mform, $data) {
+    public function get_form_elements($grade, MoodleQuickForm $mform, stdClass $data) {
 
         $elements = array();
 

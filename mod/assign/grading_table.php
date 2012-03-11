@@ -149,7 +149,6 @@ class grading_table extends table_sql implements renderable {
 
         // load the grading info for all users
         $this->gradinginfo = grade_get_grades($this->assignment->get_course()->id, 'mod', 'assign', $this->assignment->get_instance()->id, $users);
-               
     }
 
     /**
@@ -414,10 +413,13 @@ class grading_table extends table_sql implements renderable {
      * @param string $colname The name of the raw column data
      * @return mixed string or false
      */
-    function get_cell_data($rownumber, $columnname) {
+    function get_cell_data($rownumber, $columnname, $lastrow) {
         $this->setup();
         $this->currpage = $rownumber;
         $this->query_db(1);
+        if ($rownumber == $this->totalrows) {
+            $lastrow = true;
+        }
         foreach ($this->rawdata as $row) {
             return $row->$columnname;
         }

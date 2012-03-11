@@ -131,12 +131,12 @@ class assignment_submission_file extends assignment_submission_plugin {
     /**
      * add elements to submission form
      * 
-     * @param stdClass $submission
+     * @param mixed stdClass|null $submission
      * @param MoodleQuickForm $submission
      * @param stdClass $data
      * @return bool 
      */
-    public function get_form_elements(stdClass $submission, MoodleQuickForm $mform, stdClass $data) {
+    public function get_form_elements($submission, MoodleQuickForm $mform, stdClass $data) {
 
         if ($this->get_config('maxfilesubmissions') <= 0) {
             return false;

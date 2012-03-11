@@ -66,8 +66,30 @@ class mod_assign_mod_form extends moodleform_mod {
         if ($this->current && $this->current->course) {
             $assignment->set_course($DB->get_record('course', array('id'=>$this->current->course), '*', MUST_EXIST));
         }
-        $assignment->add_settings($mform);
         
+        $mform->addElement('header', 'general', get_string('availability', 'assign'));
+        $mform->addElement('date_time_selector', 'allowsubmissionsfromdate', get_string('allowsubmissionsfromdate', 'assign'), array('optional'=>true));
+        $mform->setDefault('allowsubmissionsfromdate', time());
+        $mform->addElement('date_time_selector', 'duedate', get_string('duedate', 'assign'), array('optional'=>true));
+        $mform->setDefault('duedate', time()+7*24*3600);
+        $mform->addElement('selectyesno', 'alwaysshowdescription', get_string('alwaysshowdescription', 'assign'));
+        $mform->setDefault('alwaysshowdescription', 1);
+        $mform->addElement('selectyesno', 'preventlatesubmissions', get_string('preventlatesubmissions', 'assign'));
+        $mform->setDefault('preventlatesubmissions', 0);
+        $mform->addElement('header', 'general', get_string('submissions', 'assign'));
+        $mform->addElement('selectyesno', 'submissiondrafts', get_string('submissiondrafts', 'assign'));
+        $mform->setDefault('submissiondrafts', 0);
+
+        
+               
+        $mform->addElement('header', 'general', get_string('notifications', 'assign'));
+        $mform->addElement('selectyesno', 'sendnotifications', get_string('sendnotifications', 'assign'));
+        $mform->setDefault('sendnotifications', 1);
+        
+        // plagiarism enabling form
+        plagiarism_get_form_elements_module($mform, $ctx->get_course_context());
+
+        $assignment->add_all_plugin_settings($mform);
         $this->standard_grading_coursemodule_elements();
         $this->standard_coursemodule_elements();
 
