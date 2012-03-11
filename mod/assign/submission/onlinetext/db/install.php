@@ -38,10 +38,10 @@ function xmldb_assignsubmission_onlinetext_install() {
 
     require_once($CFG->dirroot . '/mod/assign/adminlib.php');
     // set the correct initial order for the plugins
-    $plugin_manager = new assignment_plugin_manager('assignsubmission');
+    $pluginmanager = new assignment_plugin_manager('assignsubmission');
 
-    $plugin_manager->move_plugin('onlinetext', 'up');
-    $plugin_manager->move_plugin('onlinetext', 'up');
+    $pluginmanager->move_plugin('onlinetext', 'up');
+    $pluginmanager->move_plugin('onlinetext', 'up');
         
     // do the upgrades
     return true;

@@ -45,8 +45,8 @@ class grading_table extends table_sql implements renderable {
     private $rownum = -1;
     /** @var renderer_base for getting output */
     private $output = null;
-    /** @var stdClass grading_info */
-    private $grading_info = null;
+    /** @var stdClass gradinginfo */
+    private $gradinginfo = null;
 
     /**
      * overridden constructor keeps a reference to the assignment class that is displaying this table
@@ -148,7 +148,7 @@ class grading_table extends table_sql implements renderable {
         $this->define_headers($headers);
 
         // load the grading info for all users
-        $this->grading_info = grade_get_grades($this->assignment->get_course()->id, 'mod', 'assign', $this->assignment->get_instance()->id, $users);
+        $this->gradinginfo = grade_get_grades($this->assignment->get_course()->id, 'mod', 'assign', $this->assignment->get_instance()->id, $users);
                
     }
 
@@ -200,8 +200,8 @@ class grading_table extends table_sql implements renderable {
      * @return mixed stdClass or false
      */
     private function get_gradebook_data_for_user($userid) {
-        if (isset($this->grading_info->items[0]) && $this->grading_info->items[0]->grades[$userid]) {
-            return $this->grading_info->items[0]->grades[$userid];
+        if (isset($this->gradinginfo->items[0]) && $this->gradinginfo->items[0]->grades[$userid]) {
+            return $this->gradinginfo->items[0]->grades[$userid];
         }
         return false;
     }

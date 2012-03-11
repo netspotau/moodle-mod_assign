@@ -332,27 +332,27 @@ class assignment_upgrade_manager {
         require_once($CFG->libdir.'/gradelib.php');
 
         // get the old and new grade items
-        $old_grade_items = grade_item::fetch_all(array('itemtype'=>'mod', 'itemmodule'=>'assignment', 'iteminstance'=>$oldassignment->id));
-        if (!$old_grade_items) {
+        $oldgradeitems = grade_item::fetch_all(array('itemtype'=>'mod', 'itemmodule'=>'assignment', 'iteminstance'=>$oldassignment->id));
+        if (!$oldgradeitems) {
             return false;
         }
-        $old_grade_item = array_pop($old_grade_items);
-        if (!$old_grade_item) {
+        $oldgradeitem = array_pop($oldgradeitems);
+        if (!$oldgradeitem) {
             return false;
         }
-        $new_grade_items = grade_item::fetch_all(array('itemtype'=>'mod', 'itemmodule'=>'assign', 'iteminstance'=>$newassignment->get_instance()->id));
-        if (!$new_grade_items) {
+        $newgradeitems = grade_item::fetch_all(array('itemtype'=>'mod', 'itemmodule'=>'assign', 'iteminstance'=>$newassignment->get_instance()->id));
+        if (!$newgradeitems) {
             return false;
         }
-        $new_grade_item = array_pop($new_grade_items);
-        if (!$new_grade_item) {
+        $newgradeitem = array_pop($newgradeitems);
+        if (!$newgradeitem) {
             return false;
         }
 
-        $grade_grades = grade_grade::fetch_all(array('itemid'=>$old_grade_item->id));
-        if ($grade_grades) {
-            foreach ($grade_grades as $gradeid=>$grade) {
-                $grade->itemid = $new_grade_item->id;
+        $gradegrades = grade_grade::fetch_all(array('itemid'=>$oldgradeitem->id));
+        if ($gradegrades) {
+            foreach ($gradegrades as $gradeid=>$grade) {
+                $grade->itemid = $newgradeitem->id;
                 grade_update('mod/assign', $newassignment->get_course()->id, 'mod', 'assign', $newassignment->get_instance()->id, 0, $grade, NULL);
             }
         }

@@ -79,8 +79,8 @@ class assignment_submission_file extends assignment_submission_plugin {
     public function get_settings(MoodleQuickForm $mform) {
         global $CFG, $COURSE;
 
-        $default_maxfilesubmissions = $this->get_config('maxfilesubmissions');
-        $default_maxsubmissionsizebytes = $this->get_config('maxsubmissionsizebytes');
+        $defaultmaxfilesubmissions = $this->get_config('maxfilesubmissions');
+        $defaultmaxsubmissionsizebytes = $this->get_config('maxsubmissionsizebytes');
 
         $settings = array();
         $options = array();
@@ -89,7 +89,7 @@ class assignment_submission_file extends assignment_submission_plugin {
         }
         
         $mform->addElement('select', 'assignsubmission_file_maxfiles', get_string('maxfilessubmission', 'assignsubmission_file'), $options);
-        $mform->setDefault('assignsubmission_file_maxfiles', $default_maxfilesubmissions);
+        $mform->setDefault('assignsubmission_file_maxfiles', $defaultmaxfilesubmissions);
 
         $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
         $choices[0] = get_string('courseuploadlimit') . ' ('.display_size($COURSE->maxbytes).')';
@@ -97,10 +97,10 @@ class assignment_submission_file extends assignment_submission_plugin {
                             'name' => 'maxsubmissionsizebytes', 
                             'description' => get_string('maximumsubmissionsize', 'assignsubmission_file'), 
                             'options'=>$choices,
-                            'default'=>$default_maxsubmissionsizebytes);
+                            'default'=>$defaultmaxsubmissionsizebytes);
         
         $mform->addElement('select', 'assignsubmission_file_maxsizebytes', get_string('maximumsubmissionsize', 'assignsubmission_file'), $choices);
-        $mform->setDefault('assignsubmission_file_maxsizebytes', $default_maxsubmissionsizebytes);
+        $mform->setDefault('assignsubmission_file_maxsizebytes', $defaultmaxsubmissionsizebytes);
     }
     
     /**
@@ -184,7 +184,7 @@ class assignment_submission_file extends assignment_submission_plugin {
         $data = file_postupdate_standard_filemanager($data, 'files', $fileoptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
 
 
-        $file_submission = $this->get_file_submission($submission->id);
+        $filesubmission = $this->get_file_submission($submission->id);
 
         //plagiarism code event trigger when files are uploaded
 
@@ -206,15 +206,15 @@ class assignment_submission_file extends assignment_submission_plugin {
         events_trigger('assessable_file_uploaded', $eventdata);
 
 
-        if ($file_submission) {
-            $file_submission->numfiles = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
-            return $DB->update_record('assign_submission_file', $file_submission);
+        if ($filesubmission) {
+            $filesubmission->numfiles = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
+            return $DB->update_record('assign_submission_file', $filesubmission);
         } else {
-            $file_submission = new stdClass();
-            $file_submission->numfiles = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
-            $file_submission->submission = $submission->id;
-            $file_submission->assignment = $this->assignment->get_instance()->id;
-            return $DB->insert_record('assign_submission_file', $file_submission) > 0;
+            $filesubmission = new stdClass();
+            $filesubmission->numfiles = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
+            $filesubmission->submission = $submission->id;
+            $filesubmission->assignment = $this->assignment->get_instance()->id;
+            return $DB->insert_record('assign_submission_file', $filesubmission) > 0;
         }
     }
 
@@ -283,10 +283,10 @@ class assignment_submission_file extends assignment_submission_plugin {
      */
     public function can_upgrade($type, $version) {
         
-        $uploadsingle_type ='uploadsingle';
-        $upload_type ='upload';
+        $uploadsingletype ='uploadsingle';
+        $uploadtype ='upload';
         
-        if (($type == $uploadsingle_type || $type == $upload_type) && $version >= 2011112900) {
+        if (($type == $uploadsingletype || $type == $uploadtype) && $version >= 2011112900) {
             return true;
         }
         return false;
@@ -332,13 +332,13 @@ class assignment_submission_file extends assignment_submission_plugin {
     public function upgrade(context $oldcontext, stdClass $oldassignment, stdClass $oldsubmission, stdClass $submission, $log) {
         global $DB;
 
-        $file_submission = new stdClass();
+        $filesubmission = new stdClass();
         
-        $file_submission->numfiles = $oldsubmission->numfiles;
-        $file_submission->submission = $submission->id;
-        $file_submission->assignment = $this->assignment->get_instance()->id;
+        $filesubmission->numfiles = $oldsubmission->numfiles;
+        $filesubmission->submission = $submission->id;
+        $filesubmission->assignment = $this->assignment->get_instance()->id;
         
-        if (!$DB->insert_record('assign_submission_file', $file_submission) > 0) {
+        if (!$DB->insert_record('assign_submission_file', $filesubmission) > 0) {
             $log .= get_string('couldnotconvertsubmission', 'mod_assign', $submission->userid);
             return false;
         }
@@ -372,11 +372,11 @@ class assignment_submission_file extends assignment_submission_plugin {
      */
     public function format_for_log(stdClass $submission) {
         // format the info for each submission plugin add_to_log
-        $file_count = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
-        $file_log_info = '';
-        $file_log_info .= ' the number of file(s) : ' . $file_count . " file(s).<br>";
+        $filecount = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
+        $fileloginfo = '';
+        $fileloginfo .= ' the number of file(s) : ' . $filecount . " file(s).<br>";
 
-        return $file_log_info;
+        return $fileloginfo;
     }
 
 }

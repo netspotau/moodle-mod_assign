@@ -179,7 +179,7 @@ abstract class assignment_plugin {
      * @param stdClass $data - the data submitted from the form
      * @return bool - on error the subtype should call set_error and return false.
      */
-    public function save($submission_grade, stdClass $data) {
+    public function save($submissionorgrade, stdClass $data) {
         return true;   
     }
     
@@ -218,7 +218,7 @@ abstract class assignment_plugin {
      * @param stdClass $data - This is the form data that can be modified for example by a filemanager element
      * @return boolean - true if we added anything to the form
      */
-    public function get_form_elements($submission_grade, MoodleQuickForm $mform, stdClass $data) {
+    public function get_form_elements($submissionorgrade, MoodleQuickForm $mform, stdClass $data) {
         return false;
     }
 
@@ -228,7 +228,7 @@ abstract class assignment_plugin {
      * @param mixed assignment_submission|assignment_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
      * @return string - return a string representation of the submission in full
      */
-    public function view($submission_grade) {
+    public function view($submissionorgrade) {
         return '';
     }
 
@@ -238,7 +238,7 @@ abstract class assignment_plugin {
      * @param mixed assignment_submission|assignment_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
      * @return bool
      */
-    public function show_view_link($submission_grade) {
+    public function show_view_link($submissionorgrade) {
         return true;
     }
 
@@ -343,7 +343,7 @@ abstract class assignment_plugin {
      * @param mixed assignment_submission| assignment_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
      * @return string - return a string representation of the submission in full
      */
-    public function view_summary($submission_grade) {
+    public function view_summary($submissionorgrade) {
         return '';
     }
     
@@ -365,7 +365,7 @@ abstract class assignment_plugin {
      * @param mixed assignment_submission| assignment_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
      * @return array - return an array of files indexed by filename
      */
-    public function get_files($submission_grade) {
+    public function get_files($submissionorgrade) {
         return array();
     }
     
@@ -411,12 +411,12 @@ abstract class assignment_plugin {
      * 
      * @param context $oldcontext The data record for the old context
      * @param stdClass $oldassignment The data record for the old assignment
-     * @param stdClass $oldsubmission_grade The data record for the old submission
+     * @param stdClass $oldsubmissionorgrade The data record for the old submission
      * @param mixed assignment_submission| assignment_grade The new submission or grade
      * @param string $log Record upgrade messages in the log
      * @return boolean true or false - false will trigger a rollback
      */
-    public function upgrade(context $oldcontext, stdClass $oldassignment, stdClass $oldsubmission_grade, $submission_grade, $log) {
+    public function upgrade(context $oldcontext, stdClass $oldassignment, stdClass $oldsubmissionorgrade, $submissionorgrade, $log) {
         $log = $log . ' ' . get_string('upgradenotimplemented', 'mod_assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));
         return false;
     }
@@ -427,7 +427,7 @@ abstract class assignment_plugin {
      * 
      * @return string
      */
-    public function format_for_log($submission_grade) {
+    public function format_for_log($submissionorgrade) {
         // format the info for each submission plugin add_to_log
         return '';
     }

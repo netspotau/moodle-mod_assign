@@ -48,17 +48,17 @@ class backup_assignsubmission_file_subplugin extends backup_subplugin {
 
         // create XML elements
         $subplugin = $this->get_subplugin_element(); // virtual optigroup element
-        $subplugin_wrapper = new backup_nested_element($this->get_recommended_name());
-        $subplugin_element = new backup_nested_element('submission_file', null, array('numfiles', 'submission'));
+        $subpluginwrapper = new backup_nested_element($this->get_recommended_name());
+        $subpluginelement = new backup_nested_element('submission_file', null, array('numfiles', 'submission'));
 
         // connect XML elements into the tree
-        $subplugin->add_child($subplugin_wrapper);
-        $subplugin_wrapper->add_child($subplugin_element);
+        $subplugin->add_child($subpluginwrapper);
+        $subpluginwrapper->add_child($subpluginelement);
 
         // set source to populate the data
-        $subplugin_element->set_source_table('assign_submission_file', array('submission' => backup::VAR_PARENTID));
+        $subpluginelement->set_source_table('assign_submission_file', array('submission' => backup::VAR_PARENTID));
 
-        $subplugin_element->annotate_files('mod_assign', 'submission_files', 'submission');// The parent is the submission
+        $subpluginelement->annotate_files('mod_assign', 'submission_files', 'submission');// The parent is the submission
         return $subplugin;
     }
 }

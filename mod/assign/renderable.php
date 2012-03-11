@@ -524,9 +524,9 @@ class submission_status implements renderable {
     /** @var bool graded */
     protected $graded = false;
     /** @var bool show_edit */
-    protected $show_edit = false;
+    protected $canedit = false;
     /** @var bool show_submit */
-    protected $show_submit = false;
+    protected $cansubmit = false;
 
     /**
      * constructor
@@ -536,17 +536,17 @@ class submission_status implements renderable {
      * @param bool $locked
      * @param bool $graded
      * @param int $view
-     * @param bool $can_edit
-     * @param bool $can_submit
+     * @param bool $canedit
+     * @param bool $cansubmit
      */
-    public function __construct($assignment, $submission, $locked, $graded, $view, $can_edit, $can_submit) {
+    public function __construct($assignment, $submission, $locked, $graded, $view, $canedit, $cansubmit) {
         $this->set_assignment($assignment);
         $this->set_submission($submission);
         $this->set_locked($locked);
         $this->set_graded($graded);
         $this->set_view($view);
-        $this->set_can_edit($can_edit);
-        $this->set_can_submit($can_submit);
+        $this->set_can_edit($canedit);
+        $this->set_can_submit($cansubmit);
     }
     
     /**
@@ -555,16 +555,16 @@ class submission_status implements renderable {
      * @return bool
      */
     public function can_edit() {
-        return $this->can_edit;
+        return $this->canedit;
     }
 
     /**
-     * Sets the can_edit link of the submission
+     * Sets the canedit link of the submission
      *
-     * @param bool $can_edit
+     * @param bool $canedit
      */
-    public function set_can_edit($can_edit) {
-        $this->can_edit = $can_edit;
+    public function set_can_edit($canedit) {
+        $this->canedit = $canedit;
     }
     
     /**
@@ -573,16 +573,16 @@ class submission_status implements renderable {
      * @return bool
      */
     public function can_submit() {
-        return $this->can_submit;
+        return $this->cansubmit;
     }
 
     /**
-     * Sets the can_submit status of the submission
+     * Sets the cansubmit status of the submission
      *
-     * @param bool $can_submit
+     * @param bool $cansubmit
      */
-    public function set_can_submit($can_submit) {
-        $this->can_submit = $can_submit;
+    public function set_can_submit($cansubmit) {
+        $this->cansubmit = $cansubmit;
     }
     
     
@@ -756,8 +756,8 @@ class assignment_header implements renderable {
      *
      * @param bool show_intro
      */
-    public function set_show_intro($show_intro) {
-        $this->showintro = $show_intro;
+    public function set_show_intro($showintro) {
+        $this->showintro = $showintro;
     }
     
 }

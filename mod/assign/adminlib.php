@@ -214,16 +214,16 @@ class assignment_plugin_manager {
                 $row[] = $this->format_icon_link('show', $plugin, 'i/show', get_string('enable'));
             }
 
-            $move_links = '';
+            $movelinks = '';
             if (!$idx == 0) {
-                $move_links .= $this->format_icon_link('moveup', $plugin, 't/up', get_string('up'));
+                $movelinks .= $this->format_icon_link('moveup', $plugin, 't/up', get_string('up'));
             } else {
-                $move_links .= $OUTPUT->spacer(array('width'=>15));
+                $movelinks .= $OUTPUT->spacer(array('width'=>15));
             }
             if ($idx != count($plugins) - 1) {
-                $move_links .= $this->format_icon_link('movedown', $plugin, 't/down', get_string('down'));
+                $movelinks .= $this->format_icon_link('movedown', $plugin, 't/down', get_string('down'));
             }
-            $row[] = $move_links;
+            $row[] = $movelinks;
 
             if ($row[1] != '') {
                 $row[] = $this->format_icon_link('delete', $plugin, 't/delete', get_string('delete'));
@@ -380,7 +380,7 @@ class assignment_plugin_manager {
         // get a list of the current plugins
         $plugins = $this->get_sorted_plugins_list();
 
-        $current_index = 0;
+        $currentindex = 0;
 
         // throw away the keys
 
@@ -389,23 +389,23 @@ class assignment_plugin_manager {
         // find this plugin in the list
         foreach ($plugins as $key => $plugin) {
             if ($plugin == $plugintomove) {
-                $current_index = $key;
+                $currentindex = $key;
                 break;
             }
         }
 
         // make the switch
         if ($dir == 'up') {
-            if ($current_index > 0) {
-                $tmp_plugin = $plugins[$current_index - 1];
-                $plugins[$current_index - 1] = $plugins[$current_index];
-                $plugins[$current_index] = $tmp_plugin;
+            if ($currentindex > 0) {
+                $tempplugin = $plugins[$currentindex - 1];
+                $plugins[$currentindex - 1] = $plugins[$currentindex];
+                $plugins[$currentindex] = $tempplugin;
             }
         } else if ($dir == 'down') {
-            if ($current_index < (count($plugins) - 1)) {
-                $tmp_plugin = $plugins[$current_index + 1];
-                $plugins[$current_index + 1] = $plugins[$current_index];
-                $plugins[$current_index] = $tmp_plugin;
+            if ($currentindex < (count($plugins) - 1)) {
+                $tempplugin = $plugins[$currentindex + 1];
+                $plugins[$currentindex + 1] = $plugins[$currentindex];
+                $plugins[$currentindex] = $tempplugin;
             }
         }
 
@@ -483,17 +483,18 @@ class assignment_plugin_manager {
         $plugins = get_plugin_list_with_file($subtype, 'settings.php', false);
         $pluginsbyname = array();
         foreach ($plugins as $plugin => $plugindir) {
-            $str_pluginname = get_string('pluginname', $subtype . '_'.$plugin);
-            $pluginsbyname[$str_pluginname] = $plugin;
+            $pluginname = get_string('pluginname', $subtype . '_'.$plugin);
+            $pluginsbyname[$pluginname] = $plugin;
         }
         ksort($pluginsbyname);
 
-        $tmp_settings = $settings;
-        foreach ($pluginsbyname as $str_pluginname => $plugin) {
+        // We need to reset settings after the loop
+        $tempsettings = $settings;
+        foreach ($pluginsbyname as $pluginname => $plugin) {
             $pluginname = $plugin;
 
             $settings = new admin_settingpage($subtype . '_'.$pluginname,
-                    $str_pluginname, 'moodle/site:config', !$module->visible);
+                    $pluginname, 'moodle/site:config', !$module->visible);
             if ($admin->fulltree) {
                 $shortsubtype = substr($subtype, strlen('assign'));
                 include($CFG->dirroot . "/mod/assign/$shortsubtype/$pluginname/settings.php");
@@ -502,7 +503,8 @@ class assignment_plugin_manager {
             $admin->add($subtype . 'plugins', $settings);
         }
 
-        $settings = $tmp_settings;
+        // Reset settings to the original point in the tree
+        $settings = $tempsettings;
     
     }
 }

@@ -75,12 +75,11 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
 
        
         $gradeid = $grade ? $grade->id : 0;
-        $default_comment = '';
         if ($grade) {
-            $feedback_comments = $this->get_feedback_comments($grade->id);
-            if ($feedback_comments) {
-                $data->feedbackcomments_editor['text'] = $feedback_comments->commenttext;
-                $data->feedbackcomments_editor['format'] = $feedback_comments->commentformat;
+            $feedbackcomments = $this->get_feedback_comments($grade->id);
+            if ($feedbackcomments) {
+                $data->feedbackcomments_editor['text'] = $feedbackcomments->commenttext;
+                $data->feedbackcomments_editor['format'] = $feedbackcomments->commentformat;
             }
         }
 
@@ -100,18 +99,18 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
         global $DB;
 
 
-        $feedback_comment = $this->get_feedback_comments($grade->id);
-        if ($feedback_comment) {
-            $feedback_comment->commenttext = $data->assignfeedbackcomments_editor['text'];
-            $feedback_comment->commentformat = $data->assignfeedbackcomments_editor['format'];
-            return $DB->update_record('assign_feedback_comments', $feedback_comment);
+        $feedbackcomment = $this->get_feedback_comments($grade->id);
+        if ($feedbackcomment) {
+            $feedbackcomment->commenttext = $data->assignfeedbackcomments_editor['text'];
+            $feedbackcomment->commentformat = $data->assignfeedbackcomments_editor['format'];
+            return $DB->update_record('assign_feedback_comments', $feedbackcomment);
         } else {
-            $feedback_comment = new stdClass();
-            $feedback_comment->commenttext = $data->assignfeedbackcomments_editor['text'];
-            $feedback_comment->commentformat = $data->assignfeedbackcomments_editor['format'];
-            $feedback_comment->grade = $grade->id;
-            $feedback_comment->assignment = $this->assignment->get_instance()->id;
-            return $DB->insert_record('assign_feedback_comments', $feedback_comment) > 0;
+            $feedbackcomment = new stdClass();
+            $feedbackcomment->commenttext = $data->assignfeedbackcomments_editor['text'];
+            $feedbackcomment->commentformat = $data->assignfeedbackcomments_editor['format'];
+            $feedbackcomment->grade = $grade->id;
+            $feedbackcomment->assignment = $this->assignment->get_instance()->id;
+            return $DB->insert_record('assign_feedback_comments', $feedbackcomment) > 0;
         }
     }
 
@@ -122,9 +121,9 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
      * @return string 
      */
     public function view_summary(stdClass $grade) {
-        $feedback_comments = $this->get_feedback_comments($grade->id);
-        if ($feedback_comments) {
-            $text = format_text($feedback_comments->commenttext, $feedback_comments->commentformat);
+        $feedbackcomments = $this->get_feedback_comments($grade->id);
+        if ($feedbackcomments) {
+            $text = format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat);
             return shorten_text($text, 140);
         }
         return '';
@@ -137,9 +136,9 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
      * @return bool
      */
     public function show_view_link(stdClass $grade) {
-        $feedback_comments = $this->get_feedback_comments($grade->id);
-        if ($feedback_comments) {
-            $text = format_text($feedback_comments->commenttext, $feedback_comments->commentformat);
+        $feedbackcomments = $this->get_feedback_comments($grade->id);
+        if ($feedbackcomments) {
+            $text = format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat);
             return shorten_text($text, 140) != $text;
         }
         return false;
@@ -152,9 +151,9 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
      * @return string
      */
     public function view(stdClass $grade) {
-        $feedback_comments = $this->get_feedback_comments($grade->id);
-        if ($feedback_comments) {
-            return format_text($feedback_comments->commenttext, $feedback_comments->commentformat);
+        $feedbackcomments = $this->get_feedback_comments($grade->id);
+        if ($feedbackcomments) {
+            return format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat);
         } 
         return '';
     }
@@ -170,9 +169,9 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
      * @return int
      */
     public function format_for_gradebook(stdClass $grade) {
-        $feedback_comments = $this->get_feedback_comments($grade->id);
-        if ($feedback_comments) {
-            return $feedback_comments->commentformat;
+        $feedbackcomments = $this->get_feedback_comments($grade->id);
+        if ($feedbackcomments) {
+            return $feedbackcomments->commentformat;
         }
         return FORMAT_MOODLE;
     }
@@ -188,9 +187,9 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
      * @return string
      */
     public function text_for_gradebook($grade) {
-        $feedback_comments = $this->get_feedback_comments($grade->id);
-        if ($feedback_comments) {
-            return $feedback_comments->commenttext;
+        $feedbackcomments = $this->get_feedback_comments($grade->id);
+        if ($feedbackcomments) {
+            return $feedbackcomments->commenttext;
         }
         return '';
     }

@@ -76,9 +76,9 @@ class backup_assign_activity_structure_step extends backup_activity_structure_st
                                                  'locked', 
                                                  'mailed'));
 
-        $plugin_configs = new backup_nested_element('plugin_configs');
+        $pluginconfigs = new backup_nested_element('plugin_configs');
         
-        $plugin_config = new backup_nested_element('plugin_config', array('id'), 
+        $pluginconfig = new backup_nested_element('plugin_config', array('id'), 
                                                    array('plugin', 
                                                          'subtype', 
                                                          'name', 
@@ -90,8 +90,8 @@ class backup_assign_activity_structure_step extends backup_activity_structure_st
         $submissions->add_child($submission);
         $assign->add_child($grades);
         $grades->add_child($grade);
-        $assign->add_child($plugin_configs);
-        $plugin_configs->add_child($plugin_config);
+        $assign->add_child($pluginconfigs);
+        $pluginconfigs->add_child($pluginconfig);
         
  
         // Define sources
@@ -103,7 +103,7 @@ class backup_assign_activity_structure_step extends backup_activity_structure_st
 
             $grade->set_source_table('assign_grades', 
                                      array('assignment' => backup::VAR_PARENTID));
-            $plugin_config->set_source_table('assign_plugin_config', 
+            $pluginconfig->set_source_table('assign_plugin_config', 
                                      array('assignment' => backup::VAR_PARENTID));
         
             // support 2 types of subplugins

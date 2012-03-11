@@ -88,10 +88,10 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
         } 
         
         if ($submission) {
-            $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
-            if ($onlinetext_submission) {
-                $data->onlinetext = $onlinetext_submission->onlinetext;
-                $data->onlinetextformat = $onlinetext_submission->onlineformat;
+            $onlinetextsubmission = $this->get_onlinetext_submission($submission->id);
+            if ($onlinetextsubmission) {
+                $data->onlinetext = $onlinetextsubmission->onlinetext;
+                $data->onlinetextformat = $onlinetextsubmission->onlineformat;
             }
             
         }
@@ -131,23 +131,23 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
         
         $data = file_postupdate_standard_editor($data, 'onlinetext', $editoroptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $submission->id);
 
-        $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
-        if ($onlinetext_submission) {
+        $onlinetextsubmission = $this->get_onlinetext_submission($submission->id);
+        if ($onlinetextsubmission) {
             
-            $onlinetext_submission->onlinetext = $data->onlinetext;
-            $onlinetext_submission->onlineformat = $data->onlinetext_editor['format'];
+            $onlinetextsubmission->onlinetext = $data->onlinetext;
+            $onlinetextsubmission->onlineformat = $data->onlinetext_editor['format'];
             
           
-            return $DB->update_record('assign_submission_onlinetext', $onlinetext_submission);
+            return $DB->update_record('assign_submission_onlinetext', $onlinetextsubmission);
         } else {
            
-            $onlinetext_submission = new stdClass();
-            $onlinetext_submission->onlinetext = $data->onlinetext;
-            $onlinetext_submission->onlineformat = $data->onlinetext_editor['format'];
+            $onlinetextsubmission = new stdClass();
+            $onlinetextsubmission->onlinetext = $data->onlinetext;
+            $onlinetextsubmission->onlineformat = $data->onlinetext_editor['format'];
                
-            $onlinetext_submission->submission = $submission->id;
-            $onlinetext_submission->assignment = $this->assignment->get_instance()->id;
-            return $DB->insert_record('assign_submission_onlinetext', $onlinetext_submission) > 0;
+            $onlinetextsubmission->submission = $submission->id;
+            $onlinetextsubmission->assignment = $this->assignment->get_instance()->id;
+            return $DB->insert_record('assign_submission_onlinetext', $onlinetextsubmission) > 0;
         }
         
      
@@ -161,9 +161,9 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
      */
     public function get_editor_text($name, $submissionid) {
         if ($name == 'onlinetext') {
-            $onlinetext_submission = $this->get_onlinetext_submission($submissionid);
-            if ($onlinetext_submission) {
-                return $onlinetext_submission->onlinetext;
+            $onlinetextsubmission = $this->get_onlinetext_submission($submissionid);
+            if ($onlinetextsubmission) {
+                return $onlinetextsubmission->onlinetext;
             }
         }
 
@@ -178,9 +178,9 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
      */
     public function get_editor_format($name, $submissionid) {
         if ($name == 'onlinetext') {
-            $onlinetext_submission = $this->get_onlinetext_submission($submissionid);
-            if ($onlinetext_submission) {
-                return $onlinetext_submission->onlineformat;
+            $onlinetextsubmission = $this->get_onlinetext_submission($submissionid);
+            if ($onlinetextsubmission) {
+                return $onlinetextsubmission->onlineformat;
             }
         }
      
@@ -196,10 +196,10 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
       */
     public function view_summary(stdClass $submission) {
          
-        $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
+        $onlinetextsubmission = $this->get_onlinetext_submission($submission->id);
 
-        if ($onlinetext_submission) {
-            $text = format_text($onlinetext_submission->onlinetext, $onlinetext_submission->onlineformat, array('context'=>$this->assignment->get_context()));
+        if ($onlinetextsubmission) {
+            $text = format_text($onlinetextsubmission->onlinetext, $onlinetextsubmission->onlineformat, array('context'=>$this->assignment->get_context()));
             $shorttext = shorten_text($text, 140);
             if ($text != $shorttext) {  
                 return get_string('numwords', '', count_words($text));                    
@@ -217,9 +217,9 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
      * @return array - return an array of files indexed by filename
      */
     public function get_files(stdClass $submission) {
-        $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
-        if ($onlinetext_submission) {
-            $submissioncontent = "<html><body>". format_text($onlinetext_submission->onlinetext, $onlinetext_submission->onlineformat, array('context'=>$this->assignment->get_context())). "</body></html>";      //fetched from database
+        $onlinetextsubmission = $this->get_onlinetext_submission($submission->id);
+        if ($onlinetextsubmission) {
+            $submissioncontent = "<html><body>". format_text($onlinetextsubmission->onlinetext, $onlinetextsubmission->onlineformat, array('context'=>$this->assignment->get_context())). "</body></html>";      //fetched from database
 
             return array(get_string('onlinetextfilename', 'assignsubmission_onlinetext') => array($submissioncontent));
         }
@@ -235,13 +235,13 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     public function view(stdClass $submission) {
         $result = '';
         
-        $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
+        $onlinetextsubmission = $this->get_onlinetext_submission($submission->id);
         
         
-        if ($onlinetext_submission) {
+        if ($onlinetextsubmission) {
             
             // render for portfolio API
-            $result .= $this->assignment->render_editor_content(ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $onlinetext_submission->submission, $this->get_type(), 'onlinetext');
+            $result .= $this->assignment->render_editor_content(ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $onlinetextsubmission->submission, $this->get_type(), 'onlinetext');
                        
         } 
         
@@ -292,13 +292,13 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     public function upgrade(context $oldcontext, stdClass $oldassignment, stdClass $oldsubmission, stdClass $submission, $log) {
         global $DB;
         
-       $comments_submission = new stdClass();
-        $onlinetext_submission->onlinetext = $oldsubmission->data1;
-        $onlinetext_submission->onlineformat = $oldsubmission->data2;
+        $commentssubmission = new stdClass();
+        $onlinetextsubmission->onlinetext = $oldsubmission->data1;
+        $onlinetextsubmission->onlineformat = $oldsubmission->data2;
                
-        $onlinetext_submission->submission = $submission->id;
-        $onlinetext_submission->assignment = $this->assignment->get_instance()->id;
-        if (!$DB->insert_record('assign_submission_onlinetext', $onlinetext_submission) > 0) {
+        $onlinetextsubmission->submission = $submission->id;
+        $onlinetextsubmission->assignment = $this->assignment->get_instance()->id;
+        if (!$DB->insert_record('assign_submission_onlinetext', $onlinetextsubmission) > 0) {
             $log .= get_string('couldnotconvertsubmission', 'mod_assign', $submission->userid);
             return false;
         }
@@ -324,14 +324,14 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
      */
     public function format_for_log(stdClass $submission) {
         // format the info for each submission plugin add_to_log
-        $onlinetext_submission = $this->get_onlinetext_submission($submission->id);
-        $onlinetext_log_info = '';
-        $text = format_text($onlinetext_submission->onlinetext,
-                            $onlinetext_submission->onlineformat, 
+        $onlinetextsubmission = $this->get_onlinetext_submission($submission->id);
+        $onlinetextloginfo = '';
+        $text = format_text($onlinetextsubmission->onlinetext,
+                            $onlinetextsubmission->onlineformat, 
                             array('context'=>$this->assignment->get_context()));
-        $onlinetext_log_info .= 'Onlinetext word count : ' . get_string('numwords', '', count_words($text)) . " <br>";
+        $onlinetextloginfo .= 'Onlinetext word count : ' . get_string('numwords', '', count_words($text)) . " <br>";
 
-        return $onlinetext_log_info;
+        return $onlinetextloginfo;
     }
 
 }

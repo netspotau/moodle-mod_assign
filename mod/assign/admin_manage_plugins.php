@@ -29,9 +29,9 @@ require_once(dirname(__FILE__) . '/../../config.php');
 require_once('adminlib.php');
 
 // create the class for this controller
-$plugin_manager = new assignment_plugin_manager(required_param('subtype', PARAM_PLUGIN));
+$pluginmanager = new assignment_plugin_manager(required_param('subtype', PARAM_PLUGIN));
 
 $PAGE->set_context(get_system_context());
 
 // execute the controller 
-$plugin_manager->execute(optional_param('action', null, PARAM_PLUGIN), optional_param('plugin', null, PARAM_PLUGIN));
+$pluginmanager->execute(optional_param('action', null, PARAM_PLUGIN), optional_param('plugin', null, PARAM_PLUGIN));

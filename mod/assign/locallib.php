@@ -110,16 +110,16 @@ class assignment {
     private $cache;
 
     /** @var array list of the installed submission plugins */
-    private $submission_plugins;
+    private $submissionplugins;
     
     /** @var array list of the installed feedback plugins */
-    private $feedback_plugins;
+    private $feedbackplugins;
 
     /** @var string action to be used to return to this page (without repeating any form submissions etc.) */
-    private $return_action = 'view';
+    private $returnaction = 'view';
     
     /** @var array params to be used to return to this page */
-    private $return_params = array();
+    private $returnparams = array();
     
     /**
      * Constructor for the base assign class
@@ -136,8 +136,8 @@ class assignment {
         $this->course = $course; 
         $this->cache = array(); // temporary cache only lives for a single request - used to reduce db lookups
 
-        $this->submission_plugins = $this->load_plugins('assignsubmission');
-        $this->feedback_plugins = $this->load_plugins('assignfeedback');
+        $this->submissionplugins = $this->load_plugins('assignsubmission');
+        $this->feedbackplugins = $this->load_plugins('assignfeedback');
         $this->output = $PAGE->get_renderer('mod_assign');
     }
 
@@ -149,8 +149,8 @@ class assignment {
      * @return void
      */
     public function register_return_link($action, $params) {
-        $this->return_action = $action;
-        $this->return_params = $params;
+        $this->returnaction = $action;
+        $this->returnparams = $params;
     }
 
     /** 
@@ -158,7 +158,7 @@ class assignment {
      * @return string action
      */
     public function get_return_action() {
-        return $this->return_action;
+        return $this->returnaction;
     }
     
     /** 
@@ -166,7 +166,7 @@ class assignment {
      * @return array params
      */
     public function get_return_params() {
-        return $this->return_params;
+        return $this->returnparams;
     }
     
     /** 
@@ -198,7 +198,7 @@ class assignment {
      * @return array 
      */
     public function get_feedback_plugins() {
-        return $this->feedback_plugins;
+        return $this->feedbackplugins;
     }
     
     /** 
@@ -206,7 +206,7 @@ class assignment {
      * @return array 
      */
     public function get_submission_plugins() {
-        return $this->submission_plugins;
+        return $this->submissionplugins;
     }
     
 
@@ -217,9 +217,9 @@ class assignment {
      */
     private function get_plugin_by_type($subtype, $type) {
         $shortsubtype = substr($subtype, strlen('assign'));
-        $name = $shortsubtype . '_plugins';
-        $plugin_list = $this->$name;
-        foreach ($plugin_list as $plugin) {
+        $name = $shortsubtype . 'plugins';
+        $pluginlist = $this->$name;
+        foreach ($pluginlist as $plugin) {
             if ($plugin->get_type() == $type) {
                 return $plugin;
             }
@@ -261,9 +261,9 @@ class assignment {
                 require_once($path . '/lib.php');
 
                 $shortsubtype = substr($subtype, strlen('assign'));
-                $plugin_class = 'assignment_' . $shortsubtype . '_' . $name;
+                $pluginclass = 'assignment_' . $shortsubtype . '_' . $name;
                 
-                $plugin = new $plugin_class($this, $name);
+                $plugin = new $pluginclass($this, $name);
 
                 if ($plugin instanceof assignment_plugin) {
                     $idx = $plugin->get_sort_order();
@@ -387,13 +387,13 @@ class assignment {
 
         if ($callplugins) {
             // call save_settings hook for submission plugins
-            foreach ($this->submission_plugins as $plugin) {
+            foreach ($this->submissionplugins as $plugin) {
                 if (!$this->update_plugin_instance($plugin, $formdata)) {
                     print_error($plugin->get_error());
                     return false;
                 }
             }
-            foreach ($this->feedback_plugins as $plugin) {
+            foreach ($this->feedbackplugins as $plugin) {
                 if (!$this->update_plugin_instance($plugin, $formdata)) {
                     print_error($plugin->get_error());
                     return false;
@@ -475,8 +475,8 @@ class assignment {
      */
     private function update_plugin_instance(assignment_plugin $plugin, stdClass $formdata) {
         if ($plugin->is_visible()) {
-            $enabled_name = $plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled';
-            if ($formdata->$enabled_name) {
+            $enabledname = $plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled';
+            if ($formdata->$enabledname) {
                 $plugin->enable();
                 if (!$plugin->save_settings($formdata)) {
                     print_error($plugin->get_error());
@@ -601,13 +601,13 @@ class assignment {
         // load the assignment so the plugins have access to it
 
         // call save_settings hook for submission plugins
-        foreach ($this->submission_plugins as $plugin) {
+        foreach ($this->submissionplugins as $plugin) {
             if (!$this->update_plugin_instance($plugin, $formdata)) {
                 print_error($plugin->get_error());
                 return false;
             }
         }
-        foreach ($this->feedback_plugins as $plugin) {
+        foreach ($this->feedbackplugins as $plugin) {
             if (!$this->update_plugin_instance($plugin, $formdata)) {
                 print_error($plugin->get_error());
                 return false;
@@ -636,7 +636,7 @@ class assignment {
      * @return void
      */
     private function add_plugin_grade_elements($grade, MoodleQuickForm $mform, stdClass $data) {
-        foreach ($this->feedback_plugins as $plugin) {
+        foreach ($this->feedbackplugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
                 $mform->addElement('header', 'header_' . $plugin->get_type(), $plugin->get_name());
                 if (!$plugin->get_form_elements($grade, $mform, $data)) {
@@ -681,11 +681,11 @@ class assignment {
      * @return void
      */
     private function add_all_plugin_settings(MoodleQuickForm $mform) {
-        foreach ($this->submission_plugins as $plugin) {
+        foreach ($this->submissionplugins as $plugin) {
             $this->add_plugin_settings($plugin, $mform);
             
         }
-        foreach ($this->feedback_plugins as $plugin) {
+        foreach ($this->feedbackplugins as $plugin) {
             $this->add_plugin_settings($plugin, $mform);
         }
     }
@@ -1100,7 +1100,7 @@ class assignment {
         global $CFG, $USER, $DB;
 
         /// first execute all crons in submission plugins
-        foreach ($this->submission_plugins as $plugin) {
+        foreach ($this->submissionplugins as $plugin) {
 
             if ($plugin->is_enabled() && $plugin->is_visible()) {
 
@@ -1108,7 +1108,7 @@ class assignment {
             }
         }
         /// first execute all crons in feedback plugins
-        foreach ($this->feedback_plugins as $plugin) {
+        foreach ($this->feedbackplugins as $plugin) {
 
             if ($plugin->is_enabled() && $plugin->is_visible()) {
 
@@ -1215,8 +1215,8 @@ class assignment {
         $text = $plugin->get_editor_text($editor, $submissionid);
         $format = $plugin->get_editor_format($editor, $submissionid);
         
-        $final_text = file_rewrite_pluginfile_urls($text, 'pluginfile.php', $this->get_context()->id, 'mod_assign', $filearea, $submissionid);
-        $result .= format_text($final_text, $format, array('overflowdiv' => true, 'context' => $this->get_context()));
+        $finaltext = file_rewrite_pluginfile_urls($text, 'pluginfile.php', $this->get_context()->id, 'mod_assign', $filearea, $submissionid);
+        $result .= format_text($finaltext, $format, array('overflowdiv' => true, 'context' => $this->get_context()));
 
         
 
@@ -1325,12 +1325,12 @@ class assignment {
 
                 $prefix = clean_filename(fullname($user) . "_" .$userid . "_");
 
-                foreach ($this->submission_plugins as $plugin) {
+                foreach ($this->submissionplugins as $plugin) {
                     if ($plugin->is_enabled() && $plugin->is_visible()) {
-                        $plugin_files = $plugin->get_files($submission);
+                        $pluginfiles = $plugin->get_files($submission);
 
                     
-                        foreach ($plugin_files as $zipfilename => $file) {
+                        foreach ($pluginfiles as $zipfilename => $file) {
                             $filesforzipping[$prefix . $zipfilename] = $file;
                         } 
                     }
@@ -1483,8 +1483,8 @@ class assignment {
         // get the current grade
         $grade = $this->get_grade($userid, 0, false);
         if ($this->can_view_submission($userid)) {
-            $grade_locked = ($grade && $grade->locked) || $this->grading_disabled($userid);
-            echo $this->output->render(new submission_status($this, $submission, $grade_locked, $this->is_graded($userid), submission_status::GRADER_VIEW, false, false));
+            $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($userid);
+            echo $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($userid), submission_status::GRADER_VIEW, false, false));
         }
         if ($grade) {
             $data = new stdClass();
@@ -1672,12 +1672,12 @@ class assignment {
         $submission = $this->get_submission($USER->id, 0, false);
 
         if ($this->can_view_submission($USER->id)) {
-            $show_edit = has_capability('mod/assign:submit', $this->context) &&
+            $showedit = has_capability('mod/assign:submit', $this->context) &&
                          $this->submissions_open() && ($this->is_any_submission_plugin_enabled());
-            $show_submit = $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
-            $grade_locked = ($grade && $grade->locked) || $this->grading_disabled($USER->id);
+            $showsubmit = $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
+            $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($USER->id);
 
-            echo $this->output->render(new submission_status($this, $submission, $grade_locked, $this->is_graded($USER->id), submission_status::STUDENT_VIEW, $show_edit, $show_submit));
+            echo $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($USER->id), submission_status::STUDENT_VIEW, $showedit, $showsubmit));
 
             echo $this->output->render(new feedback_status($this, $grade, feedback_status::STUDENT_VIEW));
         }
@@ -1691,44 +1691,44 @@ class assignment {
      * convert the final raw grade(s) in the  grading table for the gradebook 
      * 
      * @param stdClass $grade
-     * @return array $gradebook_grade 
+     * @return array 
      */
     private function convert_grade_for_gradebook(stdClass $grade) {
-        $gradebook_grade = array();
+        $gradebookgrade = array();
         
         // trying to match those array keys in grade update function in gradelib.php
         // with keys in th database table assign_grades
         // starting around line 262
-        $gradebook_grade['rawgrade'] = $grade->grade;
-        $gradebook_grade['userid'] = $grade->userid;
-        $gradebook_grade['usermodified'] = $grade->grader;
-        $gradebook_grade['datesubmitted'] = NULL;
-        $gradebook_grade['dategraded'] = $grade->timemodified;
+        $gradebookgrade['rawgrade'] = $grade->grade;
+        $gradebookgrade['userid'] = $grade->userid;
+        $gradebookgrade['usermodified'] = $grade->grader;
+        $gradebookgrade['datesubmitted'] = NULL;
+        $gradebookgrade['dategraded'] = $grade->timemodified;
         if (isset($grade->feedbackformat)) {
-            $gradebook_grade['feedbackformat'] = $grade->feedbackformat;
+            $gradebookgrade['feedbackformat'] = $grade->feedbackformat;
         }
         if (isset($grade->feedbacktext)) {
-            $gradebook_grade['feedback'] = $grade->feedbacktext;
+            $gradebookgrade['feedback'] = $grade->feedbacktext;
         }
        
-        return $gradebook_grade;
+        return $gradebookgrade;
     }
     
     /**
      * convert submission details for the gradebook  
      * 
      * @param stdClass $submission
-     * @return array $gradebook_grade
+     * @return array 
      */
     private function convert_submission_for_gradebook(stdClass $submission) {
-        $gradebook_grade = array();
+        $gradebookgrade = array();
         
         
-        $gradebook_grade['userid'] = $submission->userid;
-        $gradebook_grade['usermodified'] = $submission->userid;
-        $gradebook_grade['datesubmitted'] = $submission->timemodified;
+        $gradebookgrade['userid'] = $submission->userid;
+        $gradebookgrade['usermodified'] = $submission->userid;
+        $gradebookgrade['datesubmitted'] = $submission->timemodified;
        
-        return $gradebook_grade;
+        return $gradebookgrade;
     }
 
     /**
@@ -1755,15 +1755,15 @@ class assignment {
         
         if($submission != NULL){
             
-            $gradebook_grade = $this->convert_submission_for_gradebook($submission);
+            $gradebookgrade = $this->convert_submission_for_gradebook($submission);
             
             
         }else{
             
         
-            $gradebook_grade = $this->convert_grade_for_gradebook($grade);
+            $gradebookgrade = $this->convert_grade_for_gradebook($grade);
         }
-        return grade_update('mod/assign', $this->get_course()->id, 'mod', 'assign', $this->get_instance()->id, 0, $gradebook_grade, $params);
+        return grade_update('mod/assign', $this->get_course()->id, 'mod', 'assign', $this->get_instance()->id, 0, $gradebookgrade, $params);
     }
 
     /**
@@ -1802,14 +1802,14 @@ class assignment {
         global $USER;
 
         $time = time();
-        $date_open = true;
+        $dateopen = true;
         if ($this->get_instance()->preventlatesubmissions && $this->get_instance()->duedate) {
-            $date_open = ($this->get_instance()->allowsubmissionsfromdate <= $time && $time <= $this->get_instance()->duedate);
+            $dateopen = ($this->get_instance()->allowsubmissionsfromdate <= $time && $time <= $this->get_instance()->duedate);
         } else {
-            $date_open = ($this->get_instance()->allowsubmissionsfromdate <= $time);
+            $dateopen = ($this->get_instance()->allowsubmissionsfromdate <= $time);
         }
 
-        if (!$date_open) {
+        if (!$dateopen) {
             return false;
         }
 
@@ -2082,7 +2082,7 @@ class assignment {
         $info .= get_string('submissionstatus', 'assign') . ': ' . get_string('submissionstatus_' . $submission->status, 'assign') . '. <br>';
         // format_for_log here iterating every single log INFO  from either submission or grade in every assignment plugin
 
-        foreach ($this->submission_plugins as $plugin) {
+        foreach ($this->submissionplugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
 
 
@@ -2124,7 +2124,7 @@ class assignment {
             }
           
         
-            foreach ($this->submission_plugins as $plugin) {
+            foreach ($this->submissionplugins as $plugin) {
                 if ($plugin->is_enabled()) {
                     if (!$plugin->save($submission, $data)) {
                         print_error($plugin->get_error());
@@ -2170,20 +2170,20 @@ class assignment {
      * 
      * @global stdClass $CFG
      * @param int $userid - The student userid
-     * @return bool $grading_disabled
+     * @return bool $gradingdisabled
      */
     private function grading_disabled($userid) {
         global $CFG;
         
-        $grading_info = grade_get_grades($this->get_course()->id, 'mod', 'assign', $this->get_instance()->id, array($userid));
-        if (!$grading_info) {
+        $gradinginfo = grade_get_grades($this->get_course()->id, 'mod', 'assign', $this->get_instance()->id, array($userid));
+        if (!$gradinginfo) {
             return false;
         }
 
-        if (!isset($grading_info->items[0]->grades[$userid])) {
+        if (!isset($gradinginfo->items[0]->grades[$userid])) {
             return false;
         }
-        $gradingdisabled = $grading_info->items[0]->grades[$userid]->locked || $grading_info->items[0]->grades[$userid]->overridden;
+        $gradingdisabled = $gradinginfo->items[0]->grades[$userid]->locked || $gradinginfo->items[0]->grades[$userid]->overridden;
         return $gradingdisabled;
     }
 
@@ -2345,7 +2345,7 @@ class assignment {
      * @return void
      */
     private function add_plugin_submission_elements(stdClass $submission, MoodleQuickForm $mform, stdClass $data) {
-        foreach ($this->submission_plugins as $plugin) {
+        foreach ($this->submissionplugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible() && $plugin->allow_submissions()) {
                 $mform->addElement('header', 'header_' . $plugin->get_type(), $plugin->get_name());
                 if (!$plugin->get_form_elements($submission, $mform, $data)) {
@@ -2363,7 +2363,7 @@ class assignment {
     public function is_any_submission_plugin_enabled() {
         if (!isset($this->cache['any_submission_plugin_enabled'])) {
             $this->cache['any_submission_plugin_enabled'] = false;
-            foreach ($this->submission_plugins as $plugin) {
+            foreach ($this->submissionplugins as $plugin) {
                 if ($plugin->is_enabled() && $plugin->is_visible() && $plugin->allow_submissions()) {
                     $this->cache['any_submission_plugin_enabled'] = true;
                     break;
@@ -2514,16 +2514,16 @@ class assignment {
             }
             $grade->grader= $USER->id;
 
-            $gradebook_plugin = $CFG->mod_assign_feedback_plugin_for_gradebook;
+            $gradebookplugin = $CFG->mod_assign_feedback_plugin_for_gradebook;
 
             // call save in plugins
-            foreach ($this->feedback_plugins as $plugin) {
+            foreach ($this->feedbackplugins as $plugin) {
                 if ($plugin->is_enabled() && $plugin->is_visible()) {
                     if (!$plugin->save($grade, $formdata)) {
                         $result = false;
                         print_error($plugin->get_error());
                     }
-                    if (('assignfeedback_' . $plugin->get_type()) == $gradebook_plugin) {
+                    if (('assignfeedback_' . $plugin->get_type()) == $gradebookplugin) {
                         // this is the feedback plugin chose to push comments to the gradebook
                         $grade->feedbacktext = $plugin->text_for_gradebook($grade);
                         $grade->feedbackformat = $plugin->format_for_gradebook($grade);
@@ -2552,12 +2552,12 @@ class assignment {
         if ($type == 'offline' && $version >= 2011112900) {
             return true;
         }
-        foreach ($this->submission_plugins as $plugin) {
+        foreach ($this->submissionplugins as $plugin) {
             if ($plugin->can_upgrade($type, $version)) {
                 return true;
             }
         }
-        foreach ($this->feedback_plugins as $plugin) {
+        foreach ($this->feedbackplugins as $plugin) {
             if ($plugin->can_upgrade($type, $version)) {
                 return true;
             }

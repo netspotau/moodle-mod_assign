@@ -77,8 +77,8 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     public function get_settings(MoodleQuickForm $mform) {
         global $CFG, $COURSE;
 
-        $default_maxfiles = $this->get_config('maxfiles');
-        $default_maxsizebytes = $this->get_config('maxsizebytes');
+        $defaultmaxfiles = $this->get_config('maxfiles');
+        $defaultmaxsizebytes = $this->get_config('maxsizebytes');
 
         $settings = array();
         $options = array();
@@ -87,13 +87,13 @@ class assignment_feedback_file extends assignment_feedback_plugin {
         }
         
         $mform->addElement('select', 'assignfeedback_file_maxfiles', get_string('maxfiles', 'assignfeedback_file'), $options);
-        $mform->setDefault('assignfeedback_file_maxfiles', $default_maxfiles);
+        $mform->setDefault('assignfeedback_file_maxfiles', $defaultmaxfiles);
 
         $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
         $choices[0] = get_string('courseuploadlimit') . ' ('.display_size($COURSE->maxbytes).')';
         
         $mform->addElement('select', 'assignfeedback_file_maxsizebytes', get_string('maximumsize', 'assignfeedback_file'), $choices);
-        $mform->setDefault('assignfeedback_file_maxsizebytes', $default_maxsizebytes);
+        $mform->setDefault('assignfeedback_file_maxsizebytes', $defaultmaxsizebytes);
     }
     
     /**
@@ -182,16 +182,16 @@ class assignment_feedback_file extends assignment_feedback_plugin {
         $data = file_postupdate_standard_filemanager($data, 'files', $fileoptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id);
 
         
-        $file_feedback = $this->get_file_feedback($grade->id);
-        if ($file_feedback) {
-            $file_feedback->numfiles = $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES);
-            return $DB->update_record('assign_feedback_file', $file_feedback);
+        $filefeedback = $this->get_file_feedback($grade->id);
+        if ($filefeedback) {
+            $filefeedback->numfiles = $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES);
+            return $DB->update_record('assign_feedback_file', $filefeedback);
         } else {
-            $file_feedback = new stdClass();
-            $file_feedback->numfiles = $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES);
-            $file_feedback->grade = $grade->id;
-            $file_feedback->assignment = $this->assignment->get_instance()->id;
-            return $DB->insert_record('assign_feedback_file', $file_feedback) > 0;
+            $filefeedback = new stdClass();
+            $filefeedback->numfiles = $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES);
+            $filefeedback->grade = $grade->id;
+            $filefeedback->assignment = $this->assignment->get_instance()->id;
+            return $DB->insert_record('assign_feedback_file', $filefeedback) > 0;
         }
     }
     
