@@ -739,6 +739,9 @@ class assignment {
         if ($this->get_course_module()) {
             $this->instance = $DB->get_record('assign', array('id' => $this->get_course_module()->instance), '*', MUST_EXIST);
         }
+        if (!$this->instance) {
+            throw new coding_exception('Improper use of the assignment class. Cannot load the assignment record.');
+        }
         return $this->instance;
     }
     
@@ -748,8 +751,7 @@ class assignment {
      */
     public function get_course_context() {
         if (!$this->context && !$this->course) {
-            print_error('badcontext');
-            return null;
+            throw new coding_exception('Improper use of the assignment class. Cannot load the course context.');
         }
         if ($this->context) {
             return $this->context->get_course_context();
@@ -1141,15 +1143,14 @@ class assignment {
         if ($pluginsubtype == 'assignsubmission') {
             $plugin = $this->get_submission_plugin_by_type($plugintype);
             if ($submissionid <= 0) {
-                print_error('invalidaccessparameter');
+                throw new coding_exception('Submission id should not be 0');
                 return;
             }
-            $item = $this->get_submission(0, $submissionid, false);
+            $item = $this->get_submission($submissionid);
 
             // permissions
-            if ($item->userid != $USER->id && !has_capability('mod/assign:grade', $this->context)) {
-                print_error('nopermissiontoshow');
-                return;
+            if ($item->userid != $USER->id) {
+                require_capability('mod/assign:grade', $this->context);
             }
             echo $this->output->render(new assignment_header($this, true, $plugin->get_name()));
             echo $this->output->render(new submission_plugin_submission($this, $plugin, $item, submission_plugin_submission::FULL));
@@ -1157,14 +1158,13 @@ class assignment {
         } else {
             $plugin = $this->get_feedback_plugin_by_type($plugintype);
             if ($gradeid <= 0) {
-                print_error('invalidaccessparameter');
+                throw new coding_exception('Grade id should not be 0');
                 return;
             }
-            $item = $this->get_grade(0, $gradeid, false);
+            $item = $this->get_grade($gradeid);
             // permissions
-            if ($item->userid != $USER->id && !has_capability('mod/assign:grade', $this->context)) {
-                print_error('nopermissiontoshow');
-                return;
+            if ($item->userid != $USER->id) {
+                require_capability('mod/assign:grade', $this->context);
             }
             echo $this->output->render(new assignment_header($this, true, $plugin->get_name()));
             echo $this->output->render(new feedback_plugin_feedback($this, $plugin, $item, feedback_plugin_feedback::FULL));
@@ -1256,11 +1256,11 @@ class assignment {
         $last = false;
         $userid = $this->get_userid_for_row($rnum, $last);
         if (!$userid) {
-            print_error('outofbound exception array:rownumber&userid');
+            throw new coding_exception('Row is out of bounds for the current grading table: ' . $rnum);
             die();
         }
     
-        redirect('view.php?id=' . $this->get_course_module()->id . '&rownum=' . $rnum . '&action=grade');
+        redirect(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'rownum'=> $rnum, 'action'=>'grade')));
         die();
     }
     
@@ -1282,6 +1282,7 @@ class assignment {
         
         if (empty($submissions)) {
             print_error('errornosubmissions', 'assign');
+            return;
         }
 
         // build a list of files to zip
@@ -1357,20 +1358,15 @@ class assignment {
      * @param bool $createnew optional Defaults to false. If set to true a new submission object will be created in the database
      * @return stdClass The submission
      */
-    private function get_submission($userid,$submissionid, $create) {
+    private function get_user_submission($userid, $create) {
         global $DB, $USER;
 
-        if (!$userid && !$submissionid) {
+        if (!$userid) {
             $userid = $USER->id;
         }
-        if ($userid){
-            
-              // if the userid is not null then use userid
-             $submission = $DB->get_record('assign_submission', array('assignment'=>$this->get_instance()->id, 'userid'=>$userid));
-         }else{
+        // if the userid is not null then use userid
+        $submission = $DB->get_record('assign_submission', array('assignment'=>$this->get_instance()->id, 'userid'=>$userid));
          
-             $submission = $DB->get_record('assign_submission', array('assignment'=>$this->get_instance()->id, 'id'=>$submissionid));
-         }
         if ($submission) {
             return $submission;
         }
@@ -1393,6 +1389,19 @@ class assignment {
         return false;
     }
     
+    /**
+     * Load the submission object from it's id
+     *
+     * @global moodle_database $DB
+     * @global stdClass $USER
+     * @param int $submissionid The id of the submission we want
+     * @return stdClass The submission
+     */
+    private function get_submission($submissionid) {
+        global $DB;
+
+        return $DB->get_record('assign_submission', array('assignment'=>$this->get_instance()->id, 'id'=>$submissionid), '*', MUST_EXIST);
+    }
     
     /**
      * This will retrieve a grade object from the db, optionally creating it if required
@@ -1403,19 +1412,15 @@ class assignment {
      * @param bool $create If true the grade will be created if it does not exist
      * @return stdClass The grade record
      */
-    private function get_grade($userid, $gradeid, $create) {
+    private function get_user_grade($userid, $create) {
         global $DB, $USER;
 
-        if (!$userid && !$gradeid) {
+        if (!$userid) {
             $userid = $USER->id;
         }
-        if ($userid){
             
-            // if the userid is not null then use userid
-            $grade = $DB->get_record('assign_grades', array('assignment'=>$this->get_instance()->id, 'userid'=>$userid));
-        } else{
-            $grade = $DB->get_record('assign_grades', array('assignment'=>$this->get_instance()->id, 'id'=>$gradeid));
-        }
+        // if the userid is not null then use userid
+        $grade = $DB->get_record('assign_grades', array('assignment'=>$this->get_instance()->id, 'userid'=>$userid));
          
         if ($grade) {
             return $grade;
@@ -1433,6 +1438,19 @@ class assignment {
             return $grade;
         }
         return false;
+    }
+    
+    /**
+     * This will retrieve a grade object from the db
+     *
+     * @global moodle_database $DB
+     * @param int $gradeid The id of the grade
+     * @return stdClass The grade record
+     */
+    private function get_grade($gradeid) {
+        global $DB;
+
+        return $DB->get_record('assign_grades', array('assignment'=>$this->get_instance()->id, 'id'=>$gradeid), '*', MUST_EXIST);
     }
     
     /**
@@ -1457,16 +1475,15 @@ class assignment {
         $last = false;
         $userid = $this->get_userid_for_row($rownum, $last);
         if(!$userid){
-            print_error('invalidaccessparameter');
-            die();
+            throw new coding_exception('Row is out of bounds for the current grading table: ' . $rownum);
         }
         $user = $DB->get_record('user', array('id' => $userid));
         if ($user) {
             echo $this->output->render(new user_summary($user, $this));
         }
-        $submission = $this->get_submission($userid, 0, false);
+        $submission = $this->get_user_submission($userid, false);
         // get the current grade
-        $grade = $this->get_grade($userid, 0, false);
+        $grade = $this->get_user_grade($userid, false);
         if ($this->can_view_submission($userid)) {
             $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($userid);
             echo $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($userid), submission_status::GRADER_VIEW, false, false));
@@ -1606,7 +1623,7 @@ class assignment {
      * @return bool
      */
     private function is_graded($userid) {
-        $grade = $this->get_grade($userid, 0, false);
+        $grade = $this->get_user_grade($userid, false);
         if ($grade) {
             return ($grade->grade != '');
         }
@@ -1652,8 +1669,8 @@ class assignment {
         if ($this->can_grade()) {
             echo $this->output->render(new grading_summary($this));
         }
-        $grade = $this->get_grade($USER->id, 0, false);
-        $submission = $this->get_submission($USER->id, 0, false);
+        $grade = $this->get_user_grade($USER->id, false);
+        $submission = $this->get_user_submission($USER->id, false);
 
         if ($this->can_view_submission($USER->id)) {
             $showedit = has_capability('mod/assign:submit', $this->context) &&
@@ -1801,13 +1818,13 @@ class assignment {
         if (!is_enrolled($this->get_course_context(), $USER)) {
             return false;
         }
-        if ($submission = $this->get_submission($USER->id, 0, false)) {
+        if ($submission = $this->get_user_submission($USER->id, false)) {
             if ($this->get_instance()->submissiondrafts && $submission->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
                 // drafts are tracked and the student has submitted the assignment
                 return false;
             }
         }
-        if ($grade = $this->get_grade($USER->id, 0, false)) {
+        if ($grade = $this->get_user_grade($USER->id, false)) {
             if ($grade->locked) {
                 return false;
             }
@@ -1831,7 +1848,7 @@ class assignment {
         global $USER;
 
         if (!$submissionid) {
-            $submission = $this->get_submission($USER->id,0, false);
+            $submission = $this->get_user_submission($USER->id,false);
             $submissionid = $submission->id;
         }
          
@@ -1993,7 +2010,7 @@ class assignment {
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
         
-        $submission = $this->get_submission($USER->id,0, true);
+        $submission = $this->get_user_submission($USER->id,true);
         $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
 
         $this->update_submission($submission);
@@ -2100,8 +2117,8 @@ class assignment {
             return false;
         }
         if ($data = $mform->get_data()) {               
-            $submission = $this->get_submission($USER->id, 0, true); //create the submission if needed & its id              
-            $grade = $this->get_grade($USER->id, 0, false); // get the grade to check if it is locked
+            $submission = $this->get_user_submission($USER->id, true); //create the submission if needed & its id              
+            $grade = $this->get_user_grade($USER->id, false); // get the grade to check if it is locked
             if ($grade && $grade->locked) {
                 print_error('submissionslocked', 'assign');
                 return true;
@@ -2185,7 +2202,7 @@ class assignment {
     private function get_grading_instance($userid, $gradingdisabled) {
         global $CFG, $USER;
 
-        $grade = $this->get_grade($userid, 0, false);
+        $grade = $this->get_user_grade($userid, false);
         $grademenu = make_grades_menu($this->get_instance()->grade);
 
         $advancedgradingwarning = false;
@@ -2231,7 +2248,7 @@ class assignment {
         $rownum = $params['rownum'];
         $last = false;
         $userid = $this->get_userid_for_row($rownum, $last);
-        $grade = $this->get_grade($userid, 0, false);
+        $grade = $this->get_user_grade($userid, false);
         
         // add advanced grading
         $gradingdisabled = $this->grading_disabled($userid);
@@ -2299,11 +2316,10 @@ class assignment {
         $last = false;
         $userid = $this->get_userid_for_row($rownum, $last);
         if(!$userid){
-            print_error('invalidaccessparameter');
-            die();
+            throw new coding_exception('Row is out of bounds for the current grading table: ' . $rnum);
         }
 
-        $grade = $this->get_grade($userid, 0, false);
+        $grade = $this->get_user_grade($userid, false);
         if ($grade) {
             $data = new stdClass();
             $data->grade = $grade->grade;
@@ -2372,7 +2388,7 @@ class assignment {
         
         // online text submissions
 
-        $submission = $this->get_submission($USER->id, 0, false);
+        $submission = $this->get_user_submission($USER->id, false);
         
         $this->add_plugin_submission_elements($submission, $mform, $data);
 
@@ -2401,7 +2417,7 @@ class assignment {
 
         $userid = required_param('userid', PARAM_INT);
 
-        $submission = $this->get_submission($userid, 0, false);
+        $submission = $this->get_user_submission($userid, false);
         if (!$submission) {
             return;
         }
@@ -2409,7 +2425,7 @@ class assignment {
         $this->update_submission($submission, false);
 
         // update the modified time on the grade (grader modified)
-        $grade = $this->get_grade($userid, 0, true);
+        $grade = $this->get_user_grade($userid, true);
         $this->update_grade($grade);
 
         $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
@@ -2433,7 +2449,7 @@ class assignment {
 
         $userid = required_param('userid', PARAM_INT);
 
-        $grade = $this->get_grade($userid, 0, true);
+        $grade = $this->get_user_grade($userid, true);
         $grade->locked = 1;
         $this->update_grade($grade);
 
@@ -2457,7 +2473,7 @@ class assignment {
 
         $userid = required_param('userid', PARAM_INT);
 
-        $grade = $this->get_grade($userid, 0, true);
+        $grade = $this->get_user_grade($userid, true);
         $grade->locked = 0;
         $this->update_grade($grade);
         
@@ -2490,7 +2506,7 @@ class assignment {
 
         
         if ($formdata = $mform->get_data()) {
-            $grade = $this->get_grade($userid, 0, true);
+            $grade = $this->get_user_grade($userid, true);
             $gradingdisabled = $this->grading_disabled($userid);
             $gradinginstance = $this->get_grading_instance($userid, $gradingdisabled);
             if ($gradinginstance) {
