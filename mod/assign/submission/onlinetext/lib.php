@@ -334,6 +334,19 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
         return $onlinetextloginfo;
     }
 
+    /**
+     * The assignment has been deleted - cleanup
+     * 
+     * @global moodle_database $DB
+     * @return bool
+     */
+    public function delete_instance() {
+        global $DB;
+        // will throw exception on failure
+        $DB->delete_records('assign_submission_onlinetext', array('assignment'=>$this->assignment->get_instance()->id));
+        
+        return true;
+    }
 }
 
 

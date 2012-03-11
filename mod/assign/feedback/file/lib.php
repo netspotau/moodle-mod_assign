@@ -230,4 +230,17 @@ class assignment_feedback_file extends assignment_feedback_plugin {
         return $this->assignment->render_area_files(ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id);
     }
     
+    /**
+     * The assignment has been deleted - cleanup
+     * 
+     * @global moodle_database $DB
+     * @return bool
+     */
+    public function delete_instance() {
+        global $DB;
+        // will throw exception on failure
+        $DB->delete_records('assign_feedback_file', array('assignment'=>$this->assignment->get_instance()->id));
+        
+        return true;
+    }
 }

@@ -363,6 +363,20 @@ class assignment_submission_file extends assignment_submission_plugin {
         
         return true;
     }
+
+    /**
+     * The assignment has been deleted - cleanup
+     * 
+     * @global moodle_database $DB
+     * @return bool
+     */
+    public function delete_instance() {
+        global $DB;
+        // will throw exception on failure
+        $DB->delete_records('assign_submission_file', array('assignment'=>$this->assignment->get_instance()->id));
+        
+        return true;
+    }
     
     /**
      * formatting for log info    

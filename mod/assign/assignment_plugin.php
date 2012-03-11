@@ -431,4 +431,13 @@ abstract class assignment_plugin {
         // format the info for each submission plugin add_to_log
         return '';
     }
+
+    /**
+     * The assignment has been deleted - remove the plugin specific data
+     * 
+     * @return bool
+     */
+    public function delete_instance() {
+        return true;
+    }
 }

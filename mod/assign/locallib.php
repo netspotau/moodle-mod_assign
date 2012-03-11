@@ -419,7 +419,7 @@ class assignment {
     private function delete_grades() {
         global $CFG;
 
-        return grade_update('mod/assign', $this->get_course()->id, 'mod', 'assign', $this->get_instance()->id, 0, NULL, array('deleted'=>1));
+        return grade_update('mod/assign', $this->get_course()->id, 'mod', 'assign', $this->get_instance()->id, 0, NULL, array('deleted'=>1)) == GRADE_UPDATE_OK;
     }
     
     /**
@@ -432,7 +432,18 @@ class assignment {
         global $DB;
         $result = true;
 
-        // TODO - should call delete on each of the plugins
+        foreach ($this->submissionplugins as $plugin) {
+            if (!$plugin->delete_instance()) {
+                print_error($plugin->get_error());
+                $result = false;
+            }
+        }
+        foreach ($this->feedbackplugins as $plugin) {
+            if (!$plugin->delete_instance()) {
+                print_error($plugin->get_error());
+                $result = false;
+            }
+        }
         
         // delete files associated with this assignment
         $fs = get_file_storage();
@@ -440,17 +451,11 @@ class assignment {
             $result = false;
         }
         
-        if (! $DB->delete_records('assign_submission', array('assignment'=>$this->get_instance()->id))) {
-            $result = false;
-        }
-        
-        if (! $DB->delete_records('assign_grades', array('assignment'=>$this->get_instance()->id))) {
-            $result = false;
-        }
-        
-        if (! $DB->delete_records('assign_plugin_config', array('assignment'=>$this->get_instance()->id))) {
-            $result = false;
-        }
+        // delete_records will throw an exception if it fails - so no need for error checking here
+
+        $DB->delete_records('assign_submission', array('assignment'=>$this->get_instance()->id));
+        $DB->delete_records('assign_grades', array('assignment'=>$this->get_instance()->id));
+        $DB->delete_records('assign_plugin_config', array('assignment'=>$this->get_instance()->id));
 
         // delete items from the gradebook
         if (! $this->delete_grades()) {
@@ -458,9 +463,7 @@ class assignment {
         }
         
         // delete the instance
-        if (! $DB->delete_records('assign', array('id'=>$this->get_instance()->id))) {
-            $result = false;
-        }
+        $DB->delete_records('assign', array('id'=>$this->get_instance()->id));
         
         return $result;
     }
