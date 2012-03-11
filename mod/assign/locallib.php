@@ -120,6 +120,12 @@ class assignment {
     
     /** @var array params to be used to return to this page */
     private $returnparams = array();
+
+    /** @var string modulename prevents excessive calls to get_string */
+    private static $modulename = '';
+
+    /** @var string modulenameplural prevents excessive calls to get_string */
+    private static $modulenameplural = '';
     
     /**
      * Constructor for the base assign class
@@ -692,6 +698,14 @@ class assignment {
             $this->add_plugin_settings($plugin, $mform);
         }
     }
+
+    final private static function get_static_string($key) {
+        if (static::$key) {
+            return static::$key;
+        }
+        static::$key = get_string($key, 'assign');
+        return static::$key;
+    }
   
     /**
      * Get the name of the current module. 
@@ -699,10 +713,7 @@ class assignment {
      * @return string the module name (Assignment)
      */
     protected function get_module_name() {
-        if (!isset($this->cache['modulename'])) {
-            $this->cache['modulename'] = get_string('modulename', 'assign');
-        }
-        return $this->cache['modulename'];
+        return static::get_static_string('modulename');
     }
     
     /**
@@ -711,10 +722,7 @@ class assignment {
      * @return string the module name plural (Assignments)
      */
     protected function get_module_name_plural() {
-        if (!isset($this->cache['modulename'])) {
-            $this->cache['modulenameplural'] = get_string('modulenameplural', 'assign');
-        }
-        return $this->cache['modulenameplural'];
+        return static::get_static_string('modulenameplural');
     }
 
     /**
