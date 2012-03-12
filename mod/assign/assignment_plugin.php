@@ -316,6 +316,9 @@ abstract class assignment_plugin {
         global $DB;
 
         if ($setting) {
+            if (!$this->assignment->has_instance()) {
+                return false;
+            }
             $assignment = $this->assignment->get_instance();
             if ($assignment) {
                 $result = $DB->get_record('assign_plugin_config', array('assignment'=>$assignment->id, 'subtype'=>$this->get_subtype(), 'plugin'=>$this->get_type(), 'name'=>$setting));

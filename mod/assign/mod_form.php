@@ -64,6 +64,9 @@ class mod_assign_mod_form extends moodleform_mod {
         }
         $assignment = new assignment($ctx, null, null);
         if ($this->current && $this->current->course) {
+            if (!$ctx) {
+                $ctx = context_course::instance($this->current->course);
+            }
             $assignment->set_course($DB->get_record('course', array('id'=>$this->current->course), '*', MUST_EXIST));
         }
         

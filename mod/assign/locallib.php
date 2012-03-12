@@ -728,6 +728,10 @@ class assignment {
         return static::get_static_string('modulenameplural');
     }
 
+    public function has_instance() {
+        return $this->instance || $this->get_course_module();
+    }
+
     /**
      * Get the settings for the current instance of this assignment
      *
@@ -2332,12 +2336,12 @@ class assignment {
     /**
      * add elements in submission plugin form 
      * 
-     * @param stdClass $submission
+     * @param mixed stdClass|null $submission
      * @param MoodleQuickForm $mform
      * @param stdClass $data 
      * @return void
      */
-    private function add_plugin_submission_elements(stdClass $submission, MoodleQuickForm $mform, stdClass $data) {
+    private function add_plugin_submission_elements($submission, MoodleQuickForm $mform, stdClass $data) {
         foreach ($this->submissionplugins as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible() && $plugin->allow_submissions()) {
                 $mform->addElement('header', 'header_' . $plugin->get_type(), $plugin->get_name());
