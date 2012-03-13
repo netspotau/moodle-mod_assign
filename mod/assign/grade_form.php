@@ -30,6 +30,8 @@ defined('MOODLE_INTERNAL') || die('Direct access to this script is forbidden.');
 require_once ($CFG->libdir.'/formslib.php');
 /** Include locallib.php */
 require_once($CFG->dirroot . '/mod/assign/locallib.php');
+/** Required for advanced grading */
+require_once('HTML/QuickForm/input.php');
 
 /*
  * Assignment grade form
