@@ -185,3 +185,34 @@ function assign_pluginfile($course, $cm, context $context, $filearea, $args, $fo
     send_stored_file($file, 0, 0, true); // download MUST be forced - security!
 }
 
+
+/**
+ * Add a get_coursemodule_info function in case any assignment type wants to add 'extra' information
+ * for the course (see resource).
+ *
+ * Given a course_module object, this function returns any "extra" information that may be needed
+ * when printing this activity in a course listing.  See get_array_of_activities() in course/lib.php.
+ *
+ * @param $coursemodule object The coursemodule object (record).
+ * @return cached_cm_info An object on information that the courses will know about (most noticeably, an icon).
+ */
+function assign_get_coursemodule_info($coursemodule) {
+    global $CFG, $DB;
+
+    if (! $assignment = $DB->get_record('assign', array('id'=>$coursemodule->instance),
+            'id, name, alwaysshowdescription, allowsubmissionsfromdate, intro, introformat')) {
+        return false;
+    }
+
+    $result = new cached_cm_info();
+    $result->name = $assignment->name;
+    if ($coursemodule->showdescription) {
+        if ($assignment->alwaysshowdescription || time() > $assignment->allowsubmissionsfromdate) {
+            // Convert intro to html. Do not filter cached version, filters run at display time.
+            $result->content = format_module_intro('assign', $assignment, $coursemodule->id, false);
+        }
+    }
+    return $result;
+}
+
+

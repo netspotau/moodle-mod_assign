@@ -412,7 +412,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         if ($status->get_assignment()->get_instance()->allowsubmissionsfromdate &&
                 $time <= $status->get_assignment()->get_instance()->allowsubmissionsfromdate) {
             $o .= $this->output->box_start('generalbox boxaligncenter submissionsalloweddates');
-            $o .= get_string('allowsubmissionsfromdatesummary', 'assign', userdate($this->instance->allowsubmissionsfromdate));
+            $o .= get_string('allowsubmissionsfromdatesummary', 'assign', userdate($status->get_assignment()->get_instance()->allowsubmissionsfromdate));
             $o .= $this->output->box_end();
         } 
         $o .= $this->output->box_start('boxaligncenter submissionsummarytable');
