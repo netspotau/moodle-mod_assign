@@ -22,7 +22,7 @@
  * This class provides all the functionality for the new assign module.
  *
  * @package   mod_assign
- * @subpackage submission_file
+ * @subpackage assignsubmission_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -47,20 +47,20 @@ define('ASSIGN_FILEAREA_SUBMISSION_FILES', 'submission_files');
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class submission_file extends submission_plugin {
+class assignment_submission_file extends assignment_submission_plugin {
     
     /**
      * get the name of the file submission plugin
      * @return string 
      */
     public function get_name() {
-        return get_string('file', 'submission_file');
+        return get_string('file', 'assignsubmission_file');
     }
     
     /**
      * get file submission information from the database  
      * 
-     * @global object $DB
+     * @global moodle_database $DB
      * @param int $submissionid
      * @return mixed 
      */
@@ -71,17 +71,16 @@ class submission_file extends submission_plugin {
     
     /**
      * get the default setting for file submission plugin
-     * @global object $CFG
-     * @global object $COURSE
-     * @global object $DB
-     * @param object $mform The form to add elements to
-     * @return mixed
+     * @global stdClass $CFG
+     * @global stdClass $COURSE
+     * @param MoodleQuickForm $mform The form to add elements to
+     * @return void
      */
-    public function get_settings($mform) {
-        global $CFG, $COURSE, $DB;
+    public function get_settings(MoodleQuickForm $mform) {
+        global $CFG, $COURSE;
 
-        $default_maxfilesubmissions = $this->get_config('maxfilesubmissions');
-        $default_maxsubmissionsizebytes = $this->get_config('maxsubmissionsizebytes');
+        $defaultmaxfilesubmissions = $this->get_config('maxfilesubmissions');
+        $defaultmaxsubmissionsizebytes = $this->get_config('maxsubmissionsizebytes');
 
         $settings = array();
         $options = array();
@@ -89,38 +88,38 @@ class submission_file extends submission_plugin {
             $options[$i] = $i;
         }
         
-        $mform->addElement('select', 'submission_file_maxfiles', get_string('maxfilessubmission', 'submission_file'), $options);
-        $mform->setDefault('submission_file_maxfiles', $default_maxfilesubmissions);
+        $mform->addElement('select', 'assignsubmission_file_maxfiles', get_string('maxfilessubmission', 'assignsubmission_file'), $options);
+        $mform->setDefault('assignsubmission_file_maxfiles', $defaultmaxfilesubmissions);
+        $mform->disabledIf('assignsubmission_file_maxfiles', 'assignsubmission_file_enabled', 'eq', 0);
 
         $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
         $choices[0] = get_string('courseuploadlimit') . ' ('.display_size($COURSE->maxbytes).')';
         $settings[] = array('type' => 'select', 
                             'name' => 'maxsubmissionsizebytes', 
-                            'description' => get_string('maximumsubmissionsize', 'submission_file'), 
+                            'description' => get_string('maximumsubmissionsize', 'assignsubmission_file'), 
                             'options'=>$choices,
-                            'default'=>$default_maxsubmissionsizebytes);
+                            'default'=>$defaultmaxsubmissionsizebytes);
         
-        $mform->addElement('select', 'submission_file_maxsizebytes', get_string('maximumsubmissionsize', 'submission_file'), $choices);
-        $mform->setDefault('submission_file_maxsizebytes', $default_maxsubmissionsizebytes);
-
-
+        $mform->addElement('select', 'assignsubmission_file_maxsizebytes', get_string('maximumsubmissionsize', 'assignsubmission_file'), $choices);
+        $mform->setDefault('assignsubmission_file_maxsizebytes', $defaultmaxsubmissionsizebytes);
+        $mform->disabledIf('assignsubmission_file_maxsizebytes', 'assignsubmission_file_enabled', 'eq', 0);
     }
     
     /**
      * save the settings for file submission plugin 
-     * @param object $mform
+     * @param stdClass $data
      * @return bool 
      */
-    public function save_settings($mform) {
-        $this->set_config('maxfilesubmissions', $mform->submission_file_maxfiles);
-        $this->set_config('maxsubmissionsizebytes', $mform->submission_file_maxsizebytes);
+    public function save_settings(stdClass $data) {
+        $this->set_config('maxfilesubmissions', $data->assignsubmission_file_maxfiles);
+        $this->set_config('maxsubmissionsizebytes', $data->assignsubmission_file_maxsizebytes);
         return true;
     }
 
     /**
      * file format options 
      * 
-     * @return mixed
+     * @return array
      */
     private function get_file_options() {
         $fileoptions = array('subdirs'=>1,
@@ -132,18 +131,17 @@ class submission_file extends submission_plugin {
     }
    
     /**
-     * get submission form elements for settings
+     * add elements to submission form
      * 
-     * @param object $submission
-     * @param object $data
-     * @return mixed 
+     * @param mixed stdClass|null $submission
+     * @param MoodleQuickForm $submission
+     * @param stdClass $data
+     * @return bool 
      */
-    public function get_form_elements($submission, $mform, $data) {
-
-        $elements = array();
+    public function get_form_elements($submission, MoodleQuickForm $mform, stdClass $data) {
 
         if ($this->get_config('maxfilesubmissions') <= 0) {
-            return $elements;
+            return false;
         }
 
         $fileoptions = $this->get_file_options();
@@ -158,13 +156,11 @@ class submission_file extends submission_plugin {
     /**
      * count the number of files
      * 
-     * @global object $USER
      * @param int $submissionid
      * @param string $area
      * @return int 
      */
-    private function count_files($submissionid = 0, $area = ASSIGN_FILEAREA_SUBMISSION_FILES) {
-        global $USER;
+    private function count_files($submissionid, $area) {
 
         $fs = get_file_storage();
         $files = $fs->get_area_files($this->assignment->get_context()->id, 'mod_assign', $area, $submissionid, "id", false);
@@ -174,14 +170,14 @@ class submission_file extends submission_plugin {
 
     /**
      * save the files and trigger plagiarism plugin, if enabled, to scan the uploaded files via events trigger
-     * @global object $USER
-     * @global object $DB
-     * @param object $submission
-     * @param object $data
-     * @return mixed 
+     *
+     * @global stdClass $USER
+     * @global moodle_database $DB
+     * @param stdClass $submission
+     * @param stdClass $data
+     * @return bool 
      */
-    public function save($submission, $data) {
-
+    public function save(stdClass $submission, stdClass $data) {
         global $USER, $DB;
 
         $fileoptions = $this->get_file_options();
@@ -190,13 +186,13 @@ class submission_file extends submission_plugin {
         $data = file_postupdate_standard_filemanager($data, 'files', $fileoptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
 
 
-        $file_submission = $this->get_file_submission($submission->id);
+        $filesubmission = $this->get_file_submission($submission->id);
 
         //plagiarism code event trigger when files are uploaded
 
         $fs = get_file_storage();
         $files = $fs->get_area_files($this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id, "id", false);
-        $count = $this->count_files($submission->id);
+        $count = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
         // send files to event system
         // Let Moodle know that an assessable file was uploaded (eg for plagiarism detection)
         $eventdata = new stdClass();
@@ -212,26 +208,25 @@ class submission_file extends submission_plugin {
         events_trigger('assessable_file_uploaded', $eventdata);
 
 
-        if ($file_submission) {
-            $file_submission->numfiles = $this->count_files($submission->id);
-            return $DB->update_record('assign_submission_file', $file_submission);
+        if ($filesubmission) {
+            $filesubmission->numfiles = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
+            return $DB->update_record('assign_submission_file', $filesubmission);
         } else {
-            $file_submission = new stdClass();
-            $file_submission->numfiles = $this->count_files($submission->id);
-            $file_submission->submission = $submission->id;
-            $file_submission->assignment = $this->assignment->get_instance()->id;
-            return $DB->insert_record('assign_submission_file', $file_submission) > 0;
+            $filesubmission = new stdClass();
+            $filesubmission->numfiles = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
+            $filesubmission->submission = $submission->id;
+            $filesubmission->assignment = $this->assignment->get_instance()->id;
+            return $DB->insert_record('assign_submission_file', $filesubmission) > 0;
         }
     }
 
     /**
      * Produce a list of files suitable for export that represent this feedback or submission
      * 
-     * @param object $submission_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
+     * @param stdClass $submission The submission
      * @return array - return an array of files indexed by filename
      */
-    public function get_files($submission) {
-        global $DB;
+    public function get_files(stdClass $submission) {
         $result = array();
         $fs = get_file_storage();
 
@@ -245,67 +240,71 @@ class submission_file extends submission_plugin {
     
     /**
      * display the list of files  in the submission status table 
-     * @param object $submission
+     * @param stdClass $submission
      * @return string
      */
     public function view_summary($submission) {
-        $count = $this->count_files($submission->id);
+        $count = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
         if ($count <= ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES) {
             return $this->assignment->render_area_files(ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
         } else {
-            return get_string('countfiles', 'submission_file', $count);
+            return get_string('countfiles', 'assignsubmission_file', $count);
         }
     }
 
     /**
      * Should the assignment module show a link to view the full submission or feedback for this plugin?
      *
+     * @param stdClass $submission
      * @return bool
      */
-    public function show_view_link($submission) {
-        $count = $this->count_files($submission->id);
+    public function show_view_link(stdClass $submission) {
+        $count = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
         return $count > ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES;
-        
     }
     
     /**
      * No full submission view - the summary contains the list of files and that is the whole submission
-     * @param object $submission
+     * 
+     * @param stdClass $submission
      * @return string 
      */
-    public function view($submission) {
+    public function view(stdClass $submission) {
         return $this->assignment->render_area_files(ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
     }
     
 
 
- /**
+    /**
      * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type
      * and version.
      * 
+     * @param string $type
+     * @param int $version
      * @return bool True if upgrade is possible
      */
     public function can_upgrade($type, $version) {
         
-        $uploadsingle_type ='uploadsingle';
-        $upload_type ='upload';
+        $uploadsingletype ='uploadsingle';
+        $uploadtype ='upload';
         
-        if (($type == $uploadsingle_type || $type == $upload_type) && $version >= 2011112900) {
+        if (($type == $uploadsingletype || $type == $uploadtype) && $version >= 2011112900) {
             return true;
         }
         return false;
     }
   
     
-     /**
+    /**
      * Upgrade the settings from the old assignment 
      * to the new plugin based one
      * 
-     * @param data - the database for the old assignment instance
+     * @param context $oldcontext - the old assignment context
+     * @param stdClass $oldassignment - the old assignment data record
      * @param string log record log events here
-     * @return bool Was it a success?
+     * @return bool Was it a success? (false will trigger rollback)
      */
-    public function upgrade_settings($oldcontext,$oldassignment, $log) {
+    public function upgrade_settings(context $oldcontext,stdClass $oldassignment, $log) {
         if ($oldassignment->assignmenttype == 'uploadsingle') {
             $this->set_config('maxfilesubmissions', 1);
             $this->set_config('maxsubmissionsizebytes', $oldassignment->maxbytes);
@@ -324,23 +323,24 @@ class submission_file extends submission_plugin {
     /**
      * Upgrade the submission from the old assignment to the new one
      * 
-     * @param object $oldassignment The data record for the old oldassignment
-     * @param object $oldsubmission The data record for the old submission
+     * @global moodle_database $DB
+     * @param context $oldcontext The context of the old assignment
+     * @param stdClass $oldassignment The data record for the old oldassignment
+     * @param stdClass $oldsubmission The data record for the old submission
+     * @param stdClass $submission The data record for the new submission
      * @param string $log Record upgrade messages in the log
      * @return bool true or false - false will trigger a rollback
      */
-    public function upgrade($oldcontext,$oldassignment, $oldsubmission, $submission, $log) {
+    public function upgrade(context $oldcontext, stdClass $oldassignment, stdClass $oldsubmission, stdClass $submission, $log) {
         global $DB;
 
-        $file_submission = new stdClass();
+        $filesubmission = new stdClass();
         
-           
+        $filesubmission->numfiles = $oldsubmission->numfiles;
+        $filesubmission->submission = $submission->id;
+        $filesubmission->assignment = $this->assignment->get_instance()->id;
         
-        $file_submission->numfiles = $oldsubmission->numfiles;
-        $file_submission->submission = $submission->id;
-        $file_submission->assignment = $this->assignment->get_instance()->id;
-        
-        if (!$DB->insert_record('assign_submission_file', $file_submission) > 0) {
+        if (!$DB->insert_record('assign_submission_file', $filesubmission) > 0) {
             $log .= get_string('couldnotconvertsubmission', 'mod_assign', $submission->userid);
             return false;
         }
@@ -365,20 +365,34 @@ class submission_file extends submission_plugin {
         
         return true;
     }
+
+    /**
+     * The assignment has been deleted - cleanup
+     * 
+     * @global moodle_database $DB
+     * @return bool
+     */
+    public function delete_instance() {
+        global $DB;
+        // will throw exception on failure
+        $DB->delete_records('assign_submission_file', array('assignment'=>$this->assignment->get_instance()->id));
+        
+        return true;
+    }
     
     /**
      * formatting for log info    
-     * @param object $submission_grade The new submission or grade
+     * @param stdClass $submission The submission
      * 
      * @return string
      */
-    public function format_for_log($submission) {
+    public function format_for_log(stdClass $submission) {
         // format the info for each submission plugin add_to_log
-        $file_count = $this->count_files($submission->id);
-        $file_log_info = '';
-        $file_log_info .= ' the number of file(s) : ' . $file_count . " file(s).<br>";
+        $filecount = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
+        $fileloginfo = '';
+        $fileloginfo .= ' the number of file(s) : ' . $filecount . " file(s).<br>";
 
-        return $file_log_info;
+        return $fileloginfo;
     }
 
 }

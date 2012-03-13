@@ -16,42 +16,40 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Post-install code for the feedback_comments module.
+ * This file contains the submission form used by the assign module.
  *
  * @package   mod_assign
- * @subpackage   assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') || die('Direct access to this script is forbidden.');
 
 
-/**
- * Code run after the feedback comments module database tables have been created.
+/** Include locallib.php */
+require_once($CFG->libdir . '/formslib.php');
+require_once($CFG->dirroot . '/mod/assign/locallib.php');
+
+/*
+ * Assignment submission form
  *
- * @package   mod_assign
- * @subpackage   assignfeedback_comments
+ * @package   mod-assign
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+class mod_assign_submission_form extends moodleform {
 
-/**
- * Set the initial order for the feedback comments plugin (top)
- */
-function xmldb_assignfeedback_comments_install() {
-    global $CFG, $DB, $OUTPUT;
+    function definition() {
+        $mform = $this->_form;
 
-    // do the install
+        list($assignment, $data) = $this->_customdata;
 
-    require_once($CFG->dirroot . '/mod/assign/adminlib.php');
-    // set the correct initial order for the plugins
-    $pluginmanager = new assignment_plugin_manager('assignfeedback');
+        $assignment->add_submission_form_elements($mform, $data);
 
-    $pluginmanager->move_plugin('comments', 'up');
-        
-    // do the upgrades
-    return true;
+        $this->add_action_buttons(true, get_string('savechanges', 'assign'));
+        if ($data) {
+            $this->set_data($data);
+        }
+    }
 }
-
 

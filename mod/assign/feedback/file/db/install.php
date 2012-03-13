@@ -16,10 +16,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Post-install code for the feedback_file module.
+ * Post-install code for the assignfeedback_file module.
  *
  * @package    assign
- * @subpackage feedback_file
+ * @subpackage assignfeedback_file
  * @copyright  1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,20 +29,22 @@ defined('MOODLE_INTERNAL') || die();
 
 
 /**
- * Code run after the quiz module database tables have been created.
+ * Code run after the assignfeedback_file module database tables have been created.
+ * Moves the feedback file plugin down
+ * 
+ * @global stdClass $CFG
+ * @return bool
  */
-function xmldb_feedback_file_install() {
-    global $CFG, $DB, $OUTPUT;
+function xmldb_assignfeedback_file_install() {
+    global $CFG;
 
     // do the install
 
-    require_once($CFG->dirroot . '/mod/assign/locallib.php');
+    require_once($CFG->dirroot . '/mod/assign/adminlib.php');
     // set the correct initial order for the plugins
-    $assignment = new assignment();
-    $plugin = $assignment->get_feedback_plugin_by_type('file');
-    if ($plugin) {
-        $plugin->move('down');
-    }
+    $pluginmanager = new assignment_plugin_manager('assignfeedback');
+
+    $pluginmanager->move_plugin('file', 'down');
         
     // do the upgrades
     return true;

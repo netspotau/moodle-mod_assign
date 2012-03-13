@@ -82,7 +82,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
      */
     function __construct($callbackargs) {
         parent::__construct($callbackargs);
-        $this->cm = get_coursemodule_from_id('assign', $this->cmid);
+        $this->cm = get_coursemodule_from_id('assign', $this->cmid, 0, false, MUST_EXIST);
     }
           
     /**
@@ -93,14 +93,11 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
      * to it. Otherwise, the caller must provide either fileid (to export single file) or
      * submissionid and filearea (to export all data attached to the given submission file area) via callback arguments.
      * 
-     * @throws    
-     * @global object $DB
-     * @global object $CFG 
+     * @throws     portfolio_caller_exception
      */
     public function load_data() {
-        global $DB, $CFG;
         
-        $context = get_context_instance(CONTEXT_MODULE,$this->cmid);
+        $context = context_module::instance($this->cmid);
 
         if (empty($this->fileid)) {
             if (empty($this->sid) || empty($this->area)) {
@@ -120,17 +117,15 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
     /**
      * prepares the package up before control is passed to the portfolio plugin. 
      * 
-     * @throws
-     * @global object $CFG
-     * @global object $DB
+     * @throws portfolio_caller_exception
      * @return mixed
      */
     public function prepare_package() {
-        global $CFG, $DB;
         
         if ($this->plugin && $this->editor) {
             $options = portfolio_format_text_options();
-            $context = get_context_instance(CONTEXT_MODULE,$this->cmid);
+            $context = context_module::instance($this->cmid);
+            $options->context = $context;
           
             $plugin = $this->get_submission_plugin();
           
@@ -142,8 +137,8 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
             
             if (in_array($this->exporter->get('formatclass'), array(PORTFOLIO_FORMAT_PLAINHTML, PORTFOLIO_FORMAT_RICHHTML))) {
                 if ($files = $this->exporter->get('caller')->get('multifiles')) {
-                    foreach ($files as $f) {
-                        $this->exporter->copy_existing_file($f);
+                    foreach ($files as $file) {
+                        $this->exporter->copy_existing_file($file);
                     }
                 }
                 return $this->exporter->write_new_file($html, 'assignment.html', !empty($files));
@@ -156,8 +151,8 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
                 $leapwriter->add_entry($entry);
                 if ($files = $this->exporter->get('caller')->get('multifiles')) {
                     $leapwriter->link_files($entry, $files, $this->area . $this->cmid . 'file');
-                    foreach ($files as $f) {
-                        $this->exporter->copy_existing_file($f);
+                    foreach ($files as $file) {
+                        $this->exporter->copy_existing_file($file);
                     }
                 }
                 return $this->exporter->write_new_file($leapwriter->to_xml(), $this->exporter->get('format')->manifest_name(), true);
@@ -189,7 +184,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
             }
             if (count($files) > 1) {
                 $baseid = 'assign' . $this->cmid . $this->area;
-                $context = get_context_instance(CONTEXT_MODULE,$this->cmid);
+                $context = context_module::instance($this->cmid);
 
                 // if we have multiple files, they should be grouped together into a folder
                 $entry = new portfolio_format_leap2a_entry($baseid . 'group', print_context_name($context), 'selection');
@@ -203,19 +198,21 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
     
     /**
      * fetch the plugin by its type 
+     * @global stdClass $CFG
      * 
-     * @return object
+     * @return assignment_submission_plugin
      */
     private function get_submission_plugin() {
+        global $CFG;
         if (!$this->plugin || !$this->cmid) {
             return null;
         }
         
-        require_once('locallib.php');
+        require_once($CFG->dirroot . '/mod/assign/locallib.php');
            
-        $context = get_context_instance(CONTEXT_MODULE,$this->cmid);
+        $context = context_module::instance($this->cmid);
 
-        $assignment = new assignment($context);
+        $assignment = new assignment($context, null, null);
         return $assignment->get_submission_plugin_by_type($this->plugin); 
     }
 
@@ -224,14 +221,14 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
      * calculate a sha1 has of either a single file or a list
      * of files based on the data set by load_data
      * 
-     * @return mixed
+     * @return string
      */
     public function get_sha1() {
        
         if ($this->plugin && $this->editor) {
             $plugin = $this->get_submission_plugin();
             $options = portfolio_format_text_options();
-            $options->context = get_context_instance(CONTEXT_MODULE,$this->cmid);
+            $options->context = context_module::instance($this->cmid);
 
             $textsha1 = sha1(format_text($plugin->get_editor_text($this->editor, $this->sid), 
                                          $plugin->get_editor_format($this->editor, $this->sid), $options));
@@ -257,10 +254,10 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
     /**
      * checking the permissions 
      * 
-     * @return mixed
+     * @return bool
      */
     public function check_permissions() {
-        $context = get_context_instance(CONTEXT_MODULE, $this->cmid);
+        $context = context_module::instance($this->cmid);
         return has_capability('mod/assign:exportownsubmission', $context);
     }
      
@@ -274,7 +271,7 @@ class assign_portfolio_caller extends portfolio_module_caller_base {
     }
     
     /**
-     *  return array of formats suported by this portfolio call back 
+     * return array of formats supported by this portfolio call back 
      * @return array
      */
     public static function base_supported_formats() {

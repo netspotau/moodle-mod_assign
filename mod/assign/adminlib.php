@@ -42,8 +42,6 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/** Include config.php */
-require_once(dirname(__FILE__) . '/../../config.php');
 /** Include adminlib.php */
 require_once($CFG->libdir . '/adminlib.php');
 /** Include tablelib.php */
@@ -67,11 +65,9 @@ class admin_page_manage_assignment_plugins extends admin_externalpage {
     /**
      *  the constructor 
      * 
-     * @global object $CFG
      * @param string $subtype 
      */
     public function __construct($subtype) {
-        global $CFG;
         $this->subtype = $subtype;
         parent::__construct('manage' . $subtype . 'plugins', get_string('manage' . $subtype . 'plugins', 'assign'),
                 new moodle_url('/mod/assign/admin_manage_plugins.php', array('subtype'=>$subtype)));
@@ -84,7 +80,6 @@ class admin_page_manage_assignment_plugins extends admin_externalpage {
      * @return array
      */
     public function search($query) {
-        global $CFG;
         if ($result = parent::search($query)) {
             return $result;
         }
@@ -128,8 +123,8 @@ class assignment_plugin_manager {
     private $subtype = '';
 
     /**
-     *
-     * @param string $subtype 
+     * Constructor for this assignment plugin manager
+     * @param string $subtype - either assignsubmission or assignfeedback
      */
     public function __construct($subtype) {
         $this->pageurl = new moodle_url('/mod/assign/admin_manage_plugins.php', array('subtype'=>$subtype));
@@ -142,14 +137,16 @@ class assignment_plugin_manager {
      * 
      * @return array The list of plugins
      */
-    private function get_sorted_plugins_list() {
+    public function get_sorted_plugins_list() {
         $names = get_plugin_list($this->subtype);
 
         $result = array();
 
-        foreach ($names as $path) {
-            $name = basename($path);
+        foreach ($names as $name => $path) {
             $idx = get_config($this->subtype . '_' . $name, 'sortorder');
+            if (!$idx) {
+                $idx = 0;
+            }
             while (array_key_exists($idx, $result)) $idx +=1;
             $result[$idx] = $name;
         }
@@ -162,7 +159,7 @@ class assignment_plugin_manager {
     /** 
      * Util function for writing an action icon link
      * 
-     * @global object $OUTPUT For writing to the page
+     * @global renderer_base $OUTPUT For writing to the page
      * @param string $action URL parameter to include in the link
      * @param string $plugintype URL parameter to include in the link
      * @param string $icon The key to the icon to use (e.g. 't/up')
@@ -181,8 +178,8 @@ class assignment_plugin_manager {
     /** 
      * Write the HTML for the submission plugins table.
      * 
-     * @global object $OUTPUT For writing to the page
-     * @global object $CFG Used to get the dirroot
+     * @global renderer_base $OUTPUT For writing to the page
+     * @global stdClass $CFG Used to get the dirroot
      * @return None
      */
     private function view_plugins_table() {
@@ -217,16 +214,16 @@ class assignment_plugin_manager {
                 $row[] = $this->format_icon_link('show', $plugin, 'i/show', get_string('enable'));
             }
 
-            $move_links = '';
+            $movelinks = '';
             if (!$idx == 0) {
-                $move_links .= $this->format_icon_link('moveup', $plugin, 't/up', get_string('up'));
+                $movelinks .= $this->format_icon_link('moveup', $plugin, 't/up', get_string('up'));
             } else {
-                $move_links .= $OUTPUT->spacer(array('width'=>15));
+                $movelinks .= $OUTPUT->spacer(array('width'=>15));
             }
             if ($idx != count($plugins) - 1) {
-                $move_links .= $this->format_icon_link('movedown', $plugin, 't/down', get_string('down'));
+                $movelinks .= $this->format_icon_link('movedown', $plugin, 't/down', get_string('down'));
             }
-            $row[] = $move_links;
+            $row[] = $movelinks;
 
             if ($row[1] != '') {
                 $row[] = $this->format_icon_link('delete', $plugin, 't/delete', get_string('delete'));
@@ -250,7 +247,7 @@ class assignment_plugin_manager {
     /** 
      * Write the page header
      * 
-     * @global object $OUTPUT For writing to the page
+     * @global renderer_base $OUTPUT For writing to the page
      * @return None
      */
     private function view_header() {
@@ -264,7 +261,7 @@ class assignment_plugin_manager {
     /** 
      * Write the page footer
      * 
-     * @global object $OUTPUT For writing to the page
+     * @global renderer_base $OUTPUT For writing to the page
      * @return None
      */
     private function view_footer() {
@@ -280,25 +277,25 @@ class assignment_plugin_manager {
     private function check_permissions() {
         // Check permissions.
         require_login();
-        $systemcontext = get_context_instance(CONTEXT_SYSTEM);
+        $systemcontext = context_system::instance();
         require_capability('moodle/site:config', $systemcontext);
     }
     
     /** 
      * Delete the database and files associated with this plugin.
      * 
-     * @global object $CFG global config
-     * @global object $DB database connection
+     * @global stdClass $CFG global config
+     * @global moodle_database $DB database connection
      * @param string $plugin - The type of the plugin to delete
      * @return string the name of the next page to display
      */
-    private function delete_plugin($plugin) {
+    public function delete_plugin($plugin) {
         global $CFG, $DB;
         $confirm = optional_param('confirm', null, PARAM_BOOL);
 
         if ($confirm) {
             // Delete any configuration records.
-            if (!unset_all_config_for_plugin('submission_' . $plugin)) {
+            if (!unset_all_config_for_plugin('assignsubmission_' . $plugin)) {
                 $this->error = $OUTPUT->notification(get_string('errordeletingconfig', 'admin', $this->subtype . '_' . $plugin));
             }
 
@@ -328,8 +325,8 @@ class assignment_plugin_manager {
     /** 
      * Show the page that gives the details of the plugin that was just deleted
      * 
-     * @global object $OUTPUT For writing to the page
-     * @param object $plugin - The plugin that was just deleted
+     * @global renderer_base $OUTPUT For writing to the page
+     * @param string $plugin - The plugin that was just deleted
      * @return None
      */
     private function view_plugin_deleted($plugin) {
@@ -345,8 +342,8 @@ class assignment_plugin_manager {
     /** 
      * Show the page that asks the user to confirm they want to delete a plugin
      * 
-     * @global object $OUTPUT For writing to the page
-     * @param object $plugin - The plugin that will be deleted
+     * @global renderer_base $OUTPUT For writing to the page
+     * @param string $plugin - The plugin that will be deleted
      * @return None
      */
     private function view_confirm_delete($plugin) {
@@ -364,10 +361,10 @@ class assignment_plugin_manager {
     /** 
      * Hide this plugin
      * 
-     * @param object $plugin - The plugin to hide
+     * @param string $plugin - The plugin to hide
      * @return string The next page to display
      */
-    private function hide_plugin($plugin) {
+    public function hide_plugin($plugin) {
         set_config('disabled', 1, $this->subtype . '_' . $plugin);
         return 'view';
     }
@@ -375,15 +372,15 @@ class assignment_plugin_manager {
     /** 
      * Change the order of this plugin
      * 
-     * @param object $plugin - The plugin to move
+     * @param string $plugin - The plugin to move
      * @param string $dir - up or down
      * @return string The next page to display
      */
-    private function move_plugin($plugintomove, $dir) {
+    public function move_plugin($plugintomove, $dir) {
         // get a list of the current plugins
         $plugins = $this->get_sorted_plugins_list();
 
-        $current_index = 0;
+        $currentindex = 0;
 
         // throw away the keys
 
@@ -392,23 +389,23 @@ class assignment_plugin_manager {
         // find this plugin in the list
         foreach ($plugins as $key => $plugin) {
             if ($plugin == $plugintomove) {
-                $current_index = $key;
+                $currentindex = $key;
                 break;
             }
         }
 
         // make the switch
         if ($dir == 'up') {
-            if ($current_index > 0) {
-                $a = $plugins[$current_index - 1];
-                $plugins[$current_index - 1] = $plugins[$current_index];
-                $plugins[$current_index] = $a;
+            if ($currentindex > 0) {
+                $tempplugin = $plugins[$currentindex - 1];
+                $plugins[$currentindex - 1] = $plugins[$currentindex];
+                $plugins[$currentindex] = $tempplugin;
             }
         } else if ($dir == 'down') {
-            if ($current_index < (count($plugins) - 1)) {
-                $a = $plugins[$current_index + 1];
-                $plugins[$current_index + 1] = $plugins[$current_index];
-                $plugins[$current_index] = $a;
+            if ($currentindex < (count($plugins) - 1)) {
+                $tempplugin = $plugins[$currentindex + 1];
+                $plugins[$currentindex + 1] = $plugins[$currentindex];
+                $plugins[$currentindex] = $tempplugin;
             }
         }
 
@@ -423,10 +420,10 @@ class assignment_plugin_manager {
     /** 
      * Show this plugin
      * 
-     * @param object $plugin - The plugin to show
+     * @param string $plugin - The plugin to show
      * @return string The next page to display
      */
-    private function show_plugin($plugin) {
+    public function show_plugin($plugin) {
         set_config('disabled', 0, $this->subtype . '_' . $plugin);
         return 'view';
     }
@@ -439,7 +436,7 @@ class assignment_plugin_manager {
      * @param string $plugintype - Optional name of a plugin type to perform the action on
      * @return None
      */
-    public function execute($action = null, $plugin = null) {
+    public function execute($action, $plugin) {
         if ($action == null) {
             $action = 'view';
         }
@@ -475,36 +472,39 @@ class assignment_plugin_manager {
      * 
      * @static
      * @param string $subtype - The type of plugin (submission or feedback)
-     * @param object $admin - The handle to the admin menu
-     * @param object $settings - The handle to current node in the navigation tree
-     * @param object $module - The handle to the current module
+     * @param part_of_admin_tree $admin - The handle to the admin menu
+     * @param admin_settingpage $settings - The handle to current node in the navigation tree
+     * @param stdClass $module - The handle to the current module
      * @return None
      */
-    static function add_admin_assignment_plugin_settings($subtype, $admin, $settings, $module) {
+    static function add_admin_assignment_plugin_settings($subtype, part_of_admin_tree $admin, admin_settingpage $settings, stdClass $module) {
         global $CFG;
 
         $plugins = get_plugin_list_with_file($subtype, 'settings.php', false);
         $pluginsbyname = array();
         foreach ($plugins as $plugin => $plugindir) {
-            $str_pluginname = get_string('pluginname', $subtype . '_'.$plugin);
-            $pluginsbyname[$str_pluginname] = $plugin;
+            $pluginname = get_string('pluginname', $subtype . '_'.$plugin);
+            $pluginsbyname[$pluginname] = $plugin;
         }
         ksort($pluginsbyname);
 
-        $tmp_settings = $settings;
-        foreach ($pluginsbyname as $str_pluginname => $plugin) {
+        // We need to reset settings after the loop
+        $tempsettings = $settings;
+        foreach ($pluginsbyname as $pluginname => $plugin) {
             $pluginname = $plugin;
 
             $settings = new admin_settingpage($subtype . '_'.$pluginname,
-                    $str_pluginname, 'moodle/site:config', !$module->visible);
+                    $pluginname, 'moodle/site:config', !$module->visible);
             if ($admin->fulltree) {
-                include($CFG->dirroot . "/mod/assign/$subtype/$pluginname/settings.php");
+                $shortsubtype = substr($subtype, strlen('assign'));
+                include($CFG->dirroot . "/mod/assign/$shortsubtype/$pluginname/settings.php");
             }
                 
             $admin->add($subtype . 'plugins', $settings);
         }
 
-        $settings = $tmp_settings;
+        // Reset settings to the original point in the tree
+        $settings = $tempsettings;
     
     }
 }

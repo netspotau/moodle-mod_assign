@@ -18,7 +18,7 @@
  * Post-install code for the submission_comments module.
  *
  * @package    mod_assign
- * @subpackage submission_comments
+ * @subpackage assignsubmission_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,20 +29,21 @@ defined('MOODLE_INTERNAL') || die();
 
 /**
  * Code run after the module database tables have been created.
+ * Moves the comments plugin to the bottom 
+ * @global stdClass $CFG
+ * @return bool
  */
-function xmldb_submission_comments_install() {
-    global $CFG, $DB, $OUTPUT;
+function xmldb_assignsubmission_comments_install() {
+    global $CFG;
 
     // do the install
 
-    require_once($CFG->dirroot . '/mod/assign/locallib.php');
+    require_once($CFG->dirroot . '/mod/assign/adminlib.php');
     // set the correct initial order for the plugins
-    $assignment = new assignment();
-    $plugin = $assignment->get_submission_plugin_by_type('comments');
-    if ($plugin) {
-        $plugin->move('down');
-        $plugin->move('down');
-    }
+    $pluginmanager = new assignment_plugin_manager('assignsubmission');
+
+    $pluginmanager->move_plugin('comments', 'down');
+    $pluginmanager->move_plugin('comments', 'down');
         
     // do the upgrades
     return true;

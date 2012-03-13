@@ -70,7 +70,7 @@ class restore_assign_activity_task extends restore_activity_task {
      * Define the decoding rules for links belonging
      * to the activity to be executed by the link decoder
      * 
-     * @return array
+     * @return array of restore_decode_rule
      */
     static public function define_decode_rules() {
         $rules = array();
@@ -88,7 +88,7 @@ class restore_assign_activity_task extends restore_activity_task {
      * assign logs. It must return one array
      * of {@link restore_log_rule} objects
      * 
-     * @return array
+     * @return array of restore_log_rule
      */
     static public function define_restore_log_rules() {
         $rules = array();

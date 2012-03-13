@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the forms used by the assign module.
+ * This file contains the forms to create and edit an instance of this module
  *
  * @package   mod_assign
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die('Direct access to this script is forbidden.');
 /** Include moodleform_mod.php */
 require_once ($CFG->dirroot.'/course/moodleform_mod.php');
 /** Include locallib.php */
-require_once('locallib.php');
+require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
 /*
  * Assignment settings form. 
@@ -59,134 +59,56 @@ class mod_assign_mod_form extends moodleform_mod {
           
         $ctx = null;
         if ($this->current && $this->current->coursemodule) {
-            $cm = get_coursemodule_from_instance('assign', $this->current->id);
-            if ($cm) {
-                $ctx = get_context_instance(CONTEXT_MODULE, $cm->id);
-            }
+            $cm = get_coursemodule_from_instance('assign', $this->current->id, 0, false, MUST_EXIST);
+            $ctx = context_module::instance($cm->id);
         }
-        $instance = new assignment($ctx);
+        $assignment = new assignment($ctx, null, null);
+        if ($this->current && $this->current->course) {
+            if (!$ctx) {
+                $ctx = context_course::instance($this->current->course);
+            }
+            $assignment->set_course($DB->get_record('course', array('id'=>$this->current->course), '*', MUST_EXIST));
+        }
         
-        $instance->add_settings($mform);
+        $mform->addElement('header', 'general', get_string('settings', 'assign'));
+        $mform->addElement('date_time_selector', 'allowsubmissionsfromdate', get_string('allowsubmissionsfromdate', 'assign'), array('optional'=>true));
+        $mform->setDefault('allowsubmissionsfromdate', time());
+        $mform->addElement('date_time_selector', 'duedate', get_string('duedate', 'assign'), array('optional'=>true));
+        $mform->setDefault('duedate', time()+7*24*3600);
+        $mform->addElement('selectyesno', 'alwaysshowdescription', get_string('alwaysshowdescription', 'assign'));
+        $mform->setDefault('alwaysshowdescription', 1);
+        $mform->addElement('selectyesno', 'preventlatesubmissions', get_string('preventlatesubmissions', 'assign'));
+        $mform->setDefault('preventlatesubmissions', 0);
+        $mform->addElement('selectyesno', 'submissiondrafts', get_string('submissiondrafts', 'assign'));
+        $mform->setDefault('submissiondrafts', 0);
+        $mform->addElement('selectyesno', 'sendnotifications', get_string('sendnotifications', 'assign'));
+        $mform->setDefault('sendnotifications', 1);
         
+        // plagiarism enabling form
+        plagiarism_get_form_elements_module($mform, $ctx->get_course_context());
+
+        $assignment->add_all_plugin_settings($mform);
         $this->standard_grading_coursemodule_elements();
         $this->standard_coursemodule_elements();
 
         $this->add_action_buttons();
     }
-
-}
-
-/*
- * Assignment submission form
- *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class mod_assign_submission_form extends moodleform {
-
-    function definition() {
-        $mform = $this->_form;
-
-        list($assignment, $data) = $this->_customdata;
-
-        $assignment->add_submission_form_elements($mform, $data);
-
-        $this->add_action_buttons(true, get_string('savechanges', 'assign'));
-        if ($data) {
-            $this->set_data($data);
-        }
-    }
-}
-
-/*
- * Assignment submission confirm form
- *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class mod_assign_confirm_submission_form extends moodleform {
-
-    function definition() {
-        $mform = $this->_form;
-
-        list($assignment, $data) = $this->_customdata;
-
-        $config = get_config('assign');
-        $mform->addElement('static', 'confirm_help', '', get_string('submitassignment_help', 'assign'));
     
-        if (($config->require_submission_statement || 
-             $assignment->get_instance()->requiresubmissionstatement)) {
-            
-            $mform->addElement('checkbox', 'submissionstatement', '', $config->submission_statement);
-            $mform->addRule('submissionstatement', get_string('required'), 'required', null, 'client');
+    /**
+     * Perform minimal validation on the settings form
+     * @param array $data
+     * @param array $files
+     */
+    function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+
+        if ($data['allowsubmissionsfromdate'] && $data['duedate']) {
+            if ($data['allowsubmissionsfromdate'] > $data['duedate']) {
+                $errors['duedate'] = get_string('duedatevalidation', 'assign');
+            }
         }
-        $mform->addElement('hidden', 'id', $assignment->get_course_module()->id);
-        $mform->setType('id', PARAM_INT);
-        $mform->addElement('hidden', 'action', 'submitconfirm');
-        $mform->setType('action', PARAM_ALPHA);
-        $this->add_action_buttons(true, get_string('savechanges', 'assign'));
-        if ($data) {
-            $this->set_data($data);
-        }
+        return $errors;
     }
+
+
 }
-
-/*
- * Assignment grade form
- *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class mod_assign_grade_form extends moodleform {         
-    function definition() {
-        $mform = $this->_form;
-        
-        list($assignment, $data, $params) = $this->_customdata;
-        // visible elements
-        $assignment->add_grade_form_elements($mform, $data, $params);
-
-        if ($data) {
-            $this->set_data($data);
-        }
-    }
-          
-}
-
-/*
- * Assignment grading options form
- *
- * @package   mod-assign
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class mod_assign_grading_options_form extends moodleform {
-    function definition() {
-        $mform = $this->_form;
-        $instance = $this->_customdata;
-
-        $mform->addElement('header', 'general', get_string('gradingoptions', 'assign'));
-        // visible elements
-        $options = array(-1=>'All',10=>'10', 20=>'20', 50=>'50', 100=>'100');
-        $autosubmit = array('onchange'=>'form.submit();');
-        $mform->addElement('select', 'perpage', get_string('assignmentsperpage', 'assign'), $options, $autosubmit);
-        $options = array(''=>get_string('filternone', 'assign'), ASSIGN_FILTER_SUBMITTED=>get_string('filtersubmitted', 'assign'), ASSIGN_FILTER_REQUIRE_GRADING=>get_string('filterrequiregrading', 'assign'));
-        $mform->addElement('select', 'filter', get_string('filter', 'assign'), $options, $autosubmit);
-    
-        // hidden params
-        $mform->addElement('hidden', 'contextid', $instance['contextid']);
-        $mform->setType('contextid', PARAM_INT);
-        $mform->addElement('hidden', 'id', $instance['cm']);
-        $mform->setType('id', PARAM_INT);
-        $mform->addElement('hidden', 'userid', $instance['userid']);
-        $mform->setType('userid', PARAM_INT);
-        $mform->addElement('hidden', 'action', 'saveoptions');
-        $mform->setType('action', PARAM_ALPHA);
-
-        // buttons
-        $this->add_action_buttons(false, get_string('updatetable', 'assign'));
-    }
-}
-

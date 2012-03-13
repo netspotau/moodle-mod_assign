@@ -16,12 +16,12 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Strings for component 'feedback_comments', language 'en'
+ * Strings for component 'assignfeedback_comments', language 'en'
  *
  * @package   mod_assign
- * @package   feedback_comments
+ * @package   assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Feedback Comments';
+$string['pluginname'] = 'Feedback comments';

@@ -25,7 +25,7 @@
 /** config.php */
 require_once('../../config.php');
 /** Include locallib.php */
-require_once('locallib.php');
+require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
 
 $id = required_param('id', PARAM_INT);  // Course Module ID
@@ -36,29 +36,22 @@ $assignment = null;
 $course = null;
 
 // get the request parameters
-if (!$cm = get_coursemodule_from_id('assign', $id)) {
-    print_error('invalidcoursemodule');
-}
+$cm = get_coursemodule_from_id('assign', $id, 0, false, MUST_EXIST);
 
-if (!$assignment = $DB->get_record('assign', array('id' => $cm->instance))) {
-    print_error('invalidid', 'assign');
-}
+$course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 
-if (!$course = $DB->get_record('course', array('id' => $assignment->course))) {
-    print_error('coursemisconf', 'assign');
-}
+
 $url->param('id', $id);
 
 // Auth
 require_login($course, true, $cm);
 $PAGE->set_url($url);
-// Javascript/css includes
-$PAGE->requires->js('/mod/assign/assign.js');
-$PAGE->requires->css('/mod/assign/style.css');
 
-$context = get_context_instance(CONTEXT_MODULE,$cm->id);
+$context = context_module::instance($cm->id);
+
+require_capability('mod/assign:view', $context);
    
-$ass = new assignment($context,$assignment,$cm,$course);
+$assignment = new assignment($context,$cm,$course);
 
 // Get the assignment to render the page
-$ass->view(optional_param('action', '', PARAM_TEXT));
+echo $assignment->view(optional_param('action', '', PARAM_TEXT));

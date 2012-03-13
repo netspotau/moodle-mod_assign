@@ -16,42 +16,41 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Post-install code for the feedback_comments module.
+ * This file contains the forms to create and edit an instance of this module
  *
  * @package   mod_assign
- * @subpackage   assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') || die('Direct access to this script is forbidden.');
 
 
-/**
- * Code run after the feedback comments module database tables have been created.
+/** Include formslib.php */
+require_once ($CFG->libdir.'/formslib.php');
+/** Include locallib.php */
+require_once($CFG->dirroot . '/mod/assign/locallib.php');
+/** Required for advanced grading */
+require_once('HTML/QuickForm/input.php');
+
+/*
+ * Assignment grade form
  *
- * @package   mod_assign
- * @subpackage   assignfeedback_comments
+ * @package   mod-assign
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-/**
- * Set the initial order for the feedback comments plugin (top)
- */
-function xmldb_assignfeedback_comments_install() {
-    global $CFG, $DB, $OUTPUT;
-
-    // do the install
-
-    require_once($CFG->dirroot . '/mod/assign/adminlib.php');
-    // set the correct initial order for the plugins
-    $pluginmanager = new assignment_plugin_manager('assignfeedback');
-
-    $pluginmanager->move_plugin('comments', 'up');
+class mod_assign_grade_form extends moodleform {         
+    function definition() {
+        $mform = $this->_form;
         
-    // do the upgrades
-    return true;
+        list($assignment, $data, $params) = $this->_customdata;
+        // visible elements
+        $assignment->add_grade_form_elements($mform, $data, $params);
+
+        if ($data) {
+            $this->set_data($data);
+        }
+    }
+          
 }
-
-

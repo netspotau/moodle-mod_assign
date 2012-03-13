@@ -22,7 +22,7 @@
  * This class provides all the functionality for the new assign module.
  *
  * @package   mod_assign
- * @subpackage   feedback_file
+ * @subpackage   assignfeedback_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -44,24 +44,20 @@ define('ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES', 5);
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class feedback_file extends feedback_plugin {
-    
-    /** @var object the assignment record that contains the global settings for this assign instance */
-    private $instance;
-
+class assignment_feedback_file extends assignment_feedback_plugin {
     
     /**
      * get the name of the file feedback plugin
      * @return string 
      */
     public function get_name() {
-        return get_string('file', 'feedback_file');
+        return get_string('file', 'assignfeedback_file');
     }
     
     /**
      * get file feedback information from the database  
      *  
-     * @global object $DB
+     * @global moodle_database $DB
      * @param int $gradeid
      * @return mixed 
      */
@@ -71,67 +67,29 @@ class feedback_file extends feedback_plugin {
     }
     
     /**
-     * get the default setting for file feedback plugin
-     * @global object $CFG
-     * @global object $COURSE
-     * @global object $DB
-     * @param object $mform The form to add the settings to
-     * @return void
-     */
-    public function get_settings(&$mform) {
-        global $CFG, $COURSE, $DB;
-
-        $default_maxfiles = $this->get_config('maxfiles');
-        $default_maxsizebytes = $this->get_config('maxsizebytes');
-
-        $settings = array();
-        $options = array();
-        for($i = 1; $i <= ASSIGN_MAX_FEEDBACK_FILES; $i++) {
-            $options[$i] = $i;
-        }
-        
-        $mform->addElement('select', 'feedback_file_maxfiles', get_string('maxfiles', 'feedback_file'), $options);
-        $mform->setDefault('feedback_file_maxfiles', $default_maxfiles);
-
-        $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
-        $choices[0] = get_string('courseuploadlimit') . ' ('.display_size($COURSE->maxbytes).')';
-        
-        $mform->addElement('select', 'feedback_file_maxsizebytes', get_string('maximumsize', 'feedback_file'), $choices);
-        $mform->setDefault('feedback_file_maxsizebytes', $default_maxsizebytes);
-    }
-    
-    /**
-     * save the settings for file feedback plugin 
-     * @param object $mform
-     * @return bool 
-     */
-    public function save_settings($mform) {
-        $this->set_config('maxfiles', $mform->feedback_file_maxfiles);
-        $this->set_config('maxsizebytes', $mform->feedback_file_maxsizebytes);
-        return true;
-    }
-
-    /**
      * file format options 
-     * @return mixed
+     * @global stdClass $COURSE
+     * @return array
      */
     private function get_file_options() {
+        global $COURSE;
+
         $fileoptions = array('subdirs'=>1,
-                                'maxbytes'=>$this->get_config('maxsizebytes'),
-                                'maxfiles'=>$this->get_config('maxfiles'),
+                                'maxbytes'=>$COURSE->maxbytes,
                                 'accepted_types'=>'*',
                                 'return_types'=>FILE_INTERNAL);
         return $fileoptions;
     }
    
     /**
-     * get form elements for settings
+     * get form elements for grading form
      * 
-     * @param object $submission
-     * @param object $data
+     * @param mixed stdClass | null $grade
+     * @param MoodleQuickForm $mform
+     * @param stdClass $data
      * @return mixed 
      */
-    public function get_form_elements($grade, $mform, $data) {
+    public function get_form_elements($grade, MoodleQuickForm $mform, stdClass $data) {
 
         $elements = array();
 
@@ -158,7 +116,7 @@ class feedback_file extends feedback_plugin {
      * @param string $area
      * @return int 
      */
-    private function count_files($gradeid = 0, $area = ASSIGN_FILEAREA_FEEDBACK_FILES) {
+    private function count_files($gradeid, $area) {
         global $USER;
 
         $fs = get_file_storage();
@@ -168,16 +126,16 @@ class feedback_file extends feedback_plugin {
     }
 
     /**
-     * save the files
-     * @global object $USER
-     * @global object $DB
-     * @param object $grade
-     * @param object $data
-     * @return mixed 
+     * save the feedback files
+     * 
+     * @global moodle_database $DB
+     * @param stdClass $grade
+     * @param stdClass $data
+     * @return bool 
      */
-    public function save($grade, $data) {
+    public function save(stdClass $grade, stdClass $data) {
 
-        global $USER, $DB;
+        global $DB;
 
         $fileoptions = $this->get_file_options();
         
@@ -185,50 +143,65 @@ class feedback_file extends feedback_plugin {
         $data = file_postupdate_standard_filemanager($data, 'files', $fileoptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id);
 
         
-        $file_feedback = $this->get_file_feedback($grade->id);
-        if ($file_feedback) {
-            $file_feedback->numfiles = $this->count_files($grade->id);
-            return $DB->update_record('assign_feedback_file', $file_feedback);
+        $filefeedback = $this->get_file_feedback($grade->id);
+        if ($filefeedback) {
+            $filefeedback->numfiles = $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES);
+            return $DB->update_record('assign_feedback_file', $filefeedback);
         } else {
-            $file_feedback = new stdClass();
-            $file_feedback->numfiles = $this->count_files($grade->id);
-            $file_feedback->grade = $grade->id;
-            $file_feedback->assignment = $this->assignment->get_instance()->id;
-            return $DB->insert_record('assign_feedback_file', $file_feedback) > 0;
+            $filefeedback = new stdClass();
+            $filefeedback->numfiles = $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES);
+            $filefeedback->grade = $grade->id;
+            $filefeedback->assignment = $this->assignment->get_instance()->id;
+            return $DB->insert_record('assign_feedback_file', $filefeedback) > 0;
         }
     }
     
     /**
      * display the list of files  in the feedback status table 
-     * @param object $feedback
+     *
+     * @param stdClass $grade
      * @return string
      */
-    public function view_summary($grade) {
-        $count = $this->count_files($grade->id);
+    public function view_summary(stdClass $grade) {
+        $count = $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES);
         if ($count <= ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES) {
             return $this->assignment->render_area_files(ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id);
         } else {
-            return get_string('countfiles', 'feedback_file', $count);
+            return get_string('countfiles', 'assignfeedback_file', $count);
         }
     }
     
     /**
      * Should the assignment module show a link to view the full submission or feedback for this plugin?
      *
+     * @param stdClass $grade
      * @return bool
      */
-    public function show_view_link($grade) {
-        $count = $this->count_files($grade->id);
+    public function show_view_link(stdClass $grade) {
+        $count = $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES);
         return $count > ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES;
     }
     
     /**
      * display the list of files  in the feedback status table 
-     * @param object $grade
+     * @param stdClass $grade
      * @return string 
      */
-    public function view($grade) {
+    public function view(stdClass $grade) {
         return $this->assignment->render_area_files(ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id);
     }
     
+    /**
+     * The assignment has been deleted - cleanup
+     * 
+     * @global moodle_database $DB
+     * @return bool
+     */
+    public function delete_instance() {
+        global $DB;
+        // will throw exception on failure
+        $DB->delete_records('assign_feedback_file', array('assignment'=>$this->assignment->get_instance()->id));
+        
+        return true;
+    }
 }

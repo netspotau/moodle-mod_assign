@@ -1,0 +1,88 @@
+div.gradingnavigation div {
+    float: left;
+    margin-left: 2em;
+}
+
+
+div.submissionstatus,
+div.submissionfull,
+div.submissionlinks,
+div.usersummary,
+div.feedback,
+div.gradingsummary {
+
+    width: 70%;
+    margin: 0 auto;
+    margin-bottom: 5em;
+}
+
+
+div.submissionstatus .generaltable,
+div.submissionlinks .generaltable,
+div.feedback .generaltable,
+div.gradingsummary .generaltable {
+    width: 100%;
+}
+
+.gradingsummarytable,
+.feedbacktable,
+.submissionsummarytable {
+    margin-top: 1em;
+}
+
+
+div.submissionsummarytable table tbody tr td.c0 {
+    width: 30%;
+}
+
+.submittedlate {
+    color: red;
+    font-weight: 900;
+}
+
+.jsenabled .gradingoptionsform .hidden {display: none;}
+
+td.submissionstatus, 
+a:link.submissionstatus {
+    color: black;
+    background-color: #efefef;
+}
+
+td.submissionstatusdraft,
+a:link.submissionstatusdraft {
+    color: black;
+    background-color: #efefcf;
+}
+
+td.submissionstatussubmitted,
+a:link.submissionstatussubmitted {
+    color: black;
+    background-color: #cfefcf;
+}
+
+td.submissionlocked {
+    color: black;
+    background-color: #efefcf;
+}
+
+td.submissiongraded {
+    color: black;
+    background-color: #cfefcf;
+}
+
+td.submissionnotgraded {
+    color: black;
+    background-color: #efefef;
+}
+
+td.latesubmission,
+a:link.latesubmission,
+div.latesubmission {
+    color: black;
+    background-color: #efcfcf;
+}
+
+td.earlysubmission {
+    color: black;
+    background-color: #cfefcf;
+}

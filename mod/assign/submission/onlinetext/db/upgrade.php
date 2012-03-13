@@ -23,12 +23,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+/**
+ * Stub for upgrade code
+ * @param int $oldversion
+ * @return bool
+ */
 function xmldb_submission_onlinetext_upgrade($oldversion) {
-    global $CFG, $DB, $OUTPUT;
-
-    $dbman = $DB->get_manager();
-
-    // do the upgrades
     return true;
 }
 

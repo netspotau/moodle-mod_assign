@@ -30,25 +30,24 @@ require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
 $ADMIN->add('modules', new admin_category('assignmentplugins',
         get_string('assignmentplugins', 'assign'), !$module->visible));
-$ADMIN->add('assignmentplugins', new admin_category('submissionplugins',
+$ADMIN->add('assignmentplugins', new admin_category('assignsubmissionplugins',
         get_string('submissionplugins', 'assign'), !$module->visible));
 
-$ADMIN->add('submissionplugins', new admin_page_manage_assignment_plugins('submission'));
+$ADMIN->add('assignsubmissionplugins', new admin_page_manage_assignment_plugins('assignsubmission'));
 
-$ADMIN->add('assignmentplugins', new admin_category('feedbackplugins',
+$ADMIN->add('assignmentplugins', new admin_category('assignfeedbackplugins',
         get_string('feedbackplugins', 'assign'), !$module->visible));
 
-$ADMIN->add('feedbackplugins', new admin_page_manage_assignment_plugins('feedback'));
+$ADMIN->add('assignfeedbackplugins', new admin_page_manage_assignment_plugins('assignfeedback'));
 
 
-assignment_plugin_manager::add_admin_assignment_plugin_settings('submission', $ADMIN, $settings, $module);
-assignment_plugin_manager::add_admin_assignment_plugin_settings('feedback', $ADMIN, $settings, $module);
+assignment_plugin_manager::add_admin_assignment_plugin_settings('assignsubmission', $ADMIN, $settings, $module);
+assignment_plugin_manager::add_admin_assignment_plugin_settings('assignfeedback', $ADMIN, $settings, $module);
 
-$assignment = new assignment();
-$menu = array();
-foreach ($assignment->get_feedback_plugins() as $plugin) {
-    if ($plugin->is_visible()) {
-        $menu['feedback_' . $plugin->get_type()] = $plugin->get_name();
+foreach (get_plugin_list('assignfeedback') as $type => $notused) {
+    $visible = !get_config('assignfeedback_' . $type, 'disabled');
+    if ($visible) {
+        $menu['assignfeedback_' . $type] = get_string('pluginname', 'assignfeedback_' . $type);
     }
 }
 

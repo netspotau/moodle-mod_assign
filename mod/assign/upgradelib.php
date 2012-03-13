@@ -62,10 +62,7 @@ class assignment_upgrade_manager {
         
         
         // first insert an assign instance to get the id
-        if (!$oldassignment = $DB->get_record('assignment', array('id'=>$oldassignmentid))) {
-            $log = get_string('couldnotfindassignmenttoupgrade', 'mod_assign');
-            return false;
-        }
+        $oldassignment = $DB->get_record('assignment', array('id'=>$oldassignmentid), '*', MUST_EXIST);
 
         $oldversion = get_config('assignment_' . $oldassignment->assignmenttype, 'version');
 
@@ -81,20 +78,19 @@ class assignment_upgrade_manager {
         $data->submissiondrafts = $oldassignment->resubmit;
         $data->preventlatesubmissions = $oldassignment->preventlate;
 
-        $newassignment = new assignment();
-        $newassignment->set_instance($data);
+        $newassignment = new assignment(null, null, null);
         
-        if (!$newassignment->add_instance(false)) {
+        if (!$newassignment->add_instance($data, false)) {
             $log = get_string('couldnotcreatenewassignmentinstance', 'mod_assign');
             return false;
         }
 
         // get the module details
-        $oldmodule = $DB->get_record('modules', array('name'=>'assignment'));
-        $oldcoursemodule = $DB->get_record('course_modules', array('module'=>$oldmodule->id, 'instance'=>$oldassignmentid));
-        $oldcontext = get_context_instance(CONTEXT_MODULE, $oldcoursemodule->id);
+        $oldmodule = $DB->get_record('modules', array('name'=>'assignment'), '*', MUST_EXIST);
+        $oldcoursemodule = $DB->get_record('course_modules', array('module'=>$oldmodule->id, 'instance'=>$oldassignmentid), '*', MUST_EXIST);
+        $oldcontext = context_module::instance($oldcoursemodule->id);
         
-        $newmodule = $DB->get_record('modules', array('name'=>'assign'));
+        $newmodule = $DB->get_record('modules', array('name'=>'assign'), '*', MUST_EXIST);
         $newcoursemodule = $this->duplicate_course_module($oldcoursemodule, $newmodule->id, $newassignment->get_instance()->id);
         if (!$newcoursemodule) {
             $log = get_string('couldnotcreatenewcoursemodule', 'mod_assign');
@@ -107,7 +103,7 @@ class assignment_upgrade_manager {
         // from this point we want to rollback on failure
         $rollback = false;
         try {
-            $newassignment->set_context(get_context_instance(CONTEXT_MODULE,$newcoursemodule->id));
+            $newassignment->set_context(context_module::instance($newcoursemodule->id));
             // the course module has now been created - time to update the core tables
             $newassignment->copy_area_files_for_upgrade($oldcontext->id, 'mod_assignment', 'intro', 0, 
                                             $newassignment->get_context()->id, 'mod_assign', 'intro', 0);
@@ -183,9 +179,9 @@ class assignment_upgrade_manager {
             // copy the grades from the old assignment to the new one
             $this->copy_grades_for_upgrade($oldassignment, $newassignment);
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             $rollback = true;
-            $log .= get_string('conversionexception', 'mod_assign', $e->getMessage());
+            $log .= get_string('conversionexception', 'mod_assign', $exception->getMessage());
         }
     
         if ($rollback) {
@@ -210,13 +206,13 @@ class assignment_upgrade_manager {
      * Create a duplicate course module record so we can create the upgraded
      * assign module alongside the old assignment module.
      * 
-     * @global object $CFG
-     * @global object $DB
-     * @param object $cm The old course module record
+     * @global stdClass $CFG
+     * @global moodle_database $DB
+     * @param stdClass $cm The old course module record
      * @param int $moduleid The id of the new assign module
-     * @return object $newcm The new course module record or FALSE
+     * @return mixed stdClass|bool The new course module record or FALSE
      */
-    private function duplicate_course_module($cm, $moduleid, $newinstanceid) {
+    private function duplicate_course_module(stdClass $cm, $moduleid, $newinstanceid) {
         global $DB, $CFG;
 
         $newcm = new stdClass();
@@ -242,11 +238,14 @@ class assignment_upgrade_manager {
         $newcm->showdescription = $cm->showdescription;
 
         $newcmid = add_course_module($newcm);
-        $newcm = get_coursemodule_from_id('', $newcmid, $cm->course, true, MUST_EXIST);
+        $newcm = get_coursemodule_from_id('', $newcmid, $cm->course);
         if (!$newcm) {
             return false;
         }
         $section = $DB->get_record("course_sections", array("id"=>$newcm->section));
+        if (!$section) {
+            return false;
+        }
 
         $mod = new stdClass();
         $mod->course = $newcm->course;
@@ -266,18 +265,18 @@ class assignment_upgrade_manager {
      * This function deletes the old assignment course module after
      * it has been upgraded. This code is adapted from "course/mod.php".
      * 
-     * @global object $CFG
-     * @global object $USER
-     * @global object $DB
-     * @param object $cm The course module to delete.
+     * @global stdClass $CFG
+     * @global stdClass $USER
+     * @global moodle_database $DB
+     * @param stdClass $cm The course module to delete.
      * @return bool
      */
     private function delete_course_module($cm) {
         global $CFG, $USER, $DB;
         $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 
-        $coursecontext = get_context_instance(CONTEXT_COURSE, $course->id);
-        $modcontext = get_context_instance(CONTEXT_MODULE, $cm->id);
+        $coursecontext = context_course::instance($course->id);
+        $modcontext = context_module::instance($cm->id);
 
         $modlib = "$CFG->dirroot/mod/$cm->modname/lib.php";
 
@@ -323,7 +322,8 @@ class assignment_upgrade_manager {
      * This function copies the grades from the old assignment module to this one.
      *
      * @global object CFG
-     * @param object $oldassignment old assignment data record
+     * @param stdClass $oldassignment old assignment data record
+     * @param assignment $newassignment the new assignment class
      * @return bool true or false
      */
     public function copy_grades_for_upgrade($oldassignment, $newassignment) {
@@ -332,27 +332,27 @@ class assignment_upgrade_manager {
         require_once($CFG->libdir.'/gradelib.php');
 
         // get the old and new grade items
-        $old_grade_items = grade_item::fetch_all(array('itemtype'=>'mod', 'itemmodule'=>'assignment', 'iteminstance'=>$oldassignment->id));
-        if (!$old_grade_items) {
+        $oldgradeitems = grade_item::fetch_all(array('itemtype'=>'mod', 'itemmodule'=>'assignment', 'iteminstance'=>$oldassignment->id));
+        if (!$oldgradeitems) {
             return false;
         }
-        $old_grade_item = array_pop($old_grade_items);
-        if (!$old_grade_item) {
+        $oldgradeitem = array_pop($oldgradeitems);
+        if (!$oldgradeitem) {
             return false;
         }
-        $new_grade_items = grade_item::fetch_all(array('itemtype'=>'mod', 'itemmodule'=>'assign', 'iteminstance'=>$newassignment->get_instance()->id));
-        if (!$new_grade_items) {
+        $newgradeitems = grade_item::fetch_all(array('itemtype'=>'mod', 'itemmodule'=>'assign', 'iteminstance'=>$newassignment->get_instance()->id));
+        if (!$newgradeitems) {
             return false;
         }
-        $new_grade_item = array_pop($new_grade_items);
-        if (!$new_grade_item) {
+        $newgradeitem = array_pop($newgradeitems);
+        if (!$newgradeitem) {
             return false;
         }
 
-        $grade_grades = grade_grade::fetch_all(array('itemid'=>$old_grade_item->id));
-        if ($grade_grades) {
-            foreach ($grade_grades as $gradeid=>$grade) {
-                $grade->itemid = $new_grade_item->id;
+        $gradegrades = grade_grade::fetch_all(array('itemid'=>$oldgradeitem->id));
+        if ($gradegrades) {
+            foreach ($gradegrades as $gradeid=>$grade) {
+                $grade->itemid = $newgradeitem->id;
                 grade_update('mod/assign', $newassignment->get_course()->id, 'mod', 'assign', $newassignment->get_instance()->id, 0, $grade, NULL);
             }
         }

@@ -29,9 +29,14 @@ defined('MOODLE_INTERNAL') || die();
  * Implements a renderable submissions table
  */
 class users_submissions_table implements renderable {
+    /** @var array of user submissions. Each data row contains user, submission and grade as stdClass objects */
     protected $data = null;
     
-    public function __construct($data) {
+    /**
+     * Constructor
+     * @param array of ('user'=>stdClass, 'grade'=>stdClass|null, 'submission'=>stdClass|null)
+     */
+    public function __construct(stdClass $data) {
         $this->set_data($data);
     }
     
@@ -89,20 +94,27 @@ class confirm_submission_form implements renderable {
     }
 }
 
+
+
 /*
- * Implements a renderable edit submission form
+ * Implements a renderable grading options form
  */
-class edit_submission_form implements renderable {
+class grading_options_form implements renderable {
+    /** @var moodleform $form is the edit submission form */
     protected $form = null;
     
-    public function __construct($form) {
+    /*
+     * Constructor
+     * @param moodleform $form
+     */
+    public function __construct(moodleform $form) {
         $this->set_form($form);
     }
     
     /**
      * Returns form
      *
-     * @return form
+     * @return moodleform $form
      */
     public function get_form() {
         return $this->form;
@@ -111,9 +123,49 @@ class edit_submission_form implements renderable {
     /**
      * Set the form
      *
-     * @param form $form
+     * @param moodleform $form
+     * @return void
      */
-    public function set_form($form) {
+    public function set_form(moodleform $form) {
+        if (!$form) {
+            throw new coding_exception('Form may not be null');
+        }
+        $this->form = $form;
+    }
+}
+
+
+/*
+ * Implements a renderable edit submission form
+ */
+class edit_submission_form implements renderable {
+    /** @var moodleform $form is the edit submission form */
+    protected $form = null;
+    
+    /*
+     * Constructor
+     * @param moodleform $form
+     */
+    public function __construct(moodleform $form) {
+        $this->set_form($form);
+    }
+    
+    /**
+     * Returns form
+     *
+     * @return moodleform $form
+     */
+    public function get_form() {
+        return $this->form;
+    }
+
+    /**
+     * Set the form
+     *
+     * @param moodleform $form
+     * @return void
+     */
+    public function set_form(moodleform $form) {
         if (!$form) {
             throw new coding_exception('Form may not be null');
         }
@@ -125,9 +177,14 @@ class edit_submission_form implements renderable {
  * Implements a renderable grading form
  */
 class grading_form implements renderable {
+    /** @var moodleform $form */
     protected $form = null;
     
-    public function __construct($form) {
+    /**
+     * A grading form is a moodleform setup to grade a user submission
+     * @param moodleform $form
+     */
+    public function __construct(moodleform $form) {
         $this->set_form($form);
     }
     
@@ -135,7 +192,7 @@ class grading_form implements renderable {
     /**
      * Returns form
      *
-     * @return form
+     * @return moodleform
      */
     public function get_form() {
         return $this->form;
@@ -144,12 +201,10 @@ class grading_form implements renderable {
     /**
      * Set the form
      *
-     * @param form $form
+     * @param moodleform $form
+     * @return void
      */
-    public function set_form($form) {
-        if (!$form) {
-            throw new coding_exception('Form may not be null');
-        }
+    public function set_form(moodleform $form) {
         $this->form = $form;
     }
     
@@ -159,10 +214,17 @@ class grading_form implements renderable {
  * Implements a renderable user summary
  */
 class user_summary implements renderable {
+    /** @var stdClass $user */
     protected $user = null;
+    /** @var assignment $assignment */
     protected $assignment = null;
     
-    public function __construct($user, $assignment) {
+    /**
+     * Constructor
+     * @param stdClass $user
+     * @param assignment $assignment
+     */
+    public function __construct(stdClass $user, assignment $assignment) {
         $this->set_user($user);
         $this->set_assignment($assignment);
     }
@@ -170,7 +232,7 @@ class user_summary implements renderable {
     /**
      * Returns assignment
      *
-     * @return assignment
+     * @return assignment $assignment
      */
     public function get_assignment() {
         return $this->assignment;
@@ -181,7 +243,7 @@ class user_summary implements renderable {
      *
      * @param assignment $assignment
      */
-    public function set_assignment($assignment) {
+    public function set_assignment(assignment $assignment) {
         if (!$assignment) {
             throw new coding_exception('Assignment may not be null');
         }
@@ -191,7 +253,7 @@ class user_summary implements renderable {
     /**
      * Returns user
      *
-     * @return user
+     * @return stdClass $user
      */
     public function get_user() {
         return $this->user;
@@ -200,7 +262,7 @@ class user_summary implements renderable {
     /**
      * Set the user
      *
-     * @param user $user
+     * @param stdClass $user 
      */
     public function set_user($user) {
         if (!$user) {
@@ -217,12 +279,24 @@ class feedback_plugin_feedback implements renderable {
     const SUMMARY                = 10;
     const FULL                   = 20;
 
+    /** @var assignment $assignment */
     protected $assignment = null;
+    /** @var assignment_submission_plugin $plugin */
     protected $plugin = null;
+    /** @var stdClass $grade */
     protected $grade = null;
+    /** @var string $view */
     protected $view = self::SUMMARY;
     
-    public function __construct($assignment, $plugin, $grade, $view) {
+    /**
+     * feedback for a single plugin
+     *
+     * @param assignment $assignment
+     * @param assignment_feedback_plugin $plugin
+     * @param stdClass $grade
+     * @param string view one of feedback_plugin::SUMMARY or feedback_plugin::FULL
+     */
+    public function __construct(assignment $assignment, assignment_feedback_plugin $plugin, stdClass $grade, $view) {
         $this->set_assignment($assignment);
         $this->set_plugin($plugin);
         $this->set_grade($grade);
@@ -243,7 +317,7 @@ class feedback_plugin_feedback implements renderable {
      *
      * @param assignment $assignment
      */
-    public function set_assignment($assignment) {
+    public function set_assignment(assignment $assignment) {
         if (!$assignment) {
             throw new coding_exception('Assignment may not be null');
         }
@@ -262,19 +336,16 @@ class feedback_plugin_feedback implements renderable {
     /**
      * Set the grade info (may not be null)
      *
-     * @param grade $grade
+     * @param stdClass $grade
      */
-    public function set_grade($grade) {
-        if (!$grade) {
-            throw new coding_exception('Grade may not be null');
-        }
+    public function set_grade(stdClass $grade) {
         $this->grade = $grade;
     }
 
     /**
      * Returns plugin info
      *
-     * @return stdClass
+     * @return assignment_feedback_plugin
      */
     public function get_plugin() {
         return $this->plugin;
@@ -283,19 +354,16 @@ class feedback_plugin_feedback implements renderable {
     /**
      * Set the plugin info (may not be null)
      *
-     * @param plugin $plugin
+     * @param assignment_feedback_plugin $plugin
      */
-    public function set_plugin($plugin) {
-        if (!$plugin) {
-            throw new coding_exception('Plugin may not be null');
-        }
+    public function set_plugin(assignment_feedback_plugin $plugin) {
         $this->plugin = $plugin;
     }
     
     /**
      * Returns view
      *
-     * @return string
+     * @return int
      */
     public function get_view() {
         return $this->view;
@@ -304,7 +372,7 @@ class feedback_plugin_feedback implements renderable {
     /**
      * Set the view
      *
-     * @param string $view
+     * @param int $view
      */
     public function set_view($view) {
         if (in_array($view, array(self::SUMMARY, self::FULL))) {
@@ -322,12 +390,23 @@ class submission_plugin_submission implements renderable {
     const SUMMARY                = 10;
     const FULL                   = 20;
 
+    /** @var assignment $assignment */
     protected $assignment = null;
+    /** @var assignment_submission_plugin $plugin */
     protected $plugin = null;
+    /** @var stdClass $submission */
     protected $submission = null;
+    /** @var string $view */
     protected $view = self::SUMMARY;
     
-    public function __construct($assignment, $plugin, $submission, $view) {
+    /**
+     * Constructor
+     * @param assignment $assignment
+     * @param assignment_submission_plugin $plugin
+     * @param stdClass $submission
+     * @param string $view one of submission_plugin::SUMMARY, submission_plugin::FULL
+     */
+    public function __construct(assignment $assignment, assignment_submission_plugin $plugin, stdClass $submission, $view) {
         $this->set_assignment($assignment);
         $this->set_plugin($plugin);
         $this->set_submission($submission);
@@ -348,10 +427,7 @@ class submission_plugin_submission implements renderable {
      *
      * @param assignment $assignment
      */
-    public function set_assignment($assignment) {
-        if (!$assignment) {
-            throw new coding_exception('Assignment may not be null');
-        }
+    public function set_assignment(assignment $assignment) {
         $this->assignment = $assignment;
     }
     
@@ -367,19 +443,16 @@ class submission_plugin_submission implements renderable {
     /**
      * Set the submission info (may not be null)
      *
-     * @param submission $submission
+     * @param stdClass $submission
      */
-    public function set_submission($submission) {
-        if (!$submission) {
-            throw new coding_exception('Submission may not be null');
-        }
+    public function set_submission(stdClass $submission) {
         $this->submission = $submission;
     }
 
     /**
      * Returns plugin info
      *
-     * @return stdClass
+     * @return assignment_submission_plugin
      */
     public function get_plugin() {
         return $this->plugin;
@@ -388,9 +461,9 @@ class submission_plugin_submission implements renderable {
     /**
      * Set the plugin info (may not be null)
      *
-     * @param plugin $plugin
+     * @param assignment_submission_plugin $plugin
      */
-    public function set_plugin($plugin) {
+    public function set_plugin(assignment_submission_plugin $plugin) {
         if (!$plugin) {
             throw new coding_exception('Plugin may not be null');
         }
@@ -400,7 +473,7 @@ class submission_plugin_submission implements renderable {
     /**
      * Returns view
      *
-     * @return string
+     * @return int
      */
     public function get_view() {
         return $this->view;
@@ -409,7 +482,7 @@ class submission_plugin_submission implements renderable {
     /**
      * Set the view
      *
-     * @param string $view
+     * @param int $view
      */
     public function set_view($view) {
         if (in_array($view, array(self::SUMMARY, self::FULL))) {
@@ -431,9 +504,16 @@ class feedback_status implements renderable {
     protected $grade = null;
     /** @var assignment the assignment info (may not be null) */
     protected $assignment = null;
+    /** @var int $view */
     protected $view = self::STUDENT_VIEW;
 
-    public function __construct($assignment, $grade = null, $view = self::STUDENT_VIEW) {
+    /**
+     * Constructor
+     * @param assignment $assignment
+     * @param mixed stdClass|null $grade
+     * @param int $view
+     */
+    public function __construct($assignment, $grade, $view) {
         $this->set_assignment($assignment);
         $this->set_grade($grade);
         $this->set_view($view);
@@ -453,7 +533,7 @@ class feedback_status implements renderable {
      *
      * @param int $view
      */
-    public function set_view($view = self::STUDENT_VIEW) {
+    public function set_view($view) {
         if (in_array($view, array(self::STUDENT_VIEW, self::GRADER_VIEW))) {
             $this->view = $view;
         } else {
@@ -464,7 +544,7 @@ class feedback_status implements renderable {
     /**
      * Returns grade info
      *
-     * @return stdClass
+     * @return mixed stdClass|null $grade
      */
     public function get_grade() {
         return $this->grade;
@@ -473,7 +553,7 @@ class feedback_status implements renderable {
     /**
      * Set the grade info (may be null)
      *
-     * @param stdClass $grade
+     * @param mixed stdClass|null $grade
      */
     public function set_grade($grade) {
         $this->grade = $grade;
@@ -482,7 +562,7 @@ class feedback_status implements renderable {
     /**
      * Returns assignment info
      *
-     * @return stdClass
+     * @return assignment
      */
     public function get_assignment() {
         return $this->assignment;
@@ -493,10 +573,7 @@ class feedback_status implements renderable {
      *
      * @param assignment $assignment
      */
-    public function set_assignment($assignment) {
-        if (!$assignment) {
-            throw new coding_exception('Assignment may not be null');
-        }
+    public function set_assignment(assignment $assignment) {
         $this->assignment = $assignment;
     }
 
@@ -513,19 +590,36 @@ class submission_status implements renderable {
     protected $submission = null;
     /** @var assignment the assignment info (may not be null) */
     protected $assignment = null;
+    /** @var int the view (submission_status::STUDENT_VIEW OR submission_status::GRADER_VIEW) */
     protected $view = self::STUDENT_VIEW;
+    /** @var bool locked */
     protected $locked = false;
+    /** @var bool graded */
     protected $graded = false;
-    protected $show_edit = false;
-    protected $show_submit = false;
+    /** @var bool show_edit */
+    protected $canedit = false;
+    /** @var bool show_submit */
+    protected $cansubmit = false;
 
-    public function __construct($assignment, $submission = null, $locked = false, $graded = false, $view = self::STUDENT_VIEW, $show_edit = false, $show_submit = false) {
+    /**
+     * constructor
+     *
+     * @param assignment $assignment
+     * @param mixed stdClass|null $submission
+     * @param bool $locked
+     * @param bool $graded
+     * @param int $view
+     * @param bool $canedit
+     * @param bool $cansubmit
+     */
+    public function __construct($assignment, $submission, $locked, $graded, $view, $canedit, $cansubmit) {
         $this->set_assignment($assignment);
         $this->set_submission($submission);
         $this->set_locked($locked);
+        $this->set_graded($graded);
         $this->set_view($view);
-        $this->set_show_edit($show_edit);
-        $this->set_show_submit($show_submit);
+        $this->set_can_edit($canedit);
+        $this->set_can_submit($cansubmit);
     }
     
     /**
@@ -533,17 +627,17 @@ class submission_status implements renderable {
      *
      * @return bool
      */
-    public function get_show_edit() {
-        return $this->show_edit;
+    public function can_edit() {
+        return $this->canedit;
     }
 
     /**
-     * Sets the show_edit status of the submission
+     * Sets the canedit link of the submission
      *
-     * @param bool $show_edit
+     * @param bool $canedit
      */
-    public function set_show_edit($show_edit = false) {
-        $this->show_edit = $show_edit;
+    public function set_can_edit($canedit) {
+        $this->canedit = $canedit;
     }
     
     /**
@@ -551,17 +645,17 @@ class submission_status implements renderable {
      *
      * @return bool
      */
-    public function get_show_submit() {
-        return $this->show_submit;
+    public function can_submit() {
+        return $this->cansubmit;
     }
 
     /**
-     * Sets the show_submit status of the submission
+     * Sets the cansubmit status of the submission
      *
-     * @param bool $show_submit
+     * @param bool $cansubmit
      */
-    public function set_show_submit($show_submit = false) {
-        $this->show_submit = $show_submit;
+    public function set_can_submit($cansubmit) {
+        $this->cansubmit = $cansubmit;
     }
     
     
@@ -604,7 +698,7 @@ class submission_status implements renderable {
     /**
      * Returns submission view type
      *
-     * @return int
+     * @return string
      */
     public function get_view() {
         return $this->view;
@@ -615,7 +709,7 @@ class submission_status implements renderable {
      *
      * @param int $view
      */
-    public function set_view($view = self::STUDENT_VIEW) {
+    public function set_view($view) {
         if (in_array($view, array(self::STUDENT_VIEW, self::GRADER_VIEW))) {
             $this->view = $view;
         } else {
@@ -626,7 +720,7 @@ class submission_status implements renderable {
     /**
      * Returns submission info
      *
-     * @return stdClass
+     * @return mixed stdClass|null
      */
     public function get_submission() {
         return $this->submission;
@@ -635,7 +729,7 @@ class submission_status implements renderable {
     /**
      * Set the submission info (may be null)
      *
-     * @param stdClass $submission
+     * @param mixed stdClass|null $submission
      */
     public function set_submission($submission) {
         $this->submission = $submission;
@@ -644,7 +738,7 @@ class submission_status implements renderable {
     /**
      * Returns assignment info
      *
-     * @return stdClass
+     * @return assignment
      */
     public function get_assignment() {
         return $this->assignment;
@@ -655,10 +749,7 @@ class submission_status implements renderable {
      *
      * @param assignment $assignment
      */
-    public function set_assignment($assignment) {
-        if (!$assignment) {
-            throw new coding_exception('Assignment may not be null');
-        }
+    public function set_assignment(assignment $assignment) {
         $this->assignment = $assignment;
     }
 
@@ -670,10 +761,19 @@ class submission_status implements renderable {
 class assignment_header implements renderable {
     /** @var assignment the assignment info (may not be null) */
     protected $assignment = null;
+    /** @var bool $showintro - show or hide the intro */
     protected $showintro = false;
+    /** @var string $subpage optional subpage (extra level in the breadcrumbs) */
     protected $subpage = '';
     
-    public function __construct($assignment, $showintro, $subpage='') {
+    /**
+     * Constructor
+     * 
+     * @param assignment $assignment 
+     * @param bool $showintro 
+     * @param string $subpage 
+     */
+    public function __construct(assignment $assignment, $showintro, $subpage='') {
         $this->set_assignment($assignment);
         $this->set_show_intro($showintro);
         $this->set_sub_page($subpage);
@@ -691,7 +791,7 @@ class assignment_header implements renderable {
     /**
      * Set the current assignment sub page
      *
-     * @param subpage $subpage
+     * @param string $subpage
      */
     public function set_sub_page($subpage) {
         $this->subpage = $subpage;
@@ -700,7 +800,7 @@ class assignment_header implements renderable {
     /**
      * Returns assignment info
      *
-     * @return stdClass
+     * @return assignment
      */
     public function get_assignment() {
         return $this->assignment;
@@ -711,10 +811,7 @@ class assignment_header implements renderable {
      *
      * @param assignment $assignment
      */
-    public function set_assignment($assignment) {
-        if (!$assignment) {
-            throw new coding_exception('Assignment may not be null');
-        }
+    public function set_assignment(assignment $assignment) {
         $this->assignment = $assignment;
     }
 
@@ -732,8 +829,8 @@ class assignment_header implements renderable {
      *
      * @param bool show_intro
      */
-    public function set_show_intro($show_intro) {
-        $this->showintro = $show_intro;
+    public function set_show_intro($showintro) {
+        $this->showintro = $showintro;
     }
     
 }
@@ -745,14 +842,19 @@ class grading_summary implements renderable {
     /** @var assignment the assignment info (may not be null) */
     protected $assignment = null;
     
-    public function __construct($assignment) {
+    /**
+     * constructor
+     *
+     * @param assignment $assignment
+     */
+    public function __construct(assignment $assignment) {
         $this->set_assignment($assignment);
     }
     
     /**
      * Returns assignment info
      *
-     * @return stdClass
+     * @return assignment
      */
     public function get_assignment() {
         return $this->assignment;
@@ -762,11 +864,9 @@ class grading_summary implements renderable {
      * Set the assignment info (may not be null)
      *
      * @param assignment $assignment
+     * @return void
      */
-    public function set_assignment($assignment) {
-        if (!$assignment) {
-            throw new coding_exception('Assignment may not be null');
-        }
+    public function set_assignment(assignment $assignment) {
         $this->assignment = $assignment;
     }
 
@@ -782,24 +882,28 @@ class grading_summary implements renderable {
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  **/
 class assign_files implements renderable {
+    /** @var context $context */
     public $context;
+    /** @var string $context */
     public $dir;
+    /** @var MoodleQuickForm $portfolioform */
     public $portfolioform;
+    /** @var stdClass $cm course module */
     public $cm;
+    /** @var stdClass $course */
     public $course;
     
     
     /**
      * The constructor 
      * 
-     * @global object $CFG
-     * @global object $USER
-     * @param object $context
+     * @global stdClass $CFG
+     * @param context $context
      * @param int $sid
      * @param string $filearea 
      */
-    public function __construct($context, $sid, $filearea='submission') {
-        global $CFG,$USER;
+    public function __construct(context $context, $sid, $filearea) {
+        global $CFG;
         $this->context = $context;
         list($context, $course, $cm) = get_context_info_array($context->id);
         $this->cm = $cm;
@@ -827,7 +931,7 @@ class assign_files implements renderable {
             require_once($CFG->libdir . '/plagiarismlib.php');
             
             // for plagiarism_get_links
-            $assignment = new assignment($this->context);
+            $assignment = new assignment($this->context, null, null);
             foreach ($files as $file) {
 
                $output .= plagiarism_get_links(array('userid' => $sid,
@@ -844,11 +948,12 @@ class assign_files implements renderable {
     }
     
     /**
-     * preprocessing 
+     * preprocessing the file list to add the portfolio links if required
      * 
-     * @global object $CFG
+     * @global stdClass $CFG
      * @param array $dir
      * @param string $filearea 
+     * @return void
      */
     public function preprocess($dir, $filearea) {
         global $CFG;

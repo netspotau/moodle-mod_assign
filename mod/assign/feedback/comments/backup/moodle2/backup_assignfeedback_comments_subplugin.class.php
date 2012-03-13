@@ -37,7 +37,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class backup_feedback_comments_subplugin extends backup_subplugin {
+class backup_assignfeedback_comments_subplugin extends backup_subplugin {
 
     /**
      * Returns the subplugin information to attach to submission element
@@ -46,15 +46,15 @@ class backup_feedback_comments_subplugin extends backup_subplugin {
 
         // create XML elements
         $subplugin = $this->get_subplugin_element(); // virtual optigroup element
-        $subplugin_wrapper = new backup_nested_element($this->get_recommended_name());
-        $subplugin_element = new backup_nested_element('feedback_comments', null, array('commenttext', 'commentformat', 'grade'));
+        $subpluginwrapper = new backup_nested_element($this->get_recommended_name());
+        $subpluginelement = new backup_nested_element('feedback_comments', null, array('commenttext', 'commentformat', 'grade'));
 
         // connect XML elements into the tree
-        $subplugin->add_child($subplugin_wrapper);
-        $subplugin_wrapper->add_child($subplugin_element);
+        $subplugin->add_child($subpluginwrapper);
+        $subpluginwrapper->add_child($subpluginelement);
 
         // set source to populate the data
-        $subplugin_element->set_source_table('assign_feedback_comments', array('grade' => backup::VAR_PARENTID));
+        $subpluginelement->set_source_table('assign_feedback_comments', array('grade' => backup::VAR_PARENTID));
 
         return $subplugin;
     }

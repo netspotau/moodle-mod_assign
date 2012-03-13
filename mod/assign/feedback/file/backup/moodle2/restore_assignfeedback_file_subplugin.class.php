@@ -19,7 +19,7 @@
  * This file contains the restore code for the feedback_file plugin.
  *
  * @package    mod_assign
- * @subpackage feedback_file
+ * @subpackage assignfeedback_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -30,18 +30,18 @@ defined('MOODLE_INTERNAL') || die();
  * needed to restore one assign_feedback subplugin.
  *
  * @package    mod_assign
- * @subpackage feedback_file
+ * @subpackage assignfeedback_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class restore_feedback_file_subplugin extends restore_subplugin {
+class restore_assignfeedback_file_subplugin extends restore_subplugin {
 
     ////////////////////////////////////////////////////////////////////////////
     // mappings of XML paths to the processable methods
     ////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Returns the paths to be handled by the subplugin at workshop level
+     * Returns the paths to be handled by the subplugin at assignment level
      */
     protected function define_grade_subplugin_structure() {
 
@@ -60,8 +60,9 @@ class restore_feedback_file_subplugin extends restore_subplugin {
 
     /**
      * Processes one feedback_file element
+     * @param object $data
      */
-    public function process_feedback_file_grade($data) {
+    public function process_assignfeedback_file_grade($data) {
         global $DB;
     
         $data = (object)$data;

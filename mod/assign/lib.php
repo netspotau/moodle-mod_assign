@@ -29,53 +29,55 @@ defined('MOODLE_INTERNAL') || die();
  * Adds an assignment instance
  *
  * This is done by calling the add_instance() method of the assignment type class
- * @param object $form_data
- * @return object 
+ * @global stdClass CFG
+ * @param stdClass $data
+ * @param mod_assign_mod_form $form
+ * @return int The instance id of the new assignment 
  */
-function assign_add_instance($form_data) {
-    require_once('locallib.php');
+function assign_add_instance(stdClass $data, mod_assign_mod_form $form) {
+    global $CFG;
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
-    $context = get_context_instance(CONTEXT_COURSE,$form_data->course);
-    $ass = new assignment($context, $form_data);
-    return $ass->add_instance();
+    $assignment = new assignment(context_module::instance($data->coursemodule), null, null);
+    return $assignment->add_instance($data, true);
 }
 
 /**
  * delete an assignment instance 
+ * @global stdClass CFG
  * @param int $id
- * @return object|bool 
+ * @return bool 
  */
 function assign_delete_instance($id) {
-    require_once('locallib.php');
-    if (!$cm = get_coursemodule_from_instance('assign', $id)) {
-        return false;
-    }
-    if (!$context = get_context_instance(CONTEXT_MODULE, $cm->id)) {
-        return false;
-    }
+    global $CFG;
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
+    $cm = get_coursemodule_from_instance('assign', $id, 0, false, MUST_EXIST);
+    $context = context_module::instance($cm->id);
 
-    $ass = new assignment($context);
-    return $ass->delete_instance();
+    $assignment = new assignment($context, null, null);
+    return $assignment->delete_instance();
 }
 
 /**
  * Update an assignment instance
  *
  * This is done by calling the update_instance() method of the assignment type class
- * @param object $form_data
+ * @global stdClass CFG
+ * @param stdClass $data
+ * @param mod_assign_mod_form $form
  * @return object
  */
-function assign_update_instance($form_data) {
-    require_once('locallib.php');
-    $context = get_context_instance(CONTEXT_MODULE,$form_data->coursemodule);
-    $ass = new assignment($context, $form_data);
-    return $ass->update_instance();
+function assign_update_instance(stdClass $data, mod_assign_mod_form $form) {
+    global $CFG;
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
+    $context = context_module::instance($data->coursemodule);
+    $assignment = new assignment($context, null, null);
+    return $assignment->update_instance($data);
 }
 
 /**
  * @param string $feature FEATURE_xx constant for requested feature
  * @return mixed True if module supports feature, null if doesn't know
- * @return bool|null
  */
 function assign_supports($feature) {
     switch($feature) {
@@ -97,7 +99,7 @@ function assign_supports($feature) {
 /**
  * Lists all gradable areas for the advanced grading methods gramework
  *
- * @return array
+ * @return array('string'=>'string') An array with area names as keys and descriptions as values
  */
 function assign_grading_areas_list() {
     return array('submissions'=>get_string('submissions', 'assign'));
@@ -107,12 +109,12 @@ function assign_grading_areas_list() {
 /**
  * extend an assigment navigation settings   
  * 
- * @global object $PAGE
- * @param object $settings
+ * @global moodle_page $PAGE
+ * @param settings_navigation $settings
  * @param navigation_node $navref
  * @return void
  */
-function assign_extend_settings_navigation($settings, navigation_node $navref) {
+function assign_extend_settings_navigation(settings_navigation $settings, navigation_node $navref) {
     global $PAGE;     
 
     $cm = $PAGE->cm;
@@ -146,16 +148,16 @@ function assign_extend_settings_navigation($settings, navigation_node $navref) {
 /**
  * Serves assignment submissions and other files.
  *
- * @global USER
- * @param object $course
- * @param object $cm
- * @param object $context
+ * @global stdClass USER
+ * @param mixed $course course or id of the course
+ * @param mixed $cm course module or id of the course module
+ * @param context $context
  * @param string $filearea
  * @param array $args
  * @param bool $forcedownload
  * @return bool false if file not found, does not return if found - just send the file
  */
-function assign_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
+function assign_pluginfile($course, $cm, context $context, $filearea, $args, $forcedownload) {
     global $USER;
     
     if ($context->contextlevel != CONTEXT_MODULE) {
@@ -183,3 +185,161 @@ function assign_pluginfile($course, $cm, $context, $filearea, $args, $forcedownl
     send_stored_file($file, 0, 0, true); // download MUST be forced - security!
 }
 
+
+/**
+ * Add a get_coursemodule_info function in case any assignment type wants to add 'extra' information
+ * for the course (see resource).
+ *
+ * Given a course_module object, this function returns any "extra" information that may be needed
+ * when printing this activity in a course listing.  See get_array_of_activities() in course/lib.php.
+ *
+ * @param $coursemodule object The coursemodule object (record).
+ * @return cached_cm_info An object on information that the courses will know about (most noticeably, an icon).
+ */
+function assign_get_coursemodule_info($coursemodule) {
+    global $CFG, $DB;
+
+    if (! $assignment = $DB->get_record('assign', array('id'=>$coursemodule->instance),
+            'id, name, alwaysshowdescription, allowsubmissionsfromdate, intro, introformat')) {
+        return false;
+    }
+
+    $result = new cached_cm_info();
+    $result->name = $assignment->name;
+    if ($coursemodule->showdescription) {
+        if ($assignment->alwaysshowdescription || time() > $assignment->allowsubmissionsfromdate) {
+            // Convert intro to html. Do not filter cached version, filters run at display time.
+            $result->content = format_module_intro('assign', $assignment, $coursemodule->id, false);
+        }
+    }
+    return $result;
+}
+
+/**
+ * Print an overview of all assignments
+ * for the courses.
+ *
+ */
+function assign_print_overview($courses, &$htmlarray) {
+    global $USER, $CFG, $DB;
+
+    if (empty($courses) || !is_array($courses) || count($courses) == 0) {
+        return array();
+    }
+
+    if (!$assignments = get_all_instances_in_courses('assign',$courses)) {
+        return;
+    }
+
+    $assignmentids = array();
+
+    // Do assignment_base::isopen() here without loading the whole thing for speed
+    foreach ($assignments as $key => $assignment) {
+        $time = time();
+        if ($assignment->duedate) {
+            if ($assignment->preventlatesubmissions) {
+                $isopen = ($assignment->allowsubmissionsfromdate <= $time && $time <= $assignment->duedate);
+            } else {
+                $isopen = ($assignment->allowsubmissionsfromdate <= $time);
+            }
+        }
+        if (empty($isopen) || empty($assignment->duedate)) {
+            unset($assignments[$key]);
+        } else {
+            $assignmentids[] = $assignment->id;
+        }
+    }
+
+    if (empty($assignmentids)){
+        // no assignments to look at - we're done
+        return true;
+    }
+    
+    $strduedate = get_string('duedate', 'assign');
+    $strduedateno = get_string('duedateno', 'assign');
+    $strgraded = get_string('graded', 'assign');
+    $strnotgradedyet = get_string('notgradedyet', 'assign');
+    $strnotsubmittedyet = get_string('notsubmittedyet', 'assign');
+    $strsubmitted = get_string('submitted', 'assign');
+    $strassignment = get_string('modulename', 'assign');
+    $strreviewed = get_string('reviewed','assign');
+
+
+    // NOTE: we do all possible database work here *outside* of the loop to ensure this scales
+    //
+    list($sqlassignmentids, $assignmentidparams) = $DB->get_in_or_equal($assignmentids);
+
+    // build up and array of unmarked submissions indexed by assignment id/ userid
+    // for use where the user has grading rights on assignment
+    $rs = $DB->get_recordset_sql("SELECT s.assignment as assignment, s.userid as userid, s.id as id, s.status as status, g.timemodified as timegraded
+                            FROM {assign_submission} s LEFT JOIN {assign_grades} g ON s.userid = g.userid and s.assignment = g.assignment
+                            WHERE g.timemodified = 0 OR s.timemodified > g.timemodified
+                            AND s.assignment $sqlassignmentids", $assignmentidparams);
+
+    $unmarkedsubmissions = array();
+    foreach ($rs as $rd) {
+        $unmarkedsubmissions[$rd->assignment][$rd->userid] = $rd->id;
+    }
+    $rs->close();
+
+
+    // get all user submissions, indexed by assignment id
+    $mysubmissions = $DB->get_records_sql("SELECT g.assignment as assignment, g.timemodified as timemarked, g.grader as grader, g.grade as grade, s.status as status
+                            FROM {assign_grades} g LEFT JOIN {assign_submission} s on s.assignment = g.assignment
+                            WHERE g.userid = ?
+                            AND g.assignment $sqlassignmentids", array_merge(array($USER->id), $assignmentidparams));
+
+    foreach ($assignments as $assignment) {
+        $str = '<div class="assign overview"><div class="name">'.$strassignment. ': '.
+               '<a '.($assignment->visible ? '':' class="dimmed"').
+               'title="'.$strassignment.'" href="'.$CFG->wwwroot.
+               '/mod/assign/view.php?id='.$assignment->coursemodule.'">'.
+               $assignment->name.'</a></div>';
+        if ($assignment->duedate) {
+            $str .= '<div class="info">'.$strduedate.': '.userdate($assignment->duedate).'</div>';
+        } else {
+            $str .= '<div class="info">'.$strduedateno.'</div>';
+        }
+        $context = get_context_instance(CONTEXT_MODULE, $assignment->coursemodule);
+        if (has_capability('mod/assign:grade', $context)) {
+
+            // count how many people can submit
+            $submissions = 0; // init
+            if ($students = get_enrolled_users($context, 'mod/assign:view', 0, 'u.id')) {
+                foreach ($students as $student) {
+                    if (isset($unmarkedsubmissions[$assignment->id][$student->id])) {
+                        $submissions++;
+                    }
+                }
+            }
+
+            if ($submissions) {
+                $link = new moodle_url('/mod/assign/view.php', array('id'=>$assignment->coursemodule, 'action'=>'grading'));
+                $str .= '<div class="details"><a href="'.$link.'">'.get_string('submissionsnotgraded', 'assign', $submissions).'</a></div>';
+            }
+        } if (has_capability('mod/assign:submit', $context)) {
+            $str .= '<div class="details">';
+            $str .= get_string('mysubmission', 'assign');
+            if (isset($mysubmissions[$assignment->id])) {
+                $submission = $mysubmissions[$assignment->id];
+
+                $str .= get_string('submissionstatus_' . $submission->status, 'assign');
+                $str .= ', ' . get_string('graded', 'assign');
+            } else {
+                $str .= $strnotsubmittedyet;
+                if ($assignment->duedate && time() > $assignment->duedate) {
+                    $str .= get_string('overdue', 'assign', format_time(time() - $assignment->duedate));
+                } else if ($assignment->duedate) {
+                    $str .= get_string('timeremaining', 'assign', format_time(time() - $assignment->duedate));
+                }
+            }
+            $str .= '</div>';
+        }
+        $str .= '</div>';
+        if (empty($htmlarray[$assignment->course]['assign'])) {
+            $htmlarray[$assignment->course]['assign'] = $str;
+        } else {
+            $htmlarray[$assignment->course]['assign'] .= $str;
+        }
+    }
+}

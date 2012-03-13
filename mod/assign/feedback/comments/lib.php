@@ -21,7 +21,7 @@
  * 
  *
  * @package   mod_assign
- * @subpackage feedback_comments
+ * @subpackage assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -33,11 +33,11 @@
  * base class
  * 
  * @package   mod_assign
- * @subpackage feedback_comments
+ * @subpackage assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class feedback_comments extends feedback_plugin {
+class assignment_feedback_comments extends assignment_feedback_plugin {
 
     /** @var object the assignment record that contains the global settings for this assign instance */
     private $instance;
@@ -47,15 +47,15 @@ class feedback_comments extends feedback_plugin {
     * @return string 
     */  
     public function get_name() {
-        return get_string('pluginname', 'feedback_comments');
+        return get_string('pluginname', 'assignfeedback_comments');
     }
     
     /**
      * get the feedback comment from the database
      *  
-     * @global object $DB
+     * @global moodle_database $DB
      * @param int $gradeid
-     * @return mixed 
+     * @return stdClass or false 
      */
     private function get_feedback_comments($gradeid) {
         global $DB;
@@ -63,69 +63,67 @@ class feedback_comments extends feedback_plugin {
     }
     
     /**
-     * get form elements
+     * get form elements for the grading page
      * 
-     * @param object $grade
-     * @param object $data
-     * @return string 
+     * @param mixed stdClass|null $grade
+     * @param MoodleQuickForm $mform
+     * @param stdClass $data
+     * @return bool (true if elements were added to the form) 
      */
-    public function get_form_elements($grade, $mform, $data) {
+    public function get_form_elements($grade, MoodleQuickForm $mform, stdClass $data) {
         $elements = array();
 
        
         $gradeid = $grade ? $grade->id : 0;
-        $default_comment = '';
         if ($grade) {
-            $feedback_comments = $this->get_feedback_comments($grade->id);
-            if ($feedback_comments) {
-                $data->feedbackcomments_editor['text'] = $feedback_comments->commenttext;
-                $data->feedbackcomments_editor['format'] = $feedback_comments->commentformat;
+            $feedbackcomments = $this->get_feedback_comments($grade->id);
+            if ($feedbackcomments) {
+                $data->feedbackcomments_editor['text'] = $feedbackcomments->commenttext;
+                $data->feedbackcomments_editor['format'] = $feedbackcomments->commentformat;
             }
         }
 
-        $mform->addElement('editor', 'feedbackcomments_editor', '', null, null);
+        $mform->addElement('editor', 'assignfeedbackcomments_editor', '', null, null);
         return true;
     }
 
     /**
      * saving the comment content into dtabase 
      * 
-     * @global object $USER
-     * @global object $DB
-     * @param object $grade
-     * @param object $data
-     * @return mixed
+     * @global moodle_database $DB
+     * @param stdClass $grade
+     * @param stdClass $data
+     * @return bool
      */
-    public function save($grade, $data) {
+    public function save(stdClass $grade, stdClass $data) {
+        global $DB;
 
-        global $USER, $DB;
 
-
-        $feedback_comment = $this->get_feedback_comments($grade->id);
-        if ($feedback_comment) {
-            $feedback_comment->commenttext = $data->feedbackcomments_editor['text'];
-            $feedback_comment->commentformat = $data->feedbackcomments_editor['format'];
-            return $DB->update_record('assign_feedback_comments', $feedback_comment);
+        $feedbackcomment = $this->get_feedback_comments($grade->id);
+        if ($feedbackcomment) {
+            $feedbackcomment->commenttext = $data->assignfeedbackcomments_editor['text'];
+            $feedbackcomment->commentformat = $data->assignfeedbackcomments_editor['format'];
+            return $DB->update_record('assign_feedback_comments', $feedbackcomment);
         } else {
-            $feedback_comment = new stdClass();
-            $feedback_comment->commenttext = $data->feedbackcomments_editor['text'];
-            $feedback_comment->commentformat = $data->feedbackcomments_editor['format'];
-            $feedback_comment->grade = $grade->id;
-            $feedback_comment->assignment = $this->assignment->get_instance()->id;
-            return $DB->insert_record('assign_feedback_comments', $feedback_comment) > 0;
+            $feedbackcomment = new stdClass();
+            $feedbackcomment->commenttext = $data->assignfeedbackcomments_editor['text'];
+            $feedbackcomment->commentformat = $data->assignfeedbackcomments_editor['format'];
+            $feedbackcomment->grade = $grade->id;
+            $feedbackcomment->assignment = $this->assignment->get_instance()->id;
+            return $DB->insert_record('assign_feedback_comments', $feedbackcomment) > 0;
         }
     }
 
     /**
      * display the comment in the feedback table
      *  
-     * @param object $grade
+     * @param stdClass $grade
      * @return string 
      */
-    public function view_summary($grade) {
-        $feedback_comments = $this->get_feedback_comments($grade->id);
-        if ($feedback_comments) {
-            $text = format_text($feedback_comments->commenttext, $feedback_comments->commentformat);
+    public function view_summary(stdClass $grade) {
+        $feedbackcomments = $this->get_feedback_comments($grade->id);
+        if ($feedbackcomments) {
+            $text = format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat);
             return shorten_text($text, 140);
         }
         return '';
@@ -134,12 +132,13 @@ class feedback_comments extends feedback_plugin {
     /**
      * Should the assignment module show a link to view the full submission or feedback for this plugin?
      *
+     * @param stdClass $grade
      * @return bool
      */
-    public function show_view_link($grade) {
-        $feedback_comments = $this->get_feedback_comments($grade->id);
-        if ($feedback_comments) {
-            $text = format_text($feedback_comments->commenttext, $feedback_comments->commentformat);
+    public function show_view_link(stdClass $grade) {
+        $feedbackcomments = $this->get_feedback_comments($grade->id);
+        if ($feedbackcomments) {
+            $text = format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat);
             return shorten_text($text, 140) != $text;
         }
         return false;
@@ -148,13 +147,13 @@ class feedback_comments extends feedback_plugin {
     /**
      * display the comment in the feedback table
      * 
-     * @param object $grade
+     * @param stdClass $grade
      * @return string
      */
-    public function view($grade) {
-        $feedback_comments = $this->get_feedback_comments($grade->id);
-        if ($feedback_comments) {
-            return format_text($feedback_comments->commenttext, $feedback_comments->commentformat);
+    public function view(stdClass $grade) {
+        $feedbackcomments = $this->get_feedback_comments($grade->id);
+        if ($feedbackcomments) {
+            return format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat);
         } 
         return '';
     }
@@ -166,13 +165,13 @@ class feedback_comments extends feedback_plugin {
      * Only one feedback plugin can push comments to the gradebook and that is chosen by the assignment
      * settings page.
      *
-     * @param object $grade The grade
+     * @param stdClass $grade The grade
      * @return int
      */
-    public function format_for_gradebook($grade) {
-        $feedback_comments = $this->get_feedback_comments($grade->id);
-        if ($feedback_comments) {
-            return $feedback_comments->commentformat;
+    public function format_for_gradebook(stdClass $grade) {
+        $feedbackcomments = $this->get_feedback_comments($grade->id);
+        if ($feedbackcomments) {
+            return $feedbackcomments->commentformat;
         }
         return FORMAT_MOODLE;
     }
@@ -184,14 +183,28 @@ class feedback_comments extends feedback_plugin {
      * Only one feedback plugin can push comments to the gradebook and that is chosen by the assignment
      * settings page.
      *
-     * @param object $grade The grade
+     * @param stdClass $grade The grade
      * @return string
      */
     public function text_for_gradebook($grade) {
-        $feedback_comments = $this->get_feedback_comments($grade->id);
-        if ($feedback_comments) {
-            return $feedback_comments->commenttext;
+        $feedbackcomments = $this->get_feedback_comments($grade->id);
+        if ($feedbackcomments) {
+            return $feedbackcomments->commenttext;
         }
         return '';
+    }
+
+    /**
+     * The assignment has been deleted - cleanup
+     * 
+     * @global moodle_database $DB
+     * @return bool
+     */
+    public function delete_instance() {
+        global $DB;
+        // will throw exception on failure
+        $DB->delete_records('assign_feedback_comments', array('assignment'=>$this->assignment->get_instance()->id));
+        
+        return true;
     }
 }

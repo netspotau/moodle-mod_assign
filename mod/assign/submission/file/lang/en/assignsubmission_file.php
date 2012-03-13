@@ -16,13 +16,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Strings for component 'submission_comments', language 'en'
+ * Strings for component 'assignsubmission_file', language 'en'
  *
  * @package   mod_assign
- * @package   submission_comments
+ * @package   assignsubmission_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['allowsubmissioncomments'] = 'Enabled';
-$string['pluginname'] = 'Submission Comments';
+
+$string['allowfilesubmissions'] = 'Enabled';
+$string['configmaxbytes'] = 'Maximum file size';
+$string['file'] = 'File submissions';
+$string['maxbytes'] = 'Maximum file size';
+$string['maxfilessubmission'] = 'Maximum number of uploaded files';
+$string['maximumsubmissionsize'] = 'Maximum submission size';
+$string['pluginname'] = 'File submissions';
+$string['submissionfilearea'] = 'Uploaded submission files';
+$string['countfiles'] = '{$a} files';
