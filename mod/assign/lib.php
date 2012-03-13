@@ -215,4 +215,131 @@ function assign_get_coursemodule_info($coursemodule) {
     return $result;
 }
 
+/**
+ * Print an overview of all assignments
+ * for the courses.
+ *
+ */
+function assign_print_overview($courses, &$htmlarray) {
+    global $USER, $CFG, $DB;
 
+    if (empty($courses) || !is_array($courses) || count($courses) == 0) {
+        return array();
+    }
+
+    if (!$assignments = get_all_instances_in_courses('assign',$courses)) {
+        return;
+    }
+
+    $assignmentids = array();
+
+    // Do assignment_base::isopen() here without loading the whole thing for speed
+    foreach ($assignments as $key => $assignment) {
+        $time = time();
+        if ($assignment->duedate) {
+            if ($assignment->preventlatesubmissions) {
+                $isopen = ($assignment->allowsubmissionsfromdate <= $time && $time <= $assignment->duedate);
+            } else {
+                $isopen = ($assignment->allowsubmissionsfromdate <= $time);
+            }
+        }
+        if (empty($isopen) || empty($assignment->duedate)) {
+            unset($assignments[$key]);
+        } else {
+            $assignmentids[] = $assignment->id;
+        }
+    }
+
+    if (empty($assignmentids)){
+        // no assignments to look at - we're done
+        return true;
+    }
+    
+    $strduedate = get_string('duedate', 'assign');
+    $strduedateno = get_string('duedateno', 'assign');
+    $strgraded = get_string('graded', 'assign');
+    $strnotgradedyet = get_string('notgradedyet', 'assign');
+    $strnotsubmittedyet = get_string('notsubmittedyet', 'assign');
+    $strsubmitted = get_string('submitted', 'assign');
+    $strassignment = get_string('modulename', 'assign');
+    $strreviewed = get_string('reviewed','assign');
+
+
+    // NOTE: we do all possible database work here *outside* of the loop to ensure this scales
+    //
+    list($sqlassignmentids, $assignmentidparams) = $DB->get_in_or_equal($assignmentids);
+
+    // build up and array of unmarked submissions indexed by assignment id/ userid
+    // for use where the user has grading rights on assignment
+    $rs = $DB->get_recordset_sql("SELECT s.assignment as assignment, s.userid as userid, s.id as id, s.status as status, g.timemodified as timegraded
+                            FROM {assign_submission} s LEFT JOIN {assign_grades} g ON s.userid = g.userid and s.assignment = g.assignment
+                            WHERE g.timemodified = 0 OR s.timemodified > g.timemodified
+                            AND s.assignment $sqlassignmentids", $assignmentidparams);
+
+    $unmarkedsubmissions = array();
+    foreach ($rs as $rd) {
+        $unmarkedsubmissions[$rd->assignment][$rd->userid] = $rd->id;
+    }
+    $rs->close();
+
+
+    // get all user submissions, indexed by assignment id
+    $mysubmissions = $DB->get_records_sql("SELECT g.assignment as assignment, g.timemodified as timemarked, g.grader as grader, g.grade as grade, s.status as status
+                            FROM {assign_grades} g LEFT JOIN {assign_submission} s on s.assignment = g.assignment
+                            WHERE g.userid = ?
+                            AND g.assignment $sqlassignmentids", array_merge(array($USER->id), $assignmentidparams));
+
+    foreach ($assignments as $assignment) {
+        $str = '<div class="assign overview"><div class="name">'.$strassignment. ': '.
+               '<a '.($assignment->visible ? '':' class="dimmed"').
+               'title="'.$strassignment.'" href="'.$CFG->wwwroot.
+               '/mod/assign/view.php?id='.$assignment->coursemodule.'">'.
+               $assignment->name.'</a></div>';
+        if ($assignment->duedate) {
+            $str .= '<div class="info">'.$strduedate.': '.userdate($assignment->duedate).'</div>';
+        } else {
+            $str .= '<div class="info">'.$strduedateno.'</div>';
+        }
+        $context = get_context_instance(CONTEXT_MODULE, $assignment->coursemodule);
+        if (has_capability('mod/assign:grade', $context)) {
+
+            // count how many people can submit
+            $submissions = 0; // init
+            if ($students = get_enrolled_users($context, 'mod/assign:view', 0, 'u.id')) {
+                foreach ($students as $student) {
+                    if (isset($unmarkedsubmissions[$assignment->id][$student->id])) {
+                        $submissions++;
+                    }
+                }
+            }
+
+            if ($submissions) {
+                $link = new moodle_url('/mod/assign/view.php', array('id'=>$assignment->coursemodule, 'action'=>'grading'));
+                $str .= '<div class="details"><a href="'.$link.'">'.get_string('submissionsnotgraded', 'assign', $submissions).'</a></div>';
+            }
+        } if (has_capability('mod/assign:submit', $context)) {
+            $str .= '<div class="details">';
+            $str .= get_string('mysubmission', 'assign');
+            if (isset($mysubmissions[$assignment->id])) {
+                $submission = $mysubmissions[$assignment->id];
+
+                $str .= get_string('submissionstatus_' . $submission->status, 'assign');
+                $str .= ', ' . get_string('graded', 'assign');
+            } else {
+                $str .= $strnotsubmittedyet;
+                if ($assignment->duedate && time() > $assignment->duedate) {
+                    $str .= get_string('overdue', 'assign', format_time(time() - $assignment->duedate));
+                } else if ($assignment->duedate) {
+                    $str .= get_string('timeremaining', 'assign', format_time(time() - $assignment->duedate));
+                }
+            }
+            $str .= '</div>';
+        }
+        $str .= '</div>';
+        if (empty($htmlarray[$assignment->course]['assign'])) {
+            $htmlarray[$assignment->course]['assign'] = $str;
+        } else {
+            $htmlarray[$assignment->course]['assign'] .= $str;
+        }
+    }
+}
