@@ -50,7 +50,7 @@ class mod_assign_confirm_submission_form extends moodleform {
         if (($config->require_submission_statement || 
              $assignment->get_instance()->requiresubmissionstatement)) {
             
-            $mform->addElement('checkbox', 'submissionstatement', '', $config->submission_statement);
+            $mform->addElement('checkbox', 'submissionstatement', '', ' ' . $config->submission_statement);
             $mform->addRule('submissionstatement', get_string('required'), 'required', null, 'client');
         }
         $mform->addElement('hidden', 'id', $assignment->get_course_module()->id);
