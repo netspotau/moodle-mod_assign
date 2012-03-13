@@ -228,8 +228,10 @@ class mod_assign_renderer extends plugin_renderer_base {
        }
 
         // submitted for grading
-        $this->add_table_row_tuple($t, get_string('numberofsubmittedassignments', 'assign'), 
+        if ($summary->get_assignment()->is_any_submission_plugin_enabled()) {
+            $this->add_table_row_tuple($t, get_string('numberofsubmittedassignments', 'assign'), 
                                        $summary->get_assignment()->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_SUBMITTED));
+        }
 
         $time = time();
         if ($summary->get_assignment()->get_instance()->duedate) {
@@ -401,13 +403,6 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o .= $this->output->container_start('submissionstatus');
         $o .= $this->output->heading(get_string('submissionstatusheading', 'assign'), 3);
         $time = time();
-        if ($status->get_view() == $status::STUDENT_VIEW && 
-            !$status->get_assignment()->is_any_submission_plugin_enabled()) {
-
-            $o .= $this->output->box_start('generalbox boxaligncenter nosubmissionrequired');
-            $o .= get_string('noonlinesubmissions', 'assign');
-            $o .= $this->output->box_end();
-        }
 
         if ($status->get_assignment()->get_instance()->allowsubmissionsfromdate &&
                 $time <= $status->get_assignment()->get_instance()->allowsubmissionsfromdate) {
@@ -429,7 +424,11 @@ class mod_assign_renderer extends plugin_renderer_base {
             $cell2 = new html_table_cell(get_string('submissionstatus_' . $status->get_submission()->status, 'assign'));
             $cell2->attributes = array('class'=>'submissionstatus' . $status->get_submission()->status);
         } else {
-            $cell2 = new html_table_cell(get_string('nosubmission', 'assign'));
+            if (!$status->get_assignment()->is_any_submission_plugin_enabled()) {
+                $cell2 = new html_table_cell(get_string('noonlinesubmissions', 'assign'));
+            } else {
+                $cell2 = new html_table_cell(get_string('nosubmission', 'assign'));
+            }
         }
         $row->cells = array($cell1, $cell2);
         $t->data[] = $row;
