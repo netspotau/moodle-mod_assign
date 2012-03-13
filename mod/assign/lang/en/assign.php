@@ -132,6 +132,7 @@ $string['savefiles'] = 'Save files';
 $string['savenext'] = 'Save and show next';
 $string['saveonlinetext'] = 'Save changes';
 $string['sendnotifications'] = 'Send notifications to graders';
+$string['settings'] = 'Assignment settings';
 $string['submissioncommentnumwords'] = 'Number of words in submission comment: {$a}. ';
 $string['submissioncomments'] = 'Enable submission comments';
 $string['submissioncomment'] = 'Submission comments';

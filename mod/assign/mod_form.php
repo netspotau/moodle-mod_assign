@@ -70,7 +70,7 @@ class mod_assign_mod_form extends moodleform_mod {
             $assignment->set_course($DB->get_record('course', array('id'=>$this->current->course), '*', MUST_EXIST));
         }
         
-        $mform->addElement('header', 'general', get_string('availability', 'assign'));
+        $mform->addElement('header', 'general', get_string('settings', 'assign'));
         $mform->addElement('date_time_selector', 'allowsubmissionsfromdate', get_string('allowsubmissionsfromdate', 'assign'), array('optional'=>true));
         $mform->setDefault('allowsubmissionsfromdate', time());
         $mform->addElement('date_time_selector', 'duedate', get_string('duedate', 'assign'), array('optional'=>true));
@@ -79,13 +79,8 @@ class mod_assign_mod_form extends moodleform_mod {
         $mform->setDefault('alwaysshowdescription', 1);
         $mform->addElement('selectyesno', 'preventlatesubmissions', get_string('preventlatesubmissions', 'assign'));
         $mform->setDefault('preventlatesubmissions', 0);
-        $mform->addElement('header', 'general', get_string('submissions', 'assign'));
         $mform->addElement('selectyesno', 'submissiondrafts', get_string('submissiondrafts', 'assign'));
         $mform->setDefault('submissiondrafts', 0);
-
-        
-               
-        $mform->addElement('header', 'general', get_string('notifications', 'assign'));
         $mform->addElement('selectyesno', 'sendnotifications', get_string('sendnotifications', 'assign'));
         $mform->setDefault('sendnotifications', 1);
         
