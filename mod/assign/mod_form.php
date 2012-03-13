@@ -98,5 +98,22 @@ class mod_assign_mod_form extends moodleform_mod {
 
         $this->add_action_buttons();
     }
+    
+    /**
+     * Perform minimal validation on the settings form
+     * @param array $data
+     * @param array $files
+     */
+    function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+
+        if ($data['allowsubmissionsfromdate'] && $data['duedate']) {
+            if ($data['allowsubmissionsfromdate'] > $data['duedate']) {
+                $errors['duedate'] = get_string('duedatevalidation', 'assign');
+            }
+        }
+        return $errors;
+    }
+
 
 }

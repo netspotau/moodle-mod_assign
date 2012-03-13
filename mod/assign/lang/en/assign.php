@@ -54,6 +54,7 @@ $string['descriptionmaxfiles'] = 'You can upload up to {$a} file(s).';
 $string['downloadall'] = 'Download all submissions';
 $string['download all submissions'] = 'Download all submissions in a zip file.';
 $string['duedate'] = 'Due date';
+$string['duedatevalidation'] = 'Due date must be after the allow submissions from date.';
 $string['editsubmission'] = 'Edit my submission';
 $string['emailgradermail'] = '{$a->username} has updated their assignment submission
 for \'{$a->assignment}\' at {$a->timeupdated}
