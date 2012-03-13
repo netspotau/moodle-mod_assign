@@ -75,7 +75,9 @@ td.submissionnotgraded {
     background-color: #efefef;
 }
 
-td.latesubmission {
+td.latesubmission,
+a:link.latesubmission,
+div.latesubmission {
     color: black;
     background-color: #efcfcf;
 }
