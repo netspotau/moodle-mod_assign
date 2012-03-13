@@ -283,7 +283,7 @@ class grading_table extends table_sql implements renderable {
                                                         array('id' => $this->assignment->get_course_module()->id, 
                                                               'rownum'=>$this->rownum,
                                                               'action'=>'grade')), 
-                                         get_string('submissionstatus_' . $row->status, 'assign'));
+                                         get_string('submissionstatus_' . $row->status, 'assign'), null, array('class'=>'submissionstatus' .$row->status));
 
         return $o;
     }

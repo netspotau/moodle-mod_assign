@@ -423,6 +423,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         $cell1 = new html_table_cell(get_string('submissionstatus', 'assign'));
         if ($status->get_submission()) {
             $cell2 = new html_table_cell(get_string('submissionstatus_' . $status->get_submission()->status, 'assign'));
+            $cell2->attributes = array('class'=>'submissionstatus' . $status->get_submission()->status);
         } else {
             $cell2 = new html_table_cell(get_string('nosubmission', 'assign'));
         }
@@ -434,6 +435,7 @@ class mod_assign_renderer extends plugin_renderer_base {
             $row = new html_table_row();
             $cell1 = new html_table_cell();
             $cell2 = new html_table_cell(get_string('submissionslocked', 'assign'));
+            $cell2->attributes = array('class'=>'submissionlocked');
             $row->cells = array($cell1, $cell2);
             $t->data[] = $row;
         }
@@ -444,8 +446,10 @@ class mod_assign_renderer extends plugin_renderer_base {
 
         if ($status->is_graded()) {
             $cell2 = new html_table_cell(get_string('graded', 'assign'));
+            $cell2->attributes = array('class'=>'submissiongraded');
         } else {
             $cell2 = new html_table_cell(get_string('notgraded', 'assign'));
+            $cell2->attributes = array('class'=>'submissionnotgraded');
         }
         $row->cells = array($cell1, $cell2);
         $t->data[] = $row;
@@ -465,11 +469,14 @@ class mod_assign_renderer extends plugin_renderer_base {
             if ($duedate - $time <= 0) {
                 if (!$status->get_submission() || $status->get_submission()->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
                     $cell2 = new html_table_cell(get_string('overdue', 'assign', format_time($time - $duedate)));
+                    $cell2->attributes = array('class'=>'overdue');
                 } else {
                     if ($status->get_submission()->timemodified > $duedate) {
-                        $cell2 = new html_table_cell(get_string('submittedlate', 'assign', format_time($status->get_submission()->timemodified - $duedate)), 'latesubmission');
+                        $cell2 = new html_table_cell(get_string('submittedlate', 'assign', format_time($status->get_submission()->timemodified - $duedate)));
+                        $cell2->attributes = array('class'=>'latesubmission');
                     } else {
-                        $cell2 = new html_table_cell(get_string('submittedearly', 'assign', format_time($status->get_submission()->timemodified - $duedate)), 'submittedearly');
+                        $cell2 = new html_table_cell(get_string('submittedearly', 'assign', format_time($status->get_submission()->timemodified - $duedate)));
+                        $cell2->attributes = array('class'=>'earlysubmission');
                     }
                 }
             } else {

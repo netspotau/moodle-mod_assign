@@ -42,3 +42,45 @@ div.submissionsummarytable table tbody tr td.c0 {
 
 .jsenabled .gradingoptionsform .hidden {display: none;}
 
+td.submissionstatus, 
+a:link.submissionstatus {
+    color: black;
+    background-color: #efefef;
+}
+
+td.submissionstatusdraft,
+a:link.submissionstatusdraft {
+    color: black;
+    background-color: #efefcf;
+}
+
+td.submissionstatussubmitted,
+a:link.submissionstatussubmitted {
+    color: black;
+    background-color: #cfefcf;
+}
+
+td.submissionlocked {
+    color: black;
+    background-color: #efefcf;
+}
+
+td.submissiongraded {
+    color: black;
+    background-color: #cfefcf;
+}
+
+td.submissionnotgraded {
+    color: black;
+    background-color: #efefef;
+}
+
+td.latesubmission {
+    color: black;
+    background-color: #efcfcf;
+}
+
+td.earlysubmission {
+    color: black;
+    background-color: #cfefcf;
+}
