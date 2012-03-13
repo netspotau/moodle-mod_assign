@@ -385,6 +385,7 @@ class assignment {
         $update->introformat = $formdata->introformat;
         $update->alwaysshowdescription = $formdata->alwaysshowdescription;
         $update->preventlatesubmissions = $formdata->preventlatesubmissions;
+        $update->requiresubmissionstatement = $formdata->requiresubmissionstatement;
         $update->submissiondrafts = $formdata->submissiondrafts;
         $update->sendnotifications = $formdata->sendnotifications;
         $update->duedate = $formdata->duedate;
@@ -603,6 +604,7 @@ class assignment {
         $update->introformat = $formdata->introformat;
         $update->alwaysshowdescription = $formdata->alwaysshowdescription;
         $update->preventlatesubmissions = $formdata->preventlatesubmissions;
+        $update->requiresubmissionstatement = $formdata->requiresubmissionstatement;
         $update->submissiondrafts = $formdata->submissiondrafts;
         $update->sendnotifications = $formdata->sendnotifications;
         $update->duedate = $formdata->duedate;
