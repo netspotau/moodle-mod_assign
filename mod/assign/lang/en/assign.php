@@ -90,6 +90,7 @@ $string['gradedby'] = 'Graded by';
 $string['graded'] = 'Graded';
 $string['gradedon'] = 'Graded on';
 $string['grade'] = 'Grade';
+$string['gradeoutof'] = 'Grade out of {$a}';
 $string['gradestudent'] = 'Grade student: (id={$a->id}, fullname={$a->fullname}). ';
 $string['grading'] = 'Grading';
 $string['gradingoptions'] = 'Display options';

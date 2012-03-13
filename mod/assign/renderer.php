@@ -320,11 +320,6 @@ class mod_assign_renderer extends plugin_renderer_base {
         if (!$assignmentgrade) {
             return '';
         }
-        $o .= $this->output->container_start('feedback');
-        $o .= $this->output->heading(get_string('feedback', 'assign'), 3);
-        $o .= $this->output->box_start('boxaligncenter feedbacktable');
-        $t = new html_table();
-        
         $gradinginfo = grade_get_grades($status->get_assignment()->get_course()->id, 
                                         'mod', 
                                         'assign', 
@@ -343,6 +338,12 @@ class mod_assign_renderer extends plugin_renderer_base {
         }
 
         $gradeddate = $grade->dategraded;
+
+        $o .= $this->output->container_start('feedback');
+        $o .= $this->output->heading(get_string('feedback', 'assign'), 3);
+        $o .= $this->output->box_start('boxaligncenter feedbacktable');
+        $t = new html_table();
+        
 
         $row = new html_table_row();
         $cell1 = new html_table_cell(get_string('grade', 'assign'));

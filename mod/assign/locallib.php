@@ -834,7 +834,7 @@ class assignment {
             if ($grade == -1 || $grade === null) {
                 return '-';
             } else {
-                return round($grade) .' / '.$this->get_instance()->grade;
+                return format_float(($grade)) .' / '. format_float($this->get_instance()->grade);
             }
 
         } else {                                // Scale
@@ -845,8 +845,9 @@ class assignment {
                     return '-';
                 }
             }
-            if (isset($this->cache['scale'][$grade])) {
-                return $this->cache['scale'][$grade];
+            $scaleid = (int)$grade;
+            if (isset($this->cache['scale'][$scaleid])) {
+                return $this->cache['scale'][$scaleid];
             }
             return '-';
         }
@@ -1504,7 +1505,7 @@ class assignment {
             // set the grade 
         } else {
             $data = new stdClass();
-            $data->grade = -1;
+            $data->grade = '';
         }
 
         // now show the grading form
@@ -2299,11 +2300,15 @@ class assignment {
             }
         } else {
             // use simple direct grading
-            $grademenu = make_grades_menu($this->get_instance()->grade);
-            $grademenu['-1'] = get_string('nograde');
+            if ($this->get_instance()->grade > 0) {
+                $mform->addElement('text', 'grade', get_string('gradeoutof', 'assign', $this->get_instance()->grade));
+                $mform->setType('grade', PARAM_FLOAT);
+            } else {
+                $grademenu = make_grades_menu($this->get_instance()->grade);
 
-            $mform->addElement('select', 'grade', get_string('grade').':', $grademenu);
-            $mform->setType('grade', PARAM_INT);
+                $mform->addElement('select', 'grade', get_string('grade').':', $grademenu);
+                $mform->setType('grade', PARAM_INT);
+            }
         }
 
 
@@ -2510,7 +2515,7 @@ class assignment {
             if ($gradinginstance) {
                 $grade->grade = $gradinginstance->submit_and_get_grade($formdata->advancedgrading, $grade->id);
             } else {
-                $grade->grade= $formdata->grade;
+                $grade->grade= grade_floatval($formdata->grade);
             }
             $grade->grader= $USER->id;
 
