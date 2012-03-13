@@ -82,7 +82,7 @@ class grading_table extends table_sql implements renderable {
             $where .= ' AND s.timecreated > 0 ';
         }
         if ($filter == ASSIGN_FILTER_REQUIRE_GRADING) {
-            $where .= ' AND s.timemodified > g.timemodified ';
+            $where .= ' AND (s.timemodified > g.timemodified OR g.timemodified IS NULL)';
         }
         $params = array($assignment->get_instance()->id, $assignment->get_instance()->id);
         $this->set_sql($fields, $from, $where, array());
