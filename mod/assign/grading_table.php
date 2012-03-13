@@ -132,7 +132,7 @@ class grading_table extends table_sql implements renderable {
         // Feedback plugins
         foreach ($this->assignment->get_feedback_plugins() as $plugin) {
             if ($plugin->is_visible() && $plugin->is_enabled()) {
-                $columns[] = 'feedback_' . $plugin->get_type();
+                $columns[] = 'assignfeedback_' . $plugin->get_type();
                 $headers[] = $plugin->get_name();
             }
         }
@@ -146,6 +146,18 @@ class grading_table extends table_sql implements renderable {
         // set the columns
         $this->define_columns($columns);
         $this->define_headers($headers);
+        $this->no_sorting('finalgrade');
+        $this->no_sorting('edit');
+        foreach ($this->assignment->get_submission_plugins() as $plugin) {
+            if ($plugin->is_visible() && $plugin->is_enabled()) {
+                $this->no_sorting('assignsubmission_' . $plugin->get_type());
+            }
+        }
+        foreach ($this->assignment->get_feedback_plugins() as $plugin) {
+            if ($plugin->is_visible() && $plugin->is_enabled()) {
+                $this->no_sorting('assignfeedback_' . $plugin->get_type());
+            }
+        }
 
         // load the grading info for all users
         $this->gradinginfo = grade_get_grades($this->assignment->get_course()->id, 'mod', 'assign', $this->assignment->get_instance()->id, $users);
@@ -406,7 +418,7 @@ class grading_table extends table_sql implements renderable {
             return '';            
         }
         if (($pos = strpos($colname, 'feedback_')) !== false) {
-            $plugin = $this->assignment->get_feedback_plugin_by_type(substr($colname, strlen('feedback_')));
+            $plugin = $this->assignment->get_feedback_plugin_by_type(substr($colname, strlen('assignfeedback_')));
             if ($plugin->is_visible() && $plugin->is_enabled()) {
                 if ($row->gradeid) {
                     $grade = new stdClass();
