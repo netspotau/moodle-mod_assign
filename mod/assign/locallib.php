@@ -2451,7 +2451,7 @@ class assignment {
         if (($config->require_submission_statement || 
              $this->instance->requiresubmissionstatement) && 
             !$this->instance->submissiondrafts) {
-            $mform->addElement('checkbox', 'submissionstatement', '', $config->submission_statement);
+            $mform->addElement('checkbox', 'submissionstatement', '', ' ' . $config->submission_statement);
             $mform->addRule('submissionstatement', get_string('required'), 'required', null, 'client');
         }
         
