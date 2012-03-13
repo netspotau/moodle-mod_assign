@@ -56,6 +56,7 @@ $string['downloadall'] = 'Download all submissions';
 $string['download all submissions'] = 'Download all submissions in a zip file.';
 $string['duedate'] = 'Due date';
 $string['duedateno'] = 'No due date';
+$string['duedatereached'] = 'The due date for this assignment has now passed';
 $string['duedatevalidation'] = 'Due date must be after the allow submissions from date.';
 $string['editsubmission'] = 'Edit my submission';
 $string['emailgradermail'] = '{$a->username} has updated their assignment submission
