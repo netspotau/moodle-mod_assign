@@ -74,7 +74,7 @@ class grading_table extends table_sql implements renderable {
         
         $fields = user_picture::fields('u') . ', u.id as userid, u.firstname as firstname, u.lastname as lastname, ';
         $fields .= 's.status as status, s.id as submissionid, s.timecreated as firstsubmission, s.timemodified as timesubmitted, ';
-        $fields .= 'g.id as gradeid, g.grade as grade, g.timemodified as timemarked, g.timecreated as firstmarked, g.mailed as mailed';
+        $fields .= 'g.id as gradeid, g.grade as grade, g.timemodified as timemarked, g.timecreated as firstmarked, g.mailed as mailed, g.locked as locked';
         $from = '{user} u LEFT JOIN {assign_submission} s ON u.id = s.userid AND s.assignment = ' . $this->assignment->get_instance()->id . 
                         ' LEFT JOIN {assign_grades} g ON u.id = g.userid AND g.assignment = ' . $this->assignment->get_instance()->id;
         $where = 'u.id IN (' . implode(',', $users) . ')';
@@ -302,20 +302,23 @@ class grading_table extends table_sql implements renderable {
                                                   'rownum'=>$this->rownum,'action'=>'grade')),
                                             $this->output->pix_icon('grade_feedback', get_string('grade'), 'assign' ));
 
-        $grade = $this->get_gradebook_data_for_user($row->id);
+        
+
         if (!$row->status || $row->status == ASSIGN_SUBMISSION_STATUS_DRAFT || !$this->assignment->get_instance()->submissiondrafts) {
-            if (!$grade || !$grade->locked) {
+            if (!$row->locked) {
                 $edit .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
                                                                    array('id' => $this->assignment->get_course_module()->id, 
                                                                          'userid'=>$row->id, 
-                                                                         'action'=>'lock')), 
+                                                                         'action'=>'lock',
+                                                                         'page'=>$this->currpage)), 
                                                                    $this->output->pix_icon('t/lock', get_string('preventsubmissions', 'assign')));
 
             } else {
                 $edit .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
                                                                    array('id' => $this->assignment->get_course_module()->id, 
                                                                          'userid'=>$row->id, 
-                                                                         'action'=>'unlock')), 
+                                                                         'action'=>'unlock',
+                                                                         'page'=>$this->currpage)), 
                                                                    $this->output->pix_icon('t/unlock', get_string('allowsubmissions', 'assign')));
             }
         }
@@ -323,7 +326,8 @@ class grading_table extends table_sql implements renderable {
             $edit .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
                                                                array('id' => $this->assignment->get_course_module()->id, 
                                                                      'userid'=>$row->id, 
-                                                                     'action'=>'reverttodraft')), 
+                                                                     'action'=>'reverttodraft',
+                                                                     'page'=>$this->currpage)), 
                                                                $this->output->pix_icon('t/left', get_string('reverttodraft', 'assign')));
         }
 

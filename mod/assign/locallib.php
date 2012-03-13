@@ -2447,6 +2447,7 @@ class assignment {
 
         $grade = $this->get_user_grade($userid, true);
         $grade->locked = 1;
+        $grade->grader = $USER->id;
         $this->update_grade($grade);
 
         $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
@@ -2471,6 +2472,7 @@ class assignment {
 
         $grade = $this->get_user_grade($userid, true);
         $grade->locked = 0;
+        $grade->grader = $USER->id;
         $this->update_grade($grade);
         
         $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
