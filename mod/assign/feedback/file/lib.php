@@ -67,54 +67,15 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     }
     
     /**
-     * Add the settings to the assignment for this plugin
-     *
-     * @global stdClass $CFG
-     * @global stdClass $COURSE
-     * @param MoodleQuickForm $mform The form to add the settings to
-     * @return void
-     */
-    public function get_settings(MoodleQuickForm $mform) {
-        global $CFG, $COURSE;
-
-        $defaultmaxfiles = $this->get_config('maxfiles');
-        $defaultmaxsizebytes = $this->get_config('maxsizebytes');
-
-        $settings = array();
-        $options = array();
-        for($i = 1; $i <= ASSIGN_MAX_FEEDBACK_FILES; $i++) {
-            $options[$i] = $i;
-        }
-        
-        $mform->addElement('select', 'assignfeedback_file_maxfiles', get_string('maxfiles', 'assignfeedback_file'), $options);
-        $mform->setDefault('assignfeedback_file_maxfiles', $defaultmaxfiles);
-
-        $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
-        $choices[0] = get_string('courseuploadlimit') . ' ('.display_size($COURSE->maxbytes).')';
-        
-        $mform->addElement('select', 'assignfeedback_file_maxsizebytes', get_string('maximumsize', 'assignfeedback_file'), $choices);
-        $mform->setDefault('assignfeedback_file_maxsizebytes', $defaultmaxsizebytes);
-    }
-    
-    /**
-     * save the settings for file feedback plugin 
-     * @param stdClass $data
-     * @return bool 
-     */
-    public function save_settings($data) {
-        $this->set_config('maxfiles', $data->assignfeedback_file_maxfiles);
-        $this->set_config('maxsizebytes', $data->assignfeedback_file_maxsizebytes);
-        return true;
-    }
-
-    /**
      * file format options 
+     * @global stdClass $COURSE
      * @return array
      */
     private function get_file_options() {
+        global $COURSE;
+
         $fileoptions = array('subdirs'=>1,
-                                'maxbytes'=>$this->get_config('maxsizebytes'),
-                                'maxfiles'=>$this->get_config('maxfiles'),
+                                'maxbytes'=>$COURSE->maxbytes,
                                 'accepted_types'=>'*',
                                 'return_types'=>FILE_INTERNAL);
         return $fileoptions;
