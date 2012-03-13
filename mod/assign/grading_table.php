@@ -281,14 +281,24 @@ class grading_table extends table_sql implements renderable {
         $extraclass = '';
         $extratext = '';
 
-        $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
+        if ($this->assignment->is_any_submission_plugin_enabled()) {
+
+            $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
                                                         array('id' => $this->assignment->get_course_module()->id, 
                                                               'rownum'=>$this->rownum,
                                                               'action'=>'grade')), 
                                          get_string('submissionstatus_' . $row->status, 'assign') . $extratext, null, array('class'=>'submissionstatus' .$row->status . $extraclass));
 
-        if ($this->assignment->get_instance()->duedate && $row->timesubmitted > $this->assignment->get_instance()->duedate) {
-            $o .= $this->output->container(get_string('submittedlateshort', 'assign', format_time($row->timesubmitted - $this->assignment->get_instance()->duedate)), 'latesubmission');
+            if ($this->assignment->get_instance()->duedate && $row->timesubmitted > $this->assignment->get_instance()->duedate) {
+                $o .= $this->output->container(get_string('submittedlateshort', 'assign', format_time($row->timesubmitted - $this->assignment->get_instance()->duedate)), 'latesubmission');
+            }
+        } else {
+            $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
+                                                        array('id' => $this->assignment->get_course_module()->id, 
+                                                              'rownum'=>$this->rownum,
+                                                              'action'=>'grade')), 
+                                         get_string('grade', 'assign'), null, array('class'=>'submissionstatus'));
+            
         }
 
         return $o;
