@@ -41,16 +41,47 @@ require_once('HTML/QuickForm/input.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_assign_grade_form extends moodleform {         
+    private $assignment;
+
     function definition() {
         $mform = $this->_form;
         
         list($assignment, $data, $params) = $this->_customdata;
         // visible elements
+        $this->assignment = $assignment;
         $assignment->add_grade_form_elements($mform, $data, $params);
 
         if ($data) {
             $this->set_data($data);
         }
+    }
+
+    /**
+     * Perform minimal validation on the grade form
+     * @param array $data
+     * @param array $files
+     */
+    function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+
+        if ($this->assignment->get_instance()->grade > 0) {
+            if (!is_numeric($data['grade'])) {
+                $errors['grade'] = get_string('invalidfloatforgrade', 'assign', $data['grade']);
+            } else if ($data['grade'] > $this->assignment->get_instance()->grade) {
+                $errors['grade'] = get_string('gradeabovemaximum', 'assign', $this->assignment->get_instance()->grade);
+            } else if ($data['grade'] < 0) {
+                $errors['grade'] = get_string('gradebelowzero', 'assign');
+            }
+        } else {
+            // this is a scale
+            if ($scale = $DB->get_record('scale', array('id'=>-($this->get_instance()->grade)))) {
+                $scaleoptions = make_menu_from_list($scale->scale);
+                if (!array_key_exists((int)$data['grade'], $scaleoptions)) {
+                    $errors['grade'] = get_string('invalidgradeforscale', 'assign');
+                }
+            }
+        }
+        return $errors;
     }
           
 }

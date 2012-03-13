@@ -294,11 +294,14 @@ class assignment {
     public function view($action='') {
 
         $o = '';
+        $mform = null;
 
         // handle form submissions first
         if ($action == 'savesubmission') {
-            $this->process_save_submission();
-            $action = 'view';
+            $action = 'editsubmission';
+            if ($this->process_save_submission($mform)) {
+                $action = 'view';
+            }
          } else if ($action == 'lock') {
             $this->process_lock();
             $action = 'grading';
@@ -314,15 +317,19 @@ class assignment {
         } else if ($action == 'submitgrade') {
             if (optional_param('saveandshownext', null, PARAM_ALPHA)) {
                 //save and show next
-                $this->process_save_grade();                
-                $action = 'nextgrade';
+                $action = 'grade';
+                if ($this->process_save_grade($mform)) {
+                    $action = 'nextgrade';
+                }
             } else if (optional_param('nosaveandnext', null, PARAM_ALPHA)) { 
                 //show next button
                 $action = 'nextgrade';
             } else if (optional_param('savegrade', null, PARAM_ALPHA)) {
                 //save changes button
-                $this->process_save_grade();
-                $action = 'grading';
+                $action = 'grade';
+                if ($this->process_save_grade($mform)) {
+                    $action = 'grading';
+                }
             } else {
                 //cancel button
                 $action = 'grading';
@@ -337,15 +344,15 @@ class assignment {
         
         // now show the right view page
         if ($action == 'nextgrade') {
-            $o .= $this->view_next_single_grade();                        
+            $o .= $this->view_next_single_grade();
         } else if ($action == 'grade') {
-            $o .= $this->view_single_grade_page();
+            $o .= $this->view_single_grade_page($mform);
         } else if ($action == 'viewpluginassignfeedback') {
             $o .= $this->view_plugin_content('assignfeedback');
         } else if ($action == 'viewpluginassignsubmission') {
             $o .= $this->view_plugin_content('assignsubmission');
         } else if ($action == 'editsubmission') {
-            $o .= $this->view_edit_submission_page();
+            $o .= $this->view_edit_submission_page($mform);
         } else if ($action == 'submit') {
             $o .= $this->view_confirm_submit_page();
         } else if ($action == 'grading') {
@@ -631,7 +638,6 @@ class assignment {
         }
 
         
-        
         // update all the calendar events 
         $this->update_calendar($this->get_course_module()->id);
 
@@ -703,7 +709,6 @@ class assignment {
             $this->add_plugin_settings($plugin, $mform);
         }
     }
-
 
     final private static function get_static_string($key) {
         if (static::$key) {
@@ -802,7 +807,6 @@ class assignment {
 
     /**
      * Get the current course
-     * @uses die
      * @global moodle_database $DB
      * @return mixed stdClass|null The course
      */
@@ -837,7 +841,7 @@ class assignment {
             if ($grade == -1 || $grade === null) {
                 return '-';
             } else {
-                return round($grade) .' / '.$this->get_instance()->grade;
+                return format_float(($grade)) .' / '. format_float($this->get_instance()->grade);
             }
 
         } else {                                // Scale
@@ -848,8 +852,9 @@ class assignment {
                     return '-';
                 }
             }
-            if (isset($this->cache['scale'][$grade])) {
-                return $this->cache['scale'][$grade];
+            $scaleid = (int)$grade;
+            if (isset($this->cache['scale'][$scaleid])) {
+                return $this->cache['scale'][$scaleid];
             }
             return '-';
         }
@@ -1268,7 +1273,6 @@ class assignment {
         $userid = $this->get_userid_for_row($rnum, $last);
         if (!$userid) {
             throw new coding_exception('Row is out of bounds for the current grading table: ' . $rnum);
-            die();
         }
     
         redirect(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'rownum'=> $rnum, 'action'=>'grade')));
@@ -1318,7 +1322,6 @@ class assignment {
                 // get the plugins to add their own files to the zip
 
                 $user = $DB->get_record("user", array("id"=>$userid),'id,username,firstname,lastname', MUST_EXIST); 
-
                 $prefix = clean_filename(fullname($user) . "_" .$userid . "_");
 
                 foreach ($this->submissionplugins as $plugin) {
@@ -1471,7 +1474,7 @@ class assignment {
      * @uses die
      * @return string
      */
-    private function view_single_grade_page() {
+    private function view_single_grade_page($mform) {
         global $DB, $CFG;
 
         $o = '';
@@ -1507,11 +1510,13 @@ class assignment {
             // set the grade 
         } else {
             $data = new stdClass();
-            $data->grade = -1;
+            $data->grade = '';
         }
 
         // now show the grading form
-        $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum)));
+        if (!$mform) {
+            $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum)));
+        }
         $o .= $this->output->render(new grading_form($mform));
 
         $this->add_to_log('view grading form', get_string('viewgradingformforstudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user))));
@@ -1654,7 +1659,7 @@ class assignment {
      * @global stdClass $CFG
      * @return void
      */
-    private function view_edit_submission_page() {
+    private function view_edit_submission_page($mform) {
         global $CFG;
 
         $o = '';
@@ -1672,7 +1677,9 @@ class assignment {
         $o .= $this->plagiarism_print_disclosure();
         $data = new stdClass();
 
-        $mform = new mod_assign_submission_form(null, array($this, $data));
+        if (!$mform) {
+            $mform = new mod_assign_submission_form(null, array($this, $data));
+        }
 
         $o .= $this->output->render(new edit_submission_form($mform));
     
@@ -2179,9 +2186,10 @@ class assignment {
      * 
      * @global stdClass $USER
      * @global stdClass $CFG
+     * @param  moodleform $mform
      * @return bool 
      */
-    private function process_save_submission() {       
+    private function process_save_submission(&$mform) {
         global $USER, $CFG;
         
         // Include submission form 
@@ -2346,11 +2354,16 @@ class assignment {
             }
         } else {
             // use simple direct grading
-            $grademenu = make_grades_menu($this->get_instance()->grade);
-            $grademenu['-1'] = get_string('nograde');
+            if ($this->get_instance()->grade > 0) {
+                $mform->addElement('text', 'grade', get_string('gradeoutof', 'assign', $this->get_instance()->grade));
+                $mform->setType('grade', PARAM_TEXT);
+            } else {
+                $grademenu = make_grades_menu($this->get_instance()->grade);
+                $grademenu['-1'] = get_string('nograde');
 
-            $mform->addElement('select', 'grade', get_string('grade').':', $grademenu);
-            $mform->setType('grade', PARAM_INT);
+                $mform->addElement('select', 'grade', get_string('grade').':', $grademenu);
+                $mform->setType('grade', PARAM_INT);
+            }
         }
 
 
@@ -2543,9 +2556,10 @@ class assignment {
      * @global stdClass $USER
      * @global moodle_database $DB 
      * @global stdClass $CFG 
-     * @return void
+     * @param  moodleform $mform
+     * @return bool - was the grade saved
      */
-    private function process_save_grade() {
+    private function process_save_grade(&$mform) {
         global $USER, $DB, $CFG;
         // Include grade form 
         require_once($CFG->dirroot . '/mod/assign/grade_form.php');
@@ -2559,7 +2573,6 @@ class assignment {
         $data = new stdClass();
         $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum, 'last'=>false)));
 
-        
         if ($formdata = $mform->get_data()) {
             $grade = $this->get_user_grade($userid, true);
             $gradingdisabled = $this->grading_disabled($userid);
@@ -2567,7 +2580,7 @@ class assignment {
             if ($gradinginstance) {
                 $grade->grade = $gradinginstance->submit_and_get_grade($formdata->advancedgrading, $grade->id);
             } else {
-                $grade->grade= $formdata->grade;
+                $grade->grade= grade_floatval($formdata->grade);
             }
             $grade->grader= $USER->id;
 
@@ -2595,8 +2608,10 @@ class assignment {
             $this->add_to_log('grade submission', $this->format_grade_for_log($grade));
              
        
+        } else {
+            return false;
         }
-        
+        return true;
     }
 
     /**

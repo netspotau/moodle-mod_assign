@@ -68,14 +68,18 @@ class users_submissions_table implements renderable {
 class confirm_submission_form implements renderable {
     protected $form = null;
     
-    public function __construct($form) {
+    /*
+     * Constructor
+     * @param moodleform $form
+     */
+    public function __construct(moodleform $form) {
         $this->set_form($form);
     }
     
     /**
      * Returns form
      *
-     * @return form
+     * @return moodleform $form
      */
     public function get_form() {
         return $this->form;
@@ -84,9 +88,10 @@ class confirm_submission_form implements renderable {
     /**
      * Set the form
      *
-     * @param form $form
+     * @param moodleform $form
+     * @return void
      */
-    public function set_form($form) {
+    public function set_form(moodleform $form) {
         if (!$form) {
             throw new coding_exception('Form may not be null');
         }
@@ -153,7 +158,7 @@ class edit_submission_form implements renderable {
     /**
      * Returns form
      *
-     * @return moodleform $form
+     * @return moodleform
      */
     public function get_form() {
         return $this->form;
@@ -166,9 +171,6 @@ class edit_submission_form implements renderable {
      * @return void
      */
     public function set_form(moodleform $form) {
-        if (!$form) {
-            throw new coding_exception('Form may not be null');
-        }
         $this->form = $form;
     }
 }
