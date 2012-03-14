@@ -88,8 +88,9 @@ class mod_assign_mod_form extends moodleform_mod {
         if (!$config->require_submission_statement) {
             $mform->addElement('selectyesno', 'requiresubmissionstatement', get_string('requiresubmissionstatement', 'assign'));
             $mform->setDefault('requiresubmissionstatement', $config->submission_statement!='');
+        } else {
+            $mform->addElement('hidden', 'requiresubmissionstatement', 0);
         }
-
         
         // plagiarism enabling form
         plagiarism_get_form_elements_module($mform, $ctx->get_course_context());
