@@ -2161,7 +2161,7 @@ class assignment {
         $data = new stdClass();
         $mform = new mod_assign_submission_form(null, array($this, $data));
         if ($mform->is_cancelled()) {
-            return false;
+            return true;
         }
         if ($data = $mform->get_data()) {               
             $submission = $this->get_user_submission($USER->id, true); //create the submission if needed & its id              
@@ -2188,8 +2188,9 @@ class assignment {
             if (!$this->get_instance()->submissiondrafts) {
                 $this->email_graders($submission);
             }
+            return true;
         }
-        return true;
+        return false;
     }
     
     /**
