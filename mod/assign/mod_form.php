@@ -83,6 +83,14 @@ class mod_assign_mod_form extends moodleform_mod {
         $mform->setDefault('submissiondrafts', 0);
         $mform->addElement('selectyesno', 'sendnotifications', get_string('sendnotifications', 'assign'));
         $mform->setDefault('sendnotifications', 1);
+        // submission statement
+        $config = get_config('assign');
+        if (!$config->require_submission_statement) {
+            $mform->addElement('selectyesno', 'requiresubmissionstatement', get_string('requiresubmissionstatement', 'assign'));
+            $mform->setDefault('requiresubmissionstatement', $config->submission_statement!='');
+        } else {
+            $mform->addElement('hidden', 'requiresubmissionstatement', 0);
+        }
         
         // plagiarism enabling form
         plagiarism_get_form_elements_module($mform, $ctx->get_course_context());
