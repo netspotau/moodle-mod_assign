@@ -86,7 +86,7 @@ class mod_assign_mod_form extends moodleform_mod {
         // submission statement
         $config = get_config('assign');
         if (!$config->require_submission_statement) {
-            $mform->addElement('select', 'requiresubmissionstatement', get_string('requiresubmissionstatement', 'ass
+            $mform->addElement('selectyesno', 'requiresubmissionstatement', get_string('requiresubmissionstatement', 'assign'));
             $mform->setDefault('requiresubmissionstatement', $config->submission_statement!='');
         }
 
