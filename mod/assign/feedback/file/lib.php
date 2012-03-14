@@ -91,12 +91,6 @@ class assignment_feedback_file extends assignment_feedback_plugin {
      */
     public function get_form_elements($grade, MoodleQuickForm $mform, stdClass $data) {
 
-        $elements = array();
-
-        if ($this->get_config('maxfiles') <= 0) {
-            return $elements;
-        }
-
         $fileoptions = $this->get_file_options();
         $gradeid = $grade ? $grade->id : 0;
 
