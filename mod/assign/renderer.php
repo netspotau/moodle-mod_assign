@@ -623,9 +623,20 @@ class mod_assign_renderer extends plugin_renderer_base {
             $o .= $this->output->container_end();
         }
         if ($table->get_assignment()->is_any_submission_plugin_enabled()) {
-            $o .= $this->output->container_start('downloadalllink');
-            $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_assignment()->get_course_module()->id, 'action' => 'downloadall')), get_string('downloadall', 'assign'));
+            $o .= $this->output->container_start('downloadallsubmissionslink');
+            $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_assignment()->get_course_module()->id, 'action' => 'downloadall')), get_string('downloadallsubmissions', 'assign'));
             $o .= $this->output->container_end();
+        }
+
+        foreach ($table->get_assignment()->get_feedback_plugins() as $plugin) {
+            if ($plugin->is_enabled() && $plugin->is_visible()) {
+                $pages = $plugin->additional_grading_pages();
+                foreach ($pages as $page) {
+                    $o .= $this->output->container_start('plugingradingpagelink');
+                    $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_assignment()->get_course_module()->id, 'action' => 'plugingradingpage', 'gradingaction'=>$page, 'plugin'=>$plugin->get_type())), get_string('gradingpage' . $page, $plugin->get_subtype() . '_' . $plugin->get_type()));
+                    $o .= $this->output->container_end();
+                }
+            }
         }
 
         $o .= $this->output->container_end();

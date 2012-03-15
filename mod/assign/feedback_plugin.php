@@ -83,4 +83,24 @@ abstract class assignment_feedback_plugin extends assignment_plugin {
         return '';
     }
     
+    /**
+     * If this plugin supports additional grading features, return a list of actions that will be passed to grading_page when clicked
+     * There also should be a language string for each one like 'gradingpageaction' in the plugin
+     *
+     * @param stdClass $grade The grade
+     * @return array
+     */
+    public function additional_grading_pages() {
+        return array();
+    }
+    
+    /**
+     * Display a custom grading page
+     *
+     * @param string $action The action that was chosen from additional_grading_pages
+     * @return string
+     */
+    public function grading_page() {
+        return '';
+    }
 }

@@ -213,18 +213,34 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     /**
      * Produce a list of files suitable for export that represent this submission
      * 
+     * @global moodle_database $DB
      * @param stdClass $submission - For this is the submission data
      * @return array - return an array of files indexed by filename
      */
     public function get_files(stdClass $submission) {
+        global $DB;
         $onlinetextsubmission = $this->get_onlinetext_submission($submission->id);
+        $result = array();
         if ($onlinetextsubmission) {
-            $submissioncontent = "<html><body>". format_text($onlinetextsubmission->onlinetext, $onlinetextsubmission->onlineformat, array('context'=>$this->assignment->get_context())). "</body></html>";      //fetched from database
+            $fs = get_file_storage();
 
-            return array(get_string('onlinetextfilename', 'assignsubmission_onlinetext') => array($submissioncontent));
+            $files = $fs->get_area_files($this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT, $submission->id, "timemodified", false);
+
+            foreach ($files as $file) {
+                $result[$file->get_filename()] = $file;
+            }
+            
+            $user = $DB->get_record("user", array("id"=>$submission->userid),'id,username,firstname,lastname', MUST_EXIST); 
+
+            $prefix = clean_filename(fullname($user) . "_" .$submission->userid . "_submission_onlinetext_");
+
+            $text = format_text($onlinetextsubmission->onlinetext, $onlinetextsubmission->onlineformat, array('context'=>$this->assignment->get_context()));      //fetched from database
+            $submissioncontent = '<html><body>'. str_replace('@@PLUGINFILE@@/', $prefix, $text). '</body></html>';
+
+            $result[get_string('onlinetextfilename', 'assignsubmission_onlinetext')] = array($submissioncontent);
         }
 
-        return array();
+        return $result;
     }
 
     /**

@@ -67,6 +67,15 @@ abstract class assignment_plugin {
         }
         return false;
     }
+    
+    /**
+     * Get the assignment instance for this plugin
+     *
+     * @return assignment
+     */
+    public final function get_assignment() {
+        return $this->assignment;
+    }
 
     /**
      * Is this the last plugin in the list?
