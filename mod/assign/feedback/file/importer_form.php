@@ -47,6 +47,9 @@ class assignfeedback_file_importer_form extends moodleform implements renderable
     /** @var string $unzippedfilesdir */
     public $unzippedfilesdir;
 
+    /** @var string $cleanupfolder */
+    public $cleanupfolder;
+
     /** @var array $participants */
     private $participants;
 
@@ -170,42 +173,49 @@ class assignfeedback_file_importer_form extends moodleform implements renderable
         return false;
     }
 
+    /**
+     * Create an instance of the form
+     * @global stdClass $CFG
+     */
     function definition() {
+        global $CFG;
         $mform = $this->_form;
         $this->hashcache = array();
     
-        list($plugin, $tmpdir) = $this->_customdata;
+        list($plugin, $data) = $this->_customdata;
         // visible elements
         $this->plugin = $plugin;
-        $this->unzippedfilesdir = $tmpdir;
+
+        $importid = $data->importid;
+        $this->cleanupfolder = "{$CFG->tempdir}/assignfeedback_file_import/{$importid}";
+        $this->unzippedfilesdir = "{$CFG->tempdir}/assignfeedback_file_import/{$importid}/files";
         $count = 0;
 
-        if (!is_dir($tmpdir)) {
-            throw new coding_exception('Expected a directory');
-        }
-        $optionsnew = array();
-        $optionsnew[1] = get_string('sendnewfileasfeedback', 'assignfeedback_file');
-        $optionsnew[0] = get_string('skip', 'assignfeedback_file');
-        $optionsupdate = array();
-        $optionsupdate[1] = get_string('replacefileasfeedback', 'assignfeedback_file');
-        $optionsupdate[0] = get_string('skip', 'assignfeedback_file');
-        foreach (scandir($tmpdir) as $file) {
-            $user = null;
-            $plugin = '';
-            $filename = '';
-            $filerecord = null;
-            if ($this->is_valid_file($file, $user, $plugin, $filename)) {
-                if ($this->file_modified($tmpdir . '/' . $file, $user, $filename, $filerecord)) {
-                    $mform->addElement('header', 'fileheader' . $count, get_string('stepnumber', 'assignfeedback_file', $count+1));
-                    $mform->addElement('static', 'filelabel' . $count, get_string('file'), $file);
-                    $mform->addElement('static', 'userlabel' . $count, get_string('user'), fullname($user));
-                    if ($filerecord) {
-                        $mform->addElement('select', 'file' . $count, '', $optionsupdate);
-                    } else {
-                        $mform->addElement('select', 'file' . $count, '', $optionsnew);
+        if (is_dir($this->unzippedfilesdir)) {
+            $optionsnew = array();
+            $optionsnew[1] = get_string('sendnewfileasfeedback', 'assignfeedback_file');
+            $optionsnew[0] = get_string('skip', 'assignfeedback_file');
+            $optionsupdate = array();
+            $optionsupdate[1] = get_string('replacefileasfeedback', 'assignfeedback_file');
+            $optionsupdate[0] = get_string('skip', 'assignfeedback_file');
+            foreach (scandir($this->unzippedfilesdir) as $file) {
+                $user = null;
+                $plugin = '';
+                $filename = '';
+                $filerecord = null;
+                if ($this->is_valid_file($file, $user, $plugin, $filename)) {
+                    if ($this->file_modified($this->unzippedfilesdir . '/' . $file, $user, $filename, $filerecord)) {
+                        $mform->addElement('header', 'fileheader' . $count, get_string('stepnumber', 'assignfeedback_file', $count+1));
+                        $mform->addElement('static', 'filelabel' . $count, get_string('file'), $file);
+                        $mform->addElement('static', 'userlabel' . $count, get_string('user'), fullname($user));
+                        if ($filerecord) {
+                            $mform->addElement('select', 'file' . $count, '', $optionsupdate);
+                        } else {
+                            $mform->addElement('select', 'file' . $count, '', $optionsnew);
+                        }
+                        $mform->setDefault('file' . $count, 1);
+                        $count += 1;
                     }
-                    $mform->setDefault('file' . $count, 1);
-                    $count += 1;
                 }
             }
         }
@@ -214,12 +224,17 @@ class assignfeedback_file_importer_form extends moodleform implements renderable
         $mform->addElement('hidden', 'action', 'plugingradingpage');
         $mform->addElement('hidden', 'gradingaction', 'import');
         $mform->addElement('hidden', 'plugin', 'file');
+        $mform->addElement('hidden', 'importid');
         if ($count == 0) {
             $mform->addElement('header', 'nofilesheader', get_string('nofeedbackfilesheader', 'assignfeedback_file'));
             $mform->addElement('static', 'nofiles', '', get_string('nofeedbackfiles', 'assignfeedback_file'));
-            $this->add_action_buttons(false, get_string('cancel'));
+            $this->add_action_buttons(false, get_string('chooseanotherfile', 'assignfeedback_file'));
+            fulldelete($this->cleanupfolder);
         } else {
             $this->add_action_buttons(true, get_string('submit'));
+        }
+        if ($data) {
+            $this->set_data($data);
         }
     }
 
@@ -235,7 +250,7 @@ class assignfeedback_file_importer_form extends moodleform implements renderable
         $count = 0;
         $filessent = 0;
         $fs = get_file_storage();
-        if ($data) {
+        if ($data && is_dir($this->unzippedfilesdir)) {
             foreach (scandir($this->unzippedfilesdir) as $file) {
                 $user = null;
                 $plugin = '';
@@ -270,6 +285,8 @@ class assignfeedback_file_importer_form extends moodleform implements renderable
                 }
             }
         }
+
+        fulldelete($this->cleanupfolder);
 
         return $filessent;
     }

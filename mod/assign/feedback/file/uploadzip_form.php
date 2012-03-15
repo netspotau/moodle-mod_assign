@@ -48,10 +48,9 @@ class assignfeedback_file_uploadzip_form extends moodleform implements renderabl
     function definition() {
         $mform = $this->_form;
         
-        $plugin = $this->_customdata;
+        list($plugin, $data) = $this->_customdata;
         // visible elements
         $this->plugin = $plugin;
-        $data = new stdClass();
         $fileoptions = array('subdirs'=>0,
                                 'maxfiles'=>1,
                                 'accepted_types'=>'*.zip',
@@ -64,7 +63,12 @@ class assignfeedback_file_uploadzip_form extends moodleform implements renderabl
         $mform->addElement('hidden', 'action', 'plugingradingpage');
         $mform->addElement('hidden', 'gradingaction', 'submitupload');
         $mform->addElement('hidden', 'plugin', 'file');
+        $mform->addElement('hidden', 'importid');
         $this->add_action_buttons(true, get_string('processzip', 'assignfeedback_file'));
+
+        if ($data) {
+            $this->set_data($data);
+        }
     }
 
 }

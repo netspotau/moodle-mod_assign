@@ -74,8 +74,10 @@ class grading_table extends table_sql implements renderable {
 
         $users = array_keys( $assignment->list_participants($currentgroup, true));
         
-        $fields = user_picture::fields('u') . ', u.id as userid, u.firstname as firstname, u.lastname as lastname, ';
-        $fields .= 's.status as status, s.id as submissionid, s.timecreated as firstsubmission, s.timemodified as timesubmitted, ';
+        $fields = user_picture::fields('u') . ', u.id as userid, u.firstname as firstname, u.lastname as lastname ';
+
+        $fields .= get_extra_user_fields_sql($assignment->get_context(), 'u');
+        $fields .= ', s.status as status, s.id as submissionid, s.timecreated as firstsubmission, s.timemodified as timesubmitted, ';
         $fields .= 'g.id as gradeid, g.grade as grade, g.timemodified as timemarked, g.timecreated as firstmarked, g.mailed as mailed, g.locked as locked';
         $from = '{user} u LEFT JOIN {assign_submission} s ON u.id = s.userid AND s.assignment = ' . $this->assignment->get_instance()->id . 
                         ' LEFT JOIN {assign_grades} g ON u.id = g.userid AND g.assignment = ' . $this->assignment->get_instance()->id;
@@ -101,6 +103,11 @@ class grading_table extends table_sql implements renderable {
         // Fullname
         $columns[] = 'fullname';
         $headers[] = get_string('fullname');
+
+        foreach (get_extra_user_fields($assignment->get_context()) as $field) {
+            $columns[] = $field;
+            $headers[] = get_user_field_name($field);
+        }
 
         // Submission status
         $columns[] = 'status';

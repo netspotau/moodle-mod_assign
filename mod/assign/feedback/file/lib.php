@@ -280,12 +280,10 @@ class assignment_feedback_file extends assignment_feedback_plugin {
         $renderer = $PAGE->get_renderer('assignfeedback_file');
 
         // process the file
-        $tmpdir = 'assignfeedback_file_' . $this->assignment->get_instance()->id . '_' . $USER->id;
+        $data = new stdClass();
+        $data->importid = required_param('importid', PARAM_ALPHANUM);
 
-        $tmpfilesdir = $tmpdir . '/files';
-        $fulltmpfilesdir = $CFG->tempdir . '/' . $tmpdir . '/files';
-
-        $importform = new assignfeedback_file_importer_form(null, array($this, $fulltmpfilesdir));
+        $importform = new assignfeedback_file_importer_form(null, array($this, $data));
         
         $filessent = $importform->process_files();
 
@@ -293,7 +291,7 @@ class assignment_feedback_file extends assignment_feedback_plugin {
             return $renderer->render(new importer_summary($filessent, $this->assignment));
         }
 
-        redirect(new moodle_url('/mod/assign/view.php', array('id'=>$this->assignment->get_course_module()->id, 'action'=>'grading')));
+        redirect(new moodle_url('/mod/assign/view.php', array('id'=>$this->assignment->get_course_module()->id, 'action'=>'plugingradingpage', 'gradingaction'=>'upload', 'plugin'=>'file')));
         die();
     }
     
@@ -318,7 +316,7 @@ class assignment_feedback_file extends assignment_feedback_plugin {
         raise_memory_limit(MEMORY_EXTRA);
 
         $renderer = $PAGE->get_renderer('assignfeedback_file');
-        $uploadform = new assignfeedback_file_uploadzip_form(null, $this);
+        $uploadform = new assignfeedback_file_uploadzip_form(null, array($this, null));
 
         if ($uploadform->is_cancelled()) {
             redirect(new moodle_url('/mod/assign/view.php', array('id' => $this->assignment->get_course_module()->id, 'action'=>'grading')));
@@ -332,24 +330,28 @@ class assignment_feedback_file extends assignment_feedback_plugin {
         }
 
         // process the file
-        $tmpdir = 'assignfeedback_file_' . $this->assignment->get_instance()->id . '_' . $USER->id;
+        $tmpdir = 'assignfeedback_file_import';
+        $importid = $data->importid;
         $realfilename = 'feedback-import.zip';
-        $importfile = "{$CFG->tempdir}/{$tmpdir}/{$realfilename}";
+        $importfile = "{$CFG->tempdir}/{$tmpdir}/{$importid}/{$realfilename}";
         make_temp_directory($tmpdir);
+        make_temp_directory($tmpdir . '/' . $importid);
         if (!$result = $uploadform->save_file('uploadzip', $importfile, true)) {
             throw new moodle_exception('uploadproblem');
         }
 
         $packer = get_file_packer('application/zip');
 
-        $tmpfilesdir = $tmpdir . '/files';
-        $fulltmpfilesdir = $CFG->tempdir . '/' . $tmpdir . '/files';
+        $tmpfilesdir = $tmpdir . '/' . $importid . '/files';
+        $fulltmpfilesdir = $CFG->tempdir . '/' . $tmpdir . '/' . $importid . '/files';
         make_temp_directory($tmpfilesdir);
         if (!$result = $packer->extract_to_pathname($importfile, $fulltmpfilesdir)) {
             throw new moodle_exception('uploadproblem');
         }
 
-        $importform = new assignfeedback_file_importer_form(null, array($this, $fulltmpfilesdir));
+        $data = new stdClass();
+        $data->importid = $importid;
+        $importform = new assignfeedback_file_importer_form(null, array($this, $data));
         return $renderer->render($importform);
     }
 
@@ -363,7 +365,11 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     public function view_zip_upload_page() {
         global $PAGE, $CFG;
         require_once($CFG->dirroot . '/mod/assign/feedback/file/uploadzip_form.php');
-        $mform = new assignfeedback_file_uploadzip_form(null, $this);
+        
+        $data = new stdClass();
+        $data->importid = uniqid();
+
+        $mform = new assignfeedback_file_uploadzip_form(null, array($this, $data));
         $renderer = $PAGE->get_renderer('assignfeedback_file');
         
         return $renderer->render($mform);

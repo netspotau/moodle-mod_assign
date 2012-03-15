@@ -25,6 +25,7 @@
  */
 
 $string['allowfilefeedback'] = 'Enabled';
+$string['chooseanotherfile'] = 'Choose another file';
 $string['configmaxbytes'] = 'Maximum file size';
 $string['confirmimport'] = 'Confirm feedback files to import';
 $string['file'] = 'Feedback files';
