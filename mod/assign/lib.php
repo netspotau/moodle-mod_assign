@@ -362,3 +362,32 @@ function assign_get_post_actions() {
     return array('upload', 'submit', 'submit for grading');
 }
 
+/**
+ * Call cron on the assign module
+ */
+function assign_cron() {
+    global $CFG;
+
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
+    //assignment::cron();    
+    $plugins = get_plugin_list('assignsubmission');
+    
+    foreach ($plugins as $name => $plugin) {
+        $disabled = get_config('assignsubmission_' . $name, 'disabled');
+        if (!$disabled) {
+            $class = 'assignment_submission_' . $name;
+            require_once($CFG->dirroot . '/mod/assign/submission/' . $name . '/lib.php');
+            $class::cron();
+        }
+    }
+    $plugins = get_plugin_list('assignfeedback');
+    
+    foreach ($plugins as $name => $plugin) {
+        $disabled = get_config('assignfeedback_' . $name, 'disabled');
+        if (!$disabled) {
+            $class = 'assignment_feedback_' . $name;
+            require_once($CFG->dirroot . '/mod/assign/feedback/' . $name . '/lib.php');
+            $class::cron();
+        }
+    }
+}

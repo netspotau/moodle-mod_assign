@@ -1095,25 +1095,8 @@ class assignment {
      * @global stdClass $DB
      * @return bool
      */
-    function cron() {
+    static function cron() {
         global $CFG, $USER, $DB;
-
-        /// first execute all crons in submission plugins
-        foreach ($this->submissionplugins as $plugin) {
-
-            if ($plugin->is_enabled() && $plugin->is_visible()) {
-
-                $plugin->$this->assignment->cron();
-            }
-        }
-        /// first execute all crons in feedback plugins
-        foreach ($this->feedbackplugins as $plugin) {
-
-            if ($plugin->is_enabled() && $plugin->is_visible()) {
-
-                $plugin->$this->assignment->cron();
-            }
-        }
 
         $this->send_notification();
 

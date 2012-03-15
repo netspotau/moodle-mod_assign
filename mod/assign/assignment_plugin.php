@@ -443,4 +443,10 @@ abstract class assignment_plugin {
     public function delete_instance() {
         return true;
     }
+
+    /**
+     * Run cron for this plugin
+     */
+    public static function cron() {
+    }
 }
