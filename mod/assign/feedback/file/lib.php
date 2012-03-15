@@ -395,5 +395,27 @@ class assignment_feedback_file extends assignment_feedback_plugin {
         throw new coding_exception('Unknown grading page');
     }
 
+    /**
+     * Run cron for this plugin
+     *
+     * For this function this deletes all files from the temp dir older than 1 hour
+     */
+    public static function cron() {
+        global $CFG;
+        mtrace('Deleting temporary files from feedback import...');
+        $now = time();
+        foreach (scandir($CFG->tempdir . '/assignfeedback_file_import') as $file) {
+            if (strpos($file, ".") == 0) {
+                continue;
+            }
+            if (strpos($file, "~") == 0) {
+                continue;
+            }
+            if ($now - filemtime($CFG->tempdir . '/assignfeedback_file_import/' . $file) > 3600) {
+                @fulldelete($CFG->tempdir . '/assignfeedback_file_import/' . $file);
+            }
+        }
+        mtrace('done.\n');
+    }
 }
 

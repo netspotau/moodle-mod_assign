@@ -1108,6 +1108,7 @@ class assignment {
      * @return bool
      */
     function cron() {
+        die('dead');
         global $CFG, $USER, $DB;
 
         /// first execute all crons in submission plugins
