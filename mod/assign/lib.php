@@ -343,3 +343,22 @@ function assign_print_overview($courses, &$htmlarray) {
         }
     }
 }
+
+/** 
+ * function to list the actions that correspond to a view of this module
+ * This is used by the participation report
+ * @return array
+ */
+function assign_get_view_actions() {
+    return array('view submission', 'view feedback');
+}
+
+/** 
+ * function to list the actions that correspond to a post of this module
+ * This is used by the participation report
+ * @return array
+ */
+function assign_get_post_actions() {
+    return array('upload', 'submit', 'submit for grading');
+}
+
