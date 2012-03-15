@@ -1305,7 +1305,6 @@ class assignment {
 
         // load all submissions
         $submissions = $this->get_all_submissions();
-        $grades = $this->get_all_grades();
         
         if (empty($submissions)) {
             print_error('errornosubmissions', 'assign');
@@ -1323,6 +1322,7 @@ class assignment {
             $groupid = groups_get_activity_group($this->get_course_module(), true);
             $groupname = groups_get_group_name($groupid).'-';
         }
+        $userids = $this->list_participants($groupid, true);
 
         // construct the zip file name
         $filename = str_replace(' ', '_', clean_filename($this->get_course()->shortname.'-'.$this->get_instance()->name.'-'.$groupname.$this->get_course_module()->id.".zip")); //name of new zip file.
@@ -1351,12 +1351,15 @@ class assignment {
             } 
         } // end of foreach loop
         // get all the files for each grade/feedback
-        foreach ($grades as $grade) {
-            $userid = $grade->userid; //get userid
+
+        
+        foreach ($userids as $useridrecord) {
+            $userid = $useridrecord->id;
             if ((groups_is_member($groupid,$userid) or !$groupmode or !$groupid)) {
                 // get the plugins to add their own files to the zip
 
                 $user = $DB->get_record('user', array('id'=>$userid), 'id, firstname, lastname');
+                $grade = $this->get_user_grade($userid, false);
                 // user may have been deleted?
                 if ($user) {
                     $prefix = clean_filename(fullname($user) . '_' .$userid . '_');

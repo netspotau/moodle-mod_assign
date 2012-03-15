@@ -78,19 +78,17 @@ class assignfeedback_file_importer_form extends moodleform implements renderable
             }
         }
         $grade = $this->plugin->get_assignment()->get_user_grade($userid, false);
-        if ($grade) {
-            foreach ($this->plugin->get_assignment()->get_feedback_plugins() as $plugin) {
-                if ($plugin->is_visible() && $plugin->is_enabled()) {
-                    $pluginfiles = $plugin->get_files($grade);
-                    foreach ($pluginfiles as $name => $file) {
-                        $hash = '';
-                        if (is_array($file)) {
-                            $hash = sha1($file[0]); 
-                        } else {
-                            $hash = $file->get_contenthash();
-                        }
-                        $hashlist[] = $hash;
+        foreach ($this->plugin->get_assignment()->get_feedback_plugins() as $plugin) {
+            if ($plugin->is_visible() && $plugin->is_enabled()) {
+                $pluginfiles = $plugin->get_files($grade);
+                foreach ($pluginfiles as $name => $file) {
+                    $hash = '';
+                    if (is_array($file)) {
+                        $hash = sha1($file[0]); 
+                    } else {
+                        $hash = $file->get_contenthash();
                     }
+                    $hashlist[] = $hash;
                 }
             }
         }
@@ -109,11 +107,6 @@ class assignfeedback_file_importer_form extends moodleform implements renderable
     function file_modified($uploadpath, $user, $originalfilename, &$filerecord) {
         $fs = get_file_storage();
 
-        $grade = $this->plugin->get_assignment()->get_user_grade($user->id, false);
-        if (!$grade) {
-            return true; // no feedback yet
-        }
-        
         // check the hashes
         $newhash = sha1_file($uploadpath);
 

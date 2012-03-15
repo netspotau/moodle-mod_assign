@@ -221,10 +221,10 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     /**
      * Produce a list of files suitable for export that represent this feedback 
      * 
-     * @param stdClass $grade The grade
+     * @param mixed stdClass|null $grade The grade
      * @return array - return an array of files indexed by filename
      */
-    public function get_files(stdClass $grade) {
+    public function get_files($grade) {
         $result = array();
         $fs = get_file_storage();
         // First add any template feedback files (if they exist)
@@ -237,11 +237,13 @@ class assignment_feedback_file extends assignment_feedback_plugin {
             }
         }
 
-        // Then add the existing feedback files.
-        $files = $fs->get_area_files($this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id, "timemodified", false);
+        if ($grade) {
+            // Then add the existing feedback files.
+            $files = $fs->get_area_files($this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id, "timemodified", false);
 
-        foreach ($files as $file) {
-            $result[$file->get_filename()] = $file;
+            foreach ($files as $file) {
+                $result[$file->get_filename()] = $file;
+            }
         }
         return $result;
     }
