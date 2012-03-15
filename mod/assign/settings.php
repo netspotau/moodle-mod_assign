@@ -40,7 +40,6 @@ $ADMIN->add('assignmentplugins', new admin_category('assignfeedbackplugins',
 
 $ADMIN->add('assignfeedbackplugins', new admin_page_manage_assignment_plugins('assignfeedback'));
 
-
 assignment_plugin_manager::add_admin_assignment_plugin_settings('assignsubmission', $ADMIN, $settings, $module);
 assignment_plugin_manager::add_admin_assignment_plugin_settings('assignfeedback', $ADMIN, $settings, $module);
 
@@ -51,6 +50,9 @@ foreach (get_plugin_list('assignfeedback') as $type => $notused) {
     }
 }
 
+$settings->add(new admin_setting_configcheckbox('mod_assign_submission_receipts',
+        get_string('sendsubmissionreceipts', 'mod_assign'), get_string('sendsubmissionreceipts_help', 'mod_assign'), 1));
+
 $settings->add(new admin_setting_configselect('mod_assign_feedback_plugin_for_gradebook', 
                       get_string('feedbackpluginforgradebook', 'mod_assign'),
-                      get_string('feedbackplugin', 'mod_assign'), 'feedback_comments', $menu));
+                      get_string('feedbackpluginforgradebook_help', 'mod_assign'), 'feedback_comments', $menu));
