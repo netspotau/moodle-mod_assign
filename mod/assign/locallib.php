@@ -712,7 +712,7 @@ class assignment {
     }
 
     final private static function get_static_string($key) {
-        if (static::$key) {
+        if (isset(static::$key)) {
             return static::$key;
         }
         static::$key = get_string($key, 'assign');
