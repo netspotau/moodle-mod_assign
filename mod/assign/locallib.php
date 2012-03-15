@@ -920,7 +920,7 @@ class assignment {
      * @param int $num The row number of the user
      * @return mixed The user id of the matching user or false if there was an error
      */
-    private function get_userid_for_row($num, $last){
+    private function get_userid_for_row($num, &$last){
         if (!array_key_exists('userid_for_row', $this->cache)) {
             $this->cache['userid_for_row'] = array();
         }
