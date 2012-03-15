@@ -36,7 +36,6 @@ $ADMIN->add('assignmentplugins', new admin_category('assignfeedbackplugins',
                 new lang_string('feedbackplugins', 'assign'), !$module->visible));
 $ADMIN->add('assignfeedbackplugins', new admin_page_manage_assignment_plugins('assignfeedback'));
 
-
 assignment_plugin_manager::add_admin_assignment_plugin_settings('assignsubmission', $ADMIN, $settings, $module);
 assignment_plugin_manager::add_admin_assignment_plugin_settings('assignfeedback', $ADMIN, $settings, $module);
 
@@ -53,6 +52,9 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_configcheckbox('assign_showrecentsubmissions',
                    new lang_string('showrecentsubmissions', 'assign'),
                    new lang_string('configshowrecentsubmissions', 'assign'), 0));       
+    $settings->add(new admin_setting_configcheckbox('assign_submission_receipts',
+                   get_string('sendsubmissionreceipts', 'mod_assign'), get_string('sendsubmissionreceipts_help', 'mod_assign'), 1));
+
             
 
     $settings->add(new admin_setting_heading('assign_defaultplugins',

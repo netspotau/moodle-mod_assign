@@ -37,6 +37,7 @@ $string['assignmentisdue'] = 'Assignment is due';
 $string['assignmentname'] = 'Assignment name';
 $string['assignmentplugins'] = 'Assignment plugins';
 $string['assignmentsperpage'] = 'Assignments per page';
+$string['assignsubmissionpluginname'] = 'Submission plugin';
 $string['assign:submit'] = 'Submit assignment';
 $string['assign:view'] = 'View assignment';
 $string['availability'] = 'Availability';
@@ -78,15 +79,16 @@ $string['duedatereached'] = 'The due date for this assignment has now passed';
 $string['duedatevalidation'] = 'Due date must be after the allow submissions from date.';
 $string['editsubmission'] = 'Edit my submission';
 $string['editaction'] = 'Actions...';
-$string['emailgradermail'] = '{$a->username} has updated their assignment submission
+$string['gradersubmissionupdatedtext'] = '{$a->username} has updated their assignment submission
 for \'{$a->assignment}\' at {$a->timeupdated}
 
 It is available here:
 
     {$a->url}';
-$string['emailgradermailhtml'] = '{$a->username} has updated their assignment submission
+$string['gradersubmissionupdatedhtml'] = '{$a->username} has updated their assignment submission
 for <i>\'{$a->assignment}\'  at {$a->timeupdated}</i><br /><br />
 It is <a href="{$a->url}">available on the web site</a>.';
+$string['gradersubmissionupdatedsmall'] = '{$a->username} has updated their submission for assignment {$a->assignment}.';
 $string['enabled'] = 'Enabled';
 $string['errornosubmissions'] = 'There are no submissions to download';
 $string['feedbackcomments'] = 'Feedback Comments';
@@ -96,8 +98,19 @@ $string['feedbackfiles'] = 'Feedback files';
 $string['assignfeedback'] = 'Feedback plugin';
 $string['assignsubmission'] = 'Submission plugin';
 $string['assignfeedbackpluginname'] = 'Feedback plugin';
+$string['feedbackavailabletext'] = '{$a->username} has posted some feedback on your
+assignment submission for \'{$a->assignment}\'
+
+You can see it appended to your assignment submission:
+
+    {$a->url}';
+$string['feedbackavailablehtml'] = '{$a->username} has posted some feedback on your
+assignment submission for \'<i>{$a->assignment}</i>\'<br /><br />
+You can see it appended to your <a href="{$a->url}">assignment submission</a>.';
+$string['feedbackavailablesmall'] = '{$a->username} has given feedback for assignment {$a->assignment}';
 $string['feedbackplugins'] = 'Feedback plugins';
 $string['feedbackpluginforgradebook'] = 'Feedback plugin that will push comments to the gradebook';
+$string['feedbackpluginforgradebook_help'] = 'Only one assignment feedback plugin can push feedback into the gradebook.';
 $string['feedbackplugin'] = 'Feedback plugin';
 $string['feedbacksettings'] = 'Feedback settings';
 $string['feedbacktextnumwords'] = 'Number of words in feedback text: {$a}. ';
@@ -133,7 +146,8 @@ $string['locksubmissions'] = 'Lock submissions';
 $string['manageassignfeedbackplugins'] = 'Manage assignment feedback plugins';
 $string['manageassignsubmissionplugins'] = 'Manage assignment submission plugins';
 $string['maximumsize'] = 'Max';
-$string['messageprovider:assign_updates'] = 'Assignment notifications';
+$string['messageprovider:assign_student_notification'] = 'Assignment student notifications';
+$string['messageprovider:assign_grader_notification'] = 'Assignment grader notifications';
 $string['minfilessubmission'] = 'Minimum number of uploaded files';
 $string['modulename'] = 'Assignment';
 $string['modulename_help'] = 'Assignments enable the teacher to specify a task either on or offline which can then be graded.';
@@ -154,6 +168,7 @@ $string['notgradedyet'] = 'Not graded yet';
 $string['notsubmittedyet'] = 'Not submitted yet';
 $string['notifications'] = 'Notifications';
 $string['nousersselected'] = 'No users selected';
+$string['notification'] = 'Notification';
 $string['numberofdraftsubmissions'] = 'Drafts';
 $string['numberofparticipants'] = 'Participants';
 $string['numberofsubmittedassignments'] = 'Submitted';
@@ -178,9 +193,14 @@ $string['savecomments'] = 'Save submission comments';
 $string['savefiles'] = 'Save files';
 $string['savenext'] = 'Save and show next';
 $string['saveonlinetext'] = 'Save changes';
-$string['sendnotifications'] = 'Send notifications to graders';
+$string['sendnotifications'] = 'Notify graders about submissions';
 $string['sendnotifications_help'] = 'If enabled, graders (usually teachers) receive a message whenever a student submits an assignment, early, on time and late. Message methods are configurable.';
 $string['selectlink'] = 'Select...';
+$string['sendlatenotifications'] = 'Notify graders about late submissions';
+$string['sendlatenotifications_help'] = 'If enabled, graders (usually teachers) receive a message whenever a student submits an assignment late. Message methods are configurable.
+';
+$string['sendsubmissionreceipts'] = 'Send submission receipt to students';
+$string['sendsubmissionreceipts_help'] = 'This switch will enable submission receipts for students. Students will receive a notification every time they successfully submit an assignment';
 $string['settings'] = 'Assignment settings';
 $string['showrecentsubmissions'] = 'Show recent submissions';
 $string['submissioncommentnumwords'] = 'Number of words in submission comment: {$a}. ';
@@ -189,10 +209,19 @@ $string['submissioncomment'] = 'Submission comments';
 $string['submissiondrafts'] = 'Require students click submit button';
 $string['submissiondrafts_help'] = 'If enabled, students will have to click a Submit button to declare their submission as final. This allows students to keep a draft version of the submission on the system.';
 $string['submissionfiles'] = 'Submission files';
-$string['assignsubmissionpluginname'] = 'Submission plugin';
 $string['submissionnotready'] = 'This assignment is not ready to submit:';
 $string['submissionplugins'] = 'Submission plugins';
 $string['submissionreceipts'] = 'Send submission receipts';
+$string['submissionreceipttext'] = 'You have submitted an
+assignment submission for \'{$a->assignment}\'
+
+You can see the status of your assignment submission:
+
+    {$a->url}';
+$string['submissionreceipthtml'] = 'You have submitted an
+assignment submission for \'<i>{$a->assignment}</i>\'<br /><br />
+You can the status of your <a href="{$a->url}">assignment submission</a>.';
+$string['submissionreceiptsmall'] = 'You have submitted your assignment submission for {$a->assignment}';
 $string['submissionslocked'] = 'This assignment is not accepting submissions';
 $string['submissionslockedshort'] = 'Submission changes not allowed';
 $string['submissions'] = 'Submissions';
@@ -235,14 +264,3 @@ $string['viewsubmission'] = 'View submission';
 $string['viewsubmissiongradingtable'] = 'View submission grading table.';
 
 
-$string['assignmentmail'] = '{$a->grader} has posted some feedback on your
-assignment submission for \'{$a->assignment}\'
-
-You can see it appended to your assignment submission:
-
-    {$a->url}';
-$string['assignmentmailhtml'] = '{$a->grader} has posted some feedback on your
-assignment submission for \'<i>{$a->assignment}</i>\'<br /><br />
-You can see it appended to your <a href="{$a->url}">assignment submission</a>.';
-$string['assignmentmailsmall'] = '{$a->grader} has posted some feedback on your
-assignment submission for \'{$a->assignment}\' You can see it appended to your submission';
