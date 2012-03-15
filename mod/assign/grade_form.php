@@ -63,6 +63,10 @@ class mod_assign_grade_form extends moodleform {
      */
     function validation($data, $files) {
         $errors = parent::validation($data, $files);
+        // advanced grading
+        if (!array_key_exists('grade', $data)) {
+            return $errors;
+        }
 
         if ($this->assignment->get_instance()->grade > 0) {
             if (!is_numeric($data['grade'])) {
