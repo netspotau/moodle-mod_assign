@@ -357,6 +357,8 @@ class assignment {
             $o .= $this->view_grading_page();
         } else if ($action == 'downloadall') {
             $o .= $this->download_submissions();
+        } else if ($action == 'plugingradingpage') {
+            $o .= $this->view_plugin_grading_page();
         } else {
             $o .= $this->view_submission_page();
         }
@@ -924,26 +926,36 @@ class assignment {
         $this->cache['userid_for_row'][$num] = array($userid, $last);
         return $userid;
     }
+    
+    /**
+     * Return all grades
+     *
+     * @global moodle_database $DB;
+     * @return array The grade objects indexed by id
+     */
+    private function get_all_grades() {
+        global $DB;
+
+        $sort = "u.lastname DESC";
+
+        return $DB->get_records_sql("SELECT g.*
+                                       FROM {assign_grades} g, {user} u
+                                      WHERE u.id = g.userid
+                                            AND g.assignment = ?
+                                   ORDER BY $sort", array($this->get_instance()->id));
+
+    }
 
     /**
-     * Return all assignment submissions by ENROLLED students (even empty)
+     * Return all assignment submissions
      *
-     * @global stdClass $CFG;
      * @global moodle_database $DB;
-     * @param $sort string optional field names for the ORDER BY in the sql query
-     * @param $dir string optional specifying the sort direction, defaults to DESC
      * @return array The submission objects indexed by id
      */
-    private function get_all_submissions( $sort="", $dir="DESC") {
-        global $CFG, $DB;
+    private function get_all_submissions() {
+        global $DB;
 
-        if ($sort == "lastname" or $sort == "firstname") {
-            $sort = "u.$sort $dir";
-        } else if (empty($sort)) {
-            $sort = "a.timemodified DESC";
-        } else {
-            $sort = "a.$sort $dir";
-        }
+        $sort = "u.lastname DESC";
 
         return $DB->get_records_sql("SELECT a.*
                                        FROM {assign_submission} a, {user} u
@@ -1292,7 +1304,8 @@ class assignment {
         require_once($CFG->libdir.'/filelib.php');
 
         // load all submissions
-        $submissions = $this->get_all_submissions('','');
+        $submissions = $this->get_all_submissions();
+        $grades = $this->get_all_grades();
         
         if (empty($submissions)) {
             print_error('errornosubmissions', 'assign');
@@ -1320,25 +1333,49 @@ class assignment {
             if ((groups_is_member($groupid,$userid) or !$groupmode or !$groupid)) {
                 // get the plugins to add their own files to the zip
 
-                $user = $DB->get_record("user", array("id"=>$userid),'id,username,firstname,lastname', MUST_EXIST); 
+                $user = $DB->get_record('user', array('id'=>$userid), 'id, firstname, lastname');
+                // user may have been deleted?
+                if ($user) {
+                    $prefix = clean_filename(str_replace('_', '', fullname($user)) . '_' .$userid . '_');
 
-                $prefix = clean_filename(fullname($user) . "_" .$userid . "_");
-
-                foreach ($this->submissionplugins as $plugin) {
-                    if ($plugin->is_enabled() && $plugin->is_visible()) {
-                        $pluginfiles = $plugin->get_files($submission);
-
+                    foreach ($this->submissionplugins as $plugin) {
+                        if ($plugin->is_enabled() && $plugin->is_visible()) {
+                            $pluginfiles = $plugin->get_files($submission);
                     
-                        foreach ($pluginfiles as $zipfilename => $file) {
-                            $filesforzipping[$prefix . $zipfilename] = $file;
-                        } 
+                            foreach ($pluginfiles as $zipfilename => $file) {
+                                $filesforzipping[$prefix . get_string('pluginname', 'assignsubmission_' . $plugin->get_type()) . '_' . $zipfilename] = $file;
+                            } 
+                        }
+                    }
+                }
+            } 
+        } // end of foreach loop
+        // get all the files for each grade/feedback
+        foreach ($grades as $grade) {
+            $userid = $grade->userid; //get userid
+            if ((groups_is_member($groupid,$userid) or !$groupmode or !$groupid)) {
+                // get the plugins to add their own files to the zip
+
+                $user = $DB->get_record('user', array('id'=>$userid), 'id, firstname, lastname');
+                // user may have been deleted?
+                if ($user) {
+                    $prefix = clean_filename(fullname($user) . '_' .$userid . '_');
+
+                    foreach ($this->feedbackplugins as $plugin) {
+                        if ($plugin->is_enabled() && $plugin->is_visible()) {
+                            $pluginfiles = $plugin->get_files($grade);
+                        
+                            foreach ($pluginfiles as $zipfilename => $file) {
+                                $filesforzipping[$prefix . get_string('pluginname', 'assignfeedback_' . $plugin->get_type()) . '_' . $zipfilename] = $file;
+                            } 
+                        }
                     }
                 }
           
             } 
         } // end of foreach loop
         if ($zipfile = $this->pack_files($filesforzipping)) {
-            $this->add_to_log('download all submissions', get_string('downloadall', 'assign'));
+            $this->add_to_log('download all submissions', get_string('downloadallsubmissions', 'assign'));
             send_temp_file($zipfile, $filename); //send file and delete after sending.
         }
     }
@@ -1372,7 +1409,7 @@ class assignment {
      * @param bool $createnew optional Defaults to false. If set to true a new submission object will be created in the database
      * @return stdClass The submission
      */
-    private function get_user_submission($userid, $create) {
+    public function get_user_submission($userid, $create) {
         global $DB, $USER;
 
         if (!$userid) {
@@ -1426,7 +1463,7 @@ class assignment {
      * @param bool $create If true the grade will be created if it does not exist
      * @return stdClass The grade record
      */
-    private function get_user_grade($userid, $create) {
+    public function get_user_grade($userid, $create) {
         global $DB, $USER;
 
         if (!$userid) {
@@ -1577,6 +1614,32 @@ class assignment {
         
         // load and print the table of submissions
         $o .= $this->output->render(new grading_table($this, $perpage, $filter));
+        return $o;
+    }
+    
+    /**
+     * View plugin grading page.
+     *
+     * @global stdClass $CFG
+     * @global stdClass $USER
+     * @return string
+     */
+    private function view_plugin_grading_page() {
+        global $CFG;
+
+        $o = '';
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:grade', $this->context);
+
+        $gradingaction = required_param('gradingaction', PARAM_ALPHA);
+        $plugintype = required_param('plugin', PARAM_ALPHA);
+        // only load this if it is 
+        
+        $plugin = $this->get_feedback_plugin_by_type($plugintype);
+    
+        $o .= $plugin->grading_page($gradingaction);
+
+        $this->add_to_log('view submission grading table', get_string('viewplugingradingpage', 'assign', array('plugin'=>$plugintype, 'action'=>$gradingaction)));
         return $o;
     }
 

@@ -207,4 +207,25 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
         
         return true;
     }
+    
+    /**
+     * Produce a list of files suitable for export that represent this feedback
+     * 
+     * @global moodle_database $DB
+     * @param stdClass $grade - For this is the grade data
+     * @return array - return an array of files indexed by filename
+     */
+    public function get_files(stdClass $grade) {
+        global $DB;
+        $feedbackcomments = $this->get_feedback_comments($grade->id);
+        $result = array();
+        if ($feedbackcomments) {
+            $text = format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat, array('context'=>$this->assignment->get_context()));      //fetched from database
+            $feedbackcontent = '<html><body>'. $text. '</body></html>';
+
+            $result[get_string('exportfilename', 'assignfeedback_comments')] = array($feedbackcontent);
+        }
+
+        return $result;
+    }
 }

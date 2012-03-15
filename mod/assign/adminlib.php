@@ -495,12 +495,11 @@ class assignment_plugin_manager {
 
             $settings = new admin_settingpage($subtype . '_'.$pluginname,
                     $pluginname, 'moodle/site:config', !$module->visible);
-            if ($admin->fulltree) {
-                $shortsubtype = substr($subtype, strlen('assign'));
-                include($CFG->dirroot . "/mod/assign/$shortsubtype/$pluginname/settings.php");
+            $shortsubtype = substr($subtype, strlen('assign'));
+            include($CFG->dirroot . "/mod/assign/$shortsubtype/$pluginname/settings.php");
+            if ($settings) {
+                $admin->add($subtype . 'plugins', $settings);
             }
-                
-            $admin->add($subtype . 'plugins', $settings);
         }
 
         // Reset settings to the original point in the tree

@@ -16,13 +16,20 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Strings for component 'assignfeedback_comments', language 'en'
+ * This file defines the admin settings for this plugin
  *
  * @package   mod_assign
- * @package   assignfeedback_comments
+ * @subpackage   assignsubmission_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Feedback comments';
-$string['exportfilename'] = 'comments.html';
+defined('MOODLE_INTERNAL') || die;
+
+$visible = !get_config('assignfeedback_file', 'disabled');
+$admin->add('assignfeedbackplugins', new admin_externalpage('assignfeedback_file_admin', 
+                                                            get_string('uploadtemplatefeedbackfile', 'assignfeedback_file'), 
+                                                            $CFG->wwwroot . '/mod/assign/feedback/file/admin.php',
+                                                            'moodle/site:config', 
+                                                             !$visible));
+$settings = null;

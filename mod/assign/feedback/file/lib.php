@@ -84,15 +84,34 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     /**
      * get form elements for grading form
      * 
+     * @global renderer_base $OUTPUT
+     * @global stdClass $CFG
      * @param mixed stdClass | null $grade
      * @param MoodleQuickForm $mform
      * @param stdClass $data
      * @return mixed 
      */
     public function get_form_elements($grade, MoodleQuickForm $mform, stdClass $data) {
+        global $OUTPUT, $CFG;
 
         $fileoptions = $this->get_file_options();
         $gradeid = $grade ? $grade->id : 0;
+
+        // Print a downloadable link to a template feedback file (if it has been set)
+        $fs = get_file_storage();
+        $systemcontext = context_system::instance();
+
+        $files = $fs->get_area_files($systemcontext->id, 'mod_assign', 'template_feedback_file', 1);
+        foreach ($files as $file) {
+            if ($file->get_filename() != ".") {
+                $icon = mimeinfo("icon", $file->get_filename());
+                $image = $OUTPUT->pix_icon("f/$icon", $file->get_filename(), 'moodle', array('class'=>'icon'));
+                $url = file_encode_url("$CFG->wwwroot/pluginfile.php", '/'.$systemcontext->id.'/mod_assign/template_feedback_file/' . $file->get_itemid() . '/'. $file->get_filepath().$file->get_filename(), true);
+
+                $mform->addElement('static', 'templatefile', get_string('templatefeedbackfile', 'assignfeedback_file'), $OUTPUT->action_link($url, $image . $file->get_filename()));
+            }
+        }
+
 
 
         $data = file_prepare_standard_filemanager($data, 'files', $fileoptions, $this->assignment->get_context(), 'mod_assign', ASSIGN_FILEAREA_FEEDBACK_FILES, $gradeid);
@@ -198,4 +217,161 @@ class assignment_feedback_file extends assignment_feedback_plugin {
         
         return true;
     }
+    
+    /**
+     * Produce a list of files suitable for export that represent this feedback 
+     * 
+     * @param stdClass $grade The grade
+     * @return array - return an array of files indexed by filename
+     */
+    public function get_files(stdClass $grade) {
+        $result = array();
+        $fs = get_file_storage();
+        // First add any template feedback files (if they exist)
+        $systemcontext = context_system::instance();
+
+        $files = $fs->get_area_files($systemcontext->id, 'mod_assign', 'template_feedback_file', 1);
+        foreach ($files as $file) {
+            if ($file->get_filename() != ".") {
+                $result[get_string('templatefilenamepart', 'assignfeedback_file') . '_' . $file->get_filename()] = $file;
+            }
+        }
+
+        // Then add the existing feedback files.
+        $files = $fs->get_area_files($this->assignment->get_context()->id, 'mod_assign', ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id, "timemodified", false);
+
+        foreach ($files as $file) {
+            $result[$file->get_filename()] = $file;
+        }
+        return $result;
+    }
+
+    /**
+     * If this plugin supports additional grading features, return a list of actions that will be passed to grading_page while clicked
+     *
+     * @param stdClass $grade The grade
+     * @return array
+     */
+    public function additional_grading_pages() {
+        return array('upload');
+    }
+    
+    /**
+     * Process the importer form
+     *
+     * @global moodle_page $PAGE
+     * @global stdClass $CFG
+     * @global stdClass $USER
+     * @uses die
+     * @return string
+     */
+    public function process_importer_form() {
+        global $PAGE, $CFG, $USER;
+        require_once($CFG->dirroot . '/mod/assign/feedback/file/importer_form.php');
+        $renderer = $PAGE->get_renderer('assignfeedback_file');
+
+        // process the file
+        $tmpdir = 'assignfeedback_file_' . $this->assignment->get_instance()->id . '_' . $USER->id;
+
+        $tmpfilesdir = $tmpdir . '/files';
+        $fulltmpfilesdir = $CFG->tempdir . '/' . $tmpdir . '/files';
+
+        $importform = new assignfeedback_file_importer_form(null, array($this, $fulltmpfilesdir));
+        
+        $filessent = $importform->process_files();
+
+        if ($filessent > 0) {
+            return $renderer->render(new importer_summary($filessent, $this->assignment));
+        }
+
+        redirect(new moodle_url('/mod/assign/view.php', array('id'=>$this->assignment->get_course_module()->id, 'action'=>'grading')));
+        die();
+    }
+    
+    /**
+     * Process the uploaded zip
+     *
+     * @global moodle_page $PAGE
+     * @global stdClass $CFG
+     * @global stdClass $USER
+     * @uses die
+     * @return string
+     */
+    public function process_zip_upload() {
+        global $PAGE, $CFG, $USER;
+        require_once($CFG->dirroot . '/mod/assign/feedback/file/uploadzip_form.php');
+        require_once($CFG->dirroot . '/mod/assign/feedback/file/importer_form.php');
+        $renderer = $PAGE->get_renderer('assignfeedback_file');
+        $uploadform = new assignfeedback_file_uploadzip_form(null, $this);
+
+        if ($uploadform->is_cancelled()) {
+            redirect(new moodle_url('/mod/assign/view.php', array('id' => $this->assignment->get_course_module()->id, 'action'=>'grading')));
+            die();
+        }
+    
+        // check for validation error
+        $data = $uploadform->get_data();
+        if (!$data) {
+            return $renderer->render($uploadform);
+        }
+
+        // process the file
+        $tmpdir = 'assignfeedback_file_' . $this->assignment->get_instance()->id . '_' . $USER->id;
+        $realfilename = 'feedback-import.zip';
+        $importfile = "{$CFG->tempdir}/{$tmpdir}/{$realfilename}";
+        make_temp_directory($tmpdir);
+        if (!$result = $uploadform->save_file('uploadzip', $importfile, true)) {
+            throw new moodle_exception('uploadproblem');
+        }
+
+        $packer = get_file_packer('application/zip');
+
+        $tmpfilesdir = $tmpdir . '/files';
+        $fulltmpfilesdir = $CFG->tempdir . '/' . $tmpdir . '/files';
+        make_temp_directory($tmpfilesdir);
+        if (!$result = $packer->extract_to_pathname($importfile, $fulltmpfilesdir)) {
+            throw new moodle_exception('uploadproblem');
+        }
+
+        $importform = new assignfeedback_file_importer_form(null, array($this, $fulltmpfilesdir));
+        return $renderer->render($importform);
+    }
+
+    /**
+     * Display a custom grading page
+     *
+     * @global moodle_page $PAGE
+     * @global stdClass $CFG
+     * @return string
+     */
+    public function view_zip_upload_page() {
+        global $PAGE, $CFG;
+        require_once($CFG->dirroot . '/mod/assign/feedback/file/uploadzip_form.php');
+        $mform = new assignfeedback_file_uploadzip_form(null, $this);
+        $renderer = $PAGE->get_renderer('assignfeedback_file');
+        
+        return $renderer->render($mform);
+    }
+
+    /**
+     * Display a custom grading page
+     *
+     * @param string $action The action that was chosen from additional_grading_pages
+     * @return string
+     */
+    public function grading_page($action) {
+        if ($action == 'upload') {
+            return $this->view_zip_upload_page();
+        }
+        if ($action == 'submitupload') {
+            return $this->process_zip_upload();
+        }
+        if ($action == 'import') {
+            return $this->process_importer_form();
+        }
+        
+        throw new coding_exception('Unknown grading page');
+    }
+
 }
+

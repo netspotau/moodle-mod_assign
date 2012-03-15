@@ -137,12 +137,6 @@ function assign_extend_settings_navigation(settings_navigation $settings, naviga
        $node = $navref->add(get_string('viewgradebook', 'assign'), $link, navigation_node::TYPE_SETTING);
    }
 
-   // Link to download all submissions
-   if (has_capability('mod/assign:grade', $context)) {
-       $link = new moodle_url('/mod/assign/view.php', array('id' => $cm->id,'action'=>'downloadall'));
-       $node = $navref->add(get_string('downloadall', 'assign'), $link, navigation_node::TYPE_SETTING);
-   }
-
 }
 
 /**
@@ -159,11 +153,6 @@ function assign_extend_settings_navigation(settings_navigation $settings, naviga
  */
 function assign_pluginfile($course, $cm, context $context, $filearea, $args, $forcedownload) {
     global $USER;
-    
-    if ($context->contextlevel != CONTEXT_MODULE) {
-        return false;
-    }
-
 
     require_login($course, false, $cm);
     

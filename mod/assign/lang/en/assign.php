@@ -52,7 +52,8 @@ $string['deletepluginareyousuremessage'] = 'You are about to completely delete t
 $string['deletingplugin'] = 'Deleting plugin {$a}.';
 $string['description'] = 'Description';
 $string['descriptionmaxfiles'] = 'You can upload up to {$a} file(s).';
-$string['downloadall'] = 'Download all submissions';
+$string['downloadallsubmissions'] = 'Download all submissions';
+$string['downloadallgrades'] = 'Download all grades';
 $string['download all submissions'] = 'Download all submissions in a zip file.';
 $string['duedate'] = 'Due date';
 $string['duedateno'] = 'No due date';
@@ -90,6 +91,7 @@ $string['gradedby'] = 'Graded by';
 $string['graded'] = 'Graded';
 $string['gradedon'] = 'Graded on';
 $string['grade'] = 'Grade';
+$string['gradesfor'] = 'Grades for {$a}';
 $string['gradebelowzero'] = 'Grade must be greater than or equal to zero.';
 $string['gradeabovemaximum'] = 'Grade must be less than or equal to {$a}.';
 $string['gradeoutof'] = 'Grade out of {$a}';
@@ -188,6 +190,7 @@ $string['viewownsubmissionstatus'] = 'View own submission status page.';
 $string['viewsubmissionforuser'] = 'View submission for user: {$a}';
 $string['viewsubmission'] = 'View submission';
 $string['viewsubmissiongradingtable'] = 'View submission grading table.';
+$string['viewplugingradingpage'] = 'View plugin grading page: (plugin={$a->plugin}, action={$a->action}).';
 
 
 $string['assignmentmail'] = '{$a->grader} has posted some feedback on your
