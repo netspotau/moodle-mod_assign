@@ -41,7 +41,7 @@ require_once($CFG->dirroot . '/mod/assign/locallib.php');
 class mod_assign_mod_form extends moodleform_mod {
 
     function definition() {
-        global $CFG, $DB;
+        global $CFG, $DB, $OUTPUT;
         $mform = $this->_form;
 
         //-------------------------------------------------------------------------------
@@ -91,6 +91,9 @@ class mod_assign_mod_form extends moodleform_mod {
         } else {
             $mform->addElement('hidden', 'requiresubmissionstatement', 0);
         }
+        $mform->addElement('selectyesno', 'sendlatenotifications', get_string('sendlatenotifications', 'assign'));
+        $mform->setDefault('sendlatenotifications', 1);
+        $mform->disabledIf('sendlatenotifications', 'sendnotifications', 'eq', 1);
         
         // plagiarism enabling form
         plagiarism_get_form_elements_module($mform, $ctx->get_course_context());
