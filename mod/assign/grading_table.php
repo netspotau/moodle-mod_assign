@@ -449,7 +449,6 @@ class grading_table extends table_sql implements renderable {
         $this->setup();
         $this->currpage = $rownumber;
         $this->query_db(1);
-        var_dump($this->totalrows);
         if ($rownumber == $this->totalrows-1) {
             $lastrow = true;
         }
