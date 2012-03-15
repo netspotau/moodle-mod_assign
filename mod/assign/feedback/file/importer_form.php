@@ -134,6 +134,9 @@ class assignfeedback_file_importer_form extends moodleform implements renderable
         if (strpos($file, ".") == 0) {
             return false;
         }
+        if (strpos($file, "~") == 0) {
+            return false;
+        }
 
         if (!$this->participants) {
             $currentgroup = groups_get_activity_group($this->plugin->get_assignment()->get_course_module(), true);
