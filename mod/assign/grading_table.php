@@ -445,11 +445,11 @@ class grading_table extends table_sql implements renderable {
      * @param string $colname The name of the raw column data
      * @return mixed string or false
      */
-    function get_cell_data($rownumber, $columnname, $lastrow) {
+    function get_cell_data($rownumber, $columnname, &$lastrow) {
         $this->setup();
         $this->currpage = $rownumber;
         $this->query_db(1);
-        if ($rownumber == $this->totalrows) {
+        if ($rownumber == $this->totalrows-1) {
             $lastrow = true;
         }
         foreach ($this->rawdata as $row) {
