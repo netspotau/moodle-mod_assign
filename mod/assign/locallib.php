@@ -973,119 +973,6 @@ class assignment {
     }
 
     
-     /**
-     * Function to send notification periodically according to the moodle cron
-     *
-     * Finds all assignment notifications that have yet to be mailed out, and mails them
-     */
-    public function send_notification() {
-
-        /// Notices older than 1 day will not be mailed.  This is to avoid the problem where
-        /// cron has not been running for a long time, and then suddenly people are flooded
-        /// with mail from the past few weeks or months
-
-        $timenow = time();
-        $endtime = $timenow - $CFG->maxeditingtime;
-        $starttime = $endtime - 24 * 3600;   /// One day earlier
-
-        if ($submissions = assignment_get_unmailed_submissions($starttime, $endtime)) {
-
-            $realuser = clone($USER);
-
-            foreach ($submissions as $key => $submission) {
-                $DB->set_field("assignment_grades", "mailed", "1", array("id" => $submission->id));
-            }
-
-            $timenow = time();
-
-            foreach ($submissions as $submission) {
-
-                echo "Processing assignment submission $submission->id\n";
-
-                if (!$user = $DB->get_record("user", array("id" => $submission->userid))) {
-                    echo "Could not find user $user->id\n";
-                    continue;
-                }
-
-                if (!$course = $this->get_course()) {
-                    echo "Could not find course $submission->course\n";
-                    continue;
-                }
-
-                /// Override the language and timezone of the "current" user, so that
-                /// mail is customised for the receiver.
-                cron_setup_user($user, $course);
-
-                $coursecontext = $this->get_course_context();
-                $courseshortname = format_string($course->shortname, true, array('context' => $coursecontext));
-                if (!is_enrolled($coursecontext, $user->id)) {
-                    echo fullname($user) . " not an active participant in " . $courseshortname . "\n";
-                    continue;
-                }
-
-                if (!$grader = $this->get_graders($user)) {
-                    echo "Could not find teacher $submission->grader\n";
-                    continue;
-                }
-
-                if (!$mod = get_coursemodule_from_instance("assign", $submission->assignment, $course->id)) {
-                    echo "Could not find course module for assignment id $submission->assignment\n";
-                    continue;
-                }
-
-                if (!$mod->visible) {    /// Hold mail notification for hidden assignments until later
-                    continue;
-                }
-
-                $strassignments = get_string("modulenameplural", "assign");
-                $strassignment = get_string("modulename", "assign");
-
-                $assignmentinfo = new stdClass();
-                $assignmentinfo->grader = fullname($grader);
-                $assignmentinfo->assignment = format_string($submission->name, true, array('context' => $coursecontext));
-                $assignmentinfo->url = "$CFG->wwwroot/mod/assign/view.php?id=$mod->id";
-
-                $postsubject = "$courseshortname: $strassignments: " . format_string($submission->name, true, array('context' => $coursecontext));
-                $posttext = "$courseshortname -> $strassignments -> " . format_string($submission->name, true, array('context' => $coursecontext)) . "\n";
-                $posttext .= "---------------------------------------------------------------------\n";
-                $posttext .= get_string("assignmentmail", "assign", $assignmentinfo) . "\n";
-                $posttext .= "---------------------------------------------------------------------\n";
-
-                if ($user->mailformat == 1) {  // HTML
-                    $posthtml = "<p><font face=\"sans-serif\">" .
-                            "<a href=\"$CFG->wwwroot/course/view.php?id=$course->id\">$courseshortname</a> ->" .
-                            "<a href=\"$CFG->wwwroot/mod/assign/index.php?id=$course->id\">$strassignments</a> ->" .
-                            "<a href=\"$CFG->wwwroot/mod/assign/view.php?id=$mod->id\">" . format_string($submission->name, true, array('context' => $coursecontext)) . "</a></font></p>";
-                    $posthtml .= "<hr /><font face=\"sans-serif\">";
-                    $posthtml .= "<p>" . get_string("assignmentmailhtml", "assign", $assignmentinfo) . "</p>";
-                    $posthtml .= "</font><hr />";
-                } else {
-                    $posthtml = "";
-                }
-
-                $eventdata = new stdClass();
-                $eventdata->modulename = 'assign';
-                $eventdata->userfrom = $grader;
-                $eventdata->userto = $user;
-                $eventdata->subject = $postsubject;
-                $eventdata->fullmessage = $posttext;
-                $eventdata->fullmessageformat = FORMAT_PLAIN;
-                $eventdata->fullmessagehtml = $posthtml;
-                $eventdata->smallmessage = get_string('assignmentmailsmall', 'assign', $assignmentinfo);
-
-                $eventdata->name = 'assign_updates';
-                $eventdata->component = 'mod_assign';
-                $eventdata->notification = 1;
-                $eventdata->contexturl = $assignmentinfo->url;
-                $eventdata->contexturlname = $assignmentinfo->assignment;
-
-                message_send($eventdata);
-            }
-
-            cron_setup_user();
-        }
-    }
-
     /**
      *  Cron function to be run periodically according to the moodle cron
      *  Finds all assignment notifications that have yet to be mailed out, and mails them
@@ -1098,7 +985,6 @@ class assignment {
     static function cron() {
         global $CFG, $USER, $DB;
 
-        $this->send_notification();
 
         return true;
     }
