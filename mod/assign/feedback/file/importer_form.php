@@ -170,7 +170,7 @@ class assignfeedback_file_importer_form extends moodleform implements renderable
     function definition() {
         $mform = $this->_form;
         $this->hashcache = array();
-        
+    
         list($plugin, $tmpdir) = $this->_customdata;
         // visible elements
         $this->plugin = $plugin;

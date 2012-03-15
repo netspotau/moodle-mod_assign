@@ -270,6 +270,13 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     public function process_importer_form() {
         global $PAGE, $CFG, $USER;
         require_once($CFG->dirroot . '/mod/assign/feedback/file/importer_form.php');
+
+        // Large files are likely to take their time and memory. Let PHP know
+        // that we'll take longer, and that the process should be recycled soon
+        // to free up memory.
+        @set_time_limit(0);
+        raise_memory_limit(MEMORY_EXTRA);
+
         $renderer = $PAGE->get_renderer('assignfeedback_file');
 
         // process the file
@@ -303,6 +310,13 @@ class assignment_feedback_file extends assignment_feedback_plugin {
         global $PAGE, $CFG, $USER;
         require_once($CFG->dirroot . '/mod/assign/feedback/file/uploadzip_form.php');
         require_once($CFG->dirroot . '/mod/assign/feedback/file/importer_form.php');
+
+        // Large files are likely to take their time and memory. Let PHP know
+        // that we'll take longer, and that the process should be recycled soon
+        // to free up memory.
+        @set_time_limit(0);
+        raise_memory_limit(MEMORY_EXTRA);
+
         $renderer = $PAGE->get_renderer('assignfeedback_file');
         $uploadform = new assignfeedback_file_uploadzip_form(null, $this);
 
