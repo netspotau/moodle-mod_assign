@@ -2089,7 +2089,7 @@ class assignment {
             $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
 
             $this->update_submission($submission);
-            if ($formdata->submissionstatement) {
+            if (isset($formdata->submissionstatement)) {
                 $this->add_to_log('submission statement accepted', get_string('submissionstatementacceptedlog', 'mod_assign', fullname($USER)));
             }
             $this->add_to_log('submit for grading', $this->format_submission_for_log($submission));
@@ -2214,7 +2214,7 @@ class assignment {
            
             $this->update_submission($submission);
 
-            if ($data->submissionstatement) {
+            if (isset($data->submissionstatement)) {
                 $this->add_to_log('submission statement accepted', get_string('submissionstatementacceptedlog', 'mod_assign', fullname($USER)));
             }
 
