@@ -61,7 +61,7 @@ class assignment_feedback_file extends assignment_feedback_plugin {
      * @param int $gradeid
      * @return mixed 
      */
-    private function get_file_feedback($gradeid) {
+    public function get_file_feedback($gradeid) {
         global $DB;
         return $DB->get_record('assign_feedback_file', array('grade'=>$gradeid));
     }
