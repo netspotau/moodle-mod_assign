@@ -722,21 +722,17 @@ class assignment {
         return self::$modulenameplural;
     }
 
-    final private static function get_static_module_name() {
-        if (isset(self::$modulename)) {
-            return self::$modulename;
-        }
-        self::$modulename = get_string('modulename', 'assign');
-        return self::$modulename;
-    }
-  
     /**
      * Get the name of the current module. 
      *
      * @return string the module name (Assignment)
      */
     protected function get_module_name() {
-        return static::get_static_module_name();
+        if (isset(self::$modulename)) {
+            return self::$modulename;
+        }
+        self::$modulename = get_string('modulename', 'assign');
+        return self::$modulename;
     }
     
     /**
@@ -745,7 +741,11 @@ class assignment {
      * @return string the module name plural (Assignments)
      */
     protected function get_module_name_plural() {
-        return static::get_static_module_name_plural();
+        if (isset(self::$modulenameplural)) {
+            return self::$modulenameplural;
+        }
+        self::$modulenameplural = get_string('modulenameplural', 'assign');
+        return self::$modulenameplural;
     }
 
     public function has_instance() {
