@@ -1307,11 +1307,6 @@ class assignment {
         // load all submissions
         $submissions = $this->get_all_submissions();
         
-        if (empty($submissions)) {
-            print_error('errornosubmissions', 'assign');
-            return;
-        }
-
         // build a list of files to zip
         $filesforzipping = array();
         $fs = get_file_storage();
@@ -1329,28 +1324,30 @@ class assignment {
         $filename = str_replace(' ', '_', clean_filename($this->get_course()->shortname.'-'.$this->get_instance()->name.'-'.$groupname.$this->get_course_module()->id.".zip")); //name of new zip file.
     
         // get all the files for each submission
-        foreach ($submissions as $submission) {
-            $userid = $submission->userid; //get userid
-            if ((groups_is_member($groupid,$userid) or !$groupmode or !$groupid)) {
-                // get the plugins to add their own files to the zip
+        if (!empty($submissions)) {
+            foreach ($submissions as $submission) {
+                $userid = $submission->userid; //get userid
+                if ((groups_is_member($groupid,$userid) or !$groupmode or !$groupid)) {
+                    // get the plugins to add their own files to the zip
 
-                $user = $DB->get_record('user', array('id'=>$userid), 'id, firstname, lastname');
-                // user may have been deleted?
-                if ($user) {
-                    $prefix = clean_filename(str_replace('_', '', fullname($user)) . '_' .$userid . '_');
+                    $user = $DB->get_record('user', array('id'=>$userid), 'id, firstname, lastname');
+                    // user may have been deleted?
+                    if ($user) {
+                        $prefix = clean_filename(str_replace('_', '', fullname($user)) . '_' .$userid . '_');
 
-                    foreach ($this->submissionplugins as $plugin) {
-                        if ($plugin->is_enabled() && $plugin->is_visible()) {
-                            $pluginfiles = $plugin->get_files($submission);
-                    
-                            foreach ($pluginfiles as $zipfilename => $file) {
-                                $filesforzipping[$prefix . get_string('pluginname', 'assignsubmission_' . $plugin->get_type()) . '_' . $zipfilename] = $file;
-                            } 
+                        foreach ($this->submissionplugins as $plugin) {
+                            if ($plugin->is_enabled() && $plugin->is_visible()) {
+                                $pluginfiles = $plugin->get_files($submission);
+                        
+                                foreach ($pluginfiles as $zipfilename => $file) {
+                                    $filesforzipping[$prefix . get_string('pluginname', 'assignsubmission_' . $plugin->get_type()) . '_' . $zipfilename] = $file;
+                                } 
+                            }
                         }
                     }
-                }
-            } 
-        } // end of foreach loop
+                } 
+            } // end of foreach loop
+        }
         // get all the files for each grade/feedback
 
         
@@ -1378,6 +1375,11 @@ class assignment {
           
             } 
         } // end of foreach loop
+        if (empty($filesforzipping)) {
+            print_error('errornosubmissions', 'assign');
+            return;
+        }
+
         if ($zipfile = $this->pack_files($filesforzipping)) {
             $this->add_to_log('download all submissions', get_string('downloadallsubmissions', 'assign'));
             send_temp_file($zipfile, $filename); //send file and delete after sending.
