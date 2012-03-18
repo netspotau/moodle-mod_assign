@@ -708,6 +708,25 @@ class assignment {
     }
 
     /**
+     * Allow each plugin an opportunity to update the default_values
+     * passed in to the settings form (needed to set up draft areas for
+     * editor and filemanager elements)
+     * @param array $default_values
+     */
+    public function plugin_data_preprocessing(&$default_values) {
+        foreach ($this->submissionplugins as $plugin) {
+            if ($plugin->is_visible()) {
+                $plugin->data_preprocessing(&$default_values);
+            }
+        }
+        foreach ($this->feedbackplugins as $plugin) {
+            if ($plugin->is_visible()) {
+                $plugin->data_preprocessing(&$default_values);
+            }
+        }
+    }
+
+    /**
      * Get the name of the current module. 
      *
      * @return string the module name (Assignment)
