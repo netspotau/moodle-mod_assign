@@ -157,15 +157,16 @@ function assign_pluginfile($course, $cm, context $context, $filearea, $args, $fo
     require_login($course, false, $cm);
     
     $userid = (int)array_shift($args);
-
-    // check is users submission or has grading permission
-    if ($USER->id != $userid and !has_capability('mod/assign:grade', $context)) {
-        return false;
+    if ($context->id != context_system::instance()->id) {
+        // check is users submission or has grading permission
+        if ($USER->id != $userid and !has_capability('mod/assign:grade', $context)) {
+            return false;
+        }
     }
         
     $relativepath = implode('/', $args);
 
-    $fullpath = "/{$context->id}/mod_assign/$filearea/$userid/$relativepath";
+     $fullpath = "/{$context->id}/mod_assign/$filearea/$userid/$relativepath";
 
     $fs = get_file_storage();
     if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
