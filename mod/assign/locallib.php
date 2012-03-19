@@ -1574,8 +1574,9 @@ class assignment {
         }
         if ($grade) {
             $data = new stdClass();
-            $data->grade = $grade->grade;
-            // set the grade 
+            if ($grade->grade >= 0) {
+                $data->grade = $grade->grade;
+            }
         } else {
             $data = new stdClass();
             $data->grade = '';
@@ -1867,7 +1868,29 @@ class assignment {
 
         return $o;
     }
-    
+
+    /**
+     * message for students when assignment submissions have been closed
+     *
+     * @return string
+     */
+    private function view_student_error_message() {
+        global $CFG;
+
+        $o = '';
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:submit', $this->context);
+
+        $o .= $this->output->render(new assignment_header($this, true, get_string('editsubmission', 'assign')));
+
+        $o .= $this->output->notification('This assignment is no longer accepting submissions');
+
+        $o .= $this->view_footer();
+
+        return $o;
+
+    }
+
     /**
      * View confirm submit page.
      * 
@@ -1913,10 +1936,10 @@ class assignment {
         require_capability('mod/assign:submit', $this->context);
 
         if (!$this->submissions_open()) {
-            print_error('submissionsclosed', 'mod_assign');
-            return;
+            $subclosed  = '';
+            $subclosed .= $this->view_student_error_message();
+            return $subclosed;
         }
-
         $o .= $this->output->render(new assignment_header($this, true, get_string('editsubmission', 'assign')));
         $o .= $this->plagiarism_print_disclosure();
         $data = new stdClass();
@@ -1929,7 +1952,7 @@ class assignment {
     
         $o .= $this->view_footer();
         $this->add_to_log('view submit assignment form', get_string('viewownsubmissionform', 'assign'));
-
+        
         return $o;
     }
     
