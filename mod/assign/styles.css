@@ -30,6 +30,12 @@ div.gradingsummary .generaltable {
     margin-top: 1em;
 }
 
+.importgradeshelp,
+.uploadgradeshelp {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
 
 div.submissionsummarytable table tbody tr td.c0 {
     width: 30%;

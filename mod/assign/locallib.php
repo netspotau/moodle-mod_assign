@@ -334,7 +334,7 @@ class assignment {
                 //cancel button
                 $action = 'grading';
             }
-        }else if ($action == 'saveoptions') {
+        } else if ($action == 'saveoptions') {
             $this->process_save_grading_options();
             $action = 'grading';
         }
@@ -359,8 +359,14 @@ class assignment {
             $o .= $this->view_grading_page();
         } else if ($action == 'downloadall') {
             $o .= $this->download_submissions();
+        } else if ($action == 'uploadgrades') {
+            $o .= $this->view_upload_grades_page();
         } else if ($action == 'plugingradingpage') {
             $o .= $this->view_plugin_grading_page();
+        } else if ($action == 'uploadgradesfile') {
+            $o .= $this->view_import_grades_page();
+         } else if ($action == 'importgradesfile') {
+            $o .= $this->process_import_grades();
         } else {
             $o .= $this->view_submission_page();
         }
@@ -1089,6 +1095,27 @@ class assignment {
         global $DB;
 
         $grade->timemodified = time();
+ 
+        if ($grade->grade) {
+            if ($this->get_instance()->grade > 0) {
+                if (!is_numeric($grade->grade)) {
+                    return false;
+                } else if ($grade->grade > $this->get_instance()->grade) {
+                    return false;
+                } else if ($grade->grade < 0) {
+                    return false;
+                }
+            } else {
+                // this is a scale
+                if ($scale = $DB->get_record('scale', array('id'=>-($this->get_instance()->grade)))) {
+                    $scaleoptions = make_menu_from_list($scale->scale);
+                    if (!array_key_exists((int)$grade->grade, $scaleoptions)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
         $result = $DB->update_record('assign_grades', $grade);
         if ($result) {
             $this->gradebook_item_update(null,$grade);
@@ -1590,6 +1617,156 @@ class assignment {
         $o .= $plugin->grading_page($gradingaction);
 
         $this->add_to_log('view submission grading table', get_string('viewplugingradingpage', 'assign', array('plugin'=>$plugintype, 'action'=>$gradingaction)));
+        return $o;
+    }
+    
+    /**
+     * Process csv file into a list of grade updates
+     * 
+     * @global stdClass $CFG 
+     * @global stdClass $USER 
+     * @param  moodleform $mform
+     * @return bool - was the form processed
+     */
+    private function process_import_grades() {
+        global $CFG, $USER;
+        $result = true;
+        $error = '';
+        $o = '';
+        // Include grade form 
+        $skippedmodified = 0;
+        $skippednograde = 0;
+        $skippedinvalidgrade = 0;
+        $updatedgrade = 0;
+        require_once($CFG->dirroot . '/mod/assign/importgradeslib.php');
+        require_once($CFG->dirroot . '/lib/csvlib.class.php');
+        
+        require_capability('mod/assign:grade', $this->context);
+
+        $importid = required_param('importid', PARAM_ALPHANUM);
+        $gradeimporter = new mod_assign_gradeimporter($importid, $this);
+        if (!$gradeimporter->init()) {
+            $error = get_string('invalidgradeimport', 'assign');
+            $gradeimporter->close(true);
+            $result = false;
+        }
+        $importform = new mod_assign_importgrades_form(null, array($this, null, null));
+
+        if ($importform->is_cancelled()) {
+            $gradeimporter->close(true);
+            return $this->view_grading_page();
+        }
+
+        $ignoremodified = optional_param('ignoremodified', 0, PARAM_BOOL);
+
+        if ($result) {
+            while ($record = $gradeimporter->next()) { 
+                $usergrade = $this->get_user_grade($record->user->id, false);
+                // Note: Do not count the seconds when comparing modified dates
+                if (!$ignoremodified && ($usergrade && $usergrade->timemodified > ($record->modified + 60))) {
+                    $skippedmodified += 1;
+                } else if (!$record->grade || $record->grade == '-' || $record->grade < 0) {
+                    $skippednograde += 1;
+                } else {
+                    $grade = $this->get_user_grade($record->user->id, true);
+
+                    $grade->grade = $record->grade;
+                    $grade->grader = $USER->id;
+                    if ($this->update_grade($grade)) {
+                        $updatedgrade += 1;
+                        $this->add_to_log('grade updated by import', get_string('gradeupdatedbyimport', 'assign', array('id'=>$record->user->id, 'fullname'=>fullname($record->user))));
+                    } else {
+                        $skippedinvalidgrade += 1;
+                    }
+
+                }
+                
+            }
+
+            $gradeimporter->close(true);
+        }
+
+        $o .= $this->output->render(new assignment_header($this, false, get_string('grading', 'assign')));
+        if ($result) {
+            $o .= $this->output->render(new mod_assign_grade_import_summary($skippedmodified, $skippednograde, $skippedinvalidgrade, $updatedgrade, $this));
+        } else {
+            $o .= $this->output->notification($error);
+        }
+        $o .= $this->view_footer();
+    
+        return $o;
+    }
+    
+
+    /**
+     * Process csv file into a list of grade updates
+     * 
+     * @global stdClass $CFG 
+     * @param  moodleform $mform
+     * @return bool - was the form processed
+     */
+    private function view_import_grades_page() {
+        global $CFG;
+        // Include grade form 
+        require_once($CFG->dirroot . '/mod/assign/importgradeslib.php');
+        require_once($CFG->dirroot . '/lib/csvlib.class.php');
+        
+        $o = '';
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:grade', $this->context);
+
+        $gradesform = new mod_assign_uploadgrades_form(null, array($this, null));
+
+        if ($gradesform->is_cancelled()) {
+            return false;
+        }
+
+        // process the form
+        $iid = csv_import_reader::get_new_iid('mod_assign');
+
+        $csvdata = $gradesform->get_file_content('uploadgrades');
+
+        $data = new stdClass();
+        $data->importid = $iid;
+
+        $importform = new mod_assign_importgrades_form(null, array($this, $csvdata, $data));
+        
+        // only load this if it is 
+
+        $o .= $this->output->render(new assignment_header($this, false, get_string('grading', 'assign')));
+        
+        $o .= $this->output->render($importform);
+
+        $o .= $this->view_footer();
+        $this->add_to_log('view upload grades form', get_string('viewuploadgradesform', 'assign'));
+        return $o;
+    }
+    
+    /**
+     * View upload grades page.
+     *
+     * @global stdClass $CFG
+     * @global stdClass $USER
+     * @return string
+     */
+    private function view_upload_grades_page() {
+        global $CFG;
+
+        $o = '';
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:grade', $this->context);
+        require_once($CFG->dirroot . '/mod/assign/importgradeslib.php');
+
+        // only load this if it is 
+
+        $o .= $this->output->render(new assignment_header($this, false, get_string('grading', 'assign')));
+
+
+        $gradesform = new mod_assign_uploadgrades_form(null, array($this, null));
+        $o .= $this->output->render($gradesform);
+
+        $o .= $this->view_footer();
+        $this->add_to_log('view upload grades form', get_string('viewuploadgradesform', 'assign'));
         return $o;
     }
 
@@ -2359,6 +2536,22 @@ class assignment {
         }
         $gradingdisabled = $gradinginfo->items[0]->grades[$userid]->locked || $gradinginfo->items[0]->grades[$userid]->overridden;
         return $gradingdisabled;
+    }
+
+    /**
+     * Is advanced grading enabled and is there a form available?
+     * 
+     * @return bool
+     */
+    public function use_advanced_grading() {
+        $gradingmanager = get_grading_manager($this->context, 'mod_assign', 'submissions');
+        if ($gradingmethod = $gradingmanager->get_active_method()) {
+            $controller = $gradingmanager->get_controller($gradingmethod);
+            if ($controller->is_form_available()) {
+                return true;
+            }
+        }
+        return false;
     }
 
 

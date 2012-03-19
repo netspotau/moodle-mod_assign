@@ -119,6 +119,47 @@ class mod_assign_renderer extends plugin_renderer_base {
     }
     
     /**
+     * Render the import grades form
+     * 
+     * @param moodleform $form
+     * @return string
+     */
+    public function render_mod_assign_importgrades_form(moodleform $form) {
+        $o = '';
+
+        $o .= $this->output->container_start('importgradeshelp');
+        $o .= $this->output->box_start('generalbox');
+        $o .= format_string(get_string('importgradeshelp', 'assign'), array('context'=>$form->assignment->get_context()));
+        $o .= $this->output->box_end();
+        $o .= $this->output->container_end();
+
+        $o .= $this->moodleform($form);
+
+        return $o;
+    }
+
+    /**
+     * Render the upload grades form
+     * 
+     * @param moodleform $form
+     * @return string
+     */
+    public function render_mod_assign_uploadgrades_form(moodleform $form) {
+        $o = '';
+
+        $o .= $this->output->container_start('uploadgradeshelp');
+        $o .= $this->output->box_start('generalbox');
+        $o .= format_text(get_string('uploadgradeshelp', 'assign'), array('context'=>$form->assignment->get_context()));
+        $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php', array('id' => $form->assignment->get_course_module()->id, 'action' => 'grading', 'download'=>'csv')), get_string('downloadlatestgradingspreadsheet', 'assign'), 'get');
+        $o .= $this->output->box_end();
+        $o .= $this->output->container_end();
+
+        $o .= $this->moodleform($form);
+
+        return $o;
+    }
+    
+    /**
      * Render the user summary
      * 
      * @param user_summary $summary The user summary to render
@@ -569,7 +610,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o = '';
 
         if ($submissionplugin->get_view() == submission_plugin_submission::SUMMARY) {
-            $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($submissionplugin->get_plugin()->get_subtype(), strlen('assign')), 'mod_assign'));
+            $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($submissionplugin->get_plugin()->get_subtype(), strlen('assign')), 'assign'));
             $link = '';
             if ($submissionplugin->get_plugin()->show_view_link($submissionplugin->get_submission())) {
                 $link = $this->output->action_link(
@@ -627,6 +668,16 @@ class mod_assign_renderer extends plugin_renderer_base {
             $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_assignment()->get_course_module()->id, 'action' => 'downloadall')), get_string('downloadallsubmissions', 'assign'));
             $o .= $this->output->container_end();
         }
+        $o .= $this->output->container_start('downloadallgrades');
+        $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_assignment()->get_course_module()->id, 'action' => 'grading', 'download'=>'csv')), get_string('downloadallgrades', 'assign'));
+        $o .= $this->output->container_end();
+        
+        if (!$table->get_assignment()->use_advanced_grading()) {
+            $o .= $this->output->container_start('uploadgrades');
+            $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_assignment()->get_course_module()->id, 'action' => 'uploadgrades')), get_string('uploadgrades', 'assign'));
+            $o .= $this->output->container_end();
+        }
+        
 
         foreach ($table->get_assignment()->get_feedback_plugins() as $plugin) {
             if ($plugin->is_enabled() && $plugin->is_visible()) {
@@ -643,6 +694,38 @@ class mod_assign_renderer extends plugin_renderer_base {
 
         return $o;
     }
+    
+    /**
+     * render the summary of a csv import operation
+     * 
+     * @param mod_assign_grade_import_summary
+     * @return string
+     */
+    public function render_mod_assign_grade_import_summary(mod_assign_grade_import_summary $summary) {
+        $o = '';
+
+        $o .= $this->output->box_start('boxaligncenter generalbox gradeimportsummary');
+        $o .= $this->output->container_start('gradeimportsummaryrow');
+        $o .= get_string('updatedgrade', 'assign', array('count'=>$summary->get_updatedgrade()));
+        $o .= $this->output->container_end();
+        $o .= $this->output->container_start('gradeimportsummaryrow');
+        $o .= get_string('skippednograde', 'assign', array('count'=>$summary->get_skippednograde()));
+        $o .= $this->output->container_end();
+        $o .= $this->output->container_start('gradeimportsummaryrow');
+        $o .= get_string('skippedinvalidgrade', 'assign', array('count'=>$summary->get_skippedinvalidgrade()));
+        $o .= $this->output->container_end();
+        if (!optional_param('ignoremodified', 0, PARAM_BOOL)) {
+            $o .= $this->output->container_start('gradeimportsummaryrow');
+            $o .= get_string('skippedmodified', 'assign', array('count'=>$summary->get_skippedmodified()));
+            $o .= $this->output->container_end();
+        }
+        $o .= $this->output->box_end();
+        $o .= $this->output->container_start('backlink');
+        $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php', array('id' => $summary->get_assignment()->get_course_module()->id, 'action'=>'grading')), get_string('back'), 'get');
+        $o .= $this->output->container_end();
+
+        return $o;
+    }
 
     /**
      * render a feedback plugin feedback
@@ -654,7 +737,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o = '';
 
         if ($feedbackplugin->get_view() == feedback_plugin_feedback::SUMMARY) {
-            $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($feedbackplugin->get_plugin()->get_subtype(), strlen('assign')), 'mod_assign'));
+            $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($feedbackplugin->get_plugin()->get_subtype(), strlen('assign')), 'assign'));
             $link = '';
             if ($feedbackplugin->get_plugin()->show_view_link($feedbackplugin->get_grade())) {
                 $link = $this->output->action_link(
