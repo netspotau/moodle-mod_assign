@@ -1863,10 +1863,10 @@ class assignment {
 
         $graders = array();
         if (groups_get_activity_groupmode($this->get_course_module()) == SEPARATEGROUPS) {   // Separate groups are being used
-            if ($groups = groups_get_all_groups($this->get_course()->id, $user->id)) {  // Try to find all groups
+            if ($groups = groups_get_all_groups($this->get_course()->id, $userid)) {  // Try to find all groups
                 foreach ($groups as $group) {
                     foreach ($potentialgraders as $grader) {
-                        if ($grader->id == $user->id) {
+                        if ($grader->id == $userid) {
                             continue; // do not send self
                         }
                         if (groups_is_member($group->id, $grader->id)) {
@@ -1877,7 +1877,7 @@ class assignment {
             } else {
                 // user not in group, try to find graders without group
                 foreach ($potentialgraders as $grader) {
-                    if ($grader->id == $user->id) {
+                    if ($grader->id == $userid) {
                         continue; // do not send self
                     }
                     if (!groups_has_membership($this->get_course_module(), $grader->id)) {
@@ -1887,7 +1887,7 @@ class assignment {
             }
         } else {
             foreach ($potentialgraders as $grader) {
-                if ($grader->id == $user->id) {
+                if ($grader->id == $userid) {
                     continue; // do not send self
                 }
                 // must be enrolled
