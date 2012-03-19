@@ -257,12 +257,25 @@ class mod_assign_renderer extends plugin_renderer_base {
 
             // time remaining
             $due = '';
-            if ($duedate - $time <= 0) {
+            if ($duedate < $time) {
                 $due = get_string('assignmentisdue', 'assign');
             } else {
                 $due = format_time($duedate - $time);
             }
             $this->add_table_row_tuple($t, get_string('timeremaining', 'assign'), $due);
+    
+            if ($duedate < $time) {
+            
+                $finaldate = $summary->get_assignment()->get_instance()->finaldate;
+                if ($finaldate) {
+                    if ($finaldate > $time) {
+                        $late = get_string('latesubmissionsaccepted', 'assign');
+                    } else {
+                        $late = get_string('nomoresubmissionsaccepted', 'assign');
+                    }
+                    $this->add_table_row_tuple($t, get_string('latesubmissions', 'assign'), $late);
+                }
+            }
         }
 
         // all done - write the table

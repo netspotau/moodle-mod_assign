@@ -114,6 +114,9 @@ $string['invalidgradeforscale'] = 'The grade supplied was not valid for the curr
 $string['invalidfloatforgrade'] = 'The grade provided could not be understood: {$a}';
 $string['lastmodifiedsubmission'] = 'Last modified (submission)';
 $string['lastmodifiedgrade'] = 'Last modified (grade)';
+$string['latesubmissions'] = 'Late submissions';
+$string['latesubmissionsaccepted'] = 'Late submissions may be accepted';
+$string['nosubmissionsaccepted'] = 'No more submissions accepted';
 $string['locksubmissionforstudent'] = 'Prevent any more submissions for student: (id={$a->id}, fullname={$a->fullname}).';
 $string['manageassignfeedbackplugins'] = 'Manage assignment feedback plugins';
 $string['manageassignsubmissionplugins'] = 'Manage assignment submission plugins';
