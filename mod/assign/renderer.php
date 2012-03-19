@@ -39,9 +39,6 @@ require_once($CFG->dirroot . '/mod/assign/locallib.php');
  **/
 class mod_assign_renderer extends plugin_renderer_base {
 
-    // used to cache grade menus (and other repetitive things)
-    private $cache = array();
-      
     /**
      * rendering assignment files 
      * 
@@ -337,32 +334,7 @@ class mod_assign_renderer extends plugin_renderer_base {
      * @return string User-friendly representation of grade
      */
     private function format_grade($grade, assignment $assignment) {
-        global $DB;
-
-        static $scalegrades = array();
-
-                                        
-
-        if ($assignment->get_instance()->grade >= 0) {    // Normal number
-            if ($grade == -1 || $grade === null) {
-                return '-';
-            } else {
-                return round($grade) .' / '.$assignment->get_instance()->grade;
-            }
-
-        } else {                                // Scale
-            if (empty($this->cache['scale'])) {
-                if ($scale = $DB->get_record('scale', array('id'=>-($assignment->get_instance()->grade)))) {
-                    $this->cache['scale'] = make_menu_from_list($scale->scale);
-                } else {
-                    return '-';
-                }
-            }
-            if (isset($this->cache['scale'][$grade])) {
-                return $this->cache['scale'][$grade];
-            }
-            return '-';
-        }
+        return $assignment->display_grade($grade);
     }
     
     /**
@@ -379,7 +351,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         require_once($CFG->libdir.'/gradelib.php');
         require_once($CFG->dirroot.'/grade/grading/lib.php');
 
-        $assignmentgrade = $status->get_grade();
+        $assignmentgrade = $status->get_grade();      
         if (!$assignmentgrade) {
             return '';
         }
@@ -392,15 +364,28 @@ class mod_assign_renderer extends plugin_renderer_base {
 
         $item = $gradinginfo->items[0];
         $grade = $item->grades[$assignmentgrade->userid];
-
+             
         if ($grade->hidden or $grade->grade === false) { // hidden or error
             return '';
         }
-
-        if ($grade->grade === null and empty($grade->str_feedback)) {   /// Nothing to show yet
-            return '';
+     
+        $commentsfeedback = $status->get_assignment()->get_feedback_plugin_by_type('comments');
+        $filefeedback = $status->get_assignment()->get_feedback_plugin_by_type('file');
+        $is_commentsfeedback_enabled= $commentsfeedback->is_enabled() && $commentsfeedback->is_visible();
+        $is_filefeedback_enabled = $filefeedback->is_enabled() && $filefeedback->is_visible();
+            
+        if ($is_commentsfeedback_enabled) {
+            $getcommentfeedback = $commentsfeedback->get_feedback_comments($assignmentgrade->id);
         }
 
+        if ($is_filefeedback_enabled) {
+            $getfilefeedback = $filefeedback->get_file_feedback($assignmentgrade->id);
+        }
+
+        if ($grade->grade === null and empty($getcommentfeedback->commenttext) and ($getfilefeedback->numfiles < 1)) {   /// Nothing to show yet
+                   return '';
+        }
+       
         $gradeddate = $grade->dategraded;
 
         $o .= $this->output->container_start('feedback');
@@ -418,7 +403,7 @@ class mod_assign_renderer extends plugin_renderer_base {
             $cell2 = new html_table_cell($controller->render_grade($this->page, $assignmentgrade->id, $item, $grade->str_long_grade, has_capability('mod/assign:grade', $status->get_assignment()->get_context())));
         } else {
 
-            $cell2 = new html_table_cell($this->format_grade($grade->str_long_grade, $status->get_assignment()));
+            $cell2 = new html_table_cell($this->format_grade($grade->grade, $status->get_assignment()));
         }
         $row->cells = array($cell1, $cell2);
         $t->data[] = $row;

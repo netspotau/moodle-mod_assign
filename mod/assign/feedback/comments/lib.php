@@ -57,7 +57,7 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
      * @param int $gradeid
      * @return stdClass or false 
      */
-    private function get_feedback_comments($gradeid) {
+    public function get_feedback_comments($gradeid) {
         global $DB;
         return $DB->get_record('assign_feedback_comments', array('grade'=>$gradeid));
     }

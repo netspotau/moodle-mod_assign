@@ -80,6 +80,12 @@ class grading_table extends table_sql implements renderable {
 
         $fields .= get_extra_user_fields_sql($assignment->get_context(), 'u');
         $fields .= ', s.status as status, s.id as submissionid, s.timecreated as firstsubmission, s.timemodified as timesubmitted, ';
+
+        if (count($users) == 0) {
+            // insert a record that will never match to the sql is still valid.
+            $users[] = -1;
+        }
+
         $fields .= 'g.id as gradeid, g.grade as grade, g.timemodified as timemarked, g.timecreated as firstmarked, g.mailed as mailed, g.locked as locked';
         $from = '{user} u LEFT JOIN {assign_submission} s ON u.id = s.userid AND s.assignment = ' . $this->assignment->get_instance()->id . 
                         ' LEFT JOIN {assign_grades} g ON u.id = g.userid AND g.assignment = ' . $this->assignment->get_instance()->id;
