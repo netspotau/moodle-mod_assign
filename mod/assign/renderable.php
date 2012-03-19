@@ -942,3 +942,122 @@ class assign_files implements renderable {
         }
     }
 }
+
+/*
+ * Implements a renderable csv import summary
+ */
+class mod_assign_grade_import_summary implements renderable {
+    /** @var int $skippedmodified count of all the records that were skipped due to the last modified date */
+    protected $skippedmodified;
+    /** @var int $skippednograde count of all the records that were skipped due to no value in the grade column */
+    protected $skippednograde ;
+    /** @var int $skippedmodified count of all the records that were skipped due an invalid value in the grade column */
+    protected $skippedinvalidgrade;
+    /** @var int $skippedmodified count of all the records that were updated */
+    protected $updatedgrade;
+    protected $assignment;
+    
+    /**
+     * Constructor
+     * @param array of ('user'=>stdClass, 'grade'=>stdClass|null, 'submission'=>stdClass|null)
+     */
+    public function __construct($skippedmodified, $skippednograde, $skippedinvalidgrade, $updatedgrade, $assignment) {
+        
+        $this->set_skippedmodified($skippedmodified);
+        $this->set_skippednograde($skippednograde);
+        $this->set_skippedinvalidgrade($skippedinvalidgrade);
+        $this->set_updatedgrade($updatedgrade);
+        $this->set_assignment($assignment);
+    }
+    
+    /**
+     * Returns skippedmodified
+     *
+     * @return int
+     */
+    public function get_skippedmodified() {
+        return $this->skippedmodified;
+    }
+
+    /**
+     * Set the skippedmodified
+     *
+     * @param int $skippedmodified
+     */
+    public function set_skippedmodified($skippedmodified) {
+        $this->skippedmodified = $skippedmodified;
+    }
+    
+    /**
+     * Returns skippednograde
+     *
+     * @return int
+     */
+    public function get_skippednograde() {
+        return $this->skippednograde;
+    }
+
+    /**
+     * Set the skippednograde
+     *
+     * @param int $skippednograde
+     */
+    public function set_skippednograde($skippednograde) {
+        $this->skippednograde = $skippednograde;
+    }
+
+    /**
+     * Returns skippedinvalidgrade
+     *
+     * @return int
+     */
+    public function get_skippedinvalidgrade() {
+        return $this->skippedinvalidgrade;
+    }
+
+    /**
+     * Set the skippedinvalidgrade
+     *
+     * @param int $skippedinvalidgrade
+     */
+    public function set_skippedinvalidgrade($skippedinvalidgrade) {
+        $this->skippedinvalidgrade = $skippedinvalidgrade;
+    }
+
+    /**
+     * Returns updatedgrade
+     *
+     * @return int
+     */
+    public function get_updatedgrade() {
+        return $this->updatedgrade;
+    }
+
+    /**
+     * Set the updatedgrade
+     *
+     * @param int $updatedgrade
+     */
+    public function set_updatedgrade($updatedgrade) {
+        $this->updatedgrade = $updatedgrade;
+    }
+
+    /**
+     * Returns assignment
+     *
+     * @return assignment
+     */
+    public function get_assignment() {
+        return $this->assignment;
+    }
+
+    /**
+     * Set the assignment
+     *
+     * @param assignment $assignment
+     */
+    public function set_assignment($assignment) {
+        $this->assignment = $assignment;
+    }
+}
+

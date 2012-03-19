@@ -66,7 +66,9 @@ class grading_table extends table_sql implements renderable {
 
         $this->define_baseurl(new moodle_url($CFG->wwwroot . '/mod/assign/view.php', array('action'=>'grading', 'id'=>$assignment->get_course_module()->id)));
 
-        $this->is_downloading(optional_param('download', '', PARAM_ALPHA), $this->get_download_filename(), get_string('gradesfor', 'assign', $assignment->get_instance()->name));
+        if (optional_param('download', '', PARAM_ALPHA)) {
+            $this->is_downloading(optional_param('download', '', PARAM_ALPHA), $this->get_download_filename(), get_string('gradesfor', 'assign', $assignment->get_instance()->name));
+        }
 
         // do some business - then set the sql
 
@@ -82,11 +84,13 @@ class grading_table extends table_sql implements renderable {
         $from = '{user} u LEFT JOIN {assign_submission} s ON u.id = s.userid AND s.assignment = ' . $this->assignment->get_instance()->id . 
                         ' LEFT JOIN {assign_grades} g ON u.id = g.userid AND g.assignment = ' . $this->assignment->get_instance()->id;
         $where = 'u.id IN (' . implode(',', $users) . ')';
-        if ($filter == ASSIGN_FILTER_SUBMITTED) {
-            $where .= ' AND s.timecreated > 0 ';
-        }
-        if ($filter == ASSIGN_FILTER_REQUIRE_GRADING) {
-            $where .= ' AND (s.timemodified > g.timemodified OR g.timemodified IS NULL)';
+        if (!$this->is_downloading()) {
+            if ($filter == ASSIGN_FILTER_SUBMITTED) {
+                $where .= ' AND s.timecreated > 0 ';
+            }
+            if ($filter == ASSIGN_FILTER_REQUIRE_GRADING) {
+                $where .= ' AND (s.timemodified > g.timemodified OR g.timemodified IS NULL)';
+            }
         }
         $params = array($assignment->get_instance()->id, $assignment->get_instance()->id);
         $this->set_sql($fields, $from, $where, array());
@@ -151,6 +155,12 @@ class grading_table extends table_sql implements renderable {
         // final grade
         $columns[] = 'finalgrade';
         $headers[] = get_string('finalgrade', 'grades');
+
+        if ($this->is_downloading() && !$this->assignment->use_advanced_grading()) {
+            // Grade 
+            $columns[] = 'recordid';
+            $headers[] = get_string('recordid', 'assign');
+        }
 
 
 
@@ -387,6 +397,16 @@ class grading_table extends table_sql implements renderable {
 
         return $edit;
     }
+    
+    /**
+     * Format a column of data for display
+     * 
+     * @param stdClass $row
+     * @return string
+     */
+    function col_recordid(stdClass $row) {
+        return sha1($row->id . '_' . $this->assignment->get_instance()->id);
+    }
 
     /**
      * Write the plugin summary with an optional link to view the full feedback/submission.
@@ -401,7 +421,7 @@ class grading_table extends table_sql implements renderable {
         $link = '';
 
         if ($plugin->show_view_link($item)) {
-            $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($plugin->get_subtype(), strlen('assign')), 'mod_assign'));
+            $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($plugin->get_subtype(), strlen('assign')), 'assign'));
             $link = $this->output->action_link(
                                 new moodle_url('/mod/assign/view.php',
                                                array('id' => $this->assignment->get_course_module()->id,

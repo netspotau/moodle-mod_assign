@@ -81,7 +81,7 @@ class assignment_upgrade_manager {
         $newassignment = new assignment(null, null, null);
         
         if (!$newassignment->add_instance($data, false)) {
-            $log = get_string('couldnotcreatenewassignmentinstance', 'mod_assign');
+            $log = get_string('couldnotcreatenewassignmentinstance', 'assign');
             return false;
         }
 
@@ -93,7 +93,7 @@ class assignment_upgrade_manager {
         $newmodule = $DB->get_record('modules', array('name'=>'assign'), '*', MUST_EXIST);
         $newcoursemodule = $this->duplicate_course_module($oldcoursemodule, $newmodule->id, $newassignment->get_instance()->id);
         if (!$newcoursemodule) {
-            $log = get_string('couldnotcreatenewcoursemodule', 'mod_assign');
+            $log = get_string('couldnotcreatenewcoursemodule', 'assign');
             return false;
         }
 
@@ -138,7 +138,7 @@ class assignment_upgrade_manager {
                 $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
                 $submission->id = $DB->insert_record('assign_submission', $submission);
                 if (!$submission->id) {
-                    $log .= get_string('couldnotinsertsubmission', 'mod_assign', $submission->userid);
+                    $log .= get_string('couldnotinsertsubmission', 'assign', $submission->userid);
                     $rollback = true;
                 }
                 foreach ($newassignment->get_submission_plugins() as $plugin) {
@@ -160,7 +160,7 @@ class assignment_upgrade_manager {
                     $grade->mailed = $oldsubmission->mailed;
                     $grade->id = $DB->insert_record('assign_grades', $grade);
                     if (!$grade->id) {
-                        $log .= get_string('couldnotinsertgrade', 'mod_assign', $grade->userid);
+                        $log .= get_string('couldnotinsertgrade', 'assign', $grade->userid);
                         $rollback = true;
                     }
                     foreach ($newassignment->get_feedback_plugins() as $plugin) {
@@ -181,7 +181,7 @@ class assignment_upgrade_manager {
 
         } catch (Exception $exception) {
             $rollback = true;
-            $log .= get_string('conversionexception', 'mod_assign', $exception->getMessage());
+            $log .= get_string('conversionexception', 'assign', $exception->getMessage());
         }
     
         if ($rollback) {

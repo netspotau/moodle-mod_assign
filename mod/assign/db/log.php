@@ -44,4 +44,5 @@ $logs = array(
     array('module'=>'assign', 'action'=>'unlock submission', 'mtable'=>'assign', 'field'=>'name'),
     array('module'=>'assign', 'action'=>'grade submission', 'mtable'=>'assign', 'field'=>'name'),
     array('module'=>'assign', 'action'=>'view all', 'mtable'=>'course', 'field'=>'fullname'),
+    array('module'=>'assign', 'action'=>'view upload grades form', 'mtable'=>'course', 'field'=>'name'),
 );

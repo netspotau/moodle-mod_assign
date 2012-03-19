@@ -52,5 +52,5 @@ foreach (get_plugin_list('assignfeedback') as $type => $notused) {
 }
 
 $settings->add(new admin_setting_configselect('mod_assign_feedback_plugin_for_gradebook', 
-                      get_string('feedbackpluginforgradebook', 'mod_assign'),
-                      get_string('feedbackplugin', 'mod_assign'), 'feedback_comments', $menu));
+                      get_string('feedbackpluginforgradebook', 'assign'),
+                      get_string('feedbackplugin', 'assign'), 'feedback_comments', $menu));

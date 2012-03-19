@@ -414,7 +414,7 @@ abstract class assignment_plugin {
      * @return bool true or false - false will trigger a rollback
      */
     public function upgrade_settings(context $oldcontext, stdClass $oldassignment, $log) {
-        $log = $log . ' ' . get_string('upgradenotimplemented', 'mod_assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));
+        $log = $log . ' ' . get_string('upgradenotimplemented', 'assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));
         return false;
     }
 
@@ -429,7 +429,7 @@ abstract class assignment_plugin {
      * @return boolean true or false - false will trigger a rollback
      */
     public function upgrade(context $oldcontext, stdClass $oldassignment, stdClass $oldsubmissionorgrade, $submissionorgrade, $log) {
-        $log = $log . ' ' . get_string('upgradenotimplemented', 'mod_assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));
+        $log = $log . ' ' . get_string('upgradenotimplemented', 'assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));
         return false;
     }
     
