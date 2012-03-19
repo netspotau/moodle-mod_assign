@@ -77,7 +77,7 @@ class grading_table extends table_sql implements renderable {
         }
         $fields = user_picture::fields('u') . ', u.id as userid, u.firstname as firstname, u.lastname as lastname, ';
         $fields .= 's.status as status, s.id as submissionid, s.timecreated as firstsubmission, s.timemodified as timesubmitted, ';
-        $fields .= 'g.id as gradeid, g.grade as grade, g.timemodified as timemarked, g.timecreated as firstmarked, g.mailed as mailed, g.locked as locked';
+        $fields .= 'g.id as gradeid, g.grade as grade, g.timemodified as timemarked, g.timecreated as firstmarked, g.mailed as mailed, g.locked as locked, g.extensionduedate as extensionduedate';
         $from = '{user} u LEFT JOIN {assign_submission} s ON u.id = s.userid AND s.assignment = ' . $this->assignment->get_instance()->id . 
                         ' LEFT JOIN {assign_grades} g ON u.id = g.userid AND g.assignment = ' . $this->assignment->get_instance()->id;
         $where = 'u.id IN (' . implode(',', $users) . ')';
@@ -305,7 +305,23 @@ class grading_table extends table_sql implements renderable {
                                          get_string('submissionstatus_' . $row->status, 'assign') . $extratext, null, array('class'=>'submissionstatus' .$row->status . $extraclass));
 
             if ($this->assignment->get_instance()->duedate && $row->timesubmitted > $this->assignment->get_instance()->duedate) {
-                $o .= $this->output->container(get_string('submittedlateshort', 'assign', format_time($row->timesubmitted - $this->assignment->get_instance()->duedate)), 'latesubmission');
+                if (!$row->extensionduedate || $row->timesubmitted > $row->extensionduedate) {
+                    $o .= $this->output->container(get_string('submittedlateshort', 'assign', format_time($row->timesubmitted - $this->assignment->get_instance()->duedate)), 'latesubmission');
+                }
+            }
+
+            if (!$row->timesubmitted) {
+                $now = time();
+                $due = $this->assignment->get_instance()->duedate;
+                if ($row->extensionduedate) {
+                    $due = $row->extensionduedate;
+                }
+                if ($due && ($now > $due)) {
+                    $o .= $this->output->container(get_string('overdue', 'assign', format_time($now - $due)), 'overduesubmission');
+                }
+            }
+            if ($row->extensionduedate) {
+                $o .= $this->output->container(get_string('userextensiondate', 'assign', userdate($row->extensionduedate)), 'extensiondate');
             }
         } else {
             $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
@@ -333,6 +349,9 @@ class grading_table extends table_sql implements renderable {
                                                   'rownum'=>$this->rownum,'action'=>'grade')),
                                             $this->output->pix_icon('grade_feedback', get_string('grade'), 'assign' ));
 
+        if (!$this->assignment->is_any_submission_plugin_open()) {
+            return $edit;
+        }
         
 
         if (!$row->status || $row->status == ASSIGN_SUBMISSION_STATUS_DRAFT || !$this->assignment->get_instance()->submissiondrafts) {
@@ -360,6 +379,15 @@ class grading_table extends table_sql implements renderable {
                                                                      'action'=>'reverttodraft',
                                                                      'page'=>$this->currpage)), 
                                                                $this->output->pix_icon('t/left', get_string('reverttodraft', 'assign')));
+        }
+        $now = time();
+        if (((!$this->assignment->get_instance()->finaldate) || $now < $this->assignment->get_instance()->finaldate) && has_capability('mod/assign:grantextension', $this->assignment->get_context())) {
+            $edit .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
+                                                               array('id' => $this->assignment->get_course_module()->id, 
+                                                                     'userid'=>$row->id, 
+                                                                     'action'=>'grantextension',
+                                                                     'page'=>$this->currpage)), 
+                                                               $this->output->pix_icon('extension', get_string('grantextension', 'assign'), 'assign'));
         }
 
         return $edit;

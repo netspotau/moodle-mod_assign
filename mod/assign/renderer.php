@@ -89,6 +89,23 @@ class mod_assign_renderer extends plugin_renderer_base {
     }
     
     /**
+     * Render the grant extension form
+     * @param mod_assign_extension_form $form The extension date form to render
+     * @return string
+     */
+    public function render_mod_assign_extension_form(mod_assign_extension_form $form) {
+        $o = '';
+        
+        $o .= $this->output->heading(get_string('grantextension', 'assign'), 3);
+        $o .= $this->render(new user_summary($form->user, $form->assignment));
+
+        $o .= $this->output->box_start('boxaligncenter grantextension');
+        $o .= $this->moodleform($form);
+        $o .= $this->output->box_end();
+        return $o;
+    }
+    
+    /**
      * Render the grading options form
      * @param grading_options_form $form The grading options form to render
      * @return string
@@ -445,12 +462,22 @@ class mod_assign_renderer extends plugin_renderer_base {
 
         
         $duedate = $status->get_assignment()->get_instance()->duedate;
-        if ($duedate >= 1) {
+        
+        if ($duedate > 0) {
             $row = new html_table_row();
             $cell1 = new html_table_cell(get_string('duedate', 'assign'));
             $cell2 = new html_table_cell(userdate($duedate));
             $row->cells = array($cell1, $cell2);
             $t->data[] = $row;
+
+            if ($status->get_extensionduedate()) {
+                $row = new html_table_row();
+                $cell1 = new html_table_cell(get_string('extensionduedate', 'assign'));
+                $cell2 = new html_table_cell(userdate($status->get_extensionduedate()));
+                $row->cells = array($cell1, $cell2);
+                $t->data[] = $row;
+                $duedate = $status->get_extensionduedate();
+            }
             
             // time remaining
             $row = new html_table_row();

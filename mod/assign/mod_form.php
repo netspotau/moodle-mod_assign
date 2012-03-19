@@ -75,6 +75,8 @@ class mod_assign_mod_form extends moodleform_mod {
         $mform->setDefault('allowsubmissionsfromdate', time());
         $mform->addElement('date_time_selector', 'duedate', get_string('duedate', 'assign'), array('optional'=>true));
         $mform->setDefault('duedate', time()+7*24*3600);
+        $mform->addElement('date_time_selector', 'finaldate', get_string('finaldate', 'assign'), array('optional'=>true));
+        $mform->setDefault('finaldate', time()+14*24*3600);
         $mform->addElement('selectyesno', 'alwaysshowdescription', get_string('alwaysshowdescription', 'assign'));
         $mform->setDefault('alwaysshowdescription', 1);
         $mform->addElement('selectyesno', 'preventlatesubmissions', get_string('preventlatesubmissions', 'assign'));
@@ -105,6 +107,16 @@ class mod_assign_mod_form extends moodleform_mod {
         if ($data['allowsubmissionsfromdate'] && $data['duedate']) {
             if ($data['allowsubmissionsfromdate'] > $data['duedate']) {
                 $errors['duedate'] = get_string('duedatevalidation', 'assign');
+            }
+        }
+        if ($data['duedate'] && $data['finaldate']) {
+            if ($data['duedate'] > $data['finaldate']) {
+                $errors['finaldate'] = get_string('finaldatevalidation', 'assign');
+            }
+        }
+        if ($data['allowsubmissionsfromdate'] && $data['finaldate']) {
+            if ($data['allowsubmissionsfromdate'] > $data['finaldate']) {
+                $errors['finaldate'] = get_string('finaldatefromdatevalidation', 'assign');
             }
         }
         return $errors;
