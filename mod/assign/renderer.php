@@ -506,6 +506,20 @@ class mod_assign_renderer extends plugin_renderer_base {
             $t->data[] = $row;
         } 
 
+        if ($status->get_view() == submission_status::GRADER_VIEW) {
+            $row = new html_table_row();
+            $cell1 = new html_table_cell(get_string('open', 'assign'));
+            if ($status->can_edit()) {
+                $cell2 = new html_table_cell(get_string('submissioneditable', 'assign'));
+                $cell2->attributes = array('class'=>'submissioneditable');
+            } else {
+                $cell2 = new html_table_cell(get_string('submissionnoteditable', 'assign'));
+                $cell2->attributes = array('class'=>'submissionnoteditable');
+            }
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+        }
+
         // last modified 
         if ($status->get_submission()) {
             $row = new html_table_row();
@@ -531,18 +545,20 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o .= $this->output->box_end();
     
         // links
-        if ($status->can_edit()) {
-            $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
-                array('id' => $status->get_assignment()->get_course_module()->id, 'action' => 'editsubmission')), get_string('editsubmission', 'assign'), 'get');
-        }
+        if ($status->get_view() == submission_status::STUDENT_VIEW) {
+            if ($status->can_edit()) {
+                $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
+                    array('id' => $status->get_assignment()->get_course_module()->id, 'action' => 'editsubmission')), get_string('editsubmission', 'assign'), 'get');
+            }
 
-        if ($status->can_submit()) {
-            // submission.php test
-            $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
-                    array('id' => $status->get_assignment()->get_course_module()->id, 'action'=>'submit')), get_string('submitassignment', 'assign'), 'get');
-            $o .= $this->output->box_start('boxaligncenter submithelp');
-            $o .= get_string('submitassignment_help', 'assign');
-            $o .= $this->output->box_end();
+            if ($status->can_submit()) {
+                // submission.php test
+                $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
+                        array('id' => $status->get_assignment()->get_course_module()->id, 'action'=>'submit')), get_string('submitassignment', 'assign'), 'get');
+                $o .= $this->output->box_start('boxaligncenter submithelp');
+                $o .= get_string('submitassignment_help', 'assign');
+                $o .= $this->output->box_end();
+            }
         }
         
         $o .= $this->output->container_end();

@@ -65,6 +65,10 @@ td.submissionlocked {
     background-color: #efefcf;
 }
 
+td.submissioneditable {
+    color: red;
+}
+
 td.submissiongraded {
     color: black;
     background-color: #cfefcf;

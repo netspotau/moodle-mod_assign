@@ -140,6 +140,7 @@ $string['notifications'] = 'Notifications';
 $string['numberofdraftsubmissions'] = 'Drafts';
 $string['numberofparticipants'] = 'Participants';
 $string['numberofsubmittedassignments'] = 'Submitted';
+$string['open'] = 'Open';
 $string['overdue'] = '<font color="red">Assignment is overdue by: {$a}</font>';
 $string['pluginadministration'] = 'Assignment administration';
 $string['pluginname'] = 'Assignment';
@@ -159,7 +160,9 @@ $string['submissioncommentnumwords'] = 'Number of words in submission comment: {
 $string['submissioncomments'] = 'Enable submission comments';
 $string['submissioncomment'] = 'Submission comments';
 $string['submissiondrafts'] = 'Require students click submit button';
+$string['submissioneditable'] = 'Student can edit this submission';
 $string['submissionfiles'] = 'Submission files';
+$string['submissionnoteditable'] = 'Student cannot edit this submission';
 $string['assignsubmissionpluginname'] = 'Submission plugin';
 $string['submissionplugins'] = 'Submission plugins';
 $string['submissionreceipts'] = 'Send submission receipts';

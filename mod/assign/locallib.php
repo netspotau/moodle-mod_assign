@@ -1416,12 +1416,16 @@ class assignment {
         // get the current grade
         $grade = $this->get_user_grade($userid, false);
         if ($this->can_view_submission($userid)) {
+            $showedit = has_capability('mod/assign:submit', $this->context) &&
+                         $this->submissions_open($userid) && ($this->is_any_submission_plugin_enabled());
+
+            $showsubmit = $showedit && $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
             $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($userid);
             $extensionduedate = null;
             if ($grade) {
                 $extensionduedate = $grade->extensionduedate;
             }
-            $o .= $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($userid), submission_status::GRADER_VIEW, false, false, $extensionduedate));
+            $o .= $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($userid), submission_status::GRADER_VIEW, $showedit, $showsubmit, $extensionduedate));
         }
         if ($grade) {
             $data = new stdClass();
@@ -1640,7 +1644,8 @@ class assignment {
         if ($this->can_view_submission($USER->id)) {
             $showedit = has_capability('mod/assign:submit', $this->context) &&
                          $this->submissions_open() && ($this->is_any_submission_plugin_enabled());
-            $showsubmit = $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
+
+            $showsubmit = $showedit && $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
             $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($USER->id);
 
             $extensionduedate = null;   
@@ -1769,13 +1774,16 @@ class assignment {
      * @global stdClass $USER
      * @return bool 
      */
-    private function submissions_open() {
+    private function submissions_open($userid = null) {
         global $USER;
 
+        if (!$userid) {
+            $userid = $USER->id;
+        }
         $time = time();
         $dateopen = true;
         if ($this->get_instance()->preventlatesubmissions && $this->get_instance()->duedate) {
-            $grade = $this->get_user_grade($USER->id, false);
+            $grade = $this->get_user_grade($userid, false);
             if ($grade && $grade->extensionduedate) { 
                 $dateopen = ($this->get_instance()->allowsubmissionsfromdate <= $time && $time <= $grade->extensionduedate);
             } else {
@@ -1790,22 +1798,22 @@ class assignment {
         }
 
         // now check if this user has already submitted etc.
-        if (!is_enrolled($this->get_course_context(), $USER)) {
+        if (!is_enrolled($this->get_course_context(), $userid)) {
             return false;
         }
-        if ($submission = $this->get_user_submission($USER->id, false)) {
+        if ($submission = $this->get_user_submission($userid, false)) {
             if ($this->get_instance()->submissiondrafts && $submission->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
                 // drafts are tracked and the student has submitted the assignment
                 return false;
             }
         }
-        if ($grade = $this->get_user_grade($USER->id, false)) {
+        if ($grade = $this->get_user_grade($userid, false)) {
             if ($grade->locked) {
                 return false;
             }
         }
 
-        if ($this->grading_disabled($USER->id)) {
+        if ($this->grading_disabled($userid)) {
             return false;
         }
 

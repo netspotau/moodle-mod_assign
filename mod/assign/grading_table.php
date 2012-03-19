@@ -349,7 +349,7 @@ class grading_table extends table_sql implements renderable {
                                                   'rownum'=>$this->rownum,'action'=>'grade')),
                                             $this->output->pix_icon('grade_feedback', get_string('grade'), 'assign' ));
 
-        if (!$this->assignment->is_any_submission_plugin_open()) {
+        if (!$this->assignment->is_any_submission_plugin_enabled()) {
             return $edit;
         }
         
