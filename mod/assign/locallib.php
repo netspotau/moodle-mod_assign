@@ -1499,8 +1499,6 @@ class assignment {
         global $CFG;
 
         $o = '';
-        // Include submission form
-        require_once($CFG->dirroot . '/mod/assign/submission_form.php');
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
 
