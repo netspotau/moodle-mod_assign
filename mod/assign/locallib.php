@@ -676,14 +676,9 @@ class assignment {
      */
     private function add_plugin_settings(assignment_plugin $plugin, MoodleQuickForm $mform) {
         if ($plugin->is_visible()) {
-            // section heading
-            $mform->addElement('header', 'general', $plugin->get_name());
-
             // enabled
-            $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
-
             //tied disableIf rule to this select element
-            $mform->addElement('select', $plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', get_string('enabled', 'assign'), $ynoptions);
+            $mform->addElement('selectyesno', $plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', $plugin->get_name());
             $mform->setDefault($plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', $plugin->is_enabled());
 
             $plugin->get_settings($mform);
@@ -700,10 +695,13 @@ class assignment {
      * @return void
      */
     public function add_all_plugin_settings(MoodleQuickForm $mform) {
+        $mform->addElement('header', 'general', get_string('submissionsettings', 'assign'));
+        
         foreach ($this->submissionplugins as $plugin) {
             $this->add_plugin_settings($plugin, $mform);
             
         }
+        $mform->addElement('header', 'general', get_string('feedbacksettings', 'assign'));
         foreach ($this->feedbackplugins as $plugin) {
             $this->add_plugin_settings($plugin, $mform);
         }
