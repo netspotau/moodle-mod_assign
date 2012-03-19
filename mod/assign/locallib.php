@@ -1372,8 +1372,9 @@ class assignment {
         }
         if ($grade) {
             $data = new stdClass();
-            $data->grade = $grade->grade;
-            // set the grade 
+            if ($grade->grade >= 0) {
+                $data->grade = $grade->grade;
+            }
         } else {
             $data = new stdClass();
             $data->grade = '';
