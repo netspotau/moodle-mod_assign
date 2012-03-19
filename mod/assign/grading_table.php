@@ -71,7 +71,10 @@ class grading_table extends table_sql implements renderable {
         $currentgroup = groups_get_activity_group($assignment->get_course_module(), true);
 
         $users = array_keys( $assignment->list_participants($currentgroup, true));
-        
+        if (count($users) == 0) {
+            // insert a record that will never match to the sql is still valid.
+            $users[] = -1;
+        }
         $fields = user_picture::fields('u') . ', u.id as userid, u.firstname as firstname, u.lastname as lastname, ';
         $fields .= 's.status as status, s.id as submissionid, s.timecreated as firstsubmission, s.timemodified as timesubmitted, ';
         $fields .= 'g.id as gradeid, g.grade as grade, g.timemodified as timemarked, g.timecreated as firstmarked, g.mailed as mailed, g.locked as locked';
