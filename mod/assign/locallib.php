@@ -311,7 +311,7 @@ class assignment {
          } else if ($action == 'unlock') {
             $this->process_unlock();
             $action = 'grading';
-         } else if ($action == 'submit') {
+         } else if ($action == 'confirmsubmit') {
             $this->process_submit_assignment_for_grading();
             // save and show next button
         } else if ($action == 'submitgrade') {
@@ -357,6 +357,8 @@ class assignment {
             $o .= $this->view_grading_page();
         } else if ($action == 'downloadall') {
             $o .= $this->download_submissions();
+        } else if ($action == 'submit') {
+            $o .= $this->check_submit_for_grading();
         } else {
             $o .= $this->view_submission_page();
         }
@@ -1604,6 +1606,23 @@ class assignment {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Ask the user to confirm they want to submit their work for grading
+     * @return string
+     */
+    private function check_submit_for_grading() {
+        $continueurl = new moodle_url('/mod/assign/view.php', array('id' => $this->coursemodule->id,
+                                                                    'action' => 'confirmsubmit',
+                                                                    'sesskey' => sesskey()));
+        $cancelurl = new moodle_url('/mod/assign/view.php', array('id' => $this->coursemodule->id));
+
+        $o = '';
+        $o .= $this->output->header();
+        $o .= $this->output->confirm(get_string('confirmsubmission', 'mod_assign'), $continueurl, $cancelurl);
+        $o .= $this->view_footer();
+        return $o;
     }
 
     /**
