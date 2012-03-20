@@ -65,7 +65,7 @@
         <INDEX NAME="mailed" UNIQUE="false" FIELDS="mailed" PREVIOUS="userid"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="assign_plugin_config" COMMENT="Config data for an instance of a plugin" PREVIOUS="assign_grades" >
+    <TABLE NAME="assign_plugin_config" COMMENT="Config data for an instance of a plugin" PREVIOUS="assign_grades" NEXT="assign_user_mapping">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="assignment"/>
         <FIELD NAME="assignment" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="plugin"/>
@@ -83,6 +83,22 @@
         <INDEX NAME="plugin" UNIQUE="false" FIELDS="plugin" PREVIOUS="assignment" NEXT="subtype"/>
         <INDEX NAME="subtype" UNIQUE="false" FIELDS="subtype" PREVIOUS="plugin" NEXT="name"/>
         <INDEX NAME="name" UNIQUE="false" FIELDS="name" PREVIOUS="subtype"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="assign_user_mapping" COMMENT="Map an assignment specific id number to a user" PREVIOUS="assign_plugin_config" >
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="assignment"/>
+        <FIELD NAME="assignment" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="userid"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="assignment"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="assignment"/>
+        <KEY NAME="assignment" TYPE="foreign" FIELDS="assignment" REFTABLE="assignment" REFFIELDS="id" PREVIOUS="primary" NEXT="user"/>
+        <KEY NAME="user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id" PREVIOUS="assignment"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="assignment" UNIQUE="false" FIELDS="assignment" NEXT="userid"/>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid" PREVIOUS="assignment"/>
       </INDEXES>
     </TABLE>
   </TABLES>

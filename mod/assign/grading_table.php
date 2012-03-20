@@ -405,7 +405,7 @@ class grading_table extends table_sql implements renderable {
      * @return string
      */
     function col_recordid(stdClass $row) {
-        return sha1($row->id . '_' . $this->assignment->get_instance()->id);
+        return $this->assignment->get_uniqueid_for_user($row->userid);
     }
 
     /**

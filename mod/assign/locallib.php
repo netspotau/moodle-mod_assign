@@ -166,7 +166,7 @@ class assignment {
     public function get_return_action() {
         return $this->returnaction;
     }
-    
+
     /** 
      * Return a list of parameters that can be used to get back to the current page
      * @return array params
@@ -1360,7 +1360,7 @@ class assignment {
                     $user = $DB->get_record('user', array('id'=>$userid), 'id, firstname, lastname');
                     // user may have been deleted?
                     if ($user) {
-                        $prefix = clean_filename(str_replace('_', '', fullname($user)) . '_' .$userid . '_');
+                        $prefix = clean_filename(str_replace('_', '', fullname($user)) . '_' . $this->get_uniqueid_for_user($userid) . '_');
 
                         foreach ($this->submissionplugins as $plugin) {
                             if ($plugin->is_enabled() && $plugin->is_visible()) {
@@ -2881,5 +2881,44 @@ class assignment {
     }
 
 
+    /**
+     * Lookup this user id and return the unique id for this assignment
+     * 
+     * @global moodle_database $DB
+     * @param int $userid The userid to lookup
+     * @return int The unique id
+     */
+    public function get_uniqueid_for_user($userid) {
+        global $DB;
+        
+        // search for a record
+        if ($record = $DB->get_record('assign_user_mapping', array('assignment'=>$this->get_instance()->id, 'userid'=>$userid), 'id')) {
+            return $record->id;
+        }
+
+        // create a record
+        $record = new stdClass();
+        $record->assignment = $this->get_instance()->id;
+        $record->userid = $userid;
+        
+        return $DB->insert_record('assign_user_mapping', $record);
+    }
+
+    /**
+     * Lookup this unique id and return the user id for this assignment
+     * 
+     * @global moodle_database $DB
+     * @param int $uniqueid The uniqueid to lookup
+     * @return int The user id
+     */
+    public function get_user_for_uniqueid($uniqueid) {
+        global $DB;
+        
+        // search for a record
+        if ($record = $DB->get_record('assign_user_mapping', array('id'=>$uniqueid, 'assignment'=>$this->get_instance()->id), 'userid')) {
+            return $record->userid;
+        }
+        return false;
+    }
 }
 
