@@ -602,6 +602,8 @@ class submission_status implements renderable {
     protected $canedit = false;
     /** @var bool show_submit */
     protected $cansubmit = false;
+    /** @var int extensionduedate */
+    protected $extensionduedate = null;
 
     /**
      * constructor
@@ -614,7 +616,7 @@ class submission_status implements renderable {
      * @param bool $canedit
      * @param bool $cansubmit
      */
-    public function __construct($assignment, $submission, $locked, $graded, $view, $canedit, $cansubmit) {
+    public function __construct($assignment, $submission, $locked, $graded, $view, $canedit, $cansubmit, $extensionduedate) {
         $this->set_assignment($assignment);
         $this->set_submission($submission);
         $this->set_locked($locked);
@@ -622,6 +624,7 @@ class submission_status implements renderable {
         $this->set_view($view);
         $this->set_can_edit($canedit);
         $this->set_can_submit($cansubmit);
+        $this->set_extensionduedate($extensionduedate);
     }
     
     /**
@@ -755,6 +758,23 @@ class submission_status implements renderable {
         $this->assignment = $assignment;
     }
 
+    /**
+     * Returns extensionduedate info
+     *
+     * @return mixed int|null
+     */
+    public function get_extensionduedate() {
+        return $this->extensionduedate;
+    }
+
+    /**
+     * Set the extensionduedate 
+     *
+     * @param mixed int|null $extensionduedate
+     */
+    public function set_extensionduedate($extensionduedate) {
+        $this->extensionduedate = $extensionduedate;
+    }
 }
 
 /**

@@ -337,6 +337,11 @@ class assignment {
         } else if ($action == 'saveoptions') {
             $this->process_save_grading_options();
             $action = 'grading';
+        }else if ($action == 'saveextension') {
+            $action = 'grantextension';
+            if ($this->process_save_extension($mform)) {
+                $action = 'grading';
+            }
         }
 
         $returnparams = array('rownum'=>optional_param('rownum', 0, PARAM_INT));
@@ -345,6 +350,8 @@ class assignment {
         // now show the right view page
         if ($action == 'nextgrade') {
             $o .= $this->view_next_single_grade();
+        } else if ($action == 'grantextension') {
+            $o .= $this->view_grant_extension($mform);
         } else if ($action == 'grade') {
             $o .= $this->view_single_grade_page($mform);
         } else if ($action == 'viewpluginassignfeedback') {
@@ -405,6 +412,7 @@ class assignment {
         $update->sendnotifications = $formdata->sendnotifications;
         $update->sendlatenotifications = $formdata->sendlatenotifications;
         $update->duedate = $formdata->duedate;
+        $update->finaldate = $formdata->finaldate;
         $update->allowsubmissionsfromdate = $formdata->allowsubmissionsfromdate;
         $update->grade = $formdata->grade;
         
@@ -429,9 +437,9 @@ class assignment {
             }
 
             // in the case of upgrades the coursemodule has not been set so we need to wait before calling these two
-            // TODO: add event to the calendar
+            // add event to the calendar
             $this->update_calendar($formdata->coursemodule);
-            // TODO: add the item in the gradebook
+            // add the item in the gradebook
             $this->update_gradebook(false, $formdata->coursemodule);
         
         }
@@ -625,6 +633,7 @@ class assignment {
         $update->sendnotifications = $formdata->sendnotifications;
         $update->sendlatenotifications = $formdata->sendlatenotifications;
         $update->duedate = $formdata->duedate;
+        $update->finaldate = $formdata->finaldate;
         $update->allowsubmissionsfromdate = $formdata->allowsubmissionsfromdate;
         $update->grade = $formdata->grade;
         
@@ -1122,6 +1131,45 @@ class assignment {
     }
     
     /**
+     * view the grant extension date page
+     * 
+     * Uses url parameters 'userid'
+     * @global moodle_database $DB
+     * @global stdClass $CFG
+     * @return string
+     */
+    private function view_grant_extension($mform) {
+        global $DB, $CFG;
+
+        $o = '';
+        
+        $userid = required_param('userid', PARAM_INT);
+        require_once($CFG->dirroot . '/mod/assign/extension_form.php');
+
+        $grade = $this->get_user_grade($userid, false);
+
+        $user = $DB->get_record('user', array('id'=>$userid), '*', MUST_EXIST);
+
+        $data = new stdClass();
+        
+        if ($grade) {
+            $data->extensionduedate = $grade->extensionduedate;
+        } else {
+            $data->extensionduedate = null;
+        }
+        $data->userid = $userid;
+        
+        $o .= $this->output->render(new assignment_header($this, true, get_string('grantextension', 'assign')));
+        if (!$mform) {
+            $mform = new mod_assign_extension_form(null, array($this, $user, $data));
+        }
+        $o .= $this->output->render($mform);
+                 
+        $o .= $this->view_footer();     
+        return $o;
+    }
+    
+    /**
      * display the submission that is used by a plugin  
      * Uses url parameters 'sid', 'gid' and 'plugin'
      * @global stdClass $CFG
@@ -1458,6 +1506,7 @@ class assignment {
             $grade->timemodified = $grade->timecreated;
             $grade->locked = 0;
             $grade->grade = -1;
+            $grade->grader = $USER->id;
             $gid = $DB->insert_record('assign_grades', $grade);
             $grade->id = $gid;
             return $grade;
@@ -1512,8 +1561,16 @@ class assignment {
         // get the current grade
         $grade = $this->get_user_grade($userid, false);
         if ($this->can_view_submission($userid)) {
+            $showedit = has_capability('mod/assign:submit', $this->context) &&
+                         $this->submissions_open($userid) && ($this->is_any_submission_plugin_enabled());
+
+            $showsubmit = $showedit && $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
             $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($userid);
-            $o .= $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($userid), submission_status::GRADER_VIEW, false, false));
+            $extensionduedate = null;
+            if ($grade) {
+                $extensionduedate = $grade->extensionduedate;
+            }
+            $o .= $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($userid), submission_status::GRADER_VIEW, $showedit, $showsubmit, $extensionduedate));
         }
         if ($grade) {
             $data = new stdClass();
@@ -1959,10 +2016,15 @@ class assignment {
         if ($this->can_view_submission($USER->id)) {
             $showedit = has_capability('mod/assign:submit', $this->context) &&
                          $this->submissions_open() && ($this->is_any_submission_plugin_enabled());
-            $showsubmit = $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
+
+            $showsubmit = $showedit && $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
             $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($USER->id);
 
-            $o .= $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($USER->id), submission_status::STUDENT_VIEW, $showedit, $showsubmit));
+            $extensionduedate = null;   
+            if ($grade) {
+                $extensionduedate = $grade->extensionduedate; 
+            }
+            $o .= $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($USER->id), submission_status::STUDENT_VIEW, $showedit, $showsubmit, $extensionduedate));
 
             $o .= $this->output->render(new feedback_status($this, $grade, feedback_status::STUDENT_VIEW));
         }
@@ -2084,13 +2146,21 @@ class assignment {
      * @global stdClass $USER
      * @return bool 
      */
-    private function submissions_open() {
+    private function submissions_open($userid = null) {
         global $USER;
 
+        if (!$userid) {
+            $userid = $USER->id;
+        }
         $time = time();
         $dateopen = true;
         if ($this->get_instance()->preventlatesubmissions && $this->get_instance()->duedate) {
-            $dateopen = ($this->get_instance()->allowsubmissionsfromdate <= $time && $time <= $this->get_instance()->duedate);
+            $grade = $this->get_user_grade($userid, false);
+            if ($grade && $grade->extensionduedate) { 
+                $dateopen = ($this->get_instance()->allowsubmissionsfromdate <= $time && $time <= $grade->extensionduedate);
+            } else {
+                $dateopen = ($this->get_instance()->allowsubmissionsfromdate <= $time && $time <= $this->get_instance()->duedate);
+            }
         } else {
             $dateopen = ($this->get_instance()->allowsubmissionsfromdate <= $time);
         }
@@ -2100,22 +2170,22 @@ class assignment {
         }
 
         // now check if this user has already submitted etc.
-        if (!is_enrolled($this->get_course_context(), $USER)) {
+        if (!is_enrolled($this->get_course_context(), $userid)) {
             return false;
         }
-        if ($submission = $this->get_user_submission($USER->id, false)) {
+        if ($submission = $this->get_user_submission($userid, false)) {
             if ($this->get_instance()->submissiondrafts && $submission->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
                 // drafts are tracked and the student has submitted the assignment
                 return false;
             }
         }
-        if ($grade = $this->get_user_grade($USER->id, false)) {
+        if ($grade = $this->get_user_grade($userid, false)) {
             if ($grade->locked) {
                 return false;
             }
         }
 
-        if ($this->grading_disabled($USER->id)) {
+        if ($this->grading_disabled($userid)) {
             return false;
         }
 
@@ -2380,6 +2450,43 @@ class assignment {
             $this->email_student_submission_receipt($submission);
             $this->email_graders($submission);
         }
+    }
+    
+    /**
+     * save extension date 
+     * 
+     * @global moodle_database $DB
+     * @global stdClass $CFG
+     * @return void
+     */
+    private function process_save_extension(& $mform) {
+        global $DB, $CFG;
+
+        // Include extension form 
+        require_once($CFG->dirroot . '/mod/assign/extension_form.php');
+        
+        // Need submit permission to submit an assignment
+        require_capability('mod/assign:grantextension', $this->context);
+        
+        $userid = required_param('userid', PARAM_INT);
+    
+        $user = $DB->get_record('user', array('id'=>$userid), '*', MUST_EXIST);
+        
+        $mform = new mod_assign_extension_form(null, array($this, $user, null));
+        
+        if ($mform->is_cancelled()) {
+            return true;
+        }
+        
+        if ($formdata = $mform->get_data()) {
+            $grade = $this->get_user_grade($userid, true);
+            $grade->extensionduedate = $formdata->extensionduedate;
+
+            $this->update_grade($grade);
+            
+            return true;
+        }
+        return false;
     }
     
     /**

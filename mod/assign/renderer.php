@@ -89,6 +89,23 @@ class mod_assign_renderer extends plugin_renderer_base {
     }
     
     /**
+     * Render the grant extension form
+     * @param mod_assign_extension_form $form The extension date form to render
+     * @return string
+     */
+    public function render_mod_assign_extension_form(mod_assign_extension_form $form) {
+        $o = '';
+        
+        $o .= $this->output->heading(get_string('grantextension', 'assign'), 3);
+        $o .= $this->render(new user_summary($form->user, $form->assignment));
+
+        $o .= $this->output->box_start('boxaligncenter grantextension');
+        $o .= $this->moodleform($form);
+        $o .= $this->output->box_end();
+        return $o;
+    }
+    
+    /**
      * Render the grading options form
      * @param grading_options_form $form The grading options form to render
      * @return string
@@ -303,12 +320,25 @@ class mod_assign_renderer extends plugin_renderer_base {
 
             // time remaining
             $due = '';
-            if ($duedate - $time <= 0) {
+            if ($duedate < $time) {
                 $due = get_string('assignmentisdue', 'assign');
             } else {
                 $due = format_time($duedate - $time);
             }
             $this->add_table_row_tuple($t, get_string('timeremaining', 'assign'), $due);
+    
+            if ($duedate < $time) {
+            
+                $finaldate = $summary->get_assignment()->get_instance()->finaldate;
+                if ($finaldate) {
+                    if ($finaldate > $time) {
+                        $late = get_string('latesubmissionsaccepted', 'assign');
+                    } else {
+                        $late = get_string('nomoresubmissionsaccepted', 'assign');
+                    }
+                    $this->add_table_row_tuple($t, get_string('latesubmissions', 'assign'), $late);
+                }
+            }
         }
 
         // all done - write the table
@@ -508,12 +538,22 @@ class mod_assign_renderer extends plugin_renderer_base {
 
         
         $duedate = $status->get_assignment()->get_instance()->duedate;
-        if ($duedate >= 1) {
+        
+        if ($duedate > 0) {
             $row = new html_table_row();
             $cell1 = new html_table_cell(get_string('duedate', 'assign'));
             $cell2 = new html_table_cell(userdate($duedate));
             $row->cells = array($cell1, $cell2);
             $t->data[] = $row;
+
+            if ($status->get_extensionduedate()) {
+                $row = new html_table_row();
+                $cell1 = new html_table_cell(get_string('extensionduedate', 'assign'));
+                $cell2 = new html_table_cell(userdate($status->get_extensionduedate()));
+                $row->cells = array($cell1, $cell2);
+                $t->data[] = $row;
+                $duedate = $status->get_extensionduedate();
+            }
             
             // time remaining
             $row = new html_table_row();
@@ -542,6 +582,20 @@ class mod_assign_renderer extends plugin_renderer_base {
             $t->data[] = $row;
         } 
 
+        if ($status->get_view() == submission_status::GRADER_VIEW) {
+            $row = new html_table_row();
+            $cell1 = new html_table_cell(get_string('open', 'assign'));
+            if ($status->can_edit()) {
+                $cell2 = new html_table_cell(get_string('submissioneditable', 'assign'));
+                $cell2->attributes = array('class'=>'submissioneditable');
+            } else {
+                $cell2 = new html_table_cell(get_string('submissionnoteditable', 'assign'));
+                $cell2->attributes = array('class'=>'submissionnoteditable');
+            }
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+        }
+
         // last modified 
         if ($status->get_submission()) {
             $row = new html_table_row();
@@ -567,18 +621,20 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o .= $this->output->box_end();
     
         // links
-        if ($status->can_edit()) {
-            $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
-                array('id' => $status->get_assignment()->get_course_module()->id, 'action' => 'editsubmission')), get_string('editsubmission', 'assign'), 'get');
-        }
+        if ($status->get_view() == submission_status::STUDENT_VIEW) {
+            if ($status->can_edit()) {
+                $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
+                    array('id' => $status->get_assignment()->get_course_module()->id, 'action' => 'editsubmission')), get_string('editsubmission', 'assign'), 'get');
+            }
 
-        if ($status->can_submit()) {
-            // submission.php test
-            $o .= get_string('submitassignment_help', 'assign');
-            $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
-                    array('id' => $status->get_assignment()->get_course_module()->id, 'action'=>'submit')), get_string('submitassignment', 'assign'), 'get');
-            $o .= $this->output->box_start('boxaligncenter submithelp');
-            $o .= $this->output->box_end();
+            if ($status->can_submit()) {
+                // submission.php test
+                $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
+                        array('id' => $status->get_assignment()->get_course_module()->id, 'action'=>'submit')), get_string('submitassignment', 'assign'), 'get');
+                $o .= $this->output->box_start('boxaligncenter submithelp');
+                $o .= get_string('submitassignment_help', 'assign');
+                $o .= $this->output->box_end();
+            }
         }
         
         $o .= $this->output->container_end();
