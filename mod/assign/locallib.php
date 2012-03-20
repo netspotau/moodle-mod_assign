@@ -1964,6 +1964,7 @@ class assignment {
         
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
+        require_sesskey();
         
         $submission = $this->get_user_submission($USER->id,true);
         $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
