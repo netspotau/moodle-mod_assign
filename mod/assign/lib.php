@@ -155,9 +155,6 @@ function assign_pluginfile($course, $cm, context $context, $filearea, $args, $fo
 
     global $USER, $DB;
     
-    if ($context->contextlevel != CONTEXT_MODULE) {
-        return false;
-    }
 
     require_login($course, false, $cm);
     $itemid = (int) array_shift($args);
