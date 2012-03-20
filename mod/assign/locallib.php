@@ -1967,11 +1967,13 @@ class assignment {
         require_sesskey();
         
         $submission = $this->get_user_submission($USER->id,true);
-        $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+        if ($submission->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
+            $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
 
-        $this->update_submission($submission);
-        $this->add_to_log('submit for grading', $this->format_submission_for_log($submission));
-        $this->email_graders($submission);
+            $this->update_submission($submission);
+            $this->add_to_log('submit for grading', $this->format_submission_for_log($submission));
+            $this->email_graders($submission);
+        }
     }
     
     /**
