@@ -2072,7 +2072,6 @@ class assignment {
         
         $o = '';
         $o .= $this->output->render(new assignment_header($this, true));
-        $o .= groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id, true);
 
         if ($this->can_grade()) {
             $o .= $this->output->render(new grading_summary($this));
