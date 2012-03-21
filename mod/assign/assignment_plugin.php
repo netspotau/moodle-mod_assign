@@ -101,6 +101,16 @@ abstract class assignment_plugin {
     }
 
     /**
+     * Allows the plugin to update the defaultvalues passed in to
+     * the settings form (needed to set up draft areas for editor
+     * and filemanager elements)
+     * @param array $defaultvalues
+     */
+    public function data_preprocessing(&$defaultvalues) {
+        return;
+    }
+
+    /**
      * The assignment subtype is responsible for saving it's own settings as the database table for the 
      * standard type cannot be modified. 
      * 

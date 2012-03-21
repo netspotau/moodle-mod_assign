@@ -48,6 +48,7 @@ $string['backtoassignment'] = 'Back to assignment';
 $string['cancel'] = 'Cancel';
 $string['comment'] = 'Comment';
 $string['conversionexception'] = 'Could not convert assignment. Exception was: {$a}.';
+$string['confirmsubmission'] = 'Are you sure you want to submit your work for grading? You will not be able to make any more changes';
 $string['couldnotconvertgrade'] = 'Could not convert assignment grade for user {$a}.';
 $string['couldnotconvertsubmission'] = 'Could not convert assignment submission for user {$a}.';
 $string['couldnotcreatecoursemodule'] = 'Could not create course module.';

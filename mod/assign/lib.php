@@ -152,21 +152,25 @@ function assign_extend_settings_navigation(settings_navigation $settings, naviga
  * @return bool false if file not found, does not return if found - just send the file
  */
 function assign_pluginfile($course, $cm, context $context, $filearea, $args, $forcedownload) {
-    global $USER;
-
-    require_login($course, false, $cm);
+    global $USER, $DB;
     
-    $userid = (int)array_shift($args);
-    if ($context->id != context_system::instance()->id) {
-        // check is users submission or has grading permission
-        if ($USER->id != $userid and !has_capability('mod/assign:grade', $context)) {
-            return false;
-        }
+    require_login($course, false, $cm);
+    $itemid = (int)array_shift($args);
+    if (strpos($filearea, "submission") === 0) {
+        $record = $DB->get_record('assign_submission', array('id'=>$itemid), 'userid', MUST_EXIST);
+        $userid = $record->userid;
+    } else if (strpos($filearea, "feedback") === 0) {
+        $record = $DB->get_record('assign_grades', array('id'=>$itemid), 'userid', MUST_EXIST);
+        $userid = $record->userid;
     }
-        
+    // check is users submission or has grading permission
+    if ($USER->id != $userid and !has_capability('mod/assign:grade', $context)) {
+        return false;
+    }
+
     $relativepath = implode('/', $args);
 
-     $fullpath = "/{$context->id}/mod_assign/$filearea/$userid/$relativepath";
+    $fullpath = "/{$context->id}/mod_assign/$filearea/$itemid/$relativepath";
 
     $fs = get_file_storage();
     if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {

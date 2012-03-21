@@ -311,7 +311,7 @@ class assignment {
          } else if ($action == 'unlock') {
             $this->process_unlock();
             $action = 'grading';
-         } else if ($action == 'submitconfirm') {
+         } else if ($action == 'confirmsubmit') {
             $this->process_submit_assignment_for_grading();
             // save and show next button
         } else if ($action == 'submitgrade') {
@@ -733,6 +733,25 @@ class assignment {
         }
         self::$modulenameplural = get_string('modulenameplural', 'assign');
         return self::$modulenameplural;
+    }
+
+    /**
+     * Allow each plugin an opportunity to update the defaultvalues
+     * passed in to the settings form (needed to set up draft areas for
+     * editor and filemanager elements)
+     * @param array $defaultvalues
+     */
+    public function plugin_data_preprocessing(&$defaultvalues) {
+        foreach ($this->submissionplugins as $plugin) {
+            if ($plugin->is_visible()) {
+                $plugin->data_preprocessing(&$defaultvalues);
+            }
+        }
+        foreach ($this->feedbackplugins as $plugin) {
+            if ($plugin->is_visible()) {
+                $plugin->data_preprocessing(&$defaultvalues);
+            }
+        }
     }
 
     /**
@@ -2433,6 +2452,7 @@ class assignment {
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
         require_once($CFG->dirroot . '/mod/assign/confirm_submission_form.php');
+        require_sesskey();
         
         $data = new stdClass();
         $mform = new mod_assign_confirm_submission_form(null, array($this, $data));
@@ -2440,15 +2460,17 @@ class assignment {
         $formdata = $mform->get_data();
         if (!$mform->is_cancelled()) {
             $submission = $this->get_user_submission($USER->id,true);
-            $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+            if ($submission->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
+                $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
 
-            $this->update_submission($submission);
-            if (isset($formdata->submissionstatement)) {
-                $this->add_to_log('submission statement accepted', get_string('submissionstatementacceptedlog', 'mod_assign', fullname($USER)));
+                $this->update_submission($submission);
+                if (isset($formdata->submissionstatement)) {
+                    $this->add_to_log('submission statement accepted', get_string('submissionstatementacceptedlog', 'mod_assign', fullname($USER)));
+                }
+                $this->add_to_log('submit for grading', $this->format_submission_for_log($submission));
+                $this->email_student_submission_receipt($submission);
+                $this->email_graders($submission);
             }
-            $this->add_to_log('submit for grading', $this->format_submission_for_log($submission));
-            $this->email_student_submission_receipt($submission);
-            $this->email_graders($submission);
         }
     }
     

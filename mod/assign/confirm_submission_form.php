@@ -55,7 +55,7 @@ class mod_assign_confirm_submission_form extends moodleform {
         }
         $mform->addElement('hidden', 'id', $assignment->get_course_module()->id);
         $mform->setType('id', PARAM_INT);
-        $mform->addElement('hidden', 'action', 'submitconfirm');
+        $mform->addElement('hidden', 'action', 'confirmsubmit');
         $mform->setType('action', PARAM_ALPHA);
         $this->add_action_buttons(true, get_string('savechanges', 'assign'));
         if ($data) {
