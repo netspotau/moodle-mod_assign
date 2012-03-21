@@ -311,7 +311,7 @@ class assignment {
          } else if ($action == 'unlock') {
             $this->process_unlock();
             $action = 'grading';
-         } else if ($action == 'submit') {
+         } else if ($action == 'confirmsubmit') {
             $this->process_submit_assignment_for_grading();
             // save and show next button
         } else if ($action == 'submitgrade') {
@@ -357,6 +357,8 @@ class assignment {
             $o .= $this->view_grading_page();
         } else if ($action == 'downloadall') {
             $o .= $this->download_submissions();
+        } else if ($action == 'submit') {
+            $o .= $this->check_submit_for_grading();
         } else {
             $o .= $this->view_submission_page();
         }
@@ -704,6 +706,25 @@ class assignment {
         $mform->addElement('header', 'general', get_string('feedbacksettings', 'assign'));
         foreach ($this->feedbackplugins as $plugin) {
             $this->add_plugin_settings($plugin, $mform);
+        }
+    }
+
+    /**
+     * Allow each plugin an opportunity to update the defaultvalues
+     * passed in to the settings form (needed to set up draft areas for
+     * editor and filemanager elements)
+     * @param array $defaultvalues
+     */
+    public function plugin_data_preprocessing(&$defaultvalues) {
+        foreach ($this->submissionplugins as $plugin) {
+            if ($plugin->is_visible()) {
+                $plugin->data_preprocessing(&$defaultvalues);
+            }
+        }
+        foreach ($this->feedbackplugins as $plugin) {
+            if ($plugin->is_visible()) {
+                $plugin->data_preprocessing(&$defaultvalues);
+            }
         }
     }
 
@@ -1588,6 +1609,23 @@ class assignment {
     }
 
     /**
+     * Ask the user to confirm they want to submit their work for grading
+     * @return string
+     */
+    private function check_submit_for_grading() {
+        $continueurl = new moodle_url('/mod/assign/view.php', array('id' => $this->coursemodule->id,
+                                                                    'action' => 'confirmsubmit',
+                                                                    'sesskey' => sesskey()));
+        $cancelurl = new moodle_url('/mod/assign/view.php', array('id' => $this->coursemodule->id));
+
+        $o = '';
+        $o .= $this->output->header();
+        $o .= $this->output->confirm(get_string('confirmsubmission', 'mod_assign'), $continueurl, $cancelurl);
+        $o .= $this->view_footer();
+        return $o;
+    }
+
+    /**
      * View submissions page (contains details of current submission).
      *
      * @global stdClass $CFG
@@ -1945,13 +1983,16 @@ class assignment {
         
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
+        require_sesskey();
         
         $submission = $this->get_user_submission($USER->id,true);
-        $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+        if ($submission->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
+            $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
 
-        $this->update_submission($submission);
-        $this->add_to_log('submit for grading', $this->format_submission_for_log($submission));
-        $this->email_graders($submission);
+            $this->update_submission($submission);
+            $this->add_to_log('submit for grading', $this->format_submission_for_log($submission));
+            $this->email_graders($submission);
+        }
     }
     
     /**

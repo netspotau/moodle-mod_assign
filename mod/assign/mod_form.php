@@ -110,5 +110,28 @@ class mod_assign_mod_form extends moodleform_mod {
         return $errors;
     }
 
+    /**
+     * Any data processing needed before the form is displayed
+     * (needed to set up draft areas for editor and filemanager elements)
+     * @param array $defaultvalues
+     */
+    function data_preprocessing(&$defaultvalues) {
+        global $DB;
+
+        $ctx = null;
+        if ($this->current && $this->current->coursemodule) {
+            $cm = get_coursemodule_from_instance('assign', $this->current->id, 0, false, MUST_EXIST);
+            $ctx = context_module::instance($cm->id);
+        }
+        $assignment = new assignment($ctx, null, null);
+        if ($this->current && $this->current->course) {
+            if (!$ctx) {
+                $ctx = context_course::instance($this->current->course);
+            }
+            $assignment->set_course($DB->get_record('course', array('id'=>$this->current->course), '*', MUST_EXIST));
+        }
+        $assignment->plugin_data_preprocessing(&$defaultvalues);
+    }
+
 
 }
