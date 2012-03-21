@@ -286,10 +286,17 @@ function assign_print_overview($courses, &$htmlarray) {
     }
     $rs->close();
 
-
+     /**
     // get all user submissions, indexed by assignment id
     $mysubmissions = $DB->get_records_sql("SELECT g.assignment as assignment, g.timemodified as timemarked, g.grader as grader, g.grade as grade, s.status as status
                             FROM {assign_grades} g LEFT JOIN {assign_submission} s on s.assignment = g.assignment
+                            WHERE g.userid = ?
+                            AND g.assignment $sqlassignmentids", array_merge(array($USER->id), $assignmentidparams));
+    */
+
+    // get all user submissions, indexed by assignment id
+    $mysubmissions = $DB->get_records_sql("SELECT g.assignment as assignment, g.timemodified as timemarked, g.grader as grader, g.grade as grade, s.status as status
+                            FROM {assign_grades} g LEFT JOIN {assign_submission} s on s.assignment = g.assignment AND s.userid = g.userid
                             WHERE g.userid = ?
                             AND g.assignment $sqlassignmentids", array_merge(array($USER->id), $assignmentidparams));
 
