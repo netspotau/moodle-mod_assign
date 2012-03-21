@@ -3010,7 +3010,7 @@ class assignment {
             $grade->grader= $USER->id;
 
             $config = get_config('assign');
-            $gradebookplugin = $config->feedback_plugin_for_gradebook;
+            $gradebookplugin = $CFG->mod_assign_feedback_plugin_for_gradebook;
 
             // call save in plugins
             foreach ($this->feedbackplugins as $plugin) {
