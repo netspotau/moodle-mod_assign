@@ -286,20 +286,13 @@ function assign_print_overview($courses, &$htmlarray) {
     }
     $rs->close();
 
-     /**
+     
     // get all user submissions, indexed by assignment id
-    $mysubmissions = $DB->get_records_sql("SELECT g.assignment as assignment, g.timemodified as timemarked, g.grader as grader, g.grade as grade, s.status as status
-                            FROM {assign_grades} g LEFT JOIN {assign_submission} s on s.assignment = g.assignment
+    $mysubmissions = $DB->get_records_sql("SELECT g.assignment AS assignment, g.timemodified AS timemarked, g.grader AS grader, g.grade AS grade, s.status AS status
+                            FROM {assign_grades} g LEFT JOIN {assign_submission} s ON s.assignment = g.assignment AND s.userid = g.userid
                             WHERE g.userid = ?
                             AND g.assignment $sqlassignmentids", array_merge(array($USER->id), $assignmentidparams));
-    */
-
-    // get all user submissions, indexed by assignment id
-    $mysubmissions = $DB->get_records_sql("SELECT g.assignment as assignment, g.timemodified as timemarked, g.grader as grader, g.grade as grade, s.status as status
-                            FROM {assign_grades} g LEFT JOIN {assign_submission} s on s.assignment = g.assignment AND s.userid = g.userid
-                            WHERE g.userid = ?
-                            AND g.assignment $sqlassignmentids", array_merge(array($USER->id), $assignmentidparams));
-
+      
     foreach ($assignments as $assignment) {
         $str = '<div class="assign overview"><div class="name">'.$strassignment. ': '.
                '<a '.($assignment->visible ? '':' class="dimmed"').
