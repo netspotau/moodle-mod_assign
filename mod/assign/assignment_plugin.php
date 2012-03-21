@@ -225,7 +225,7 @@ abstract class assignment_plugin {
      * 
      * @return bool - if false - this plugin will not accept submissions / feedback
      */
-    public final function is_enabled() {
+    public function is_enabled() {
         return $this->get_config('enabled');
     }
 

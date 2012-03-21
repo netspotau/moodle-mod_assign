@@ -80,6 +80,19 @@ class mod_assign_importgrades_form extends moodleform implements renderable {
     /** @var assignment $assignment */
     public $assignment;
 
+    /** 
+     * Print a user - but not if blind marking is enabled
+     * @param stdClass user
+     * @return string
+     */
+    private function showuser($user) {
+        if (!$this->assignment->is_blind_marking()) {
+            return fullname($user);
+        } else {
+            return get_string('hiddenuser', 'assign', $this->assignment->get_uniqueid_for_user($user->id));
+        }
+    }
+
     function definition() {
         $mform = $this->_form;
         
@@ -116,12 +129,12 @@ class mod_assign_importgrades_form extends moodleform implements renderable {
                 $usergrade = $assignment->get_user_grade($user->id, false);
                 // Note: we lose the seconds when converting to user date format - so must not count seconds in comparision
                 if (!$ignoremodified && ($usergrade && $usergrade->timemodified > ($modified + 60))) {
-                    $mform->addElement('static', 'row' . $step, get_string('skiprecord', 'assign'), get_string('reason', 'assign', get_string('graderecentlymodified', 'assign', fullname($user))));
+                    $mform->addElement('static', 'row' . $step, get_string('skiprecord', 'assign'), get_string('reason', 'assign', get_string('graderecentlymodified', 'assign', $this->showuser($user))));
                 } else if (!$grade || $grade == '-' || $grade < 0) {
-                    $mform->addElement('static', 'row' . $step, get_string('skiprecord', 'assign'), get_string('reason', 'assign', get_string('nogradeinimport', 'assign', fullname($user))));
+                    $mform->addElement('static', 'row' . $step, get_string('skiprecord', 'assign'), get_string('reason', 'assign', get_string('nogradeinimport', 'assign', $this->showuser($user))));
                 } else {
                     $update = true;
-                    $mform->addElement('static', 'row' . $step, get_string('updaterecord', 'assign'), get_string('gradeupdate', 'assign', array('grade'=>$grade, 'student'=>fullname($user))));
+                    $mform->addElement('static', 'row' . $step, get_string('updaterecord', 'assign'), get_string('gradeupdate', 'assign', array('grade'=>$grade, 'student'=>$this->showuser($user))));
                 }
                     
                 $step += 1;
@@ -167,8 +180,8 @@ class mod_assign_gradeimporter {
     /** @var int $modifiedindex the column index containing the last modified time */
     private $modifiedindex = -1;
 
-    /** @var array $idcache a cache of unique ids to users */
-    private $idcache;
+    /** @var array $validusers only the enrolled users with the correct capability in this course */
+    private $validusers;
 
     /**
      * Constructor
@@ -226,14 +239,14 @@ class mod_assign_gradeimporter {
             return false;
         }
 
-        $currentgroup = groups_get_activity_group($this->assignment->get_course_module(), true);
-        $users = $this->assignment->list_participants($currentgroup, false);
-
-        $this->idcache = array();
-        foreach ($users as $userrecord) {
-            $this->idcache[sha1($userrecord->id . '_' . $this->assignment->get_instance()->id)] = $userrecord;
+        $groupmode = groups_get_activity_groupmode($this->assignment->get_course_module());
+        $groupid = 0;   // All users
+        $groupname = '';
+        if ($groupmode) {
+            $groupid = groups_get_activity_group($this->assignment->get_course_module(), true);
+            $groupname = groups_get_group_name($groupid).'-';
         }
-            
+        $this->validusers = $this->assignment->list_participants($groupid, false);
     
         return true;
     }
@@ -241,20 +254,24 @@ class mod_assign_gradeimporter {
     /**
      * Get the next row of data from the csv file (only the columns we care about)
      * 
+     * @global moodle_database $DB
      * @return stdClass or false The stdClass is an object containing user, grade and lastmodified
      */
     function next() {
+        global $DB;
         $result = new stdClass();
     
         while ($record = $this->csvreader->next()) {
-            $id = $record[$this->idindex];
-            if (!array_key_exists($id, $this->idcache)) {
-                continue;
-            } else {
-                $result->grade = $record[$this->gradeindex];
-                $result->modified = strtotime($record[$this->modifiedindex]);
-                $result->user = $this->idcache[$id];
-                return $result;
+            $idcolumn = $record[$this->idindex];
+            $id = array_pop(explode(' ', $idcolumn));
+
+            if ($userid = $this->assignment->get_user_for_uniqueid($id)) {
+                if (array_key_exists($userid, $this->validusers)) {
+                    $result->grade = $record[$this->gradeindex];
+                    $result->modified = strtotime($record[$this->modifiedindex]);
+                    $result->user = $this->validusers[$userid];
+                    return $result;
+                }
             }
         }
 

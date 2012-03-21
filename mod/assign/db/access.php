@@ -45,6 +45,16 @@ $capabilities = array(
             'student' => CAP_ALLOW
         )
     ),
+    
+    'mod/assign:revealidentities' => array(
+
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => array(
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW
+        )
+    ),
 
     'mod/assign:grade' => array(
         'captype' => 'write',

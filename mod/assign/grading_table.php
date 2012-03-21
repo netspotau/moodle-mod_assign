@@ -105,19 +105,28 @@ class grading_table extends table_sql implements renderable {
         $headers = array();
     
         // User picture
-        if (!$this->is_downloading()) {
-            $columns[] = 'picture';
-            $headers[] = '';
-        }
+        if (!$assignment->is_blind_marking()) {
+            if (!$this->is_downloading()) {
+                $columns[] = 'picture';
+                $headers[] = '';
+            }
         
-        // Fullname
-        $columns[] = 'fullname';
-        $headers[] = get_string('fullname');
+            // Fullname
+            $columns[] = 'fullname';
+            $headers[] = get_string('fullname');
 
-        foreach (get_extra_user_fields($assignment->get_context()) as $field) {
-            $columns[] = $field;
-            $headers[] = get_user_field_name($field);
+            foreach (get_extra_user_fields($assignment->get_context()) as $field) {
+                $columns[] = $field;
+                $headers[] = get_user_field_name($field);
+            }
         }
+        if (($this->is_downloading() && !$this->assignment->use_advanced_grading()) ||
+            ($assignment->is_blind_marking())) {
+            // Grade 
+            $columns[] = 'recordid';
+            $headers[] = get_string('recordid', 'assign');
+        }
+
 
         // Submission status
         $columns[] = 'status';
@@ -159,13 +168,9 @@ class grading_table extends table_sql implements renderable {
         }
 
         // final grade
-        $columns[] = 'finalgrade';
-        $headers[] = get_string('finalgrade', 'grades');
-
-        if ($this->is_downloading() && !$this->assignment->use_advanced_grading()) {
-            // Grade 
-            $columns[] = 'recordid';
-            $headers[] = get_string('recordid', 'assign');
+        if (!$assignment->is_blind_marking()) {
+            $columns[] = 'finalgrade';
+            $headers[] = get_string('finalgrade', 'grades');
         }
 
 
@@ -229,11 +234,6 @@ class grading_table extends table_sql implements renderable {
      */
     function col_picture(stdClass $row) {
         global $PAGE;
-        if ($this->rownum < 0) {
-            $this->rownum = $this->currpage * $this->pagesize;
-        } else {
-            $this->rownum += 1;
-        }
         if ($row->picture) {
             return $this->output->user_picture($row);
         }
@@ -328,6 +328,11 @@ class grading_table extends table_sql implements renderable {
         $o = '';
         $extraclass = '';
         $extratext = '';
+        if ($this->rownum < 0) {
+            $this->rownum = $this->currpage * $this->pagesize;
+        } else {
+            $this->rownum += 1;
+        }
 
         if ($this->assignment->is_any_submission_plugin_enabled()) {
             $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
@@ -435,7 +440,7 @@ class grading_table extends table_sql implements renderable {
      * @return string
      */
     function col_recordid(stdClass $row) {
-        return sha1($row->id . '_' . $this->assignment->get_instance()->id);
+        return get_string('hiddenuser', 'assign', $this->assignment->get_uniqueid_for_user($row->userid));
     }
 
     /**
