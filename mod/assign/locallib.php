@@ -710,20 +710,20 @@ class assignment {
     }
 
     /**
-     * Allow each plugin an opportunity to update the default_values
+     * Allow each plugin an opportunity to update the defaultvalues
      * passed in to the settings form (needed to set up draft areas for
      * editor and filemanager elements)
-     * @param array $default_values
+     * @param array $defaultvalues
      */
-    public function plugin_data_preprocessing(&$default_values) {
+    public function plugin_data_preprocessing(&$defaultvalues) {
         foreach ($this->submissionplugins as $plugin) {
             if ($plugin->is_visible()) {
-                $plugin->data_preprocessing(&$default_values);
+                $plugin->data_preprocessing(&$defaultvalues);
             }
         }
         foreach ($this->feedbackplugins as $plugin) {
             if ($plugin->is_visible()) {
-                $plugin->data_preprocessing(&$default_values);
+                $plugin->data_preprocessing(&$defaultvalues);
             }
         }
     }

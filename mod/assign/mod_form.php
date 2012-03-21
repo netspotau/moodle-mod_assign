@@ -113,9 +113,9 @@ class mod_assign_mod_form extends moodleform_mod {
     /**
      * Any data processing needed before the form is displayed
      * (needed to set up draft areas for editor and filemanager elements)
-     * @param array $default_values
+     * @param array $defaultvalues
      */
-    function data_preprocessing(&$default_values) {
+    function data_preprocessing(&$defaultvalues) {
         global $DB;
 
         $ctx = null;
@@ -130,7 +130,7 @@ class mod_assign_mod_form extends moodleform_mod {
             }
             $assignment->set_course($DB->get_record('course', array('id'=>$this->current->course), '*', MUST_EXIST));
         }
-        $assignment->plugin_data_preprocessing(&$default_values);
+        $assignment->plugin_data_preprocessing(&$defaultvalues);
     }
 
 
