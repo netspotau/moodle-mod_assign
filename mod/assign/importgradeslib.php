@@ -80,6 +80,19 @@ class mod_assign_importgrades_form extends moodleform implements renderable {
     /** @var assignment $assignment */
     public $assignment;
 
+    /** 
+     * Print a user - but not if blind marking is enabled
+     * @param stdClass user
+     * @return string
+     */
+    private function showuser($user) {
+        if (!$this->assignment->is_blind_marking()) {
+            return fullname($user);
+        } else {
+            return get_string('hiddenuser', 'assign', $this->assignment->get_uniqueid_for_user($user->id));
+        }
+    }
+
     function definition() {
         $mform = $this->_form;
         
@@ -116,12 +129,12 @@ class mod_assign_importgrades_form extends moodleform implements renderable {
                 $usergrade = $assignment->get_user_grade($user->id, false);
                 // Note: we lose the seconds when converting to user date format - so must not count seconds in comparision
                 if (!$ignoremodified && ($usergrade && $usergrade->timemodified > ($modified + 60))) {
-                    $mform->addElement('static', 'row' . $step, get_string('skiprecord', 'assign'), get_string('reason', 'assign', get_string('graderecentlymodified', 'assign', fullname($user))));
+                    $mform->addElement('static', 'row' . $step, get_string('skiprecord', 'assign'), get_string('reason', 'assign', get_string('graderecentlymodified', 'assign', $this->showuser($user))));
                 } else if (!$grade || $grade == '-' || $grade < 0) {
-                    $mform->addElement('static', 'row' . $step, get_string('skiprecord', 'assign'), get_string('reason', 'assign', get_string('nogradeinimport', 'assign', fullname($user))));
+                    $mform->addElement('static', 'row' . $step, get_string('skiprecord', 'assign'), get_string('reason', 'assign', get_string('nogradeinimport', 'assign', $this->showuser($user))));
                 } else {
                     $update = true;
-                    $mform->addElement('static', 'row' . $step, get_string('updaterecord', 'assign'), get_string('gradeupdate', 'assign', array('grade'=>$grade, 'student'=>fullname($user))));
+                    $mform->addElement('static', 'row' . $step, get_string('updaterecord', 'assign'), get_string('gradeupdate', 'assign', array('grade'=>$grade, 'student'=>$this->showuser($user))));
                 }
                     
                 $step += 1;
@@ -249,7 +262,9 @@ class mod_assign_gradeimporter {
         $result = new stdClass();
     
         while ($record = $this->csvreader->next()) {
-            $id = $record[$this->idindex];
+            $idcolumn = $record[$this->idindex];
+            $id = array_pop(explode(' ', $idcolumn));
+
             if ($userid = $this->assignment->get_user_for_uniqueid($id)) {
                 if (array_key_exists($userid, $this->validusers)) {
                     $result->grade = $record[$this->gradeindex];

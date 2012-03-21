@@ -126,6 +126,19 @@ class assignfeedback_file_importer_form extends moodleform implements renderable
         // file exists
         return true;
     }
+    
+    /** 
+     * Print a user - but not if blind marking is enabled
+     * @param stdClass user
+     * @return string
+     */
+    private function showuser($user) {
+        if (!$this->plugin->get_assignment()->is_blind_marking()) {
+            return fullname($user);
+        } else {
+            return get_string('hiddenuser', 'assign', $this->plugin->get_assignment()->get_uniqueid_for_user($user->id));
+        }
+    }
 
     /**
      * Is this a valid filename for import?
@@ -148,7 +161,11 @@ class assignfeedback_file_importer_form extends moodleform implements renderable
             $this->participants = array();
             foreach ($users as $user) {
                 // build the prefix 
-                $prefix = clean_filename(str_replace('_', '', fullname($user)) . '_' . $this->plugin->get_assignment()->get_uniqueid_for_user($user->id) . '_');
+                if (!$this->plugin->get_assignment()->is_blind_marking()) {
+                    $prefix = clean_filename(str_replace('_', '', fullname($user)) . '_' . $this->plugin->get_assignment()->get_uniqueid_for_user($user->id) . '_');
+                } else {
+                    $prefix = clean_filename(get_string('participant', 'assign') . '_' . $this->plugin->get_assignment()->get_uniqueid_for_user($user->id) . '_');
+                }
                 $this->participants[$prefix] = $user;
             }
         }
@@ -168,7 +185,6 @@ class assignfeedback_file_importer_form extends moodleform implements renderable
             }
         }
 
-        // filename pattern is fullname(user)_uniqueid_plugintype
         // get a list of all participants
         return false;
     }
@@ -207,7 +223,7 @@ class assignfeedback_file_importer_form extends moodleform implements renderable
                     if ($this->file_modified($this->unzippedfilesdir . '/' . $file, $user, $filename, $filerecord)) {
                         $mform->addElement('header', 'fileheader' . $count, get_string('stepnumber', 'assignfeedback_file', $count+1));
                         $mform->addElement('static', 'filelabel' . $count, get_string('file'), $file);
-                        $mform->addElement('static', 'userlabel' . $count, get_string('user'), fullname($user));
+                        $mform->addElement('static', 'userlabel' . $count, get_string('user'), $this->showuser($user));
                         if ($filerecord) {
                             $mform->addElement('select', 'file' . $count, '', $optionsupdate);
                         } else {

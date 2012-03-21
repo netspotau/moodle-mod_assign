@@ -83,6 +83,8 @@ class mod_assign_mod_form extends moodleform_mod {
         $mform->setDefault('submissiondrafts', 0);
         $mform->addElement('selectyesno', 'sendnotifications', get_string('sendnotifications', 'assign'));
         $mform->setDefault('sendnotifications', 1);
+        $mform->addElement('selectyesno', 'blindmarking', get_string('blindmarking', 'assign'));
+        $mform->setDefault('blindmarking', 0);
         
         // plagiarism enabling form
         plagiarism_get_form_elements_module($mform, $ctx->get_course_context());

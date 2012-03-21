@@ -215,6 +215,13 @@ class assignment {
         return $this->submissionplugins;
     }
     
+    /** 
+     * is_blind_marking
+     * @return bool 
+     */
+    public function is_blind_marking() {
+        return $this->get_instance()->blindmarking && !$this->get_instance()->revealidentities;
+    }
 
     /**
      * get a specific submission plugin by its type
@@ -337,6 +344,9 @@ class assignment {
         } else if ($action == 'saveoptions') {
             $this->process_save_grading_options();
             $action = 'grading';
+        } else if ($action == 'revealidentitiesconfirm') {
+            $this->process_reveal_identities();
+            $action = 'grading';
         }
 
         $returnparams = array('rownum'=>optional_param('rownum', 0, PARAM_INT));
@@ -363,6 +373,8 @@ class assignment {
             $o .= $this->view_plugin_grading_page();
         } else if ($action == 'uploadgradesfile') {
             $o .= $this->view_import_grades_page();
+         } else if ($action == 'revealidentities') {
+            $o .= $this->view_reveal_identities_confirm();
          } else if ($action == 'importgradesfile') {
             $o .= $this->process_import_grades();
         } else {
@@ -403,6 +415,7 @@ class assignment {
         $update->duedate = $formdata->duedate;
         $update->allowsubmissionsfromdate = $formdata->allowsubmissionsfromdate;
         $update->grade = $formdata->grade;
+        $update->blindmarking = $formdata->blindmarking;
         
         $returnid = $DB->insert_record('assign', $update);
         $this->instance = $DB->get_record('assign', array('id'=>$returnid), '*', MUST_EXIST);
@@ -621,6 +634,7 @@ class assignment {
         $update->duedate = $formdata->duedate;
         $update->allowsubmissionsfromdate = $formdata->allowsubmissionsfromdate;
         $update->grade = $formdata->grade;
+        $update->blindmarking = $formdata->blindmarking;
         
         $result = $DB->update_record('assign', $update);
         $this->instance = $DB->get_record('assign', array('id'=>$update->id), '*', MUST_EXIST);
@@ -1360,7 +1374,11 @@ class assignment {
                     $user = $DB->get_record('user', array('id'=>$userid), 'id, firstname, lastname');
                     // user may have been deleted?
                     if ($user) {
-                        $prefix = clean_filename(str_replace('_', '', fullname($user)) . '_' . $this->get_uniqueid_for_user($userid) . '_');
+                        if (!$this->is_blind_marking()) {
+                            $prefix = clean_filename(str_replace('_', '', fullname($user)) . '_' . $this->get_uniqueid_for_user($userid) . '_');
+                        } else {
+                            $prefix = clean_filename(get_string('participant', 'assign') . '_' . $this->get_uniqueid_for_user($userid) . '_');
+                        }
 
                         foreach ($this->submissionplugins as $plugin) {
                             if ($plugin->is_enabled() && $plugin->is_visible()) {
@@ -1387,7 +1405,11 @@ class assignment {
                 $grade = $this->get_user_grade($userid, false);
                 // user may have been deleted?
                 if ($user) {
-                    $prefix = clean_filename(fullname($user) . '_' .$userid . '_');
+                    if (!$this->is_blind_marking()) {
+                        $prefix = clean_filename(str_replace('_', '', fullname($user)) . '_' . $this->get_uniqueid_for_user($userid) . '_');
+                    } else {
+                        $prefix = clean_filename(get_string('participant', 'assign') . '_' . $this->get_uniqueid_for_user($userid) . '_');
+                    }
 
                     foreach ($this->feedbackplugins as $plugin) {
                         if ($plugin->is_enabled() && $plugin->is_visible()) {
@@ -1942,6 +1964,32 @@ class assignment {
         }
         return true;
     }
+    
+    /**
+     * Show a confirmation page to make sure they want to release student identities
+     *
+     * @return string
+     */
+    private function view_reveal_identities_confirm() {
+        global $CFG, $USER;
+
+        require_capability('mod/assign:revealidentities', $this->get_context());
+        
+        $o = '';
+        $o .= $this->output->render(new assignment_header($this, true));
+
+        $confirmurl = new moodle_url('/mod/assign/view.php', array('id'=>$this->get_course_module()->id, 
+                                                                    'action'=>'revealidentitiesconfirm',
+                                                                    'sesskey'=>sesskey()));
+
+        $cancelurl = new moodle_url('/mod/assign/view.php', array('id'=>$this->get_course_module()->id,
+                                                                    'action'=>'grading'));
+
+        $o .= $this->output->confirm(get_string('revealidentitiesconfirm', 'assign'), $confirmurl, $cancelurl);
+        $o .= $this->view_footer();
+        $this->add_to_log('view', get_string('viewrevealidentitiesconfirm', 'assign'));
+        return $o;
+    } 
 
     /**
      * View submissions page (contains details of current submission).
@@ -2032,6 +2080,11 @@ class assignment {
      * @return bool 
      */
     private function gradebook_item_update($submission=NULL, $grade=NULL) {
+
+        // do not push grade updates if blind marking is enabled because this would push student identities to the gradebook
+        if ($this->is_blind_marking()) {
+            return;
+        }
 
         $params = array('itemname' => $this->get_instance()->name, 'idnumber' => $this->get_course_module()->id);
 
@@ -2308,6 +2361,49 @@ class assignment {
         $this->update_submission($submission);
         $this->add_to_log('submit for grading', $this->format_submission_for_log($submission));
         $this->email_graders($submission);
+    }
+    
+    /**
+     * reveal student identities to markers (and the gradebook)
+     * 
+     * @return void
+     */
+    private function process_reveal_identities() {
+        global $DB, $CFG;
+
+        require_capability('mod/assign:revealidentities', $this->context);
+        if (!confirm_sesskey()) {
+            return false;
+        }
+
+        // update the assignment record
+        $update = new stdClass();
+        $update->id = $this->get_instance()->id;
+        $update->revealidentities = 1;
+        $DB->update_record('assign', $update);
+        
+
+        // release the grades to the gradebook
+        // first create the column in the gradebook
+        $this->update_gradebook(false, $this->get_course_module()->id);
+
+        // now release all grades
+
+        $grades = $DB->get_records('assign_grades', array('assignment'=>$this->get_instance()->id));
+        $gradebookplugin = $CFG->mod_assign_feedback_plugin_for_gradebook;
+
+        $plugin = $this->get_feedback_plugin_by_type($gradebookplugin);
+
+        foreach ($grades as $grade) {
+            // fetch any comments for this student
+            if ($plugin && $plugin->is_enabled() && $plugin->is_visible()) {
+                $grade->feedbacktext = $plugin->text_for_gradebook($grade);
+                $grade->feedbackformat = $plugin->format_for_gradebook($grade);
+            }
+            $this->gradebook_item_update(NULL, $grade);
+        }
+
+        
     }
     
     /**

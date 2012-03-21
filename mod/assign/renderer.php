@@ -173,9 +173,13 @@ class mod_assign_renderer extends plugin_renderer_base {
         }
         $o .= $this->output->container_start('usersummary');
         $o .= $this->output->box_start('boxaligncenter usersummarysection');
-        $o .= $this->output->user_picture($summary->get_user());
-        $o .= $this->output->spacer(array('width'=>30));
-        $o .= $this->output->action_link(new moodle_url('/user/view.php', array('id' => $summary->get_user()->id, 'course'=>$summary->get_assignment()->get_course()->id)), fullname($summary->get_user(), has_capability('moodle/site:viewfullnames', $summary->get_assignment()->get_course_context())));
+        if (!$summary->get_assignment()->is_blind_marking()) {
+            $o .= $this->output->user_picture($summary->get_user());
+            $o .= $this->output->spacer(array('width'=>30));
+            $o .= $this->output->action_link(new moodle_url('/user/view.php', array('id' => $summary->get_user()->id, 'course'=>$summary->get_assignment()->get_course()->id)), fullname($summary->get_user(), has_capability('moodle/site:viewfullnames', $summary->get_assignment()->get_course_context())));
+        } else {
+            $o .= get_string('hiddenuser', 'assign', $summary->get_assignment()->get_uniqueid_for_user($summary->get_user()->id));
+        }
         $o .= $this->output->box_end();
         $o .= $this->output->container_end();
         
@@ -653,6 +657,11 @@ class mod_assign_renderer extends plugin_renderer_base {
         if (!$table->get_assignment()->use_advanced_grading()) {
             $o .= $this->output->container_start('uploadgrades');
             $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_assignment()->get_course_module()->id, 'action' => 'uploadgrades')), get_string('uploadgrades', 'assign'));
+            $o .= $this->output->container_end();
+        }
+        if ($table->get_assignment()->is_blind_marking() && has_capability('mod/assign:revealidentities', $table->get_assignment()->get_context())) {
+            $o .= $this->output->container_start('revealidentities');
+            $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_assignment()->get_course_module()->id, 'action' => 'revealidentities')), get_string('revealidentities', 'assign'));
             $o .= $this->output->container_end();
         }
         

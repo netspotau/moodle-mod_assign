@@ -79,6 +79,18 @@ class assignment_submission_comments extends assignment_submission_plugin {
         return $comment->output(true);
      
     }
+
+    /**
+     * If blind marking is enabled then disable this plugin (it shows names)
+     * 
+     * @return bool 
+     */
+    public function is_enabled() {
+        if ($this->assignment->get_course_module() && $this->assignment->is_blind_marking()) {
+            return false;
+        }
+        return parent::is_enabled();
+    }
     
   /**
      * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type
