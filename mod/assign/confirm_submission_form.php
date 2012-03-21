@@ -53,11 +53,12 @@ class mod_assign_confirm_submission_form extends moodleform {
             $mform->addElement('checkbox', 'submissionstatement', '', ' ' . $config->submission_statement);
             $mform->addRule('submissionstatement', get_string('required'), 'required', null, 'client');
         }
+        $mform->addElement('static', 'confirmhelp', '', get_string('submitassignment_help', 'assign'));
         $mform->addElement('hidden', 'id', $assignment->get_course_module()->id);
         $mform->setType('id', PARAM_INT);
         $mform->addElement('hidden', 'action', 'confirmsubmit');
         $mform->setType('action', PARAM_ALPHA);
-        $this->add_action_buttons(true, get_string('savechanges', 'assign'));
+        $this->add_action_buttons(true, get_string('submit'));
         if ($data) {
             $this->set_data($data);
         }
