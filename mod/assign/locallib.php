@@ -2030,6 +2030,7 @@ class assignment {
         if ($formdata = $mform->get_data()) {
             $grade = $this->get_user_grade($userid, true);
             $grade->extensionduedate = $formdata->extensionduedate;
+            $grade->timemodified = time();
 
             return $DB->update_record('assign_grades', $grade);
         }
