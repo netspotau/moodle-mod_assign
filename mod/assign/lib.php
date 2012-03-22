@@ -288,10 +288,9 @@ function assign_print_overview($courses, &$htmlarray) {
 
      
     // get all user submissions, indexed by assignment id
-    $mysubmissions = $DB->get_records_sql("SELECT g.assignment AS assignment, g.timemodified AS timemarked, g.grader AS grader, g.grade AS grade, s.status AS status
-                            FROM {assign_grades} g LEFT JOIN {assign_submission} s ON s.assignment = g.assignment AND s.userid = g.userid
-                            WHERE g.userid = ?
-                            AND g.assignment $sqlassignmentids", array_merge(array($USER->id), $assignmentidparams));
+    $mysubmissions = $DB->get_records_sql("SELECT a.id AS assignment, g.timemodified AS timemarked, g.grader AS grader, g.grade AS grade, s.status AS status
+                            FROM {assign} a LEFT JOIN {assign_grades} g ON g.assignment = a.id AND g.userid = ? LEFT JOIN {assign_submission} s ON s.assignment = a.id AND s.userid = ?
+                            AND a.id $sqlassignmentids", array_merge(array($USER->id, $USER->id), $assignmentidparams));
       
     foreach ($assignments as $assignment) {
         $str = '<div class="assign overview"><div class="name">'.$strassignment. ': '.
@@ -324,22 +323,20 @@ function assign_print_overview($courses, &$htmlarray) {
         } if (has_capability('mod/assign:submit', $context)) {
             $str .= '<div class="details">';
             $str .= get_string('mysubmission', 'assign');
-            if (isset($mysubmissions[$assignment->id])) {
-                $submission = $mysubmissions[$assignment->id];
-
-                $str .= get_string('submissionstatus_' . $submission->status, 'assign');
-                $str .= ', ' . get_string('graded', 'assign');
-            } else {
+            $submission = $mysubmissions[$assignment->id];
+            if (!$submission->status || $submission->status == 'draft') {
                 $str .= $strnotsubmittedyet;
-                if ($assignment->duedate && time() > $assignment->duedate) {
-                    $str .= get_string('overdue', 'assign', format_time(time() - $assignment->duedate));
-                } else if ($assignment->duedate) {
-                    $str .= get_string('timeremaining', 'assign', format_time(time() - $assignment->duedate));
-                }
+            } else {
+                $str .= get_string('submissionstatus_' . $submission->status, 'assign');
+            }
+            if (!$submission->grade || $submission->grade < 0) {
+                $str .= ', ' . get_string('notgraded', 'assign');                
+            } else {
+                $str .= ', ' . get_string('graded', 'assign');
             }
             $str .= '</div>';
         }
-        $str .= '</div>';
+       $str .= '</div>';
         if (empty($htmlarray[$assignment->course]['assign'])) {
             $htmlarray[$assignment->course]['assign'] = $str;
         } else {
