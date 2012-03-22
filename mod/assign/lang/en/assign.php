@@ -132,6 +132,7 @@ $string['notifications'] = 'Notifications';
 $string['numberofdraftsubmissions'] = 'Drafts';
 $string['numberofparticipants'] = 'Participants';
 $string['numberofsubmittedassignments'] = 'Submitted';
+$string['offline'] = 'No submissions required';
 $string['overdue'] = '<font color="red">Assignment is overdue by: {$a}</font>';
 $string['pluginadministration'] = 'Assignment administration';
 $string['pluginname'] = 'Assignment';

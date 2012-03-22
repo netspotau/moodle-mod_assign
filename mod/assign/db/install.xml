@@ -11,8 +11,9 @@
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="course" NEXT="intro"/>
         <FIELD NAME="intro" TYPE="text" LENGTH="small" NOTNULL="true" SEQUENCE="false" PREVIOUS="name" NEXT="introformat"/>
         <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="intro" NEXT="alwaysshowdescription"/>
-        <FIELD NAME="alwaysshowdescription" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="introformat" NEXT="preventlatesubmissions"/>
-        <FIELD NAME="preventlatesubmissions" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="alwaysshowdescription" NEXT="submissiondrafts"/>
+        <FIELD NAME="alwaysshowdescription" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="introformat" NEXT="nosubmissions"/>
+        <FIELD NAME="nosubmissions" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="alwaysshowdescription" NEXT="preventlatesubmissions"/>
+        <FIELD NAME="preventlatesubmissions" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="nosubmissions" NEXT="submissiondrafts"/>
         <FIELD NAME="submissiondrafts" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="preventlatesubmissions" NEXT="sendnotifications"/>
         <FIELD NAME="sendnotifications" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="submissiondrafts" NEXT="duedate"/>
         <FIELD NAME="duedate" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="sendnotifications" NEXT="allowsubmissionsfromdate"/>
