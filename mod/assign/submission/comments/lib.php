@@ -86,7 +86,7 @@ class assignment_submission_comments extends assignment_submission_plugin {
      * @return bool 
      */
     public function is_enabled() {
-        if ($this->assignment->get_course_module() && $this->assignment->is_blind_marking()) {
+        if ($this->assignment->has_instance() && $this->assignment->is_blind_marking()) {
             return false;
         }
         return parent::is_enabled();
