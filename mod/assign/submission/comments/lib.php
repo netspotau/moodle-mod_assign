@@ -79,6 +79,14 @@ class assignment_submission_comments extends assignment_submission_plugin {
         return $comment->output(true);
      
     }
+
+    /**
+     * Always return false because at a minimum there is the comments control
+     * @return bool
+     */
+    public function is_empty(stdClass $submission) {
+        return false;
+    }
     
   /**
      * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type

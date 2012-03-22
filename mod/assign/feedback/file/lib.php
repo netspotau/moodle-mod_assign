@@ -198,4 +198,11 @@ class assignment_feedback_file extends assignment_feedback_plugin {
         
         return true;
     }
+    
+    /**
+     * Return true if there are no feedback files
+     */
+    public function is_empty(stdClass $grade) {
+        return $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES) == 0;
+    }
 }

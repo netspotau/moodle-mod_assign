@@ -347,6 +347,15 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
         
         return true;
     }
+
+    /**
+     * No text is set for this plugin
+     * 
+     * @return bool
+     */
+    public function is_empty(stdClass $submission) {
+        return $this->view() == '';
+    }
 }
 
 

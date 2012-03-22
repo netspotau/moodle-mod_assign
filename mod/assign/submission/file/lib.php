@@ -395,4 +395,11 @@ class assignment_submission_file extends assignment_submission_plugin {
         return $fileloginfo;
     }
 
+    /**
+     * Return true if there are no submission files
+     */
+    public function is_empty(stdClass $submission) {
+        return $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES) == 0;
+    }
+
 }

@@ -459,4 +459,12 @@ abstract class assignment_plugin {
      */
     public static function cron() {
     }
+
+    /**
+     * Is this assignment plugin empty? (ie no submission or feedback)
+     * @return bool
+     */
+    public function is_empty($submissionorgrade) {
+        return true;
+    }
 }
