@@ -2570,9 +2570,7 @@ class assignment {
             $grade = $this->get_user_grade($userid, true);
             $grade->extensionduedate = $formdata->extensionduedate;
 
-            $this->update_grade($grade);
-            
-            return true;
+            return $DB->update_record('assign_grades', $grade);
         }
         return false;
     }
