@@ -402,21 +402,18 @@ class mod_assign_renderer extends plugin_renderer_base {
         if ($grade->hidden or $grade->grade === false) { // hidden or error
             return '';
         }
+
+        // check to see if all feedback plugins are empty 
+        $emptyplugins = true;
+        foreach ($status->get_assignment()->get_feedback_plugins() as $plugin) {
+            if ($plugin->is_visible() && $plugin->is_enabled()) {
+                if (!$plugin->is_empty($assignmentgrade)) {
+                    $emptyplugins = false;
+                }
+            }
+        }
      
-        $commentsfeedback = $status->get_assignment()->get_feedback_plugin_by_type('comments');
-        $filefeedback = $status->get_assignment()->get_feedback_plugin_by_type('file');
-        $is_commentsfeedback_enabled= $commentsfeedback->is_enabled() && $commentsfeedback->is_visible();
-        $is_filefeedback_enabled = $filefeedback->is_enabled() && $filefeedback->is_visible();
-            
-        if ($is_commentsfeedback_enabled) {
-            $getcommentfeedback = $commentsfeedback->get_feedback_comments($assignmentgrade->id);
-        }
-
-        if ($is_filefeedback_enabled) {
-            $getfilefeedback = $filefeedback->get_file_feedback($assignmentgrade->id);
-        }
-
-        if ($grade->grade === null and empty($getcommentfeedback->commenttext) and ($getfilefeedback->numfiles < 1)) {   /// Nothing to show yet
+        if ($grade->grade === null && $emptyplugins) {   /// Nothing to show yet
                    return '';
         }
        
@@ -457,7 +454,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         }
     
         foreach ($status->get_assignment()->get_feedback_plugins() as $plugin) {
-            if ($plugin->is_enabled() && $plugin->is_visible()) {
+            if ($plugin->is_enabled() && $plugin->is_visible() && !$plugin->is_empty($status->get_grade())) {
                 $row = new html_table_row();
                 $cell1 = new html_table_cell($plugin->get_name());
                 $pluginfeedback = new feedback_plugin_feedback($status->get_assignment(), $plugin, $status->get_grade(), feedback_plugin_feedback::SUMMARY);
@@ -609,7 +606,7 @@ class mod_assign_renderer extends plugin_renderer_base {
             $t->data[] = $row;
 
             foreach ($status->get_assignment()->get_submission_plugins() as $plugin) {
-                if ($plugin->is_enabled() && $plugin->is_visible()) {
+                if ($plugin->is_enabled() && $plugin->is_visible() && !$plugin->is_empty($status->get_submission())) {
                     $row = new html_table_row();
                     $cell1 = new html_table_cell($plugin->get_name());
                     $pluginsubmission = new submission_plugin_submission($status->get_assignment(), $plugin, $status->get_submission(), submission_plugin_submission::SUMMARY);
