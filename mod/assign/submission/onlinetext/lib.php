@@ -232,7 +232,12 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
             
             $user = $DB->get_record("user", array("id"=>$submission->userid),'id,username,firstname,lastname', MUST_EXIST); 
 
-            $prefix = clean_filename(fullname($user) . "_" .$submission->userid . "_submission_onlinetext_");
+            if (!$this->assignment->is_blind_marking()) {
+                $prefix = clean_filename(str_replace('_', '', fullname($user)) . '_' . $this->assignment->get_uniqueid_for_user($userid) . '_' . $this->get_name() . '_');
+            } else {
+                $prefix = clean_filename(get_string('participant', 'assign') . '_' . $this->assignment->get_uniqueid_for_user($userid) . '_' . $this->get_name() . '_');
+            }
+
 
             $text = format_text($onlinetextsubmission->onlinetext, $onlinetextsubmission->onlineformat, array('context'=>$this->assignment->get_context()));      //fetched from database
             $submissioncontent = '<html><body>'. str_replace('@@PLUGINFILE@@/', $prefix, $text). '</body></html>';
