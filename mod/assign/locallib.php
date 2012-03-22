@@ -456,6 +456,12 @@ class assignment {
             $this->update_gradebook(false, $formdata->coursemodule);
         
         }
+        
+        $update = new stdClass();
+        $update->id = $this->get_instance()->id;
+        $update->nosubmissions = (!$this->is_any_submission_plugin_enabled()) ? 1: 0;
+        $DB->update_record('assign', $update);
+        
         return $returnid;
     }
 
@@ -675,6 +681,14 @@ class assignment {
         $this->update_calendar($this->get_course_module()->id);
 
         $this->update_gradebook(false, $this->get_course_module()->id);
+
+        $update = new stdClass();
+        $update->id = $this->get_instance()->id;
+        $update->nosubmissions = (!$this->is_any_submission_plugin_enabled()) ? 1: 0;
+        $DB->update_record('assign', $update);
+
+
+
 
 
         return $result;

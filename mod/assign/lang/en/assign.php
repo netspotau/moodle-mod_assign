@@ -178,6 +178,7 @@ $string['numberofdraftsubmissions'] = 'Drafts';
 $string['numberofparticipants'] = 'Participants';
 $string['numberofsubmittedassignments'] = 'Submitted';
 $string['open'] = 'Open';
+$string['offline'] = 'No online submissions required';
 $string['overdue'] = '<font color="red">Assignment is overdue by: {$a}</font>';
 $string['participant'] = 'Participant';
 $string['pluginadministration'] = 'Assignment administration';
