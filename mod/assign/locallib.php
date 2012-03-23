@@ -1313,7 +1313,6 @@ class assignment {
         return true;
     }
 
-
     /**
      * Does an assignment have submission(s) or grade(s) already?
      *
@@ -2329,7 +2328,7 @@ class assignment {
             foreach ($teachers as $teacher) {
                 $info = new stdClass();
                 if($this->is_blind_marking()){
-                    $info->username = get_string('participant', 'assign') . '_' . $this->get_uniqueid_for_user($submission->userid);
+                    $info->username = get_string('participant', 'assign') . ' ' . $this->get_uniqueid_for_user($submission->userid);
                 }else{
                     $info->username = fullname($user, true);
                 }
