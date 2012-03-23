@@ -84,6 +84,17 @@ class mod_assign_mod_form extends moodleform_mod {
         $mform->addElement('selectyesno', 'sendnotifications', get_string('sendnotifications', 'assign'));
         $mform->setDefault('sendnotifications', 1);
         $mform->addElement('selectyesno', 'blindmarking', get_string('blindmarking', 'assign'));
+        $mform->addHelpButton('blindmarking','blindmarking', 'assign');
+
+       //  echo'<pre>';
+         //var_dump($assignment);
+       //  die('fffffffffffffff');
+
+        if ($assignment->has_submissions_or_grades() ) {
+        
+            $mform->addElement('hidden', 'truevalue', 1);
+            $mform->disabledIf('blindmarking', 'truevalue', 'eq', 1);
+        }
         $mform->setDefault('blindmarking', 0);
         
         // plagiarism enabling form

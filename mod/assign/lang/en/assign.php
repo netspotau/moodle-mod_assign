@@ -45,6 +45,7 @@ $string['availability'] = 'Availability';
 $string['back'] = 'Back';
 $string['backtoassignment'] = 'Back to assignment';
 $string['blindmarking'] = 'Blind marking';
+$string['blindmarking_help'] = 'Blind marking settings will be locked once a submission or grade has been made in relation to this assignment';
 $string['cancel'] = 'Cancel';
 $string['comment'] = 'Comment';
 $string['conversionexception'] = 'Could not convert assignment. Exception was: {$a}.';

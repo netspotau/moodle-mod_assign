@@ -635,7 +635,7 @@ class assignment {
         $update->allowsubmissionsfromdate = $formdata->allowsubmissionsfromdate;
         $update->grade = $formdata->grade;
         $update->blindmarking = $formdata->blindmarking;
-        
+       
         $result = $DB->update_record('assign', $update);
         $this->instance = $DB->get_record('assign', array('id'=>$update->id), '*', MUST_EXIST);
         
@@ -1217,7 +1217,7 @@ class assignment {
                 throw new coding_exception('Submission id should not be 0');
             }
             $item = $this->get_submission($submissionid);
-
+           
             // permissions
             if ($item->userid != $USER->id) {
                 require_capability('mod/assign:grade', $this->context);
@@ -1310,6 +1310,21 @@ class assignment {
             return false;
         }
 
+        return true;
+    }
+
+
+    /**
+     * Does an assignment have submission(s) or grade(s) already?
+     *
+     * @return bool
+     */
+    public function has_submissions_or_grades() {
+        $allgrades = $this->get_all_grades();
+        $allsubmissions = $this->get_all_submissions();
+        if (empty($allgrades) && empty($allsubmissions)){
+            return false;
+        }
         return true;
     }
 
@@ -2313,7 +2328,11 @@ class assignment {
 
             foreach ($teachers as $teacher) {
                 $info = new stdClass();
-                $info->username = fullname($user, true);
+                if($this->is_blind_marking()){
+                    $info->username = get_string('participant', 'assign') . '_' . $this->get_uniqueid_for_user($submission->userid);
+                }else{
+                    $info->username = fullname($user, true);
+                }
                 $info->assignment = format_string($this->get_instance()->name,true, array('context'=>$this->get_context()));
                 $info->url = $CFG->wwwroot.'/mod/assign/view.php?id='.$this->get_course_module()->id;
                 $info->timeupdated = strftime('%c',$submission->timemodified);
