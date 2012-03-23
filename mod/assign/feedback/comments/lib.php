@@ -214,6 +214,6 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
      * @return bool
      */
     public function is_empty(stdClass $grade) {
-        return $this->view() == '';
+        return $this->view($grade) == '';
     }
 }
