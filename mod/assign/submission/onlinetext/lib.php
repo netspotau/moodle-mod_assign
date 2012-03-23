@@ -375,7 +375,7 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
      * @return bool
      */
     public function is_empty(stdClass $submission) {
-        return $this->view() == '';
+        return $this->view($submission) == '';
     }
 }
 
