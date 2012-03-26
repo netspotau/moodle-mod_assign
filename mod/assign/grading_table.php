@@ -105,6 +105,15 @@ class grading_table extends table_sql implements renderable {
         $columns[] = 'status';
         $headers[] = get_string('status');
 
+        if ($assignment->get_instance()->teamsubmission) {
+            $columns[] = 'team';
+            $headers[] = get_string('submissionteam', 'assign');
+
+            $columns[] = 'teamstatus';
+            $headers[] = get_string('teamsubmissionstatus', 'assign');
+
+        }
+
         // Edit links
         if (!$this->is_downloading()) {
             $columns[] = 'edit';
@@ -150,6 +159,8 @@ class grading_table extends table_sql implements renderable {
         $this->define_columns($columns);
         $this->define_headers($headers);
         $this->no_sorting('finalgrade');
+        $this->no_sorting('team');
+        $this->no_sorting('teamstatus');
         $this->no_sorting('edit');
         foreach ($this->assignment->get_submission_plugins() as $plugin) {
             if ($plugin->is_visible() && $plugin->is_enabled()) {
@@ -186,6 +197,35 @@ class grading_table extends table_sql implements renderable {
             return $grade;
         }
         return $this->assignment->display_grade($grade);
+    }
+    
+    /**
+     * Get the team info for this user
+     * 
+     * @param stdClass $row
+     * @return string The team name
+     */
+    function col_team(stdClass $row) {
+        $group = $this->assignment->get_submission_group($row->userid);
+        if ($group) {
+            return $group->name;
+        }
+        return get_string('defaultteam', 'assign');
+    }
+    
+    /**
+     * Get the team info for this user
+     * 
+     * @param stdClass $row
+     * @return string The team name
+     */
+    function col_teamstatus(stdClass $row) {
+        $submission = $this->assignment->get_group_submission($row->userid, 0, false);
+        $status = '';
+        if ($submission) {
+            $status = $submission->status;
+        }
+        return get_string('submissionstatus_' . $status, 'assign');
     }
     
     /**

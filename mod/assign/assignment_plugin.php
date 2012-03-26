@@ -459,4 +459,7 @@ abstract class assignment_plugin {
      */
     public static function cron() {
     }
+
+    public function is_empty($submissionorgrade) {
+    }
 }
