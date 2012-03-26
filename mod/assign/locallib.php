@@ -428,6 +428,9 @@ class assignment {
         $update->allowsubmissionsfromdate = $formdata->allowsubmissionsfromdate;
         $update->grade = $formdata->grade;
         $update->blindmarking = $formdata->blindmarking;
+        $update->teamsubmission = $formdata->teamsubmission;
+        $update->requireallteammemberssubmit = $formdata->requireallteammemberssubmit;
+        $update->teamsubmissiongroupingid = $formdata->teamsubmissiongroupingid;
         
         $returnid = $DB->insert_record('assign', $update);
         $this->instance = $DB->get_record('assign', array('id'=>$returnid), '*', MUST_EXIST);
@@ -656,6 +659,9 @@ class assignment {
         $update->allowsubmissionsfromdate = $formdata->allowsubmissionsfromdate;
         $update->grade = $formdata->grade;
         $update->blindmarking = $formdata->blindmarking;
+        $update->teamsubmission = $formdata->teamsubmission;
+        $update->requireallteammemberssubmit = $formdata->requireallteammemberssubmit;
+        $update->teamsubmissiongroupingid = $formdata->teamsubmissiongroupingid;
         
         $result = $DB->update_record('assign', $update);
         $this->instance = $DB->get_record('assign', array('id'=>$update->id), '*', MUST_EXIST);
@@ -944,6 +950,14 @@ class assignment {
         } else {
             return get_enrolled_users($this->context, "mod/assign:submit", $currentgroup);
         }
+
+        /* Should do this!
+            if (!empty($CFG->enablegroupmembersonly) and $cm->groupmembersonly) {
+                if ($groupingusers = groups_get_grouping_members($cm->groupingid, 'u.id', 'u.id')) {
+                    $users = array_intersect($users, array_keys($groupingusers));
+                }
+            }
+        */
     }
 
     /**
@@ -1476,9 +1490,127 @@ class assignment {
 
         add_to_log($this->get_course()->id, 'assign', $action, $fullurl, $info, $this->get_course_module()->id, $USER->id);
     }
+
+    /**
+     * Get a list of the users in the same group as this user
+     *
+     * @global moodle_database $DB
+     * @global stdClass $USER
+     * @param int $groupid The id of the group whose members we want or 0 for the default group
+     * @param bool $idsonly Whether to retrieve only the user id's
+     * @return array The users (possibly id's only)
+     */
+    public function get_submission_group_members($groupid, $onlyids) {
+        $members = array();
+        if ($groupid != 0) {
+            if ($onlyids) {
+                $allusers = groups_get_members($groupid, 'u.id');
+            } else {
+                $allusers = groups_get_members($groupid);
+            }
+            foreach ($allusers as $user) {
+                if ($this->get_submission_group($user->id)) {
+                    $members[] = $user;
+                }
+            }
+        } else {
+            $allusers = $this->list_participants(null, $onlyids);
+            foreach ($allusers as $user) {
+                if ($this->get_submission_group($user->id) == null) {
+                    $members[] = $user;
+                }
+            }
+        }
+        return $members;
+    }
+    
+    /**
+     * Load the submission object for a particular group, optionally creating it if required
+     *
+     * This will create the user submission and the group submission if required
+     *
+     * @global moodle_database $DB
+     * @global stdClass $USER
+     * @param int $userid The id of the user whose submission we want or 0 in which case USER->id is used
+     * @param bool $createnew optional Defaults to false. If set to true a new submission object will be created in the database
+     * @return stdClass The submission
+     */
+    public function get_group_submission($userid, $groupid, $create) {
+        global $DB;
+
+        if ($groupid == 0) {
+            $group = $this->get_submission_group($userid);
+            if ($group) {
+                $groupid = $group->id;
+            }
+        }
+
+        if ($create) {
+            // make sure there is a submission for this user
+            $submission = $DB->get_record('assign_submission', array('assignment'=>$this->get_instance()->id, 'groupid'=>0, 'userid'=>$userid));
+            if (!$submission) {
+                $submission = new stdClass();
+                $submission->assignment   = $this->get_instance()->id;
+                $submission->userid       = $userid;
+                $submission->groupid      = 0;
+                $submission->timecreated  = time();
+                $submission->timemodified = $submission->timecreated;
+                
+                if ($this->get_instance()->submissiondrafts) {
+                    $submission->status = ASSIGN_SUBMISSION_STATUS_DRAFT;
+                } else {
+                    $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+                }
+                $DB->insert_record('assign_submission', $submission);
+            }
+        }
+        // now get the group submission
+        $submission = $DB->get_record('assign_submission', array('assignment'=>$this->get_instance()->id, 'groupid'=>$groupid, 'userid'=>0));
+             
+        if ($submission) {
+            return $submission;
+        }
+        if ($create) {
+            $submission = new stdClass();
+            $submission->assignment   = $this->get_instance()->id;
+            $submission->userid       = 0;
+            $submission->groupid       = $groupid;
+            $submission->timecreated = time();
+            $submission->timemodified = $submission->timecreated;
+                
+            if ($this->get_instance()->submissiondrafts) {
+                $submission->status = ASSIGN_SUBMISSION_STATUS_DRAFT;
+            } else {
+                $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+            }
+            $sid = $DB->insert_record('assign_submission', $submission);
+            $submission->id = $sid;
+            return $submission;
+        }
+        return false;
+    }
+
+    /**
+     * This is used for team assignments to get the group for the specified user. 
+     * If the user is a member of multiple or no groups this will return false
+     *
+     * @param int $userid The id of the user whose submission we want
+     * @return mixed The group or false
+     */
+    public function get_submission_group($userid) {
+        $groups = groups_get_all_groups($this->get_course()->id, $userid, $this->get_instance()->teamsubmissiongroupingid);
+        if (count($groups) != 1) {
+            return false;
+        }
+        return array_pop($groups);
+    }
     
     /**
      * Load the submission object for a particular user, optionally creating it if required
+     *
+     * For team assignments there are 2 submissions - the student submission and the team submission
+     * All files are associated with the team submission but the status of the students contribution is
+     * recorded separately.
      *
      * @global moodle_database $DB
      * @global stdClass $USER
@@ -1492,8 +1624,9 @@ class assignment {
         if (!$userid) {
             $userid = $USER->id;
         }
+
         // if the userid is not null then use userid
-        $submission = $DB->get_record('assign_submission', array('assignment'=>$this->get_instance()->id, 'userid'=>$userid));
+        $submission = $DB->get_record('assign_submission', array('assignment'=>$this->get_instance()->id, 'userid'=>$userid, 'groupid'=>0));
          
         if ($submission) {
             return $submission;
@@ -1568,6 +1701,10 @@ class assignment {
         }
         return false;
     }
+
+    private function is_team_submissions() {
+        return $this->get_instance()->teamsubmission;
+    }
     
     /**
      * This will retrieve a grade object from the db
@@ -1605,6 +1742,7 @@ class assignment {
         $rownum = required_param('rownum', PARAM_INT);  
         $last = false;
         $userid = $this->get_userid_for_row($rownum, $last);
+
         if(!$userid){
             throw new coding_exception('Row is out of bounds for the current grading table: ' . $rownum);
         }
@@ -1612,6 +1750,11 @@ class assignment {
         if ($user) {
             $o .= $this->output->render(new user_summary($user, $this));
         }
+        $submissiongroup = null;
+        if ($this->is_team_submissions()) {
+            $teamsubmission = $this->get_group_submission($userid, 0, false);
+            $submissiongroup = $this->get_submission_group($userid);
+        } 
         $submission = $this->get_user_submission($userid, false);
         // get the current grade
         $grade = $this->get_user_grade($userid, false);
@@ -1625,7 +1768,16 @@ class assignment {
             if ($grade) {
                 $extensionduedate = $grade->extensionduedate;
             }
-            $o .= $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($userid), submission_status::GRADER_VIEW, $showedit, $showsubmit, $extensionduedate));
+            $o .= $this->output->render(new submission_status($this, 
+                                                              $submission, 
+                                                              $teamsubmission, 
+                                                              $submissiongroup, 
+                                                              $gradelocked, 
+                                                              $this->is_graded($userid), 
+                                                              submission_status::GRADER_VIEW, 
+                                                              false, 
+                                                              false,
+                                                              $extensionduedate));
         }
         if ($grade) {
             $data = new stdClass();
@@ -2090,13 +2242,11 @@ class assignment {
         if ($this->can_grade()) {
             $o .= $this->output->render(new grading_summary($this));
         }
-        $grade = $this->get_user_grade($USER->id, false);
-        $submission = $this->get_user_submission($USER->id, false);
-
         if ($this->can_view_submission($USER->id)) {
             $showedit = has_capability('mod/assign:submit', $this->context) &&
                          $this->submissions_open() && ($this->is_any_submission_plugin_enabled());
 
+            $grade = $this->get_user_grade($USER->id, false);
             $showsubmit = $showedit && $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
             $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($USER->id);
 
@@ -2104,7 +2254,32 @@ class assignment {
             if ($grade) {
                 $extensionduedate = $grade->extensionduedate; 
             }
-            $o .= $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($USER->id), submission_status::STUDENT_VIEW, $showedit, $showsubmit, $extensionduedate));
+            $submissiongroup = null;
+            if ($this->is_team_submissions()) {
+                $teamsubmission = $this->get_group_submission($USER->id, 0, false);
+                $submissiongroup = $this->get_submission_group($USER->id);
+            }
+            $submission = $this->get_user_submission($USER->id, false);
+
+            $showsubmit = ($submission || $teamsubmission);
+            if ($teamsubmission && ($teamsubmission->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED)) {
+                $showsubmit = false;
+            }
+            if ($submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED)) {
+                $showsubmit = false;
+            }
+            $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($USER->id);
+
+            $o .= $this->output->render(new submission_status($this, 
+                                                              $submission, 
+                                                              $teamsubmission, 
+                                                              $submissiongroup, 
+                                                              $gradelocked, 
+                                                              $this->is_graded($USER->id), 
+                                                              submission_status::STUDENT_VIEW, 
+                                                              $showedit, 
+                                                              $showsubmit,
+                                                              $extensionduedate));
 
             $o .= $this->output->render(new feedback_status($this, $grade, feedback_status::STUDENT_VIEW));
         }
@@ -2166,7 +2341,21 @@ class assignment {
      * @param mixed stdClass|null $grade
      * @return bool 
      */
-    private function gradebook_item_update($submission=NULL, $grade=NULL) {
+    private function gradebook_item_update($submission=null, $grade=null) {
+        
+        if($submission != null){
+            if ($submission->userid == 0) {
+                // this is a group submission update
+                $team = groups_get_members($submission->groupid, 'u.id');
+
+                foreach ($team as $member) {
+                    $submission->groupid = 0;
+                    $submission->userid = $member->id;
+                    $this->gradebook_item_update($submission, null); 
+                }
+                return;
+            }
+        }
 
         // do not push grade updates if blind marking is enabled because this would push student identities to the gradebook
         if ($this->is_blind_marking()) {
@@ -2200,19 +2389,85 @@ class assignment {
     }
 
     /**
-     * update grades in the gradebook based on submission time 
+     * update team submission 
      * 
      * @global moodle_database $DB
      * @param stdClass $submission
+     * @param int $userid
      * @param bool $updatetime
      * @return bool 
      */
-    private function update_submission(stdClass $submission, $updatetime=true) {
+    private function update_team_submission(stdClass $submission, $userid, $updatetime) {
         global $DB;
 
         if ($updatetime) {
             $submission->timemodified = time();
         }
+        
+        // first update the submission for the current user
+       
+        $mysubmission = $this->get_user_submission($userid, true);
+        $mysubmission->status = $submission->status;
+
+        $this->update_submission($mysubmission, 0, $updatetime, false);
+            
+        // now check the team settings to see if this assignment qualifies as submitted or draft
+        $team = $this->get_submission_group_members($submission->groupid, true);
+
+        $allsubmitted = true;
+        $anysubmitted = false;
+        foreach ($team as $member) {
+            $membersubmission = $this->get_user_submission($member->id, false);
+
+            if (!$membersubmission || $membersubmission->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
+                $allsubmitted = false;
+                break;
+            } else {
+                $anysubmitted = true;
+            }
+        }
+        if ($this->get_instance()->requireallteammemberssubmit) {
+            if ($allsubmitted) {
+                $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+            } else {
+                $submission->status = ASSIGN_SUBMISSION_STATUS_DRAFT;
+            }
+            $result= $DB->update_record('assign_submission', $submission);
+        } else {
+            if ($anysubmitted) {
+                $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+            } else {
+                $submission->status = ASSIGN_SUBMISSION_STATUS_DRAFT;
+            }
+            $result= $DB->update_record('assign_submission', $submission);
+        }
+        
+        $this->gradebook_item_update($submission);
+            
+        return $result;
+    }
+    
+
+    /**
+     * update grades in the gradebook based on submission time 
+     * 
+     * @global moodle_database $DB
+     * @param stdClass $submission
+     * @param int $userid
+     * @param bool $updatetime
+     * @return bool 
+     */
+    private function update_submission(stdClass $submission, $userid, $updatetime, $teamsubmission) {
+        global $DB;
+
+        if ($teamsubmission) {
+            return $this->update_team_submission($submission, $userid, $updatetime);
+        }
+
+        if ($updatetime) {
+            $submission->timemodified = time();
+        }
+
         $result= $DB->update_record('assign_submission', $submission);
         if ($result) {
             $this->gradebook_item_update($submission);
@@ -2287,13 +2542,6 @@ class assignment {
     public function render_area_files($area, $submissionid) {
         global $USER;
 
-        if (!$submissionid) {
-            $submission = $this->get_user_submission($USER->id,false);
-            $submissionid = $submission->id;
-        }
-         
-       
-        
         $fs = get_file_storage();
         $browser = get_file_browser();
         $files = $fs->get_area_files($this->get_context()->id, 'mod_assign', $area , $submissionid , "timemodified", false);              
@@ -2478,12 +2726,13 @@ class assignment {
      * email graders upon student submissions 
      * 
      * @global stdClass $CFG
+     * @global stdClass $USER
      * @global moodle_database $DB
      * @param stdClass $submission
      * @return void 
      */
     private function email_graders(stdClass $submission) {
-        global $CFG, $DB;
+        global $CFG, $DB, $USER;
 
         $late = $this->get_instance()->duedate && ($this->get_instance()->duedate < time());
 
@@ -2491,7 +2740,11 @@ class assignment {
             return;
         }
 
-        $user = $DB->get_record('user', array('id'=>$submission->userid), '*', MUST_EXIST);
+        if ($submission->userid) {
+            $user = $DB->get_record('user', array('id'=>$submission->userid), '*', MUST_EXIST);
+        } else {
+            $user = $USER;
+        }
 
         if ($teachers = $this->get_graders($user->id)) {
 
@@ -2525,11 +2778,16 @@ class assignment {
         
         $formdata = $mform->get_data();
         if (!$mform->is_cancelled()) {
-            $submission = $this->get_user_submission($USER->id,true);
+            if ($this->is_team_submissions()) {
+                $submission = $this->get_group_submission($USER->id, 0, true);
+            } else {
+                $submission = $this->get_user_submission($USER->id, true);
+            }
+        
             if ($submission->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
                 $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
 
-                $this->update_submission($submission);
+                $this->update_submission($submission, $USER->id, true, $this->is_team_submissions());
                 if (isset($formdata->submissionstatement)) {
                     $this->add_to_log('submission statement accepted', get_string('submissionstatementacceptedlog', 'mod_assign', fullname($USER)));
                 }
@@ -2716,7 +2974,11 @@ class assignment {
             return true;
         }
         if ($data = $mform->get_data()) {               
-            $submission = $this->get_user_submission($USER->id, true); //create the submission if needed & its id              
+            if ($this->is_team_submissions()) {
+                $submission = $this->get_group_submission($USER->id, 0, true);
+            } else {
+                $submission = $this->get_user_submission($USER->id, true);
+            }
             $grade = $this->get_user_grade($USER->id, false); // get the grade to check if it is locked
             if ($grade && $grade->locked) {
                 print_error('submissionslocked', 'assign');
@@ -2732,7 +2994,7 @@ class assignment {
                 }
             }
            
-            $this->update_submission($submission);
+            $this->update_submission($submission, $USER->id, true, $this->is_team_submissions());
 
             if (isset($data->submissionstatement)) {
                 $this->add_to_log('submission statement accepted', get_string('submissionstatementacceptedlog', 'mod_assign', fullname($USER)));
@@ -2906,6 +3168,11 @@ class assignment {
         $mform->setType('id', PARAM_INT);
         $mform->addElement('hidden', 'rownum', $params['rownum']);
         $mform->setType('rownum', PARAM_INT);
+
+        if ($this->is_team_submissions()) {
+            $mform->addElement('selectyesno', 'applytoall', get_string('applytoteam', 'assign'));
+            $mform->setDefault('applytoall', 1);
+        }
         
         $mform->addElement('hidden', 'action', 'submitgrade');
         $mform->setType('action', PARAM_ALPHA);
@@ -2974,7 +3241,11 @@ class assignment {
         
         // online text submissions
 
-        $submission = $this->get_user_submission($USER->id, false);
+        if ($this->is_team_submissions()) {
+            $submission = $this->get_group_submission($USER->id, 0, false);
+        } else {
+            $submission = $this->get_user_submission($USER->id, false);
+        }
 
         // submission statement
         $config = get_config('assign');
@@ -3012,12 +3283,16 @@ class assignment {
 
         $userid = required_param('userid', PARAM_INT);
 
-        $submission = $this->get_user_submission($userid, false);
+        if ($this->is_team_submissions()) {
+            $submission = $this->get_group_submission($userid, 0, false);
+        } else {
+            $submission = $this->get_user_submission($userid, false);
+        }
         if (!$submission) {
             return;
         }
         $submission->status = ASSIGN_SUBMISSION_STATUS_DRAFT;
-        $this->update_submission($submission, false);
+        $this->update_submission($submission, $userid, false, $this->is_team_submissions());
 
         // update the modified time on the grade (grader modified)
         $grade = $this->get_user_grade($userid, true);
@@ -3079,18 +3354,62 @@ class assignment {
 
         $this->add_to_log('unlock submission', get_string('unlocksubmissionforstudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user))));
     }
+
+    /**
+     * Apply a grade from a grading form to a user (may be called multiple times for a group submission)
+     *
+     * @global stdClass $USER
+     * @global stdClass $CFG
+     * @global moodle_database $DB
+     * @param stdClass $formdata - the data from the form
+     * @param int $userid - the user to apply the grade to
+     * @return void
+     */
+    private function apply_grade_to_user($formdata, $userid) {
+        global $USER, $CFG, $DB;
+
+        $grade = $this->get_user_grade($userid, true);
+        $gradingdisabled = $this->grading_disabled($userid);
+        $gradinginstance = $this->get_grading_instance($userid, $gradingdisabled);
+        if ($gradinginstance) {
+            $grade->grade = $gradinginstance->submit_and_get_grade($formdata->advancedgrading, $grade->id);
+        } else {
+            $grade->grade= grade_floatval($formdata->grade);
+        }
+        $grade->grader= $USER->id;
+
+        $gradebookplugin = $CFG->mod_assign_feedback_plugin_for_gradebook;
+
+        // call save in plugins
+        foreach ($this->feedbackplugins as $plugin) {
+            if ($plugin->is_enabled() && $plugin->is_visible()) {
+                if (!$plugin->save($grade, $formdata)) {
+                    $result = false;
+                    print_error($plugin->get_error());
+                }
+                if (('assignfeedback_' . $plugin->get_type()) == $gradebookplugin) {
+                    // this is the feedback plugin chose to push comments to the gradebook
+                    $grade->feedbacktext = $plugin->text_for_gradebook($grade);
+                    $grade->feedbackformat = $plugin->format_for_gradebook($grade);
+                }
+            }
+        }
+        $this->update_grade($grade);
+
+        $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
+
+        $this->add_to_log('grade submission', $this->format_grade_for_log($grade));
+    }
   
     /**
      * save grade
      * 
-     * @global stdClass $USER
-     * @global moodle_database $DB 
      * @global stdClass $CFG 
      * @param  moodleform $mform
      * @return bool - was the grade saved
      */
     private function process_save_grade(&$mform) {
-        global $USER, $DB, $CFG;
+        global $CFG;
         // Include grade form 
         require_once($CFG->dirroot . '/mod/assign/grade_form.php');
         
@@ -3104,40 +3423,20 @@ class assignment {
         $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum, 'last'=>false)));
 
         if ($formdata = $mform->get_data()) {
-            $grade = $this->get_user_grade($userid, true);
-            $gradingdisabled = $this->grading_disabled($userid);
-            $gradinginstance = $this->get_grading_instance($userid, $gradingdisabled);
-            if ($gradinginstance) {
-                $grade->grade = $gradinginstance->submit_and_get_grade($formdata->advancedgrading, $grade->id);
-            } else {
-                $grade->grade= grade_floatval($formdata->grade);
-            }
-            $grade->grader= $USER->id;
-
-            $config = get_config('assign');
-            $gradebookplugin = $CFG->mod_assign_feedback_plugin_for_gradebook;
-
-            // call save in plugins
-            foreach ($this->feedbackplugins as $plugin) {
-                if ($plugin->is_enabled() && $plugin->is_visible()) {
-                    if (!$plugin->save($grade, $formdata)) {
-                        $result = false;
-                        print_error($plugin->get_error());
-                    }
-                    if (('assignfeedback_' . $plugin->get_type()) == $gradebookplugin) {
-                        // this is the feedback plugin chose to push comments to the gradebook
-                        $grade->feedbacktext = $plugin->text_for_gradebook($grade);
-                        $grade->feedbackformat = $plugin->format_for_gradebook($grade);
-                    }
+            if ($this->is_team_submissions() && $formdata->applytoall) {
+                $groupid = 0;
+                if ($this->get_submission_group($userid)) {
+                    $groupid = $this->get_submission_group($userid)->id;
                 }
+                $members = $this->get_submission_group_members($groupid, true);
+                foreach ($members as $member) {
+                    // user may exist in multple groups (which should put them in the default group)
+                    $this->apply_grade_to_user($formdata, $member->id);
+                }
+            } else {
+                $this->apply_grade_to_user($formdata, $userid);
             }
-            $this->update_grade($grade);
-
-            $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
-
-            $this->add_to_log('grade submission', $this->format_grade_for_log($grade));
              
-       
         } else {
             return false;
         }

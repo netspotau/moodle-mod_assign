@@ -78,8 +78,8 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
         if ($grade) {
             $feedbackcomments = $this->get_feedback_comments($grade->id);
             if ($feedbackcomments) {
-                $data->feedbackcomments_editor['text'] = $feedbackcomments->commenttext;
-                $data->feedbackcomments_editor['format'] = $feedbackcomments->commentformat;
+                $data->assignfeedbackcomments_editor['text'] = $feedbackcomments->commenttext;
+                $data->assignfeedbackcomments_editor['format'] = $feedbackcomments->commentformat;
             }
         }
 

@@ -590,6 +590,10 @@ class submission_status implements renderable {
     
     /** @var stdClass the submission info (may be null) */
     protected $submission = null;
+    /** @var stdClass the team submission info (may be null) */
+    protected $teamsubmission = null;
+    /** @var stdClass the submission group info (may be null) */
+    protected $submissiongroup = null;
     /** @var assignment the assignment info (may not be null) */
     protected $assignment = null;
     /** @var int the view (submission_status::STUDENT_VIEW OR submission_status::GRADER_VIEW) */
@@ -616,9 +620,11 @@ class submission_status implements renderable {
      * @param bool $canedit
      * @param bool $cansubmit
      */
-    public function __construct($assignment, $submission, $locked, $graded, $view, $canedit, $cansubmit, $extensionduedate) {
+    public function __construct($assignment, $submission, $teamsubmission, $submissiongroup, $locked, $graded, $view, $canedit, $cansubmit, $extensionduedate) {
         $this->set_assignment($assignment);
         $this->set_submission($submission);
+        $this->set_team_submission($teamsubmission);
+        $this->set_submission_group($submissiongroup);
         $this->set_locked($locked);
         $this->set_graded($graded);
         $this->set_view($view);
@@ -721,6 +727,44 @@ class submission_status implements renderable {
             throw new coding_exception('Unknown submission view type.');
         }
     }
+    
+    /**
+     * Returns team submission
+     *
+     * @return mixed stdClass|null
+     */
+    public function get_team_submission() {
+        return $this->teamsubmission;
+    }
+
+    /**
+     * Set the team submission (may be null)
+     *
+     * @param mixed stdClass|null $submission
+     */
+    public function set_team_submission($teamsubmission) {
+        $this->teamsubmission = $teamsubmission;
+    }
+
+    /**
+     * Returns submission group
+     *
+     * @return mixed stdClass|null
+     */
+    public function get_submission_group() {
+        return $this->submissiongroup;
+    }
+
+    /**
+     * Set the submission group (may be null)
+     *
+     * @param mixed stdClass|null $submission
+     */
+    public function set_submission_group($submissiongroup) {
+        $this->submissiongroup = $submissiongroup;
+    }
+
+    
     
     /**
      * Returns submission info

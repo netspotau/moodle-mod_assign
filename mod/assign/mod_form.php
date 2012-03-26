@@ -98,6 +98,23 @@ class mod_assign_mod_form extends moodleform_mod {
         }
         $mform->addElement('selectyesno', 'blindmarking', get_string('blindmarking', 'assign'));
         $mform->setDefault('blindmarking', 0);
+        $mform->addElement('selectyesno', 'teamsubmission', get_string('teamsubmission', 'assign'));
+        $mform->setDefault('teamsubmission', 0);
+        $mform->addElement('selectyesno', 'requireallteammemberssubmit', get_string('requireallteammemberssubmit', 'assign'));
+        $mform->setDefault('requireallteammemberssubmit', 0);
+        $mform->disabledIf('requireallteammemberssubmit', 'teamsubmission', 'eq', 0);
+        $mform->disabledIf('requireallteammemberssubmit', 'submissiondrafts', 'eq', 0);
+
+        $groupings = groups_get_all_groupings($assignment->get_course()->id);
+        $options = array();
+        $options[0] = get_string('none');
+        foreach ($groupings as $grouping) {
+            $options[$grouping->id] = $grouping->name;
+        }
+        $mform->addElement('select', 'teamsubmissiongroupingid', get_string('teamsubmissiongrouping', 'assign'), $options);
+        $mform->disabledIf('teamsubmissiongroupingid', 'teamsubmission', 'eq', 0);
+
+        
         
         // plagiarism enabling form
         plagiarism_get_form_elements_module($mform, $ctx->get_course_context());

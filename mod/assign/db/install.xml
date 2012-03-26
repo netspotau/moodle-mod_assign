@@ -24,21 +24,27 @@
         <FIELD NAME="grade" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="allowsubmissionsfromdate" NEXT="timemodified"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="grade" NEXT="blindmarking"/>
         <FIELD NAME="blindmarking" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timemodified" NEXT="revealidentities"/>
-        <FIELD NAME="revealidentities" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="blindmarking"/>
+        <FIELD NAME="revealidentities" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="blindmarking" NEXT="teamsubmission"/>
+        <FIELD NAME="teamsubmission" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="revealidentities" NEXT="requireallteammemberssubmit"/>
+        <FIELD NAME="requireallteammemberssubmit" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="teamsubmission" NEXT="teamsubmissiongroupingid"/>
+        <FIELD NAME="teamsubmissiongroupingid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="requireallteammemberssubmit"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="course" UNIQUE="false" FIELDS="course"/>
+        <INDEX NAME="course" UNIQUE="false" FIELDS="course" NEXT="teamsubmissiongroupingid"/>
+        <INDEX NAME="teamsubmissiongroupingid" UNIQUE="false" FIELDS="teamsubmissiongroupingid" NEXT="name" PREVIOUS="course"/>
+        <INDEX NAME="name" UNIQUE="false" FIELDS="name" PREVIOUS="teamsubmissiongroupingid"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="assign_submission" COMMENT="Info about submitted assignments" PREVIOUS="assign" NEXT="assign_grades">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="assignment"/>
         <FIELD NAME="assignment" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="userid"/>
-        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="assignment" NEXT="timecreated"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="userid" NEXT="timemodified"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="assignment" NEXT="groupid"/>
+        <FIELD NAME="groupid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="userid" NEXT="timecreated"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="groupid" NEXT="timemodified"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timecreated" NEXT="status"/>
         <FIELD NAME="status" TYPE="text" LENGTH="small" NOTNULL="false" SEQUENCE="false" PREVIOUS="timemodified"/>
       </FIELDS>
@@ -47,7 +53,9 @@
         <KEY NAME="assignment" TYPE="foreign" FIELDS="assignment" REFTABLE="assignment" REFFIELDS="id" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="assignment_userid_groupid" UNIQUE="true" FIELDS="assignment, userid, groupid" NEXT="userid"/>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid" NEXT="groupid" PREVIOUS="assignment_userid_groupid"/>
+        <INDEX NAME="groupid" UNIQUE="false" FIELDS="groupid" PREVIOUS="userid"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="assign_grades" COMMENT="Info about graded assignments" PREVIOUS="assign_submission" NEXT="assign_plugin_config">
