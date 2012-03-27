@@ -31,10 +31,6 @@ require_once($CFG->dirroot . '/mod/assign/locallib.php');
 $id = required_param('id', PARAM_INT);  // Course Module ID
 $url = new moodle_url('/mod/assign/view.php'); // Base URL
 
-$cm = null;
-$assignment = null;
-$course = null;
-
 // get the request parameters
 $cm = get_coursemodule_from_id('assign', $id, 0, false, MUST_EXIST);
 
