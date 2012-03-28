@@ -2720,9 +2720,9 @@ class assignment {
         }
 
         if ($this->is_team_submissions()) {
-            $members = $this->get_submission_group_members($submission->groupid, true);
+            $members = $this->get_submission_group_members($submission->groupid, false);
             foreach ($members as $member) {
-                $this->send_notification($USER, $member, 'teamsubmissionreceipt', 'assign_student_notification', $submission->timemodified); 
+                $this->send_notification($member, $member, 'teamsubmissionreceipt', 'assign_student_notification', $submission->timemodified); 
             }
         } else {
             $user = $DB->get_record('user', array('id'=>$submission->userid), '*', MUST_EXIST);
