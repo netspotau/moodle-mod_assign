@@ -223,6 +223,12 @@ $string['submissionteam'] = 'Team';
 $string['assignsubmissionpluginname'] = 'Submission plugin';
 $string['submissionplugins'] = 'Submission plugins';
 $string['submissionreceipts'] = 'Send submission receipts';
+$string['teamsubmissionreceipttext'] = 'A member of your team has submitted an
+assignment submission for \'{$a->assignment}\'
+
+You can see the status of the assignment submission:
+
+    {$a->url}';
 $string['submissionreceipttext'] = 'You have submitted an
 assignment submission for \'{$a->assignment}\'
 
@@ -232,7 +238,11 @@ You can see the status of your assignment submission:
 $string['submissionreceipthtml'] = 'You have submitted an
 assignment submission for \'<i>{$a->assignment}</i>\'<br /><br />
 You can the status of your <a href="{$a->url}">assignment submission</a>.';
+$string['teamsubmissionreceipthtml'] = 'A member of your team has submitted an
+assignment submission for \'<i>{$a->assignment}</i>\'<br /><br />
+You can the status of the <a href="{$a->url}">assignment submission</a>.';
 $string['submissionreceiptsmall'] = 'You have submitted your assignment submission for "{$a->assignment}"';
+$string['teamsubmissionreceiptsmall'] = 'A member of your team has submitted an assignment submission for "{$a->assignment}"';
 $string['submissionslocked'] = 'This assignment is not accepting submissions';
 $string['submissions'] = 'Submissions';
 $string['submissionsnotgraded'] = 'Submissions not graded: {$a}';

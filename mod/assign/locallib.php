@@ -2713,13 +2713,20 @@ class assignment {
      * @return void 
      */
     private function email_student_submission_receipt(stdClass $submission) {
-        global $CFG, $DB;
+        global $CFG, $DB, $USER;
 
         if (!$CFG->mod_assign_submission_receipts) {          // No need to do anything
             return;
         }
 
-        $user = $DB->get_record('user', array('id'=>$submission->userid), '*', MUST_EXIST);
+        if ($this->is_team_submission()) {
+            $members = $this->get_submission_group_members($submission->groupid, true);
+            foreach ($members as $member) {
+                $this->send_notification($USER, $member, 'teamsubmissionreceipt', 'assign_student_notification', $submission->timemodified); 
+            }
+        } else {
+            $user = $DB->get_record('user', array('id'=>$submission->userid), '*', MUST_EXIST);
+        }
 
         $this->send_notification($user, $user, 'submissionreceipt', 'assign_student_notification', $submission->timemodified); 
     }
