@@ -2255,6 +2255,7 @@ class assignment {
                 $extensionduedate = $grade->extensionduedate; 
             }
             $submissiongroup = null;
+            $teamsubmission = null;
             if ($this->is_team_submissions()) {
                 $teamsubmission = $this->get_group_submission($USER->id, 0, false);
                 $submissiongroup = $this->get_submission_group($USER->id);
