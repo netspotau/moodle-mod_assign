@@ -2719,7 +2719,7 @@ class assignment {
             return;
         }
 
-        if ($this->is_team_submission()) {
+        if ($this->is_team_submissions()) {
             $members = $this->get_submission_group_members($submission->groupid, true);
             foreach ($members as $member) {
                 $this->send_notification($USER, $member, 'teamsubmissionreceipt', 'assign_student_notification', $submission->timemodified); 
