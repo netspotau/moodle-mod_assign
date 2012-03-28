@@ -247,8 +247,8 @@ function assign_print_overview($courses, &$htmlarray) {
                 $isopen = ($assignment->allowsubmissionsfromdate <= $time);
             }
         }
-        if (empty($isopen) || empty($assignment->duedate)) {
-            unset($assignments[$key]);
+        if (empty($isopen) || empty($assignment->duedate)) {          
+            $assignmentids[] = $assignment->id;
         } else {
             $assignmentids[] = $assignment->id;
         }
