@@ -2726,9 +2726,9 @@ class assignment {
             }
         } else {
             $user = $DB->get_record('user', array('id'=>$submission->userid), '*', MUST_EXIST);
+            $this->send_notification($user, $user, 'submissionreceipt', 'assign_student_notification', $submission->timemodified); 
         }
 
-        $this->send_notification($user, $user, 'submissionreceipt', 'assign_student_notification', $submission->timemodified); 
     }
     
     /**
