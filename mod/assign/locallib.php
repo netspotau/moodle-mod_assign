@@ -1751,6 +1751,7 @@ class assignment {
             $o .= $this->output->render(new user_summary($user, $this));
         }
         $submissiongroup = null;
+        $teamsubmission = null;
         if ($this->is_team_submissions()) {
             $teamsubmission = $this->get_group_submission($userid, 0, false);
             $submissiongroup = $this->get_submission_group($userid);
@@ -2247,6 +2248,7 @@ class assignment {
                          $this->submissions_open() && ($this->is_any_submission_plugin_enabled());
 
             $grade = $this->get_user_grade($USER->id, false);
+            $submission = $this->get_user_submission($USER->id, false);
             $showsubmit = $showedit && $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
             $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($USER->id);
 
@@ -2260,7 +2262,6 @@ class assignment {
                 $teamsubmission = $this->get_group_submission($USER->id, 0, false);
                 $submissiongroup = $this->get_submission_group($USER->id);
             }
-            $submission = $this->get_user_submission($USER->id, false);
 
             $showsubmit = ($submission || $teamsubmission);
             if ($teamsubmission && ($teamsubmission->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED)) {
