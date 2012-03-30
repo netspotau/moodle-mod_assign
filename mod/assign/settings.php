@@ -47,7 +47,7 @@ foreach (get_plugin_list('assignfeedback') as $type => $notused) {
 }
 
 $settings->add(new admin_setting_configcheckbox('mod_assign_submission_receipts',
-        new lang_string('sendsubmissionreceipts', 'mod_assign'), new lang_string('sendsubmissionreceipts_help', 'mod_assign'), 1));
+        get_string('sendsubmissionreceipts', 'mod_assign'), get_string('sendsubmissionreceipts_help', 'mod_assign'), 1));
 
 $settings->add(new admin_setting_configselect('mod_assign_feedback_plugin_for_gradebook', 
                       new lang_string('feedbackpluginforgradebook', 'mod_assign'),
