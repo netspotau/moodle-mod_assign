@@ -112,6 +112,7 @@ class mod_assign_mod_form extends moodleform_mod {
             $options[$grouping->id] = $grouping->name;
         }
         $mform->addElement('select', 'teamsubmissiongroupingid', get_string('teamsubmissiongrouping', 'assign'), $options);
+        $mform->setDefault('teamsubmissiongroupingid', 0);
         $mform->disabledIf('teamsubmissiongroupingid', 'teamsubmission', 'eq', 0);
 
         
