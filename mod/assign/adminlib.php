@@ -84,10 +84,11 @@ class admin_page_manage_assignment_plugins extends admin_externalpage {
             return $result;
         }
 
-        $found = false;
-        $textlib = textlib_get_instance();
+        $found = false;     
+        $textlib = new textlib();
+
         foreach (get_plugin_list($this->subtype) as $name => $notused) {
-            if (strpos($textlib->strtolower(get_string('pluginname', $this->subtype . '_' . $name)),
+            if (strpos($textlib::strtolower(get_string('pluginname', $this->subtype . '_' . $name)),
                     $query) !== false) {
                 $found = true;
                 break;

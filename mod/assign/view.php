@@ -27,21 +27,13 @@ require_once('../../config.php');
 /** Include locallib.php */
 require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
-
 $id = required_param('id', PARAM_INT);  // Course Module ID
 $url = new moodle_url('/mod/assign/view.php'); // Base URL
-
-$cm = null;
-$assignment = null;
-$course = null;
 
 // get the request parameters
 $cm = get_coursemodule_from_id('assign', $id, 0, false, MUST_EXIST);
 
 $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-
-
-$url->param('id', $id);
 
 // Auth
 require_login($course, true, $cm);

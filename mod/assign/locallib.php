@@ -919,7 +919,7 @@ class assignment {
             if ($grade == -1 || $grade === null) {
                 return '-';
             } else {
-                return format_float(($grade)) .' / '. format_float($this->get_instance()->grade);
+                return format_float(($grade),2) .' / '. format_float($this->get_instance()->grade,0);
             }
 
         } else {                                // Scale
@@ -1783,7 +1783,7 @@ class assignment {
         if ($grade) {
             $data = new stdClass();
             if ($grade->grade >= 0) {
-                $data->grade = $grade->grade;
+                $data->grade = format_float($grade->grade,2);                
             }
         } else {
             $data = new stdClass();
@@ -3154,9 +3154,9 @@ class assignment {
                 $mform->addElement('hidden', 'advancedgradinginstanceid', $gradinginstance->get_id());
             }
         } else {
-            // use simple direct grading
-            if ($this->get_instance()->grade > 0) {
-                $mform->addElement('text', 'grade', get_string('gradeoutof', 'assign', $this->get_instance()->grade));
+            // use simple direct grading                       
+            if ($this->get_instance()->grade > 0) {                        
+                $mform->addElement('text', 'grade', get_string('gradeoutof', 'assign',$this->get_instance()->grade));
                 $mform->setType('grade', PARAM_TEXT);
             } else {
                 $grademenu = make_grades_menu($this->get_instance()->grade);

@@ -51,8 +51,6 @@ if (!$assignments = get_all_instances_in_course("assign", $course)) {
 $sections = get_all_sections($course->id);
 
 // Check if we need the closing date header
-$showclosingheader = false;
-$showfeedback = false;
 $table = new html_table();
 $table->head  = array ($strplural, get_string('duedate', 'assign'), get_string('submissions', 'assign'));
 $table->align = array ('left', 'left', 'center');
