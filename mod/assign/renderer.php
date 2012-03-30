@@ -266,9 +266,9 @@ class mod_assign_renderer extends plugin_renderer_base {
     
             if ($duedate < $time) {
             
-                $finaldate = $summary->get_assignment()->get_instance()->finaldate;
-                if ($finaldate) {
-                    if ($finaldate > $time) {
+                $cutoffdate = $summary->get_assignment()->get_instance()->cutoffdate;
+                if ($cutoffdate) {
+                    if ($cutoffdate > $time) {
                         $late = get_string('latesubmissionsaccepted', 'assign');
                     } else {
                         $late = get_string('nomoresubmissionsaccepted', 'assign');

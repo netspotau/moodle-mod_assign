@@ -75,12 +75,10 @@ class mod_assign_mod_form extends moodleform_mod {
         $mform->setDefault('allowsubmissionsfromdate', time());
         $mform->addElement('date_time_selector', 'duedate', get_string('duedate', 'assign'), array('optional'=>true));
         $mform->setDefault('duedate', time()+7*24*3600);
-        $mform->addElement('date_time_selector', 'finaldate', get_string('finaldate', 'assign'), array('optional'=>true));
-        $mform->setDefault('finaldate', time()+14*24*3600);
+        $mform->addElement('date_time_selector', 'cutoffdate', get_string('cutoffdate', 'assign'), array('optional'=>true));
+        $mform->setDefault('cutoffdate', time()+14*24*3600);
         $mform->addElement('selectyesno', 'alwaysshowdescription', get_string('alwaysshowdescription', 'assign'));
-        $mform->setDefault('alwaysshowdescription', 1);
-        $mform->addElement('selectyesno', 'preventlatesubmissions', get_string('preventlatesubmissions', 'assign'));
-        $mform->setDefault('preventlatesubmissions', 0);
+        $mform->setDefault('alwaysshowdescription', 1);        
         $mform->addElement('selectyesno', 'submissiondrafts', get_string('submissiondrafts', 'assign'));
         $mform->setDefault('submissiondrafts', 0);
         $mform->addElement('selectyesno', 'sendnotifications', get_string('sendnotifications', 'assign'));
@@ -109,14 +107,14 @@ class mod_assign_mod_form extends moodleform_mod {
                 $errors['duedate'] = get_string('duedatevalidation', 'assign');
             }
         }
-        if ($data['duedate'] && $data['finaldate']) {
-            if ($data['duedate'] > $data['finaldate']) {
-                $errors['finaldate'] = get_string('finaldatevalidation', 'assign');
+        if ($data['duedate'] && $data['cutoffdate']) {
+            if ($data['duedate'] > $data['cutoffdate']) {
+                $errors['cutoffdate'] = get_string('cutoffdatevalidation', 'assign');
             }
         }
-        if ($data['allowsubmissionsfromdate'] && $data['finaldate']) {
-            if ($data['allowsubmissionsfromdate'] > $data['finaldate']) {
-                $errors['finaldate'] = get_string('finaldatefromdatevalidation', 'assign');
+        if ($data['allowsubmissionsfromdate'] && $data['cutoffdate']) {
+            if ($data['allowsubmissionsfromdate'] > $data['cutoffdate']) {
+                $errors['cutoffdate'] = get_string('cutoffdatefromdatevalidation', 'assign');
             }
         }
         return $errors;

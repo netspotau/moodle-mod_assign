@@ -381,7 +381,7 @@ class grading_table extends table_sql implements renderable {
                                                                $this->output->pix_icon('t/left', get_string('reverttodraft', 'assign')));
         }
         $now = time();
-        if (((!$this->assignment->get_instance()->finaldate) || $now < $this->assignment->get_instance()->finaldate) && has_capability('mod/assign:grantextension', $this->assignment->get_context())) {
+        if (has_capability('mod/assign:grantextension', $this->assignment->get_context())) {
             $edit .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
                                                                array('id' => $this->assignment->get_course_module()->id, 
                                                                      'userid'=>$row->id, 

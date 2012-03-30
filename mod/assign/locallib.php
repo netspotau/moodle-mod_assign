@@ -395,12 +395,11 @@ class assignment {
         $update->courseid = $formdata->course;
         $update->intro = $formdata->intro;
         $update->introformat = $formdata->introformat;
-        $update->alwaysshowdescription = $formdata->alwaysshowdescription;
-        $update->preventlatesubmissions = $formdata->preventlatesubmissions;
+        $update->alwaysshowdescription = $formdata->alwaysshowdescription;        
         $update->submissiondrafts = $formdata->submissiondrafts;
         $update->sendnotifications = $formdata->sendnotifications;
         $update->duedate = $formdata->duedate;
-        $update->finaldate = $formdata->finaldate;
+        $update->cutoffdate = $formdata->cutoffdate;
         $update->allowsubmissionsfromdate = $formdata->allowsubmissionsfromdate;
         $update->grade = $formdata->grade;
         
@@ -614,12 +613,11 @@ class assignment {
         $update->course = $formdata->course;
         $update->intro = $formdata->intro;
         $update->introformat = $formdata->introformat;
-        $update->alwaysshowdescription = $formdata->alwaysshowdescription;
-        $update->preventlatesubmissions = $formdata->preventlatesubmissions;
+        $update->alwaysshowdescription = $formdata->alwaysshowdescription;        
         $update->submissiondrafts = $formdata->submissiondrafts;
         $update->sendnotifications = $formdata->sendnotifications;
         $update->duedate = $formdata->duedate;
-        $update->finaldate = $formdata->finaldate;
+        $update->cutoffdate = $formdata->cutoffdate;
         $update->allowsubmissionsfromdate = $formdata->allowsubmissionsfromdate;
         $update->grade = $formdata->grade;
         
@@ -1782,13 +1780,20 @@ class assignment {
         }
         $time = time();
         $dateopen = true;
-        if ($this->get_instance()->preventlatesubmissions && $this->get_instance()->duedate) {
+        if ($this->get_instance()->duedate) {
             $grade = $this->get_user_grade($userid, false);
             if ($grade && $grade->extensionduedate) { 
                 $dateopen = ($this->get_instance()->allowsubmissionsfromdate <= $time && $time <= $grade->extensionduedate);
             } else {
-                $dateopen = ($this->get_instance()->allowsubmissionsfromdate <= $time && $time <= $this->get_instance()->duedate);
-            }
+
+                if ($this->get_instance()->cutoffdate) {
+
+                    $dateopen = ($this->get_instance()->allowsubmissionsfromdate <= $time && $time <= $this->get_instance()->cutoffdate);
+                } else {
+
+                    $dateopen = ($this->get_instance()->allowsubmissionsfromdate <= $time && $time <= $this->get_instance()->duedate);
+                }
+           }
         } else {
             $dateopen = ($this->get_instance()->allowsubmissionsfromdate <= $time);
         }

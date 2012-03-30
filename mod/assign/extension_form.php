@@ -55,8 +55,8 @@ class mod_assign_extension_form extends moodleform implements renderable {
         if ($this->assignment->get_instance()->duedate) {
             $mform->addElement('static', 'duedate', get_string('duedate', 'assign'), userdate($this->assignment->get_instance()->duedate));
         }
-        if ($this->assignment->get_instance()->finaldate) {
-            $mform->addElement('static', 'finaldate', get_string('finaldate', 'assign'), userdate($this->assignment->get_instance()->finaldate));
+        if ($this->assignment->get_instance()->cutoffdate) {
+            $mform->addElement('static', 'cutoffdate', get_string('cutoffdate', 'assign'), userdate($this->assignment->get_instance()->cutoffdate));
         }
         $mform->addElement('date_time_selector', 'extensionduedate', get_string('extensionduedate', 'assign'), array('optional'=>true));
         $mform->setDefault('extensionduedate', NULL);
@@ -86,12 +86,7 @@ class mod_assign_extension_form extends moodleform implements renderable {
                 $errors['extensionduedate'] = get_string('extensionnotafterfromdate', 'assign');
             }
         }
-        if ($this->assignment->get_instance()->finaldate && $data['extensionduedate']) {
-            if ($this->assignment->get_instance()->finaldate <= $data['extensionduedate']) {
-                $errors['extensionduedate'] = get_string('extensionnotbeforefinaldate', 'assign');
-            }
-        }
-
+        
         return $errors;
     }
 }

@@ -75,8 +75,7 @@ class assignment_upgrade_manager {
         $data->duedate = $oldassignment->timedue;
         $data->allowsubmissionsfromdate = $oldassignment->timeavailable;
         $data->grade = $oldassignment->grade;
-        $data->submissiondrafts = $oldassignment->resubmit;
-        $data->preventlatesubmissions = $oldassignment->preventlate;
+        $data->submissiondrafts = $oldassignment->resubmit;      
 
         $newassignment = new assignment(null, null, null);
         
