@@ -460,15 +460,58 @@ class grading_table extends table_sql implements renderable {
         }
         return false;
     }
-    
+
     /**
-     * Return the current assignemnt to the renderer
+     * Return things to the renderer
      *
-     * @return assignment
+     * @return string the assignment name
      */
-    function get_assignment() {
-        return $this->assignment;
+    function get_assignment_name() {
+        return $this->assignment->get_instance()->name;
     }
     
+    /**
+     * Return things to the renderer
+     *
+     * @return int the course module id
+     */
+    function get_course_module_id() {
+        return $this->assignment->get_course_module()->id;
+    }
+    
+    /**
+     * Return things to the renderer
+     *
+     * @return int the course id
+     */
+    function get_course_id() {
+        return $this->assignment->get_course()->id;
+    }
+    
+    /**
+     * Return things to the renderer
+     *
+     * @return stdClass The course context
+     */
+    function get_course_context() {
+        return $this->assignment->get_course_context();
+    }
 
+    /**
+     * Return things to the renderer
+     *
+     * @return bool Does this assignment accept submissions
+     */
+    function submissions_enabled() {
+        return $this->assignment->is_any_submission_plugin_enabled();
+    }
+
+    /**
+     * Return things to the renderer
+     *
+     * @return bool Can this user view all grades (the gradebook)
+     */
+    function can_view_all_grades() {
+        return has_capability('gradereport/grader:view', $this->assignment->get_course_context()) && has_capability('moodle/grade:viewall', $this->assignment->get_course_context());
+    }
 }

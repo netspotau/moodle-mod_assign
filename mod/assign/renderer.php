@@ -514,20 +514,20 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o .= $this->output->box_end();
 
         $o .= $this->output->spacer(array('height'=>30));
-        $contextname = print_context_name($table->get_assignment()->get_context());
+        $contextname = $table->get_assignment_name();
 
         $o .= $this->output->container_start('gradingnavigation');
         $o .= $this->output->container_start('backlink');
-        $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_assignment()->get_course_module()->id)), get_string('backto', '', $contextname));
+        $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_course_module_id())), get_string('backto', '', $contextname));
         $o .= $this->output->container_end();
-        if (has_capability('gradereport/grader:view', $table->get_assignment()->get_course_context()) && has_capability('moodle/grade:viewall', $table->get_assignment()->get_course_context())) {
+        if ($table->can_view_all_grades()) {
             $o .= $this->output->container_start('gradebooklink');
-            $o .= $this->output->action_link(new moodle_url('/grade/report/grader/index.php', array('id' => $table->get_assignment()->get_course()->id)), get_string('viewgradebook', 'assign'));
+            $o .= $this->output->action_link(new moodle_url('/grade/report/grader/index.php', array('id' => $table->get_course_id())), get_string('viewgradebook', 'assign'));
             $o .= $this->output->container_end();
         }
-        if ($table->get_assignment()->is_any_submission_plugin_enabled()) {
+        if ($table->submissions_enabled()) {
             $o .= $this->output->container_start('downloadalllink');
-            $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_assignment()->get_course_module()->id, 'action' => 'downloadall')), get_string('downloadall', 'assign'));
+            $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_course_module_id(), 'action' => 'downloadall')), get_string('downloadall', 'assign'));
             $o .= $this->output->container_end();
         }
 
