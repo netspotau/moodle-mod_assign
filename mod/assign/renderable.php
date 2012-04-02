@@ -218,7 +218,7 @@ class feedback_plugin_feedback implements renderable {
     /** @var string returnaction The action to take you back to the current page */
     var $returnaction = '';
     /** @var array returnparams The params to take you back to the current page */
-    var $returnaction = array();
+    var $returnparams = array();
     
     /**
      * feedback for a single plugin
@@ -257,7 +257,7 @@ class submission_plugin_submission implements renderable {
     /** @var string returnaction The action to take you back to the current page */
     var $returnaction = '';
     /** @var array returnparams The params to take you back to the current page */
-    var $returnaction = array();
+    var $returnparams = array();
     
 
     
@@ -413,7 +413,7 @@ class assignment_header implements renderable {
      * @param string $subpage  - an optional sub page in the navigation
      */
     public function __construct(stdClass $assign, $showintro, $coursemoduleid, $subpage='') {
-        $this->assign = $assignment;
+        $this->assign = $assign;
         $this->showintro = $showintro;
         $this->coursemoduleid = $coursemoduleid;
         $this->subpage = $subpage;

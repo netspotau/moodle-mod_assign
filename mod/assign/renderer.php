@@ -303,7 +303,7 @@ class mod_assign_renderer extends plugin_renderer_base {
             if ($plugin->is_enabled() && $plugin->is_visible() && !$plugin->is_empty($status->grade)) {
                 $row = new html_table_row();
                 $cell1 = new html_table_cell($plugin->get_name());
-                $pluginfeedback = new feedback_plugin_feedback($plugin, $status->grade, $status->coursemoduleid, $status->returnaction, $status->returnparams);
+                $pluginfeedback = new feedback_plugin_feedback($plugin, $status->grade, feedback_plugin_feedback::SUMMARY, $status->coursemoduleid, $status->returnaction, $status->returnparams);
                 $cell2 = new html_table_cell($this->render($pluginfeedback));
                 $row->cells = array($cell1, $cell2);
                 $t->data[] = $row;
@@ -431,7 +431,7 @@ class mod_assign_renderer extends plugin_renderer_base {
                 if ($plugin->is_enabled() && $plugin->is_visible() && !$plugin->is_empty($status->submission)) {
                     $row = new html_table_row();
                     $cell1 = new html_table_cell($plugin->get_name());
-                    $pluginsubmission = new submission_plugin_submission($plugin, $status->submission, submission_plugin_submission::SUMMARY);
+                    $pluginsubmission = new submission_plugin_submission($plugin, $status->submission, submission_plugin_submission::SUMMARY, $status->coursemoduleid, $status->returnaction, $status->returnparams);
                     $cell2 = new html_table_cell($this->render($pluginsubmission));
                     $row->cells = array($cell1, $cell2);
                     $t->data[] = $row;
@@ -482,7 +482,7 @@ class mod_assign_renderer extends plugin_renderer_base {
                                                      'plugin'=>$submissionplugin->plugin->get_type(), 
                                                      'action'=>'viewplugin' . $submissionplugin->plugin->get_subtype(), 
                                                      'returnaction'=>$submissionplugin->returnaction, 
-                                                     'returnparams'=>http_build_query($submissionplugin->returnlinks))), 
+                                                     'returnparams'=>http_build_query($submissionplugin->returnparams))), 
                                 $icon);
             
                 $link .= $this->output->spacer(array('width'=>15));

@@ -1701,11 +1701,13 @@ class assignment {
      * View submissions page (contains details of current submission).
      *
      * @global stdClass $CFG
+     * @global stdClass $DB
      * @global stdClass $USER
+     * @global stdClass $PAGE
      * @return string
      */
     private function view_submission_page() {
-        global $CFG, $USER;
+        global $CFG, $DB, $USER, $PAGE;
         
         $o = '';
         $o .= $this->output->render(new assignment_header($this->get_instance(), $this->show_intro(), $this->get_course_module()->id));
@@ -1751,17 +1753,19 @@ class assignment {
                                         'mod',
                                         'assign',
                                         $this->get_instance()->id,
-                                        $grade->userid);
+                                        $USER->id);
 
             $gradingitem = $gradinginfo->items[0];
-            $gradebookgrade = $gradingitem->grades[$grade->userid];
+            $gradebookgrade = $gradingitem->grades[$USER->id];
 
             // check to see if all feedback plugins are empty 
             $emptyplugins = true;
-            foreach ($this->get_feedback_plugins() as $plugin) {
-                if ($plugin->is_visible() && $plugin->is_enabled()) {
-                    if (!$plugin->is_empty($grade)) {
-                        $emptyplugins = false;
+            if ($grade) {
+                foreach ($this->get_feedback_plugins() as $plugin) {
+                    if ($plugin->is_visible() && $plugin->is_enabled()) {
+                        if (!$plugin->is_empty($grade)) {
+                            $emptyplugins = false;
+                        }
                     }
                 }
             }
@@ -1774,13 +1778,13 @@ class assignment {
 
                 if ($controller = $gradingmanager->get_active_controller()) {
                     $controller->set_grade_range(make_grades_menu($this->get_instance()->grade));
-                    $gradefordisplay = $controller->render_grade($this->output->page, 
+                    $gradefordisplay = $controller->render_grade($PAGE, 
                                                                  $grade->id, 
                                                                  $gradingitem, 
                                                                  $gradebookgrade->str_long_grade, 
                                                                  has_capability('mod/assign:grade', $this->get_context()));
                 } else {
-                    $gradefordisplay = $this->display_grade($grade);
+                    $gradefordisplay = $this->display_grade($gradebookgrade->grade);
                 }
 
                 $gradeddate = $gradebookgrade->dategraded;
