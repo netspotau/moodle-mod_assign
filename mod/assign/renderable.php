@@ -246,106 +246,37 @@ class submission_plugin_submission implements renderable {
     const SUMMARY                = 10;
     const FULL                   = 20;
 
-    /** @var assignment $assignment */
-    protected $assignment = null;
     /** @var assignment_submission_plugin $plugin */
-    protected $plugin = null;
+    var $plugin = null;
     /** @var stdClass $submission */
-    protected $submission = null;
+    var $submission = null;
     /** @var string $view */
-    protected $view = self::SUMMARY;
+    var $view = self::SUMMARY;
+    /** @var int $coursemoduleid */
+    var $coursemoduleid = 0;
+    /** @var string returnaction The action to take you back to the current page */
+    var $returnaction = '';
+    /** @var array returnparams The params to take you back to the current page */
+    var $returnaction = array();
+    
+
     
     /**
      * Constructor
-     * @param assignment $assignment
      * @param assignment_submission_plugin $plugin
      * @param stdClass $submission
      * @param string $view one of submission_plugin::SUMMARY, submission_plugin::FULL
+     * @param int $coursemoduleid - the course module id
+     * @param string $returnaction The action to return to the current page
+     * @param array $returnparams The params to return to the current page
      */
-    public function __construct(assignment $assignment, assignment_submission_plugin $plugin, stdClass $submission, $view) {
-        $this->set_assignment($assignment);
-        $this->set_plugin($plugin);
-        $this->set_submission($submission);
-        $this->set_view($view);
-    }
-    
-    /**
-     * Returns assignment info
-     *
-     * @return assignment
-     */
-    public function get_assignment() {
-        return $this->assignment;
-    }
-
-    /**
-     * Set the assignment info (may not be null)
-     *
-     * @param assignment $assignment
-     */
-    public function set_assignment(assignment $assignment) {
-        $this->assignment = $assignment;
-    }
-    
-    /**
-     * Returns submission info
-     *
-     * @return stdClass
-     */
-    public function get_submission() {
-        return $this->submission;
-    }
-
-    /**
-     * Set the submission info (may not be null)
-     *
-     * @param stdClass $submission
-     */
-    public function set_submission(stdClass $submission) {
-        $this->submission = $submission;
-    }
-
-    /**
-     * Returns plugin info
-     *
-     * @return assignment_submission_plugin
-     */
-    public function get_plugin() {
-        return $this->plugin;
-    }
-
-    /**
-     * Set the plugin info (may not be null)
-     *
-     * @param assignment_submission_plugin $plugin
-     */
-    public function set_plugin(assignment_submission_plugin $plugin) {
-        if (!$plugin) {
-            throw new coding_exception('Plugin may not be null');
-        }
+    public function __construct(assignment_submission_plugin $plugin, stdClass $submission, $view, $coursemoduleid, $returnaction, $returnparams) {
         $this->plugin = $plugin;
-    }
-    
-    /**
-     * Returns view
-     *
-     * @return int
-     */
-    public function get_view() {
-        return $this->view;
-    }
-
-    /**
-     * Set the view
-     *
-     * @param int $view
-     */
-    public function set_view($view) {
-        if (in_array($view, array(self::SUMMARY, self::FULL))) {
-            $this->view = $view;
-        } else {
-            throw new coding_exception('Unknown submission view type.');
-        }
+        $this->submission = $submission;
+        $this->view = $view;
+        $this->coursemoduleid = $coursemoduleid;
+        $this->returnaction = $returnaction;
+        $this->returnparams = $returnparams;
     }
 }
 
@@ -399,20 +330,34 @@ class submission_status implements renderable {
     const STUDENT_VIEW     = 10;
     const GRADER_VIEW      = 20;
     
+    /** @var int allowsubmissionsfromdate */
+    var $allowsubmissionsfromdate = 0;
+    /** @var bool alwaysshowdescription */
+    var $alwaysshowdescription = false;
     /** @var stdClass the submission info (may be null) */
-    protected $submission = null;
-    /** @var assignment the assignment info (may not be null) */
-    protected $assignment = null;
-    /** @var int the view (submission_status::STUDENT_VIEW OR submission_status::GRADER_VIEW) */
-    protected $view = self::STUDENT_VIEW;
+    var $submission = null;
+    /** @var bool submissionsenabled */
+    var $submissionsenabled = false;
     /** @var bool locked */
-    protected $locked = false;
+    var $locked = false;
     /** @var bool graded */
-    protected $graded = false;
-    /** @var bool show_edit */
-    protected $canedit = false;
-    /** @var bool show_submit */
-    protected $cansubmit = false;
+    var $graded = false;
+    /** @var int duedate */
+    var $duedate = 0;
+    /** @var array submissionplugins - the list of submission plugins */
+    var $submissionplugins = array();
+    /** @var string returnaction */
+    var $returnaction = '';
+    /** @var string returnparams */
+    var $returnparams = array();
+    /** @var int coursemoduleid */
+    var $coursemoduleid = 0;
+    /** @var int the view (submission_status::STUDENT_VIEW OR submission_status::GRADER_VIEW) */
+    var $view = self::STUDENT_VIEW;
+    /** @var bool canedit */
+    var $canedit = false;
+    /** @var bool cansubmit */
+    var $cansubmit = false;
 
     /**
      * constructor
@@ -425,147 +370,25 @@ class submission_status implements renderable {
      * @param bool $canedit
      * @param bool $cansubmit
      */
-    public function __construct($assignment, $submission, $locked, $graded, $view, $canedit, $cansubmit) {
-        $this->set_assignment($assignment);
-        $this->set_submission($submission);
-        $this->set_locked($locked);
-        $this->set_graded($graded);
-        $this->set_view($view);
-        $this->set_can_edit($canedit);
-        $this->set_can_submit($cansubmit);
-    }
-    
-    /**
-     * Returns true if the we should show the edit submission link
-     *
-     * @return bool
-     */
-    public function can_edit() {
-        return $this->canedit;
-    }
-
-    /**
-     * Sets the canedit link of the submission
-     *
-     * @param bool $canedit
-     */
-    public function set_can_edit($canedit) {
+    public function __construct($allowsubmissionsfromdate, $alwaysshowdescription, $submission, $submissionsenabled,
+                                $locked, $graded, $duedate, $submissionplugins, $returnaction, $returnparams, 
+                                $coursemoduleid, $view, $canedit, $cansubmit) {
+        $this->allowsubmissionsfromdate = $allowsubmissionsfromdate;
+        $this->alwaysshowdescription = $alwaysshowdescription;
+        $this->submission = $submission;
+        $this->submissionsenabled = $submissionsenabled;
+        $this->locked = $locked;
+        $this->graded = $graded;
+        $this->duedate = $duedate;
+        $this->submissionplugins = $submissionplugins;
+        $this->returnaction = $returnaction;
+        $this->returnparams = $returnparams;
+        $this->coursemoduleid = $coursemoduleid;
+        $this->view = $view;
         $this->canedit = $canedit;
-    }
-    
-    /**
-     * Returns true if the we should show the submit submission link
-     *
-     * @return bool
-     */
-    public function can_submit() {
-        return $this->cansubmit;
-    }
-
-    /**
-     * Sets the cansubmit status of the submission
-     *
-     * @param bool $cansubmit
-     */
-    public function set_can_submit($cansubmit) {
         $this->cansubmit = $cansubmit;
     }
     
-    
-    /**
-     * Returns true if the submission is graded in the gradebook
-     *
-     * @return bool
-     */
-    public function is_graded() {
-        return $this->graded;
-    }
-
-    /**
-     * Sets the graded status of the submission
-     *
-     * @param bool $graded
-     */
-    public function set_graded($graded = false) {
-        $this->graded = $graded;
-    }
-    
-    /**
-     * Returns true if the submission is locked in the gradebook
-     *
-     * @return bool
-     */
-    public function is_locked() {
-        return $this->locked;
-    }
-
-    /**
-     * Sets the locked status of the submission
-     *
-     * @param bool $locked
-     */
-    public function set_locked($locked = false) {
-        $this->locked = $locked;
-    }
-    
-    /**
-     * Returns submission view type
-     *
-     * @return string
-     */
-    public function get_view() {
-        return $this->view;
-    }
-
-    /**
-     * Sets the submission view type
-     *
-     * @param int $view
-     */
-    public function set_view($view) {
-        if (in_array($view, array(self::STUDENT_VIEW, self::GRADER_VIEW))) {
-            $this->view = $view;
-        } else {
-            throw new coding_exception('Unknown submission view type.');
-        }
-    }
-    
-    /**
-     * Returns submission info
-     *
-     * @return mixed stdClass|null
-     */
-    public function get_submission() {
-        return $this->submission;
-    }
-
-    /**
-     * Set the submission info (may be null)
-     *
-     * @param mixed stdClass|null $submission
-     */
-    public function set_submission($submission) {
-        $this->submission = $submission;
-    }
-
-    /**
-     * Returns assignment info
-     *
-     * @return assignment
-     */
-    public function get_assignment() {
-        return $this->assignment;
-    }
-
-    /**
-     * Set the assignment info (may not be null)
-     *
-     * @param assignment $assignment
-     */
-    public function set_assignment(assignment $assignment) {
-        $this->assignment = $assignment;
-    }
-
 }
 
 /**

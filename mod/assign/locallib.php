@@ -1081,8 +1081,17 @@ class assignment {
             if ($item->userid != $USER->id) {
                 require_capability('mod/assign:grade', $this->context);
             }
-            $o .= $this->output->render(new assignment_header($this->get_instance(), $this->show_intro(), $this->get_course_module()->id, $plugin->get_name()));
-            $o .= $this->output->render(new submission_plugin_submission($this, $plugin, $item, submission_plugin_submission::FULL));
+            $o .= $this->output->render(new assignment_header($this->get_instance(), 
+                                                              $this->show_intro(), 
+                                                              $this->get_course_module()->id, 
+                                                              $plugin->get_name()));
+            $o .= $this->output->render(new submission_plugin_submission($plugin, 
+                                                              $item, 
+                                                              submission_plugin_submission::FULL, 
+                                                              $this->get_course_module()->id, 
+                                                              $this->get_return_action(), 
+                                                              $this->get_return_params()));
+
             $this->add_to_log('view submission', get_string('viewsubmissionforuser', 'assign', $item->userid));
         } else {
             $plugin = $this->get_feedback_plugin_by_type($plugintype);
@@ -1094,8 +1103,16 @@ class assignment {
             if ($item->userid != $USER->id) {
                 require_capability('mod/assign:grade', $this->context);
             }
-            $o .= $this->output->render(new assignment_header($this->get_instance(), $this->show_intro(), $this->get_course_module()->id, $plugin->get_name()));
-            $o .= $this->output->render(new feedback_plugin_feedback($plugin, $item, feedback_plugin_feedback::FULL, $this->get_course_module()->id, $this->get_return_action(), $this->get_return_params()));
+            $o .= $this->output->render(new assignment_header($this->get_instance(), 
+                                                              $this->show_intro(), 
+                                                              $this->get_course_module()->id, 
+                                                              $plugin->get_name()));
+            $o .= $this->output->render(new feedback_plugin_feedback($plugin, 
+                                                              $item, 
+                                                              feedback_plugin_feedback::FULL, 
+                                                              $this->get_course_module()->id, 
+                                                              $this->get_return_action(), 
+                                                              $this->get_return_params()));
             $this->add_to_log('view feedback', get_string('viewfeedbackforuser', 'assign', $item->userid));
         }
 
@@ -1414,7 +1431,20 @@ class assignment {
         $grade = $this->get_user_grade($userid, false);
         if ($this->can_view_submission($userid)) {
             $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($userid);
-            $o .= $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($userid), submission_status::GRADER_VIEW, false, false));
+            $o .= $this->output->render(new submission_status($this->get_instance()->allowsubmissionsfromdate,
+                                                              $this->get_instance()->alwaysshowdescription,
+                                                              $submission, 
+                                                              $this->is_any_submission_plugin_enabled(),
+                                                              $gradelocked,
+                                                              $this->is_graded($userid),
+                                                              $this->get_instance()->duedate,
+                                                              $this->get_submission_plugins(),
+                                                              $this->get_return_action(),
+                                                              $this->get_return_params(),
+                                                              $this->get_course_module()->id,
+                                                              submission_status::GRADER_VIEW, 
+                                                              false, 
+                                                              false));
         }
         if ($grade) {
             $data = new stdClass();
@@ -1680,7 +1710,20 @@ class assignment {
             $showsubmit = $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
             $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($USER->id);
 
-            $o .= $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($USER->id), submission_status::STUDENT_VIEW, $showedit, $showsubmit));
+            $o .= $this->output->render(new submission_status($this->get_instance()->allowsubmissionsfromdate,
+                                                              $this->get_instance()->alwaysshowdescription,
+                                                              $submission, 
+                                                              $this->is_any_submission_plugin_enabled(),
+                                                              $gradelocked,
+                                                              $this->is_graded($USER->id),
+                                                              $this->get_instance()->duedate,
+                                                              $this->get_submission_plugins(),
+                                                              $this->get_return_action(),
+                                                              $this->get_return_params(),
+                                                              $this->get_course_module()->id,
+                                                              submission_status::STUDENT_VIEW, 
+                                                              $showedit, 
+                                                              $showsubmit));
 
             require_once($CFG->libdir.'/gradelib.php');
             require_once($CFG->dirroot.'/grade/grading/lib.php');
