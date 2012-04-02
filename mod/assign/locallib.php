@@ -1032,9 +1032,7 @@ class assignment {
 
         return true;
     }
-
-    
-    
+        
     /**
      * Update a grade in the grade table for the assignment and in the gradebook
      *
@@ -1046,13 +1044,34 @@ class assignment {
         global $DB;
 
         $grade->timemodified = time();
+
+        if ($grade->grade && $grade->grade != -1) {
+            if ($this->get_instance()->grade > 0) {
+                if (!is_numeric($grade->grade)) {
+                    return false;
+                } else if ($grade->grade > $this->get_instance()->grade) {
+                    return false;
+                } else if ($grade->grade < 0) {
+                    return false;
+                }
+            } else {
+                // this is a scale
+                if ($scale = $DB->get_record('scale', array('id' => -($this->get_instance()->grade)))) {
+                    $scaleoptions = make_menu_from_list($scale->scale);
+                    if (!array_key_exists((int) $grade->grade, $scaleoptions)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
         $result = $DB->update_record('assign_grades', $grade);
         if ($result) {
-            $this->gradebook_item_update(null,$grade);
+            $this->gradebook_item_update(null, $grade);
         }
         return $result;
     }
-    
+
     /**
      * display the submission that is used by a plugin  
      * Uses url parameters 'sid', 'gid' and 'plugin'
