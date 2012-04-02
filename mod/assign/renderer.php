@@ -284,82 +284,37 @@ class mod_assign_renderer extends plugin_renderer_base {
     public function render_feedback_status(feedback_status $status) {
         global $DB, $CFG;
         $o = '';
-        require_once($CFG->libdir.'/gradelib.php');
-        require_once($CFG->dirroot.'/grade/grading/lib.php');
-
-        $assignmentgrade = $status->get_grade();      
-        if (!$assignmentgrade) {
-            return '';
-        }
-        $gradinginfo = grade_get_grades($status->get_assignment()->get_course()->id, 
-                                        'mod', 
-                                        'assign', 
-                                        $status->get_assignment()->get_instance()->id, 
-                                        $assignmentgrade->userid);
-
-        $item = $gradinginfo->items[0];
-        $grade = $item->grades[$assignmentgrade->userid];
-             
-        if ($grade->hidden or $grade->grade === false) { // hidden or error
-            return '';
-        }
-
-        // check to see if all feedback plugins are empty 
-        $emptyplugins = true;
-        foreach ($status->get_assignment()->get_feedback_plugins() as $plugin) {
-            if ($plugin->is_visible() && $plugin->is_enabled()) {
-                if (!$plugin->is_empty($assignmentgrade)) {
-                    $emptyplugins = false;
-                }
-            }
-        }
-     
-        if ($grade->grade === null && $emptyplugins) {   /// Nothing to show yet
-                   return '';
-        }
-       
-        $gradeddate = $grade->dategraded;
 
         $o .= $this->output->container_start('feedback');
         $o .= $this->output->heading(get_string('feedback', 'assign'), 3);
         $o .= $this->output->box_start('boxaligncenter feedbacktable');
         $t = new html_table();
         
-
         $row = new html_table_row();
         $cell1 = new html_table_cell(get_string('grade', 'assign'));
-
-        $gradingmanager = get_grading_manager($status->get_assignment()->get_context(), 'mod_assign', 'submissions');
-    
-        if ($controller = $gradingmanager->get_active_controller()) {
-            $controller->set_grade_range(make_grades_menu($status->get_assignment()->get_instance()->grade));
-            $cell2 = new html_table_cell($controller->render_grade($this->page, $assignmentgrade->id, $item, $grade->str_long_grade, has_capability('mod/assign:grade', $status->get_assignment()->get_context())));
-        } else {
-
-            $cell2 = new html_table_cell($this->format_grade($grade->grade, $status->get_assignment()));
-        }
+        $cell2 = new html_table_cell($status->gradefordisplay);
         $row->cells = array($cell1, $cell2);
         $t->data[] = $row;
         
         $row = new html_table_row();
         $cell1 = new html_table_cell(get_string('gradedon', 'assign'));
-        $cell2 = new html_table_cell(userdate($gradeddate));
+        $cell2 = new html_table_cell(userdate($status->gradeddate));
         $row->cells = array($cell1, $cell2);
         $t->data[] = $row;
         
-        if ($grader = $DB->get_record('user', array('id'=>$grade->usermodified))) {
+        if ($status->grader) {
             $row = new html_table_row();
             $cell1 = new html_table_cell(get_string('gradedby', 'assign'));
-            $cell2 = new html_table_cell($this->output->user_picture($grader) . $this->output->spacer(array('width'=>30)) . fullname($grader));
+            $cell2 = new html_table_cell($this->output->user_picture($status->grader) . $this->output->spacer(array('width'=>30)) . fullname($status->grader));
             $row->cells = array($cell1, $cell2);
             $t->data[] = $row;
         }
     
-        foreach ($status->get_assignment()->get_feedback_plugins() as $plugin) {
-            if ($plugin->is_enabled() && $plugin->is_visible() && !$plugin->is_empty($status->get_grade())) {
+        foreach ($status->feedbackplugins as $plugin) {
+            if ($plugin->is_enabled() && $plugin->is_visible() && !$plugin->is_empty($status->grade)) {
                 $row = new html_table_row();
                 $cell1 = new html_table_cell($plugin->get_name());
-                $pluginfeedback = new feedback_plugin_feedback($status->get_assignment(), $plugin, $status->get_grade(), feedback_plugin_feedback::SUMMARY);
+                $pluginfeedback = new feedback_plugin_feedback($plugin, $status->grade, $status->coursemoduleid, $status->returnaction, $status->returnparams);
                 $cell2 = new html_table_cell($this->render($pluginfeedback));
                 $row->cells = array($cell1, $cell2);
                 $t->data[] = $row;
@@ -601,27 +556,27 @@ class mod_assign_renderer extends plugin_renderer_base {
     public function render_feedback_plugin_feedback(feedback_plugin_feedback $feedbackplugin) {
         $o = '';
 
-        if ($feedbackplugin->get_view() == feedback_plugin_feedback::SUMMARY) {
-            $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($feedbackplugin->get_plugin()->get_subtype(), strlen('assign')), 'mod_assign'));
+        if ($feedbackplugin->view == feedback_plugin_feedback::SUMMARY) {
+            $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($feedbackplugin->plugin->get_subtype(), strlen('assign')), 'mod_assign'));
             $link = '';
-            if ($feedbackplugin->get_plugin()->show_view_link($feedbackplugin->get_grade())) {
+            if ($feedbackplugin->plugin->show_view_link($feedbackplugin->grade)) {
                 $link = $this->output->action_link(
                                 new moodle_url('/mod/assign/view.php', 
-                                               array('id' => $feedbackplugin->get_assignment()->get_course_module()->id, 
-                                                     'gid'=>$feedbackplugin->get_grade()->id, 
-                                                     'plugin'=>$feedbackplugin->get_plugin()->get_type(), 
-                                                     'action'=>'viewplugin' . $feedbackplugin->get_plugin()->get_subtype(), 
-                                                     'returnaction'=>$feedbackplugin->get_assignment()->get_return_action(), 
-                                                     'returnparams'=>http_build_query($feedbackplugin->get_assignment()->get_return_params()))), 
+                                               array('id' => $feedbackplugin->coursemoduleid, 
+                                                     'gid'=>$feedbackplugin->grade->id, 
+                                                     'plugin'=>$feedbackplugin->plugin->get_type(), 
+                                                     'action'=>'viewplugin' . $feedbackplugin->plugin->get_subtype(), 
+                                                     'returnaction'=>$feedbackplugin->returnaction, 
+                                                     'returnparams'=>http_build_query($feedbackplugin->returnparams))), 
                                 $icon);
                 $link .= $this->output->spacer(array('width'=>15));
             }
             
-            $o .= $link . $feedbackplugin->get_plugin()->view_summary($feedbackplugin->get_grade());
+            $o .= $link . $feedbackplugin->plugin->view_summary($feedbackplugin->grade);
         }
-        if ($feedbackplugin->get_view() == feedback_plugin_feedback::FULL) {
+        if ($feedbackplugin->view == feedback_plugin_feedback::FULL) {
             $o .= $this->output->box_start('boxaligncenter feedbackfull');
-            $o .= $feedbackplugin->get_plugin()->view($feedbackplugin->get_grade());
+            $o .= $feedbackplugin->plugin->view($feedbackplugin->grade);
             $o .= $this->output->box_end();
         }
 

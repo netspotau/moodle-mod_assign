@@ -207,14 +207,18 @@ class feedback_plugin_feedback implements renderable {
     const SUMMARY                = 10;
     const FULL                   = 20;
 
-    /** @var assignment $assignment */
-    protected $assignment = null;
     /** @var assignment_submission_plugin $plugin */
-    protected $plugin = null;
+    var $plugin = null;
     /** @var stdClass $grade */
-    protected $grade = null;
+    var $grade = null;
     /** @var string $view */
-    protected $view = self::SUMMARY;
+    var $view = self::SUMMARY;
+    /** @var int $coursemoduleid */
+    var $coursemoduleid = 0;
+    /** @var string returnaction The action to take you back to the current page */
+    var $returnaction = '';
+    /** @var array returnparams The params to take you back to the current page */
+    var $returnaction = array();
     
     /**
      * feedback for a single plugin
@@ -224,91 +228,15 @@ class feedback_plugin_feedback implements renderable {
      * @param stdClass $grade
      * @param string view one of feedback_plugin::SUMMARY or feedback_plugin::FULL
      */
-    public function __construct(assignment $assignment, assignment_feedback_plugin $plugin, stdClass $grade, $view) {
-        $this->set_assignment($assignment);
-        $this->set_plugin($plugin);
-        $this->set_grade($grade);
-        $this->set_view($view);
-    }
-    
-    /**
-     * Returns assignment info
-     *
-     * @return assignment
-     */
-    public function get_assignment() {
-        return $this->assignment;
-    }
-
-    /**
-     * Set the assignment info (may not be null)
-     *
-     * @param assignment $assignment
-     */
-    public function set_assignment(assignment $assignment) {
-        if (!$assignment) {
-            throw new coding_exception('Assignment may not be null');
-        }
-        $this->assignment = $assignment;
-    }
-    
-    /**
-     * Returns grade info
-     *
-     * @return stdClass
-     */
-    public function get_grade() {
-        return $this->grade;
-    }
-
-    /**
-     * Set the grade info (may not be null)
-     *
-     * @param stdClass $grade
-     */
-    public function set_grade(stdClass $grade) {
-        $this->grade = $grade;
-    }
-
-    /**
-     * Returns plugin info
-     *
-     * @return assignment_feedback_plugin
-     */
-    public function get_plugin() {
-        return $this->plugin;
-    }
-
-    /**
-     * Set the plugin info (may not be null)
-     *
-     * @param assignment_feedback_plugin $plugin
-     */
-    public function set_plugin(assignment_feedback_plugin $plugin) {
+    public function __construct(assignment_feedback_plugin $plugin, stdClass $grade, $view, $coursemoduleid, $returnaction, $returnparams) {
         $this->plugin = $plugin;
+        $this->grade = $grade;
+        $this->view = $view;
+        $this->coursemoduleid = $coursemoduleid;
+        $this->returnaction = $returnaction;
+        $this->returnparams = $returnparams;
     }
     
-    /**
-     * Returns view
-     *
-     * @return int
-     */
-    public function get_view() {
-        return $this->view;
-    }
-
-    /**
-     * Set the view
-     *
-     * @param int $view
-     */
-    public function set_view($view) {
-        if (in_array($view, array(self::SUMMARY, self::FULL))) {
-            $this->view = $view;
-        } else {
-            throw new coding_exception('Unknown submission view type.');
-        }
-    }
 }
 
 /*
@@ -425,86 +353,43 @@ class submission_plugin_submission implements renderable {
  * Renderable feedback status
  */
 class feedback_status implements renderable {
-    const STUDENT_VIEW     = 10;
-    const GRADER_VIEW      = 20;
     
-    /** @var stdClass the grade info (may be null) */
-    protected $grade = null;
-    /** @var assignment the assignment info (may not be null) */
-    protected $assignment = null;
-    /** @var int $view */
-    protected $view = self::STUDENT_VIEW;
+    /** @var stding $gradefordisplay the student grade rendered into a format suitable for display */
+    var $gradefordisplay = '';
+    /** @var mixed the graded date (may be null) */
+    var $gradeddate = 0;
+    /** @var mixed the grader (may be null) */
+    var $grader = null;
+    /** @var array feedbackplugins - array of feedback plugins */
+    var $feedbackplugins = array();
+    /** @var stdClass assign_grade record */
+    var $grade = null;
+    /** @var int coursemoduleid */
+    var $coursemoduleid = 0;
+    /** @var string returnaction */
+    var $returnaction = '';
+    /** @var array returnparams */
+    var $returnparams = array();
 
     /**
      * Constructor
-     * @param assignment $assignment
-     * @param mixed stdClass|null $grade
-     * @param int $view
+     * @param string $gradefordisplay
+     * @param mixed $gradeddate
+     * @param mixed $grader
+     * @param array $feedbackplugins
+     * @param mixed $grade
      */
-    public function __construct($assignment, $grade, $view) {
-        $this->set_assignment($assignment);
-        $this->set_grade($grade);
-        $this->set_view($view);
-    }
-    
-    /**
-     * Returns submission view type
-     *
-     * @return int
-     */
-    public function get_view() {
-        return $this->view;
-    }
-
-    /**
-     * Sets the submission view type
-     *
-     * @param int $view
-     */
-    public function set_view($view) {
-        if (in_array($view, array(self::STUDENT_VIEW, self::GRADER_VIEW))) {
-            $this->view = $view;
-        } else {
-            throw new coding_exception('Unknown view type.');
-        }
-    }
-    
-    /**
-     * Returns grade info
-     *
-     * @return mixed stdClass|null $grade
-     */
-    public function get_grade() {
-        return $this->grade;
-    }
-
-    /**
-     * Set the grade info (may be null)
-     *
-     * @param mixed stdClass|null $grade
-     */
-    public function set_grade($grade) {
+    public function __construct($gradefordisplay, $gradeddate, $grader, $feedbackplugins, $grade, $coursemoduleid, $returnaction, $returnparams) {
+        $this->gradefordisplay = $gradefordisplay;
+        $this->gradeddate = $gradeddate;
+        $this->grader = $grader;
+        $this->feedbackplugins = $feedbackplugins;
         $this->grade = $grade;
+        $this->coursemoduleid = $coursemoduleid;
+        $this->returnaction = $returnaction;
+        $this->returnparams = $returnparams;
     }
-
-    /**
-     * Returns assignment info
-     *
-     * @return assignment
-     */
-    public function get_assignment() {
-        return $this->assignment;
-    }
-
-    /**
-     * Set the assignment info (may not be null)
-     *
-     * @param assignment $assignment
-     */
-    public function set_assignment(assignment $assignment) {
-        $this->assignment = $assignment;
-    }
-
+    
 }
 
 /**

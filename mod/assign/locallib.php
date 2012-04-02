@@ -1095,7 +1095,7 @@ class assignment {
                 require_capability('mod/assign:grade', $this->context);
             }
             $o .= $this->output->render(new assignment_header($this->get_instance(), $this->show_intro(), $this->get_course_module()->id, $plugin->get_name()));
-            $o .= $this->output->render(new feedback_plugin_feedback($this, $plugin, $item, feedback_plugin_feedback::FULL));
+            $o .= $this->output->render(new feedback_plugin_feedback($plugin, $item, feedback_plugin_feedback::FULL, $this->get_course_module()->id, $this->get_return_action(), $this->get_return_params()));
             $this->add_to_log('view feedback', get_string('viewfeedbackforuser', 'assign', $item->userid));
         }
 
@@ -1682,7 +1682,59 @@ class assignment {
 
             $o .= $this->output->render(new submission_status($this, $submission, $gradelocked, $this->is_graded($USER->id), submission_status::STUDENT_VIEW, $showedit, $showsubmit));
 
-            $o .= $this->output->render(new feedback_status($this, $grade, feedback_status::STUDENT_VIEW));
+            require_once($CFG->libdir.'/gradelib.php');
+            require_once($CFG->dirroot.'/grade/grading/lib.php');
+
+            $gradinginfo = grade_get_grades($this->get_course()->id,
+                                        'mod',
+                                        'assign',
+                                        $this->get_instance()->id,
+                                        $grade->userid);
+
+            $gradingitem = $gradinginfo->items[0];
+            $gradebookgrade = $gradingitem->grades[$grade->userid];
+
+            // check to see if all feedback plugins are empty 
+            $emptyplugins = true;
+            foreach ($this->get_feedback_plugins() as $plugin) {
+                if ($plugin->is_visible() && $plugin->is_enabled()) {
+                    if (!$plugin->is_empty($grade)) {
+                        $emptyplugins = false;
+                    }
+                }
+            }
+
+
+            if (!($gradebookgrade->hidden) && ($gradebookgrade->grade !== null || !$emptyplugins)) {
+
+                $gradefordisplay = '';
+                $gradingmanager = get_grading_manager($this->get_context(), 'mod_assign', 'submissions');
+
+                if ($controller = $gradingmanager->get_active_controller()) {
+                    $controller->set_grade_range(make_grades_menu($this->get_instance()->grade));
+                    $gradefordisplay = $controller->render_grade($this->output->page, 
+                                                                 $grade->id, 
+                                                                 $gradingitem, 
+                                                                 $gradebookgrade->str_long_grade, 
+                                                                 has_capability('mod/assign:grade', $this->get_context()));
+                } else {
+                    $gradefordisplay = $this->display_grade($grade);
+                }
+
+                $gradeddate = $gradebookgrade->dategraded;
+                $grader = $DB->get_record('user', array('id'=>$gradebookgrade->usermodified));
+
+                $feedbackstatus = new feedback_status($gradefordisplay,
+                                                      $gradeddate,
+                                                      $grader,  
+                                                      $this->get_feedback_plugins(),
+                                                      $grade,
+                                                      $this->get_course_module()->id,
+                                                      $this->get_return_action(),
+                                                      $this->get_return_params());
+
+                $o .= $this->output->render($feedbackstatus);
+            }
         }
         
             
