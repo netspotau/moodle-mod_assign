@@ -180,61 +180,23 @@ class grading_form implements renderable {
  * Implements a renderable user summary
  */
 class user_summary implements renderable {
-    /** @var stdClass $user */
-    protected $user = null;
-    /** @var assignment $assignment */
-    protected $assignment = null;
+    /** @var stdClass $user suitable for rendering with user_picture and fullname(). Must contain firstname, lastname, id and picture fields */
+    public $user = null;
+    /** @var int $courseid */
+    public $courseid;
+    /** @var bool $viewfullnames */
+    public $viewfullnames = false;
     
     /**
      * Constructor
      * @param stdClass $user
-     * @param assignment $assignment
+     * @param int $courseid
+     * @param bool $viewfullnames
      */
-    public function __construct(stdClass $user, assignment $assignment) {
-        $this->set_user($user);
-        $this->set_assignment($assignment);
-    }
-    
-    /**
-     * Returns assignment
-     *
-     * @return assignment $assignment
-     */
-    public function get_assignment() {
-        return $this->assignment;
-    }
-
-    /**
-     * Set the assignment
-     *
-     * @param assignment $assignment
-     */
-    public function set_assignment(assignment $assignment) {
-        if (!$assignment) {
-            throw new coding_exception('Assignment may not be null');
-        }
-        $this->assignment = $assignment;
-    }
-    
-    /**
-     * Returns user
-     *
-     * @return stdClass $user
-     */
-    public function get_user() {
-        return $this->user;
-    }
-
-    /**
-     * Set the user
-     *
-     * @param stdClass $user 
-     */
-    public function set_user($user) {
-        if (!$user) {
-            throw new coding_exception('User may not be null');
-        }
+    public function __construct(stdClass $user, $courseid, $viewfullnames) {
         $this->user = $user;
+        $this->courseid = $courseid;
+        $this->viewfullnames = $viewfullnames;
     }
 }
 
@@ -725,80 +687,29 @@ class submission_status implements renderable {
  * Renderable header
  */
 class assignment_header implements renderable {
-    /** @var assignment the assignment info (may not be null) */
-    protected $assignment = null;
+    /** @var stdClass the assign record  */
+    var $assign = null;
     /** @var bool $showintro - show or hide the intro */
-    protected $showintro = false;
+    var $showintro = false;
+    /** @var int coursemoduleid - The course module id */
+    var $coursemoduleid = 0;
     /** @var string $subpage optional subpage (extra level in the breadcrumbs) */
-    protected $subpage = '';
+    var $subpage = '';
     
     /**
      * Constructor
      * 
-     * @param assignment $assignment 
-     * @param bool $showintro 
-     * @param string $subpage 
+     * @param stdClass $assignment  - the assign database record
+     * @param bool $showintro  - show or hide the intro
+     * @param int $coursemoduleid  - the course module id
+     * @param string $subpage  - an optional sub page in the navigation
      */
-    public function __construct(assignment $assignment, $showintro, $subpage='') {
-        $this->set_assignment($assignment);
-        $this->set_show_intro($showintro);
-        $this->set_sub_page($subpage);
-    }
-    
-    /**
-     * Returns the sub page for the navigation menu
-     *
-     * @return string
-     */
-    public function get_sub_page() {
-        return $this->subpage;
-    }
-
-    /**
-     * Set the current assignment sub page
-     *
-     * @param string $subpage
-     */
-    public function set_sub_page($subpage) {
+    public function __construct(stdClass $assign, $showintro, $coursemoduleid, $subpage='') {
+        $this->assign = $assignment;
+        $this->showintro = $showintro;
+        $this->coursemoduleid = $coursemoduleid;
         $this->subpage = $subpage;
     }
-
-    /**
-     * Returns assignment info
-     *
-     * @return assignment
-     */
-    public function get_assignment() {
-        return $this->assignment;
-    }
-
-    /**
-     * Set the assignment info (may not be null)
-     *
-     * @param assignment $assignment
-     */
-    public function set_assignment(assignment $assignment) {
-        $this->assignment = $assignment;
-    }
-
-    /**
-     * Returns show intro
-     *
-     * @return bool
-     */
-    public function get_show_intro() {
-        return $this->showintro;
-    }
-
-    /**
-     * Set the show intro flag
-     *
-     * @param bool show_intro
-     */
-    public function set_show_intro($showintro) {
-        $this->showintro = $showintro;
-    }
-    
 }
 
 /**

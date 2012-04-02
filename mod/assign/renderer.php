@@ -123,14 +123,17 @@ class mod_assign_renderer extends plugin_renderer_base {
     public function render_user_summary(user_summary $summary) {
         $o = '';
 
-        if (!$summary->get_user()) {
+        if (!$summary->user) {
             return;
         }
         $o .= $this->output->container_start('usersummary');
         $o .= $this->output->box_start('boxaligncenter usersummarysection');
-        $o .= $this->output->user_picture($summary->get_user());
+        $o .= $this->output->user_picture($summary->user);
         $o .= $this->output->spacer(array('width'=>30));
-        $o .= $this->output->action_link(new moodle_url('/user/view.php', array('id' => $summary->get_user()->id, 'course'=>$summary->get_assignment()->get_course()->id)), fullname($summary->get_user(), has_capability('moodle/site:viewfullnames', $summary->get_assignment()->get_course_context())));
+        $o .= $this->output->action_link(new moodle_url('/user/view.php', 
+                                                        array('id' => $summary->user->id, 
+                                                              'course'=>$summary->courseid)), 
+                                                              fullname($summary->user, $summary->viewfullnames));
         $o .= $this->output->box_end();
         $o .= $this->output->container_end();
         
@@ -178,23 +181,20 @@ class mod_assign_renderer extends plugin_renderer_base {
     public function render_assignment_header(assignment_header $header) {
         $o = '';
 
-        if ($header->get_sub_page()) {
-            $this->page->navbar->add($header->get_sub_page());
+        if ($header->subpage) {
+            $this->page->navbar->add($header->subpage);
         }
 
         $this->page->set_title(get_string('pluginname', 'assign'));
-        $this->page->set_heading($header->get_assignment()->get_instance()->name);
+        $this->page->set_heading($header->assign->name);
 
         $o .= $this->output->header();
-        $o .= $this->output->heading($header->get_assignment()->get_instance()->name);
+        $o .= $this->output->heading($header->assign->name);
 
-        if ($header->get_show_intro()) {
-            if ($header->get_assignment()->get_instance()->alwaysshowdescription || 
-                    time() > $header->get_assignment()->get_instance()->allowsubmissionsfromdate) {
-                $o .= $this->output->box_start('generalbox boxaligncenter', 'intro');
-                $o .= format_module_intro('assign', $header->get_assignment()->get_instance(), $header->get_assignment()->get_course_module()->id);
-                $o .= $this->output->box_end();
-            }
+        if ($header->showintro) {
+            $o .= $this->output->box_start('generalbox boxaligncenter', 'intro');
+            $o .= format_module_intro('assign', $header->assign, $header->coursemoduleid);
+            $o .= $this->output->box_end();
         }
         return $o;
     }
