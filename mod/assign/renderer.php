@@ -58,7 +58,6 @@ class mod_assign_renderer extends plugin_renderer_base {
      * @return string
      */
     public function render_assign_files(assign_files $tree) {
-        $module = array('name'=>'mod_assign_files', 'fullpath'=>'/mod/assign/assign.js', 'requires'=>array('yui2-treeview'));
         $this->htmlid = 'assign_files_tree_'.uniqid();
         $this->page->requires->js_init_call('M.mod_assign.init_tree', array(true, $this->htmlid));
         $html = '<div id="'.$this->htmlid.'">';
