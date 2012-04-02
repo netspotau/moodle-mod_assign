@@ -716,35 +716,34 @@ class assignment_header implements renderable {
  * Renderable grading summary
  */
 class grading_summary implements renderable {
-    /** @var assignment the assignment info (may not be null) */
-    protected $assignment = null;
+    /** @var int participantcount - The number of users who can submit to this assignment */
+    var $participantcount = 0;
+    /** @var bool submissiondraftsenabled - Allow submission drafts */
+    var $submissiondraftsenabled = false;
+    /** @var int submissiondraftscount - The number of submissions in draft status */
+    var $submissiondraftscount = 0;
+    /** @var bool submissionsenabled - Allow submissions */
+    var $submissionsenabled = false;
+    /** @var int submissionssubmittedcount - The number of submissions in submitted status */
+    var $submissionssubmittedcount = 0;
+    /** @var int duedate - The assignment due date (if one is set) */
+    var $duedate = 0;
+    /** @var int coursemoduleid - The assignment course module id */
+    var $coursemoduleid = 0;
     
     /**
      * constructor
      *
      * @param assignment $assignment
      */
-    public function __construct(assignment $assignment) {
-        $this->set_assignment($assignment);
-    }
-    
-    /**
-     * Returns assignment info
-     *
-     * @return assignment
-     */
-    public function get_assignment() {
-        return $this->assignment;
-    }
-
-    /**
-     * Set the assignment info (may not be null)
-     *
-     * @param assignment $assignment
-     * @return void
-     */
-    public function set_assignment(assignment $assignment) {
-        $this->assignment = $assignment;
+    public function __construct($participantcount, $submissiondraftsenabled, $submissiondraftscount, $submissionsenabled, $submissionssubmittedcount, $duedate, $coursemoduleid) {
+        $this->participantcount = $participantcount;
+        $this->submissiondraftsenabled = $submissiondraftsenabled;
+        $this->submissiondraftscount = $submissiondraftscount;
+        $this->submissionsenabled = $submissionsenabled;
+        $this->submissionssubmittedcount = $submissionssubmittedcount;
+        $this->duedate = $duedate;
+        $this->coursemoduleid = $coursemoduleid;
     }
 
     

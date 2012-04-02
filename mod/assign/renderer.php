@@ -215,25 +215,25 @@ class mod_assign_renderer extends plugin_renderer_base {
 
         // status
         $this->add_table_row_tuple($t, get_string('numberofparticipants', 'assign'), 
-                                   $summary->get_assignment()->count_participants(0));
+                                   $summary->participantcount);
 
         // drafts
-        if ($summary->get_assignment()->get_instance()->submissiondrafts) {
+        if ($summary->submissiondraftsenabled) {
             $this->add_table_row_tuple($t, get_string('numberofdraftsubmissions', 'assign'), 
-                                       $summary->get_assignment()->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_DRAFT));
+                                       $summary->submissiondraftscount);
        }
 
         // submitted for grading
-        if ($summary->get_assignment()->is_any_submission_plugin_enabled()) {
+        if ($summary->submissionsenabled) {
             $this->add_table_row_tuple($t, get_string('numberofsubmittedassignments', 'assign'), 
-                                       $summary->get_assignment()->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_SUBMITTED));
+                                       $summary->submissionssubmittedcount);
         }
 
         $time = time();
-        if ($summary->get_assignment()->get_instance()->duedate) {
+        if ($summary->duedate) {
             // due date
             // submitted for grading
-            $duedate = $summary->get_assignment()->get_instance()->duedate;
+            $duedate = $summary->duedate;
             $this->add_table_row_tuple($t, get_string('duedate', 'assign'), 
                                        userdate($duedate));
 
@@ -253,7 +253,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         
         // link to the grading page
         $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
-            array('id' => $summary->get_assignment()->get_course_module()->id ,'action'=>'grading')), get_string('viewgrading', 'assign'), 'get');
+            array('id' => $summary->coursemoduleid,'action'=>'grading')), get_string('viewgrading', 'assign'), 'get');
 
         // close the container and insert a spacer
         $o .= $this->output->container_end();

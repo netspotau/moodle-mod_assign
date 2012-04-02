@@ -1662,7 +1662,14 @@ class assignment {
         $o .= $this->output->render(new assignment_header($this->get_instance(), $this->show_intro(), $this->get_course_module()->id));
 
         if ($this->can_grade()) {
-            $o .= $this->output->render(new grading_summary($this));
+            $o .= $this->output->render(new grading_summary($this->count_participants(0),
+                                                            $this->get_instance()->submissiondrafts,
+                                                            $this->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_DRAFT),
+                                                            $this->is_any_submission_plugin_enabled(),
+                                                            $this->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_SUBMITTED),
+                                                            $this->get_instance()->duedate,
+                                                            $this->get_course_module()->id
+                                                            ));
         }
         $grade = $this->get_user_grade($USER->id, false);
         $submission = $this->get_user_submission($USER->id, false);
