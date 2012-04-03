@@ -357,6 +357,8 @@ class assignment {
         // now show the right view page
         if ($action == 'nextgrade') {
             $o .= $this->view_next_single_grade();
+        } else if ($action == 'redirect') {
+            redirect(required_param('url', PARAM_TEXT));
         } else if ($action == 'grade') {
             $o .= $this->view_single_grade_page($mform);
         } else if ($action == 'viewpluginassignfeedback') {
@@ -1518,29 +1520,37 @@ class assignment {
         global $USER, $CFG;
         // Include grading options form 
         require_once($CFG->dirroot . '/mod/assign/grading_options_form.php');
+        require_once($CFG->dirroot . '/mod/assign/grading_actions_form.php');
         $o = '';
-
+      
+        $links = array();
+        $links[''] = get_string('selectlink', 'assign');
+        $links[(string)(new moodle_url('/grade/report/grader/index.php', array('id' => $this->get_course()->id)))] = get_string('viewgradebook', 'assign');
+        $links[(string)(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'action' => 'downloadall')))] = get_string('downloadall', 'assign');
+        $mform1 = new mod_assign_grading_actions_form(null, array('links'=>$links, 'cm'=>$this->get_course_module()->id), 'post', '', array('class'=>'gradingactionsform'));
+ 
         $perpage = get_user_preferences('assign_perpage', 10);
         $filter = get_user_preferences('assign_filter', '');
         // print options  for changing the filter and changing the number of results per page
-        $mform = new mod_assign_grading_options_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'userid'=>$USER->id), 'post', '', array('class'=>'gradingoptionsform'));
+        $mform2 = new mod_assign_grading_options_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'userid'=>$USER->id), 'post', '', array('class'=>'gradingoptionsform'));
 
 
-        $data = new stdClass();
-        $data->perpage = $perpage;
-        $data->filter = $filter;
-        $mform->set_data($data);
+        $data2 = new stdClass();
+        $data2->perpage = $perpage;
+        $data2->filter = $filter;
+        $mform2->set_data($data2);
         
         // plagiarism update status apearring in the grading book
         plagiarism_update_status($this->get_course(), $this->get_course_module());
-        
-        $o .= $this->output->render(new grading_options_form($mform));
-        
+
+        $o .= $this->output->render(new grading_actions_form($mform1));        
+        $o .= $this->output->render(new grading_options_form($mform2));
+       
         // load and print the table of submissions
         $o .= $this->output->render(new grading_table($this, $perpage, $filter));
         return $o;
     }
-
+  
     /**
      * View entire grading page.
      *
