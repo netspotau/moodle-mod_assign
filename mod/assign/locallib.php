@@ -1524,9 +1524,13 @@ class assignment {
         $o = '';
       
         $links = array();
-        $links[''] = get_string('selectlink', 'assign');
-        $links[(string)(new moodle_url('/grade/report/grader/index.php', array('id' => $this->get_course()->id)))] = get_string('viewgradebook', 'assign');
-        $links[(string)(new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'action' => 'downloadall')))] = get_string('downloadall', 'assign');
+        $links[(string)(new moodle_url('/mod/assign/view.php', array('action'=>'grading', 'id'=>$this->get_course_module()->id)))] = get_string('selectlink', 'assign');
+        if (has_capability('gradereport/grader:view', $this->get_course_context()) && has_capability('moodle/grade:viewall', $this->get_course_context())) {
+            $links[(string) (new moodle_url('/grade/report/grader/index.php', array('id' => $this->get_course()->id)))] = get_string('viewgradebook', 'assign');
+        }
+        if ($this->is_any_submission_plugin_enabled()) {
+            $links[(string) (new moodle_url('/mod/assign/view.php', array('id' => $this->get_course_module()->id, 'action' => 'downloadall')))] = get_string('downloadall', 'assign');
+        }
         $mform1 = new mod_assign_grading_actions_form(null, array('links'=>$links, 'cm'=>$this->get_course_module()->id), 'post', '', array('class'=>'gradingactionsform'));
  
         $perpage = get_user_preferences('assign_perpage', 10);
