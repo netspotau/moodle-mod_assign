@@ -12,7 +12,106 @@ M.mod_assign.init_tree = function(Y, expand_all, htmlid) {
         if (expand_all) {
             tree.expandAll();
         }
-
         tree.render();
     });
 };
+
+M.mod_assign.init_grading_table = function(Y, coursemoduleid) {
+    Y.use('panel', 'dd-plugin', 'connection', 'dom', function (Y) {
+
+        var loadgradeformsuccess = function(o) {
+            var gradingformelement = Y.one('#gradingformajax');
+            if (!gradingformelement) {
+                Y.one('body').append('<div id="gradingformajax">&nbsp;</div>');
+                gradingformelement = Y.one('#gradingformajax');
+            }
+            
+            gradingformelement.setContent(o.responseText);
+
+            var gradingformpanel = new Y.Panel({
+                srcNode: gradingformelement,
+                headerContent: M.str.moodle.grade,
+                zIndex: 30,
+                centered: true,
+                visible: true,
+                render: true,
+                iframe: true,
+                constraintoviewport: false,
+                plugins      : [Y.Plugin.Drag],
+                buttons: [],
+                //buttons : [ { text:M.str.moodle.savechanges, handler:handleSubmit, isDefault:true }, 
+                //            { text:M.str.moodle.cancel, handler:handleCancel } ] 
+             
+            });
+
+            // force the javascript to execute
+            /*scriptNodes = Y.all('#gradingformajax script');
+
+            scriptNodes.each(function(node) {
+                eval(node.getContent());
+            });*/
+
+            var cancelbutton = Y.one('#id_cancelbutton');
+            cancelbutton.on('click', function(e) {
+                e.preventDefault();
+                gradingformpanel.hide();
+                gradingformpanel.destroy();
+            });
+
+            // hijack the submit
+
+            var submitbutton = Y.one('#id_savegrade');
+            submitbutton.on('click', function(e) {
+                e.preventDefault();
+    
+                var savegradecallback = {
+                    success : function(o) {
+                        gradingformpanel.hide();
+                        gradingformpanel.destroy();
+
+                        if (o.responseText.length > 0) {
+                            // validation error in the form
+                            // reopen the panel
+                            loadgradeformsuccess(o);
+                        
+                        }
+                    },
+                    failure : function(o) {
+                        console.log(o);
+                    }
+                };
+
+                var gradeform = Y.one('.gradeform').getDOMNode();
+                var actionurl = gradeform.attributes['action'].value;
+                YAHOO.util.Connect.setForm(gradeform);
+                YAHOO.util.Connect.asyncRequest(gradeform.method, actionurl, savegradecallback);
+                
+            });
+
+            
+        };
+        var loadgradeformfailure = function(o) {
+        };
+
+        var loadgradeformcallback = {
+            success: loadgradeformsuccess,
+            failure: loadgradeformfailure,
+        };
+
+        var ajaxlinks = Y.all('.ajaxgradelink');
+
+        ajaxlinks.each(function(ajaxlink) {
+            ajaxlink.on('click', function(e) {
+                    e.preventDefault();
+                    linkhref = ajaxlink.getAttribute('href');
+                    linkhref += '&ajax=1';
+                    
+                    YAHOO.util.Connect.asyncRequest('GET', linkhref, loadgradeformcallback, null);
+                }
+            );
+        });
+
+
+    });
+};
+

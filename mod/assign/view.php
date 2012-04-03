@@ -23,6 +23,10 @@
  */
 
 /** config.php */
+if ($_GET['ajax'] || $_POST['ajax']) {
+    define('AJAX_SCRIPT', 1);
+}
+
 require_once('../../config.php');
 /** Include locallib.php */
 require_once($CFG->dirroot . '/mod/assign/locallib.php');

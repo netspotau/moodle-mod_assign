@@ -331,7 +331,7 @@ class grading_table extends table_sql implements renderable {
         $edit .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
                                             array('id' => $this->assignment->get_course_module()->id, 
                                                   'rownum'=>$this->rownum,'action'=>'grade')),
-                                            $this->output->pix_icon('grade_feedback', get_string('grade'), 'assign' ));
+                                            $this->output->pix_icon('grade_feedback', get_string('grade'), 'assign'), null, array('class'=>'ajaxgradelink'));
 
         
 

@@ -107,10 +107,11 @@ class mod_assign_renderer extends plugin_renderer_base {
      */
     public function render_grading_form(grading_form $form) {
         $o = '';
-        $o .= $this->output->heading(get_string('grade'), 3);
         $o .= $this->output->box_start('boxaligncenter gradingform');
         $o .= $this->moodleform($form->get_form());
         $o .= $this->output->box_end();
+
+        
         return $o;
     }
     
@@ -507,6 +508,10 @@ class mod_assign_renderer extends plugin_renderer_base {
      */
     public function render_grading_table(grading_table $table) {
         $o = '';
+        $this->page->requires->string_for_js('grade', 'moodle');
+        $this->page->requires->string_for_js('savechanges', 'moodle');
+        $this->page->requires->string_for_js('cancel', 'moodle');
+        $this->page->requires->js_init_call('M.mod_assign.init_grading_table', array((int)$table->get_course_module_id()));
 
         $o .= $this->output->box_start('boxaligncenter gradingtable');
         // need to get from prefs

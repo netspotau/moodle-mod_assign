@@ -327,7 +327,12 @@ class assignment {
             $this->process_submit_assignment_for_grading();
             // save and show next button
         } else if ($action == 'submitgrade') {
-            if (optional_param('saveandshownext', null, PARAM_ALPHA)) {
+            if (optional_param('ajax', 0, PARAM_INT)) {
+                $action = 'grade';
+                if ($this->process_save_grade($mform)) {
+                    $action = 'none';
+                }
+            } else if (optional_param('saveandshownext', null, PARAM_ALPHA)) {
                 //save and show next
                 $action = 'grade';
                 if ($this->process_save_grade($mform)) {
@@ -371,6 +376,8 @@ class assignment {
             $o .= $this->download_submissions();
         } else if ($action == 'submit') {
             $o .= $this->check_submit_for_grading();
+        } else if ($action == 'none') {
+            $o .= '';
         } else {
             $o .= $this->view_submission_page();
         }
@@ -1477,7 +1484,7 @@ class assignment {
 
         // now show the grading form
         if (!$mform) {
-            $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum)));
+            $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum)), 'post', '', array('class'=>'gradeform'));
         }
         $o .= $this->output->render(new grading_form($mform));
 
@@ -1538,6 +1545,7 @@ class assignment {
         
         // load and print the table of submissions
         $o .= $this->output->render(new grading_table($this, $perpage, $filter));
+        // print the ajax grading form
         return $o;
     }
 
@@ -1554,6 +1562,7 @@ class assignment {
         $o = '';
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
+        require_once($CFG->dirroot . '/mod/assign/grade_form.php');
 
         // only load this if it is 
 
@@ -2410,16 +2419,20 @@ class assignment {
         $mform->setType('id', PARAM_INT);
         $mform->addElement('hidden', 'rownum', $params['rownum']);
         $mform->setType('rownum', PARAM_INT);
+        $mform->addElement('hidden', 'ajax', optional_param('ajax', 0, PARAM_INT));
+        $mform->setType('ajax', PARAM_INT);
         
         $mform->addElement('hidden', 'action', 'submitgrade');
         $mform->setType('action', PARAM_ALPHA);
           
         $buttonarray=array();
        
+        /*
         if (!$last){
             $buttonarray[] = $mform->createElement('submit', 'saveandshownext', get_string('savenext','assign')); 
             $buttonarray[] = $mform->createElement('submit', 'nosaveandnext', get_string('nosavebutnext', 'assign'));
         }
+        */
         $buttonarray[] = $mform->createElement('submit', 'savegrade', get_string('savechanges', 'assign'));        
         $buttonarray[] = $mform->createElement('cancel', 'cancelbutton', get_string('cancel','assign'));     
         $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
@@ -2595,7 +2608,7 @@ class assignment {
         $last = false;
         $userid = $this->get_userid_for_row($rownum, $last);
         $data = new stdClass();
-        $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum, 'last'=>false)));
+        $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum, 'last'=>false)), 'post', '', array('class'=>'gradeform'));
 
         if ($formdata = $mform->get_data()) {
             $grade = $this->get_user_grade($userid, true);
