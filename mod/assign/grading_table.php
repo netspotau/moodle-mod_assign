@@ -57,7 +57,7 @@ class grading_table extends table_sql implements renderable {
      * @param int $perpage how many per page
      * @param string $filter The current filter
      */
-    function __construct(assignment $assignment, $perpage, $filter) {
+    function __construct(assignment $assignment, $perpage, $filter, $rowoffset=0) {
         global $CFG, $PAGE;
         parent::__construct('mod_assign_grading');
         $this->assignment = $assignment;
@@ -69,6 +69,10 @@ class grading_table extends table_sql implements renderable {
         // do some business - then set the sql
 
         $currentgroup = groups_get_activity_group($assignment->get_course_module(), true);
+
+        if ($rowoffset) {
+            $this->rownum = $rowoffset - 1;
+        }
 
         $users = array_keys( $assignment->list_participants($currentgroup, true));
         if (count($users) == 0) {
@@ -86,6 +90,10 @@ class grading_table extends table_sql implements renderable {
         }
         if ($filter == ASSIGN_FILTER_REQUIRE_GRADING) {
             $where .= ' AND (s.timemodified > g.timemodified OR g.timemodified IS NULL)';
+        }
+        if (strpos($filter, ASSIGN_FILTER_SINGLE_USER) === 0) {
+            $userfilter = (int) array_pop(explode('=', $filter));
+            $where .= ' AND (u.id = ' . $userfilter . ')';
         }
         $params = array($assignment->get_instance()->id, $assignment->get_instance()->id);
         $this->set_sql($fields, $from, $where, array());
@@ -164,6 +172,15 @@ class grading_table extends table_sql implements renderable {
 
         // load the grading info for all users
         $this->gradinginfo = grade_get_grades($this->assignment->get_course()->id, 'mod', 'assign', $this->assignment->get_instance()->id, $users);
+    }
+    
+    /**
+     * Add the userid to the row class so it can be updated via ajax
+     * 
+     * @return string The row class
+     */
+    function get_row_class($row) {
+        return 'user' . $row->userid;
     }
 
     /**
@@ -454,7 +471,6 @@ class grading_table extends table_sql implements renderable {
     function get_column_data($columnname) {
         $this->setup();
         $this->currpage = 0;
-        $this->define_columns(array($columnname));
         $this->query_db(1000);
         $result = array();
         foreach ($this->rawdata as $row) {

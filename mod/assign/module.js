@@ -38,43 +38,92 @@ M.mod_assign.init_grading_table = function(Y, coursemoduleid) {
 
 
             var cancelbutton = Y.one('#id_cancelbutton');
-            cancelbutton.on('click', function(e) {
-                e.preventDefault();
-                gradingformpanel.hide();
-                gradingformpanel.destroy();
-            });
+            if (cancelbutton) {
+                cancelbutton.on('click', function(e) {
+                    e.preventDefault();
+                    gradingformpanel.hide();
+                    gradingformpanel.destroy();
+                });
+            }
 
             // hijack the submit
 
             var submitbutton = Y.one('#id_savegrade');
-            submitbutton.on('click', function(e) {
-                e.preventDefault();
-    
-                var savegradecallback = {
-                    success : function(o) {
-                        gradingformpanel.hide();
-                        gradingformpanel.destroy();
+            if (submitbutton) {
+                submitbutton.on('click', function(e) {
+                    e.preventDefault();
+        
+                    var savegradecallback = {
+                        success : function(o) {
+                            gradingformpanel.hide();
+                            gradingformpanel.destroy();
 
-                        if (o.responseText.length > 0) {
-                            // validation error in the form
-                            // reopen the panel
-                            loadgradeformsuccess(o);
+                            var node = Y.Node.create(o.responseText);
+                            var updatedtable = node.one('div.gradingtable');
+                            if (!updatedtable) {
+                                // validation error in the form
+                                // reopen the panel
+                                loadgradeformsuccess(o);
+                            
+                            } else {
+                                // update the table row
+                                var oldtable = Y.one("div.gradingtable");
+                                var ajaxlinks = updatedtable.all('.ajaxgradelink');
+
+                                ajaxlinks.each(function(ajaxlink) {
+                                    ajaxlink.on('click', function(e) {
+                                        e.preventDefault();
+                                        linkhref = ajaxlink.getAttribute('href');
+                                        linkhref += '&ajax=1';
                         
-                        } else {
-                            // update the table row
-                        }
-                    },
-                    failure : function(o) {
-                        console.log(o);
-                    }
-                };
+                                        YAHOO.util.Connect.asyncRequest('GET', linkhref, loadgradeformcallback, null);
+                                    });
+                                });
 
-                var gradeform = Y.one('.gradeform').getDOMNode();
-                var actionurl = gradeform.attributes['action'].value;
-                YAHOO.util.Connect.setForm(gradeform);
-                YAHOO.util.Connect.asyncRequest(gradeform.method, actionurl, savegradecallback);
-                
-            });
+                                // replace the row in the table
+                                oldtable.replace(updatedtable);
+                            }
+                            /**
+                            var updatedrow = node.one('tr.r1');
+                            if (!updatedrow) {
+                                // validation error in the form
+                                // reopen the panel
+                                loadgradeformsuccess(o);
+                            
+                            } else {
+                                // update the table row
+                                var classes = updatedrow.getAttribute('class').toString().split(" ");
+                                    
+                                var oldrow = Y.one("tr." + classes[classes.length-1]);
+                                var ajaxlinks = updatedrow.all('.ajaxgradelink');
+
+                                ajaxlinks.each(function(ajaxlink) {
+                                    ajaxlink.on('click', function(e) {
+                                        e.preventDefault();
+                                        linkhref = ajaxlink.getAttribute('href');
+                                        linkhref += '&ajax=1';
+                        
+                                        YAHOO.util.Connect.asyncRequest('GET', linkhref, loadgradeformcallback, null);
+                                    });
+                                });
+
+                                // replace the row in the table
+                                oldrow.replace(updatedrow);
+                            }
+                            **/
+                        },
+                        failure : function(o) {
+                            console.log(o);
+                        }
+                    };
+
+                    var gradeform = Y.one('.gradeform').getDOMNode();
+                    var actionurl = gradeform.attributes['action'].value;
+                    YAHOO.util.Connect.setForm(gradeform);
+                    YAHOO.util.Connect.asyncRequest(gradeform.method, actionurl, savegradecallback);
+                    
+                });
+            }
 
             
             // execute the javascript - in the correct order

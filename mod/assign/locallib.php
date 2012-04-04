@@ -37,6 +37,7 @@ define('ASSIGN_SUBMISSION_STATUS_SUBMITTED', 'submitted'); // student thinks it 
  * Search filters for grading page 
  */
 define('ASSIGN_FILTER_SUBMITTED', 'submitted');
+define('ASSIGN_FILTER_SINGLE_USER', 'singleuser');
 define('ASSIGN_FILTER_REQUIRE_GRADING', 'require_grading');
 
 /**
@@ -1423,6 +1424,28 @@ class assignment {
         global $DB;
 
         return $DB->get_record('assign_grades', array('assignment'=>$this->get_instance()->id, 'id'=>$gradeid), '*', MUST_EXIST);
+    }
+    
+    private function view_single_grading_row() {
+        return $this->view_grading_table();
+        $rownum = required_param('rownum', PARAM_INT);
+        $useridlist = optional_param('useridlist', '', PARAM_TEXT);
+        if ($useridlist) {
+            $useridlist = explode(',', $useridlist);
+        } else {
+            $useridlist = $this->get_grading_userid_list();
+        }
+        $last = false;
+        $userid = $useridlist[$rownum];
+        if ($rownum == count($useridlist) - 1) {
+            $last = true;
+        }
+    
+        $o = '';
+        $filter = ASSIGN_FILTER_SINGLE_USER . '=' . $userid;
+        $o .= $this->output->render(new grading_table($this, 1, $filter, $rownum));
+
+        return $o;
     }
     
     /**
