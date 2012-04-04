@@ -39,9 +39,6 @@
  */
 class assignment_feedback_comments extends assignment_feedback_plugin {
 
-    /** @var object the assignment record that contains the global settings for this assign instance */
-    private $instance;
-
    /**
     * get the name of the online comment feedback plugin
     * @return string 
