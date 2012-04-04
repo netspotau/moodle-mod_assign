@@ -120,7 +120,7 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
     public function view_summary(stdClass $grade) {
         $feedbackcomments = $this->get_feedback_comments($grade->id);
         if ($feedbackcomments) {
-            $text = format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat);
+            $text = format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat, array('context' => $this->assignment->get_context()));
             return shorten_text($text, 140);
         }
         return '';
@@ -135,7 +135,7 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
     public function show_view_link(stdClass $grade) {
         $feedbackcomments = $this->get_feedback_comments($grade->id);
         if ($feedbackcomments) {
-            $text = format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat);
+            $text = format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat, array('context' => $this->assignment->get_context()));
             return shorten_text($text, 140) != $text;
         }
         return false;
@@ -150,7 +150,7 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
     public function view(stdClass $grade) {
         $feedbackcomments = $this->get_feedback_comments($grade->id);
         if ($feedbackcomments) {
-            return format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat);
+            return format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat, array('context' => $this->assignment->get_context()));
         } 
         return '';
     }
