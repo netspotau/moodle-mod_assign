@@ -118,6 +118,9 @@ class mod_assign_renderer extends plugin_renderer_base {
             $this->page->requires->string_for_js('savechanges', 'moodle');
             $this->page->requires->string_for_js('cancel', 'moodle');
             $o .= $this->page->requires->get_end_code();
+        } else {
+            $this->page->requires->string_for_js('unsavedchanges', 'assign');
+            $this->page->requires->js_init_call('M.mod_assign.init_grade_form', array());
         }
         return $o;
     }

@@ -446,6 +446,23 @@ class grading_table extends table_sql implements renderable {
     }
 
     /**
+     * Using the current filtering and sorting - load all rows and return a single column from them
+     *
+     * @param string $colname The name of the raw column data
+     * @return array of data
+     */
+    function get_column_data($columnname) {
+        $this->setup();
+        $this->currpage = 0;
+        $this->define_columns(array($columnname));
+        $this->query_db(1000);
+        $result = array();
+        foreach ($this->rawdata as $row) {
+            $result[] = $row->$columnname;
+        }
+        return $result;
+    }
+    /**
      * Using the current filtering and sorting - load a single row and return a single column from it
      *
      * @param int $rownum The rownumber to load
