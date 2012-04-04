@@ -17,7 +17,7 @@ M.mod_assign.init_tree = function(Y, expand_all, htmlid) {
 };
 
 M.mod_assign.init_grading_table = function(Y, coursemoduleid) {
-    Y.use('panel', 'dd-plugin', 'connection', 'dom', function (Y) {
+    Y.use('yui2-get', 'panel', 'dd-plugin', 'connection', 'dom', function (Y) {
 
         var loadgradeformsuccess = function(o) {
             var gradingformelement = Y.one('#gradingformajax');
@@ -44,12 +44,33 @@ M.mod_assign.init_grading_table = function(Y, coursemoduleid) {
              
             });
 
-            // force the javascript to execute
-            /*scriptNodes = Y.all('#gradingformajax script');
+            // execute the javascript - move them to the head of the page
 
-            scriptNodes.each(function(node) {
-                eval(node.getContent());
-            });*/
+            // force the javascript to execute
+            var scriptnodes = Y.all('#gradingformajax script');
+
+            var headnode = Y.one('head');
+            var scriptsrcs = [];
+            scriptnodes.each(function(node) {
+                scriptsrc = node.getAttribute('src');
+                if (scriptsrc != "") {
+                    scriptsrcs[scriptsrcs.length] = scriptsrc;
+                }
+            });
+            console.log(scriptsrcs);
+            YAHOO.util.Get.script(scriptsrcs, {
+                onSuccess: function(o) {
+                    var scriptnodes = Y.all('#gradingformajax script');
+                    scriptnodes.each(function(node) {
+                        scriptsrc = node.getAttribute('src');
+                        if (scriptsrc == "") {
+                            eval(node.getContent());
+                        }
+                    });
+                    
+                }
+            });
+
 
             var cancelbutton = Y.one('#id_cancelbutton');
             cancelbutton.on('click', function(e) {

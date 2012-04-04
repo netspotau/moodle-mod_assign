@@ -111,7 +111,9 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o .= $this->moodleform($form->get_form());
         $o .= $this->output->box_end();
 
-        
+        $o .= $this->page->requires->get_head_code($this->page, $this->output);
+        $o .= $this->page->requires->get_end_code();
+        $o .= '<script language="javascript">alert("test");</script>';
         return $o;
     }
     
