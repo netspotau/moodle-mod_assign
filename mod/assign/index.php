@@ -16,8 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the function for feedback_plugin abstract class
- *
+ * Displays information about all the assignment modules in the requested course
  *
  * @package   mod_assign
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
@@ -25,13 +24,13 @@
  */
 
 require_once("../../config.php");
-require_once("locallib.php");
+require_once($CFG->dirroot.'/mod/assign/locallib.php');
 
-$id = required_param('id', PARAM_INT);
-$PAGE->set_url('/mod/assign/index.php', array('id'=>$id));
+$id = required_param('id', PARAM_INT); // Course ID
+
 $course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
-$coursecontext = context_course::instance($id);
-require_login($course->id);
+require_login($course);
+$PAGE->set_url('/mod/assign/index.php', array('id' => $id));
 $PAGE->set_pagelayout('incourse');
 
 add_to_log($course->id, "assign", "view all", "index.php?id=$course->id", "");
@@ -45,19 +44,19 @@ echo $OUTPUT->header();
 
 // Get all the appropriate data
 if (!$assignments = get_all_instances_in_course("assign", $course)) {
-    notice(get_string('thereareno', 'moodle', $strplural), "../../course/view.php?id=$course->id");
+    notice(get_string('thereareno', 'moodle', $strplural), new moodle_url('/course/view.php', array('id' => $course->id)));
     die;
 }
-$sections = get_all_sections($course->id);
 
 // Check if we need the closing date header
 $table = new html_table();
 $table->head  = array ($strplural, get_string('duedate', 'assign'), get_string('submissions', 'assign'));
 $table->align = array ('left', 'left', 'center');
+$table->data = array();
 foreach ($assignments as $assignment) {
     $cm = get_coursemodule_from_instance('assign', $assignment->id, 0, false, MUST_EXIST);
 
-    $link = html_writer::link(new moodle_url('/mod/assign/view.php', array('id'=>$cm->id, 'sesskey'=>sesskey())), $assignment->name);
+    $link = html_writer::link(new moodle_url('/mod/assign/view.php', array('id' => $cm->id)), $assignment->name);
     $date = userdate($assignment->duedate);
     $submissions = $DB->count_records('assign_submission', array('assignment'=>$cm->instance));
     $row = array($link, $date, $submissions);
