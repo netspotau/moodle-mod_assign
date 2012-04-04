@@ -26,7 +26,7 @@
 /** Include config.php */
 require_once(dirname(__FILE__) . '/../../config.php');
 /** Include adminlib.php */
-require_once('adminlib.php');
+require_once($CFG->dirroot.'/mod/assign/adminlib.php');
 
 // create the class for this controller
 $pluginmanager = new assignment_plugin_manager(required_param('subtype', PARAM_PLUGIN));

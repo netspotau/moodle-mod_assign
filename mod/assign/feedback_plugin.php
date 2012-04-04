@@ -27,7 +27,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 /** Include assignment_plugin.php */
-require_once('assignment_plugin.php');
+require_once($CFG->dirroot.'/mod/assign/assignment_plugin.php');
 
 /*
  * Abstract class for feedback_plugin inherited from assignment_plugin

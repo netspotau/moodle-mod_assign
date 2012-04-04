@@ -59,7 +59,7 @@ require_once($CFG->libdir . '/plagiarismlib.php');
 /** Include repository/lib.php */
 require_once($CFG->dirroot . '/repository/lib.php');
 /** Include local mod_form.php */
-require_once('mod_form.php');
+require_once($CFG->dirroot.'/mod/assign/mod_form.php');
 /** Include portfoliolib.php */
 require_once($CFG->libdir . '/portfoliolib.php');
 /** gradelib.php */
