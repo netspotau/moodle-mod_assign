@@ -38,31 +38,16 @@ require_once($CFG->dirroot . '/mod/assign/locallib.php');
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_assign_grading_options_form extends moodleform {
+class mod_assign_grading_manager_requirements extends moodleform {
     function definition() {
         $mform = $this->_form;
         $instance = $this->_customdata;
 
-        $mform->addElement('header', 'general', get_string('gradingoptions', 'assign'));
-        // visible elements
-        $options = array(-1=>'All',10=>'10', 20=>'20', 50=>'50', 100=>'100');
-        $autosubmit = array('onchange'=>'form.submit();');
-        $mform->addElement('select', 'perpage', get_string('assignmentsperpage', 'assign'), $options, $autosubmit);
-        $options = array(''=>get_string('filternone', 'assign'), ASSIGN_FILTER_SUBMITTED=>get_string('filtersubmitted', 'assign'), ASSIGN_FILTER_REQUIRE_GRADING=>get_string('filterrequiregrading', 'assign'));
-        $mform->addElement('select', 'filter', get_string('filter', 'assign'), $options, $autosubmit);
-
-        // hidden params
-        $mform->addElement('hidden', 'contextid', $instance['contextid']);
-        $mform->setType('contextid', PARAM_INT);
-        $mform->addElement('hidden', 'id', $instance['cm']);
-        $mform->setType('id', PARAM_INT);
-        $mform->addElement('hidden', 'userid', $instance['userid']);
-        $mform->setType('userid', PARAM_INT);
-        $mform->addElement('hidden', 'action', 'saveoptions');
-        $mform->setType('action', PARAM_ALPHA);
-
-        // buttons
-        $this->add_action_buttons(false, get_string('updatetable', 'assign'));
+        $gradinginstance = $instance['gradinginstance'];
+        if ($gradinginstance) {
+            $mform->addElement('grading', 'gradingrequirements', get_string('grade').':', array('gradinginstance' => $gradinginstance));
+        }
+    
     }
 }
 

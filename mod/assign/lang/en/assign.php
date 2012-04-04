@@ -184,6 +184,7 @@ $string['upgradenotimplemented'] = 'Upgrade not implemented in plugin ({$a->type
 $string['uploadfiles'] = 'Upload files';
 $string['viewfeedback'] = 'View feedback';
 $string['viewfeedbackforuser'] = 'View feedback for user: {$a}';
+$string['viewfullgradingpage'] = 'Open the full grading page to provide feedback';
 $string['viewgradebook'] = 'View gradebook';
 $string['viewgradingformforstudent'] = 'View grading page for student: (id={$a->id}, fullname={$a->fullname}).';
 $string['viewgrading'] = 'Grade assignment';

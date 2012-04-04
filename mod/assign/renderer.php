@@ -88,14 +88,14 @@ class mod_assign_renderer extends plugin_renderer_base {
     }
     
     /**
-     * Render the grading options form
-     * @param grading_options_form $form The grading options form to render
+     * Render the generic form
+     * @param assign_form $form The form to render
      * @return string
      */
-    public function render_grading_options_form(grading_options_form $form) {
+    public function render_assign_form(assign_form $form) {
         $o = '';
-        $o .= $this->output->box_start('boxaligncenter gradingoptionsform');
-        $o .= $this->moodleform($form->get_form());
+        $o .= $this->output->box_start('boxaligncenter ' . $form->classname);
+        $o .= $this->moodleform($form->form);
         $o .= $this->output->box_end();
         return $o;
     }
@@ -111,9 +111,14 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o .= $this->moodleform($form->get_form());
         $o .= $this->output->box_end();
 
-        $o .= $this->page->requires->get_head_code($this->page, $this->output);
-        $o .= $this->page->requires->get_end_code();
-        $o .= '<script language="javascript">alert("test");</script>';
+        
+        if (AJAX_SCRIPT) {
+            // need to render this javascript for advanced grading
+            $this->page->requires->string_for_js('grade', 'moodle');
+            $this->page->requires->string_for_js('savechanges', 'moodle');
+            $this->page->requires->string_for_js('cancel', 'moodle');
+            $o .= $this->page->requires->get_end_code();
+        }
         return $o;
     }
     
@@ -514,6 +519,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         $this->page->requires->string_for_js('savechanges', 'moodle');
         $this->page->requires->string_for_js('cancel', 'moodle');
         $this->page->requires->js_init_call('M.mod_assign.init_grading_table', array((int)$table->get_course_module_id()));
+
 
         $o .= $this->output->box_start('boxaligncenter gradingtable');
         // need to get from prefs

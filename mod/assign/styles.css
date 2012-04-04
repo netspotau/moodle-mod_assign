@@ -41,6 +41,8 @@ div.submissionsummarytable table tbody tr td.c0 {
 }
 
 .jsenabled .gradingoptionsform .hidden {display: none;}
+.ajaxgradelink {display: none;}
+.jsenabled .ajaxgradelink {display: inline;}
 
 td.submissionstatus, 
 a:link.submissionstatus {

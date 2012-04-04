@@ -19,7 +19,14 @@ M.mod_assign.init_tree = function(Y, expand_all, htmlid) {
 M.mod_assign.init_grading_table = function(Y, coursemoduleid) {
     Y.use('yui2-get', 'panel', 'dd-plugin', 'connection', 'dom', function (Y) {
 
+        var gradingformpanel;
+
         var loadgradeformsuccess = function(o) {
+
+            if (typeof(gradingformpanel) != "undefined") {
+                gradingformpanel.hide();
+                gradingformpanel.destroy();
+            }
             var gradingformelement = Y.one('#gradingformajax');
             if (!gradingformelement) {
                 Y.one('body').append('<div id="gradingformajax">&nbsp;</div>');
@@ -28,48 +35,6 @@ M.mod_assign.init_grading_table = function(Y, coursemoduleid) {
             
             gradingformelement.setContent(o.responseText);
 
-            var gradingformpanel = new Y.Panel({
-                srcNode: gradingformelement,
-                headerContent: M.str.moodle.grade,
-                zIndex: 30,
-                centered: true,
-                visible: true,
-                render: true,
-                iframe: true,
-                constraintoviewport: false,
-                plugins      : [Y.Plugin.Drag],
-                buttons: [],
-                //buttons : [ { text:M.str.moodle.savechanges, handler:handleSubmit, isDefault:true }, 
-                //            { text:M.str.moodle.cancel, handler:handleCancel } ] 
-             
-            });
-
-            // execute the javascript - move them to the head of the page
-
-            // force the javascript to execute
-            var scriptnodes = Y.all('#gradingformajax script');
-
-            var headnode = Y.one('head');
-            var scriptsrcs = [];
-            scriptnodes.each(function(node) {
-                scriptsrc = node.getAttribute('src');
-                if (scriptsrc != "") {
-                    scriptsrcs[scriptsrcs.length] = scriptsrc;
-                }
-            });
-            console.log(scriptsrcs);
-            YAHOO.util.Get.script(scriptsrcs, {
-                onSuccess: function(o) {
-                    var scriptnodes = Y.all('#gradingformajax script');
-                    scriptnodes.each(function(node) {
-                        scriptsrc = node.getAttribute('src');
-                        if (scriptsrc == "") {
-                            eval(node.getContent());
-                        }
-                    });
-                    
-                }
-            });
 
 
             var cancelbutton = Y.one('#id_cancelbutton');
@@ -95,6 +60,8 @@ M.mod_assign.init_grading_table = function(Y, coursemoduleid) {
                             // reopen the panel
                             loadgradeformsuccess(o);
                         
+                        } else {
+                            // update the table row
                         }
                     },
                     failure : function(o) {
@@ -110,6 +77,51 @@ M.mod_assign.init_grading_table = function(Y, coursemoduleid) {
             });
 
             
+            // execute the javascript - in the correct order
+
+            // force the javascript to execute
+            var scriptnodes = Y.all('#gradingformajax script');
+
+            function runNextScriptNode(nodelist) {
+                var scriptnode = nodelist.shift();
+                
+                if (typeof(scriptnode) == "undefined") {
+                    return;
+                }
+                scriptsrc = scriptnode.getAttribute('src');
+                if (scriptsrc != "") {
+                    // need to include this node and wait until it's loaded
+                    YAHOO.util.Get.script(scriptsrc, {
+                        onSuccess: function(o) {
+                            runNextScriptNode(nodelist);
+                        }
+                    });
+                        
+                } else {
+                    // normal script node - just run it
+                    eval(scriptnode.getContent()); 
+                    runNextScriptNode(nodelist);
+                }
+
+            }
+
+            runNextScriptNode(scriptnodes);
+            gradingformpanel = new Y.Panel({
+                srcNode: gradingformelement,
+                headerContent: M.str.moodle.grade,
+                zIndex: 30,
+                centered: true,
+                visible: true,
+                render: true,
+                modal: true,
+                iframe: true,
+                constraintoviewport: false,
+                plugins      : [Y.Plugin.Drag],
+                buttons : []
+            });
+
+
+
         };
         var loadgradeformfailure = function(o) {
         };

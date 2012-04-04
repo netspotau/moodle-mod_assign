@@ -327,10 +327,10 @@ class assignment {
             $this->process_submit_assignment_for_grading();
             // save and show next button
         } else if ($action == 'submitgrade') {
-            if (optional_param('ajax', 0, PARAM_INT)) {
+            if (AJAX_SCRIPT) {
                 $action = 'grade';
                 if ($this->process_save_grade($mform)) {
-                    $action = 'none';
+                    $action = 'singlegradingrow';
                 }
             } else if (optional_param('saveandshownext', null, PARAM_ALPHA)) {
                 //save and show next
@@ -376,8 +376,8 @@ class assignment {
             $o .= $this->download_submissions();
         } else if ($action == 'submit') {
             $o .= $this->check_submit_for_grading();
-        } else if ($action == 'none') {
-            $o .= '';
+        } else if ($action == 'singlegradingrow') {
+            $o .= $this->view_single_grading_row();
         } else {
             $o .= $this->view_submission_page();
         }
@@ -1525,23 +1525,26 @@ class assignment {
         global $USER, $CFG;
         // Include grading options form 
         require_once($CFG->dirroot . '/mod/assign/grading_options_form.php');
+        require_once($CFG->dirroot . '/mod/assign/grading_manager_requirements.php');
         $o = '';
 
         $perpage = get_user_preferences('assign_perpage', 10);
         $filter = get_user_preferences('assign_filter', '');
         // print options  for changing the filter and changing the number of results per page
-        $mform = new mod_assign_grading_options_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'userid'=>$USER->id), 'post', '', array('class'=>'gradingoptionsform'));
+        $gradingoptionsform = new mod_assign_grading_options_form(null, array('cm'=>$this->get_course_module()->id, 'contextid'=>$this->context->id, 'userid'=>$USER->id), 'post', '', array('class'=>'gradingoptionsform'));
+        $gradingrequirementsform = new mod_assign_grading_manager_requirements(null, array('gradinginstance'=>$this->get_grading_instance(0, true)), 'post', '', array('style'=>'display:none'));
 
 
         $data = new stdClass();
         $data->perpage = $perpage;
         $data->filter = $filter;
-        $mform->set_data($data);
+        $gradingoptionsform->set_data($data);
         
         // plagiarism update status apearring in the grading book
         plagiarism_update_status($this->get_course(), $this->get_course_module());
         
-        $o .= $this->output->render(new grading_options_form($mform));
+        $o .= $this->output->render(new assign_form('gradingoptionsform', $gradingoptionsform));
+        $o .= $this->output->render(new assign_form('gradingrequirements', $gradingrequirementsform));
         
         // load and print the table of submissions
         $o .= $this->output->render(new grading_table($this, $perpage, $filter));
@@ -2411,7 +2414,17 @@ class assignment {
 
 
         // plugins
-        $this->add_plugin_grade_elements($grade, $mform, $data);
+        if (!AJAX_SCRIPT) {
+            $this->add_plugin_grade_elements($grade, $mform, $data);
+        } else {
+            if ($this->is_any_feedback_plugin_enabled()) {
+                $fullgradingurl = new moodle_url('/mod/assign/view.php', array('id'=>$this->get_course_module()->id, 'action'=>'grade', 'rownum'=>$params['rownum']));
+                
+                $fullgradinglink = $this->output->action_link($fullgradingurl, get_string('viewfullgradingpage', 'assign'));
+
+                $mform->addElement('static', 'fullgradinglink', '', $fullgradinglink);
+            }
+        }
 
         
         // hidden params
@@ -2457,6 +2470,26 @@ class assignment {
                 }
             }
         }
+    }
+    
+    /**
+     * check if feedback plugins installed are enabled 
+     * 
+     * @return bool
+     */
+    public function is_any_feedback_plugin_enabled() {
+        if (!isset($this->cache['any_feedback_plugin_enabled'])) {
+            $this->cache['any_feedback_plugin_enabled'] = false;
+            foreach ($this->feedbackplugins as $plugin) {
+                if ($plugin->is_enabled() && $plugin->is_visible()) {
+                    $this->cache['any_feedback_plugin_enabled'] = true;
+                    break;
+                }
+            }
+        }
+
+        return $this->cache['any_feedback_plugin_enabled'];
+        
     }
     
     /**
@@ -2624,16 +2657,18 @@ class assignment {
             $gradebookplugin = $CFG->mod_assign_feedback_plugin_for_gradebook;
 
             // call save in plugins
-            foreach ($this->feedbackplugins as $plugin) {
-                if ($plugin->is_enabled() && $plugin->is_visible()) {
-                    if (!$plugin->save($grade, $formdata)) {
-                        $result = false;
-                        print_error($plugin->get_error());
-                    }
-                    if (('assignfeedback_' . $plugin->get_type()) == $gradebookplugin) {
-                        // this is the feedback plugin chose to push comments to the gradebook
-                        $grade->feedbacktext = $plugin->text_for_gradebook($grade);
-                        $grade->feedbackformat = $plugin->format_for_gradebook($grade);
+            if (!AJAX_SCRIPT) {
+                foreach ($this->feedbackplugins as $plugin) {
+                    if ($plugin->is_enabled() && $plugin->is_visible()) {
+                        if (!$plugin->save($grade, $formdata)) {
+                            $result = false;
+                            print_error($plugin->get_error());
+                        }
+                        if (('assignfeedback_' . $plugin->get_type()) == $gradebookplugin) {
+                            // this is the feedback plugin chose to push comments to the gradebook
+                            $grade->feedbacktext = $plugin->text_for_gradebook($grade);
+                            $grade->feedbackformat = $plugin->format_for_gradebook($grade);
+                        }
                     }
                 }
             }
