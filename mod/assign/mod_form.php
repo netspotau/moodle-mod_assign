@@ -136,7 +136,7 @@ class mod_assign_mod_form extends moodleform_mod {
             }
             $assignment->set_course($DB->get_record('course', array('id'=>$this->current->course), '*', MUST_EXIST));
         }
-        $assignment->plugin_data_preprocessing(&$defaultvalues);
+        $assignment->plugin_data_preprocessing($defaultvalues);
     }
 
 

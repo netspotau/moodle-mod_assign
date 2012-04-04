@@ -756,12 +756,12 @@ class assignment {
     public function plugin_data_preprocessing(&$defaultvalues) {
         foreach ($this->submissionplugins as $plugin) {
             if ($plugin->is_visible()) {
-                $plugin->data_preprocessing(&$defaultvalues);
+                $plugin->data_preprocessing($defaultvalues);
             }
         }
         foreach ($this->feedbackplugins as $plugin) {
             if ($plugin->is_visible()) {
-                $plugin->data_preprocessing(&$defaultvalues);
+                $plugin->data_preprocessing($defaultvalues);
             }
         }
     }
