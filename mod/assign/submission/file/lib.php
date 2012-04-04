@@ -245,7 +245,7 @@ class assignment_submission_file extends assignment_submission_plugin {
      * @param stdClass $submission
      * @return string
      */
-    public function view_summary($submission) {
+    public function view_summary(stdClass $submission) {
         $count = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
         if ($count <= ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES) {
             return $this->assignment->render_area_files(ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);

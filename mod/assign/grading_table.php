@@ -438,7 +438,7 @@ class grading_table extends table_sql implements renderable {
      * @param stdClass $row The submission row
      * @return mixed string or NULL
      */
-    function other_cols($colname, stdClass $row){
+    function other_cols($colname, $row){
         if (($pos = strpos($colname, 'assignsubmission_')) !== false) {
             $plugin = $this->assignment->get_submission_plugin_by_type(substr($colname, strlen('assignsubmission_')));
             if ($plugin->is_visible() && $plugin->is_enabled()) {

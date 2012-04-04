@@ -183,7 +183,7 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
      * @param stdClass $grade The grade
      * @return string
      */
-    public function text_for_gradebook($grade) {
+    public function text_for_gradebook(stdClass $grade) {
         $feedbackcomments = $this->get_feedback_comments($grade->id);
         if ($feedbackcomments) {
             return $feedbackcomments->commenttext;

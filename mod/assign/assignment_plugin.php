@@ -189,7 +189,7 @@ abstract class assignment_plugin {
      * @param stdClass $data - the data submitted from the form
      * @return bool - on error the subtype should call set_error and return false.
      */
-    public function save($submissionorgrade, stdClass $data) {
+    public function save(stdClass $submissionorgrade, stdClass $data) {
         return true;   
     }
     
@@ -238,7 +238,7 @@ abstract class assignment_plugin {
      * @param mixed assignment_submission|assignment_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
      * @return string - return a string representation of the submission in full
      */
-    public function view($submissionorgrade) {
+    public function view(stdClass $submissionorgrade) {
         return '';
     }
 
@@ -248,7 +248,7 @@ abstract class assignment_plugin {
      * @param mixed assignment_submission|assignment_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
      * @return bool
      */
-    public function show_view_link($submissionorgrade) {
+    public function show_view_link(stdClass $submissionorgrade) {
         return true;
     }
 
@@ -356,7 +356,7 @@ abstract class assignment_plugin {
      * @param mixed assignment_submission| assignment_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
      * @return string - return a string representation of the submission in full
      */
-    public function view_summary($submissionorgrade) {
+    public function view_summary(stdClass $submissionorgrade) {
         return '';
     }
     
@@ -378,7 +378,7 @@ abstract class assignment_plugin {
      * @param mixed assignment_submission| assignment_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
      * @return array - return an array of files indexed by filename
      */
-    public function get_files($submissionorgrade) {
+    public function get_files(stdClass $submissionorgrade) {
         return array();
     }
     
@@ -429,7 +429,7 @@ abstract class assignment_plugin {
      * @param string $log Record upgrade messages in the log
      * @return boolean true or false - false will trigger a rollback
      */
-    public function upgrade(context $oldcontext, stdClass $oldassignment, stdClass $oldsubmissionorgrade, $submissionorgrade, $log) {
+    public function upgrade(context $oldcontext, stdClass $oldassignment, stdClass $oldsubmissionorgrade, stdClass $submissionorgrade, $log) {
         $log = $log . ' ' . get_string('upgradenotimplemented', 'mod_assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));
         return false;
     }
@@ -440,7 +440,7 @@ abstract class assignment_plugin {
      * 
      * @return string
      */
-    public function format_for_log($submissionorgrade) {
+    public function format_for_log(stdClass $submissionorgrade) {
         // format the info for each submission plugin add_to_log
         return '';
     }
@@ -464,7 +464,7 @@ abstract class assignment_plugin {
      * Is this assignment plugin empty? (ie no submission or feedback)
      * @return bool
      */
-    public function is_empty($submissionorgrade) {
+    public function is_empty(stdClass $submissionorgrade) {
         return true;
     }
 }

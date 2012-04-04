@@ -114,7 +114,7 @@ class assignment_submission_comments extends assignment_submission_plugin {
      * @param string log - can be appended to by the upgrade
      * @return bool was it a success? (false will trigger a rollback)
      */
-    public function upgrade_settings($oldcontext,$oldassignment, $log) {
+    public function upgrade_settings(context $oldcontext, stdClass $oldassignment, $log) {
         // first upgrade settings (nothing to do)
         return true;
     }
@@ -163,7 +163,7 @@ class assignment_submission_comments extends assignment_submission_plugin {
      *
      * @return bool
      */
-    public function show_view_link($grade) {
+    public function show_view_link(stdClass $grade) {
         return false;
     }
     
