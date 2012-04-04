@@ -28,7 +28,7 @@ require_once('../../config.php');
 require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
 $id = required_param('id', PARAM_INT);  // Course Module ID
-$url = new moodle_url('/mod/assign/view.php'); // Base URL
+$url = new moodle_url('/mod/assign/view.php', array('id' => $id)); // Base URL
 
 // get the request parameters
 $cm = get_coursemodule_from_id('assign', $id, 0, false, MUST_EXIST);
