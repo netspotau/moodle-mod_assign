@@ -68,10 +68,6 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
      * @return bool (true if elements were added to the form) 
      */
     public function get_form_elements($grade, MoodleQuickForm $mform, stdClass $data) {
-        $elements = array();
-
-       
-        $gradeid = $grade ? $grade->id : 0;
         if ($grade) {
             $feedbackcomments = $this->get_feedback_comments($grade->id);
             if ($feedbackcomments) {
@@ -94,8 +90,6 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
      */
     public function save(stdClass $grade, stdClass $data) {
         global $DB;
-
-
         $feedbackcomment = $this->get_feedback_comments($grade->id);
         if ($feedbackcomment) {
             $feedbackcomment->commenttext = $data->assignfeedbackcomments_editor['text'];
@@ -201,7 +195,6 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
         global $DB;
         // will throw exception on failure
         $DB->delete_records('assign_feedback_comments', array('assignment'=>$this->assignment->get_instance()->id));
-        
         return true;
     }
     
