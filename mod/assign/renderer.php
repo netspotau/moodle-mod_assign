@@ -462,7 +462,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         }
 
         if ($status->cansubmit) {
-            // submission.php test
+            // submission.php 
             $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
                     array('id' => $status->coursemoduleid, 'action'=>'submit')), get_string('submitassignment', 'assign'), 'get');
             $o .= $this->output->box_start('boxaligncenter submithelp');
@@ -520,6 +520,11 @@ class mod_assign_renderer extends plugin_renderer_base {
     public function render_grading_table(grading_table $table) {
         $o = '';
         $o .= $this->output->box_start('boxaligncenter gradingtable');
+        $this->page->requires->js_init_call('M.mod_assign.init_grading_table', array());
+        $this->page->requires->string_for_js('nousersselected', 'assign');
+        $this->page->requires->string_for_js('batchoperationconfirmlock', 'assign');
+        $this->page->requires->string_for_js('batchoperationconfirmunlock', 'assign');
+        $this->page->requires->string_for_js('batchoperationconfirmreverttodraft', 'assign');
         // need to get from prefs
         $o .= $this->flexible_table($table, $table->get_rows_per_page(), true);
         $o .= $this->output->box_end();

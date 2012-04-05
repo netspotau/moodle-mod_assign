@@ -327,7 +327,10 @@ class assignment {
          } else if ($action == 'confirmsubmit') {
             $this->process_submit_assignment_for_grading();
             // save and show next button
-        } else if ($action == 'submitgrade') {
+         } else if ($action == 'batchgradingoperation') {
+            $this->process_batch_grading_operation();
+            $action = 'grading';
+         } else if ($action == 'submitgrade') {
             if (optional_param('saveandshownext', null, PARAM_ALPHA)) {
                 //save and show next
                 $action = 'grade';
@@ -1560,6 +1563,7 @@ class assignment {
         // Include grading options form 
         require_once($CFG->dirroot . '/mod/assign/grading_options_form.php');
         require_once($CFG->dirroot . '/mod/assign/grading_actions_form.php');
+        require_once($CFG->dirroot . '/mod/assign/grading_batch_operations_form.php');
         $o = '';
       
         $links = array();
@@ -1594,6 +1598,11 @@ class assignment {
                                                                   'post', '', 
                                                                   array('class'=>'gradingoptionsform'));
 
+        $gradingbatchoperationsform = new mod_assign_grading_batch_operations_form(null, 
+                                                                  array('cm'=>$this->get_course_module()->id, 
+                                                                        'submissiondrafts'=>$this->get_instance()->submissiondrafts), 
+                                                                  'post', '', 
+                                                                  array('class'=>'gradingbatchoperationsform'));
 
         $gradingoptionsdata = new stdClass();
         $gradingoptionsdata->perpage = $perpage;
@@ -1608,6 +1617,7 @@ class assignment {
        
         // load and print the table of submissions
         $o .= $this->output->render(new grading_table($this, $perpage, $filter));
+        $o .= $this->output->render(new assign_form('gradingbatchoperationsform', $gradingbatchoperationsform));
         return $o;
     }
   
@@ -1749,6 +1759,40 @@ class assignment {
             return false;
         }
         return true;
+    }
+    
+    /**
+     * Ask the user to confirm they want to perform this batch operation
+     * @return string
+     */
+    private function process_batch_grading_operation() {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/assign/grading_batch_operations_form.php');
+        require_sesskey();
+
+        $gradingbatchoperationsform = new mod_assign_grading_batch_operations_form(null, 
+                                                                  array('cm'=>$this->get_course_module()->id, 
+                                                                        'submissiondrafts'=>$this->get_instance()->submissiondrafts), 
+                                                                  'post', '', 
+                                                                  array('class'=>'gradingbatchoperationsform'));
+
+        if ($data = $gradingbatchoperationsform->get_data()) {               
+            // get the list of users
+            $users = $data->selectedusers;
+            $userlist = explode(',', $users);
+
+            foreach ($userlist as $userid) {
+                if ($data->operation == 'lock') {
+                    $this->process_lock($userid);
+                } else if ($data->operation == 'unlock') {
+                    $this->process_unlock($userid);
+                } else if ($data->operation == 'reverttodraft') {
+                    $this->process_revert_to_draft($userid);
+                }
+            }
+        }
+        
+        return true;    
     }
 
     /**
@@ -2306,6 +2350,7 @@ class assignment {
 
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
+        require_sesskey();
       
         $data = new stdClass();
         $mform = new mod_assign_submission_form(null, array($this, $data));
@@ -2602,13 +2647,16 @@ class assignment {
      * @global moodle_database $DB
      * @return void
      */
-    private function process_revert_to_draft() {
+    private function process_revert_to_draft($userid = 0) {
         global $USER, $DB;
         
         // Need grade permission
         require_capability('mod/assign:grade', $this->context);
+        require_sesskey();
 
-        $userid = required_param('userid', PARAM_INT);
+        if (!$userid) {
+            $userid = required_param('userid', PARAM_INT);
+        }
 
         $submission = $this->get_user_submission($userid, false);
         if (!$submission) {
@@ -2634,13 +2682,16 @@ class assignment {
      * @global moodle_database $DB
      * @return void
      */
-    private function process_lock() {
+    private function process_lock($userid = 0) {
         global $USER, $DB;
         
         // Need grade permission
         require_capability('mod/assign:grade', $this->context);
+        require_sesskey();
 
-        $userid = required_param('userid', PARAM_INT);
+        if (!$userid) {
+            $userid = required_param('userid', PARAM_INT);
+        }
 
         $grade = $this->get_user_grade($userid, true);
         $grade->locked = 1;
@@ -2659,13 +2710,16 @@ class assignment {
      * @global moodle_database $DB 
      * @return void
      */
-    private function process_unlock() {
+    private function process_unlock($userid = 0) {
         global $USER, $DB;
 
         // Need grade permission
         require_capability('mod/assign:grade', $this->context);
+        require_sesskey();
 
-        $userid = required_param('userid', PARAM_INT);
+        if (!$userid) {
+            $userid = required_param('userid', PARAM_INT);
+        }
 
         $grade = $this->get_user_grade($userid, true);
         $grade->locked = 0;
@@ -2693,6 +2747,7 @@ class assignment {
         
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
+        require_sesskey();
 
         $rownum = required_param('rownum', PARAM_INT);
         $useridlist = optional_param('useridlist', '', PARAM_TEXT);
