@@ -99,7 +99,20 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o .= $this->output->box_end();
         return $o;
     }
-    
+
+    /**
+     * Render the grading actions form
+     * @param grading_actions_form $form The grading actions form to render
+     * @return string
+     */
+    public function render_grading_actions_form(grading_actions_form $form) {
+        $o = '';
+        $o .= $this->output->box_start('boxaligncenter gradingactionsform');
+        $o .= $this->moodleform($form->get_form());
+        $o .= $this->output->box_end();
+        return $o;
+    }
+
     /**
      * Render the grading form
      * @param grading_form $form The grading form to render
@@ -520,25 +533,11 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o .= $this->output->spacer(array('height'=>30));
         $contextname = $table->get_assignment_name();
 
-        $o .= $this->output->container_start('gradingnavigation');
-        $o .= $this->output->container_start('backlink');
-        $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_course_module_id())), get_string('backto', '', $contextname));
-        $o .= $this->output->container_end();
-        if ($table->can_view_all_grades()) {
-            $o .= $this->output->container_start('gradebooklink');
-            $o .= $this->output->action_link(new moodle_url('/grade/report/grader/index.php', array('id' => $table->get_course_id())), get_string('viewgradebook', 'assign'));
-            $o .= $this->output->container_end();
-        }
-        if ($table->submissions_enabled()) {
-            $o .= $this->output->container_start('downloadalllink');
-            $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', array('id' => $table->get_course_module_id(), 'action' => 'downloadall')), get_string('downloadall', 'assign'));
-            $o .= $this->output->container_end();
-        }
-
+        $o .= $this->output->container_start('gradingnavigation');    
         $o .= $this->output->container_end();
 
         return $o;
-    }
+   }
 
     /**
      * render a feedback plugin feedback

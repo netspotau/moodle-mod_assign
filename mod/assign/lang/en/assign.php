@@ -107,6 +107,8 @@ $string['invalidgradeforscale'] = 'The grade supplied was not valid for the curr
 $string['invalidfloatforgrade'] = 'The grade provided could not be understood: {$a}';
 $string['lastmodifiedsubmission'] = 'Last modified (submission)';
 $string['lastmodifiedgrade'] = 'Last modified (grade)';
+$string['links'] = 'Links';
+$string['linkoptions'] = 'Link options';
 $string['locksubmissionforstudent'] = 'Prevent any more submissions for student: (id={$a->id}, fullname={$a->fullname}).';
 $string['manageassignfeedbackplugins'] = 'Manage assignment feedback plugins';
 $string['manageassignsubmissionplugins'] = 'Manage assignment submission plugins';
@@ -149,6 +151,7 @@ $string['savefiles'] = 'Save files';
 $string['savenext'] = 'Save and show next';
 $string['saveonlinetext'] = 'Save changes';
 $string['sendnotifications'] = 'Send notifications to graders';
+$string['selectlink'] = 'Select action';
 $string['settings'] = 'Assignment settings';
 $string['submissioncommentnumwords'] = 'Number of words in submission comment: {$a}. ';
 $string['submissioncomments'] = 'Enable submission comments';
