@@ -101,6 +101,10 @@ class grading_table extends table_sql implements renderable {
         $columns = array();
         $headers = array();
     
+        // Select
+        $columns[] = 'select';
+        $headers[] = '<input type="checkbox" name="selectall" title="' . get_string('selectall') . '"/>';
+        
         // User picture
         $columns[] = 'picture';
         $headers[] = '';
@@ -159,6 +163,7 @@ class grading_table extends table_sql implements renderable {
         $this->define_headers($headers);
         $this->no_sorting('finalgrade');
         $this->no_sorting('edit');
+        $this->no_sorting('select');
         foreach ($this->assignment->get_submission_plugins() as $plugin) {
             if ($plugin->is_visible() && $plugin->is_enabled()) {
                 $this->no_sorting('assignsubmission_' . $plugin->get_type());
@@ -222,6 +227,16 @@ class grading_table extends table_sql implements renderable {
             return $this->output->user_picture($row);
         }
         return '';
+    }
+    
+    /**
+     * Insert a checkbox for selecting the current row for batch operations
+     * 
+     * @param stdClass $row
+     * @return string
+     */
+    function col_select(stdClass $row) {
+        return '<input type="checkbox" name="selectedusers" value="' . $row->userid . '"/>';
     }
 
     /**

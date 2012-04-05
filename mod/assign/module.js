@@ -16,3 +16,70 @@ M.mod_assign.init_tree = function(Y, expand_all, htmlid) {
     });
 };
 
+
+M.mod_assign.init_grading_table = function(Y) {
+    Y.use('node', function(Y) {
+        checkboxes = Y.all('td.c0 input');
+        checkboxes.each(function(node) {
+            node.on('change', function(e) {
+                rowelement = e.currentTarget.get('parentNode').get('parentNode');
+                if (e.currentTarget.get('checked')) {
+                    rowelement.setAttribute('class', 'selectedrow');
+                } else {
+                    rowelement.setAttribute('class', 'unselectedrow');
+                }
+            });
+
+            rowelement = node.get('parentNode').get('parentNode');
+            if (node.get('checked')) {
+                rowelement.setAttribute('class', 'selectedrow');
+            } else {
+                rowelement.setAttribute('class', 'unselectedrow');
+            }
+        });
+
+        var selectall = Y.one('th.c0 input');
+        selectall.on('change', function(e) {
+            if (e.currentTarget.get('checked')) {
+                checkboxes = Y.all('td.c0 input');
+                checkboxes.each(function(node) {
+                    rowelement = node.get('parentNode').get('parentNode');
+                    node.set('checked', true); 
+                    rowelement.setAttribute('class', 'selectedrow');
+                });
+            } else {
+                checkboxes = Y.all('td.c0 input');
+                checkboxes.each(function(node) {
+                    rowelement = node.get('parentNode').get('parentNode');
+                    node.set('checked', false); 
+                    rowelement.setAttribute('class', 'unselectedrow');
+                });
+            }
+        });
+
+        var batchform = Y.one('form.gradingbatchoperationsform');
+        batchform.on('submit', function(e) {
+            checkboxes = Y.all('td.c0 input');
+            var selectedusers = [];
+            checkboxes.each(function(node) {
+                if (node.get('checked')) {
+                    selectedusers[selectedusers.length] = node.get('value');
+                }
+            });
+
+            operation = Y.one('#id_operation');
+            usersinput = Y.one('input.selectedusers');
+            usersinput.set('value', selectedusers.join(','));
+            if (selectedusers.length == 0) {
+                alert(M.str.assign.nousersselected);
+                e.preventDefault();
+            } else {
+                if (!confirm(eval('M.str.assign.batchoperationconfirm' + operation.get('value')))) {
+                    e.preventDefault();
+                }
+            }
+        });
+    });
+
+    
+};

@@ -26,6 +26,7 @@ div.gradingsummary .generaltable {
 
 .gradingsummarytable,
 .feedbacktable,
+.gradingbatchoperationsform,
 .submissionsummarytable {
     margin-top: 1em;
 }
@@ -86,3 +87,11 @@ td.earlysubmission {
     color: black;
     background-color: #cfefcf;
 }
+
+.gradingtable .c0 { display: none; }
+.jsenabled .gradingtable .c0 { display: table-cell; }
+.gradingbatchoperationsform { display: none; }
+.jsenabled .gradingbatchoperationsform { display: block; }
+
+.gradingtable tr.selectedrow { background-color: #ffeecc; }
+.gradingtable tr.unselectedrow { background-color: white; }
