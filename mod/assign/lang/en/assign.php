@@ -97,7 +97,8 @@ $string['gradeabovemaximum'] = 'Grade must be less than or equal to {$a}.';
 $string['gradeoutof'] = 'Grade out of {$a}';
 $string['gradestudent'] = 'Grade student: (id={$a->id}, fullname={$a->fullname}). ';
 $string['grading'] = 'Grading';
-$string['gradingoptions'] = 'Display options';
+$string['gradingoptions'] = 'Grade listing options';
+$string['gradingactions'] = 'Grading actions';
 $string['gradingstatus'] = 'Grading status';
 $string['gradingstudentprogress'] = 'Grading student {$a->index} of {$a->count}';
 $string['gradingsummary'] = 'Grading summary';
@@ -107,8 +108,6 @@ $string['invalidgradeforscale'] = 'The grade supplied was not valid for the curr
 $string['invalidfloatforgrade'] = 'The grade provided could not be understood: {$a}';
 $string['lastmodifiedsubmission'] = 'Last modified (submission)';
 $string['lastmodifiedgrade'] = 'Last modified (grade)';
-$string['links'] = 'Links';
-$string['linkoptions'] = 'Link options';
 $string['locksubmissionforstudent'] = 'Prevent any more submissions for student: (id={$a->id}, fullname={$a->fullname}).';
 $string['manageassignfeedbackplugins'] = 'Manage assignment feedback plugins';
 $string['manageassignsubmissionplugins'] = 'Manage assignment submission plugins';

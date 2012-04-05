@@ -1602,8 +1602,8 @@ class assignment {
         // plagiarism update status apearring in the grading book
         plagiarism_update_status($this->get_course(), $this->get_course_module());
 
-        $o .= $this->output->render(new grading_actions_form($gradingactionsform));        
-        $o .= $this->output->render(new grading_options_form($gradingoptionsform));
+        $o .= $this->output->render(new assign_form('gradingactionsform', $gradingactionsform));        
+        $o .= $this->output->render(new assign_form('gradingoptionsform', $gradingoptionsform));
        
         // load and print the table of submissions
         $o .= $this->output->render(new grading_table($this, $perpage, $filter));

@@ -519,22 +519,10 @@ class mod_assign_renderer extends plugin_renderer_base {
      */
     public function render_grading_table(grading_table $table) {
         $o = '';
-        $this->page->requires->string_for_js('grade', 'moodle');
-        $this->page->requires->string_for_js('savechanges', 'moodle');
-        $this->page->requires->string_for_js('cancel', 'moodle');
-        $this->page->requires->js_init_call('M.mod_assign.init_grading_table', array((int)$table->get_course_module_id()));
-
-
         $o .= $this->output->box_start('boxaligncenter gradingtable');
         // need to get from prefs
         $o .= $this->flexible_table($table, $table->get_rows_per_page(), true);
         $o .= $this->output->box_end();
-
-        $o .= $this->output->spacer(array('height'=>30));
-        $contextname = $table->get_assignment_name();
-
-        $o .= $this->output->container_start('gradingnavigation');    
-        $o .= $this->output->container_end();
 
         return $o;
    }
