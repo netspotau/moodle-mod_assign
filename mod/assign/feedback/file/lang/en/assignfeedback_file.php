@@ -26,6 +26,8 @@
 
 $string['allowfilefeedback'] = 'Enabled';
 $string['configmaxbytes'] = 'Maximum file size';
+$string['enabled'] = 'File feedback';
+$string['enabled_help'] = 'If enabled, the teacher will be able to upload files with feedback when marking the assignments. These files may be, but are not limited to marked up student submissions, documents with comments or spoken audio feedback. ';
 $string['file'] = 'Feedback files';
 $string['maxbytes'] = 'Maximum file size';
 $string['maxfiles'] = 'Maximum number of uploaded files';

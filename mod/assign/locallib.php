@@ -718,6 +718,7 @@ class assignment {
             // enabled
             //tied disableIf rule to this select element
             $mform->addElement('selectyesno', $plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', $plugin->get_name());
+            $mform->addHelpButton($plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', 'enabled', $plugin->get_subtype() . '_' . $plugin->get_type());
             $mform->setDefault($plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', $plugin->is_enabled());
 
             $plugin->get_settings($mform);

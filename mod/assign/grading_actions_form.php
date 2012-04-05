@@ -49,10 +49,13 @@ class mod_assign_grading_actions_form extends moodleform {
         $autosubmit = array('onchange'=>'form.submit();');  
         $mform->addElement('select', 'url', '', $links, $autosubmit);
     	
-        // hidden params       
+        // hidden params               
+        $mform->addElement('hidden', 'id', $cm);
+        $mform->setType('id', PARAM_INT);
         $mform->addElement('hidden', 'action', 'redirect');
         $mform->setType('action', PARAM_ALPHA);
-        $mform->addElement('hidden', 'id', $cm);
-        $mform->setType('id', PARAM_INT);        
+
+        // buttons
+        $this->add_action_buttons(false, get_string('submitaction', 'assign'));
     }
 }
