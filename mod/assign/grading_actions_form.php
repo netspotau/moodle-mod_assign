@@ -44,10 +44,10 @@ class mod_assign_grading_actions_form extends moodleform {
         $data = $this->_customdata;
         $links = $data['links'];
         $cm = $data['cm'];
-        $mform->addElement('header', 'general', get_string('linkoptions', 'assign'));
+        $mform->addElement('header', 'general', get_string('gradingactions', 'assign'));
         // visible elements
         $autosubmit = array('onchange'=>'form.submit();');  
-        $mform->addElement('select', 'url', get_string('links', 'assign'), $links, $autosubmit);
+        $mform->addElement('select', 'url', '', $links, $autosubmit);
     	
         // hidden params               
         $mform->addElement('hidden', 'id', $cm);

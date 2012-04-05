@@ -350,11 +350,6 @@ class grading_table extends table_sql implements renderable {
                                                   'rownum'=>$this->rownum,'action'=>'grade')),
                                             $this->output->pix_icon('grade_feedback', get_string('grade'), 'assign'), null);
 
-        $edit .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
-                                            array('id' => $this->assignment->get_course_module()->id, 
-                                                  'rownum'=>$this->rownum,'action'=>'grade')),
-                                            $this->output->pix_icon('quickgrade', get_string('grade'), 'assign'), null, array('class'=>'ajaxgradelink'));
-        
 
         if (!$row->status || $row->status == ASSIGN_SUBMISSION_STATUS_DRAFT || !$this->assignment->get_instance()->submissiondrafts) {
             if (!$row->locked) {
