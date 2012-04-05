@@ -172,6 +172,7 @@ $string['submissionstatus_'] = 'No submission';
 $string['submissionstatus'] = 'Submission status';
 $string['submissionstatus_submitted'] = 'Submitted for grading';
 $string['submission'] = 'Submission';
+$string['submitaction'] = 'Submit action link';
 $string['submitassignment_help'] = 'Once this assignment is submitted you will not be able to make any more changes';
 $string['submitassignment'] = 'Submit assignment';
 $string['submittedearly'] = 'Assignment was submitted {$a} early';
