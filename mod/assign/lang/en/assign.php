@@ -156,7 +156,7 @@ $string['preventlatesubmissions_help'] = 'If enabled, students will not be able 
 $string['preventsubmissions'] = 'Prevent the user from making any more submissions to this assignment.';
 $string['previous'] = 'Previous';
 $string['reverttodraftforstudent'] = 'Revert submission to draft for student: (id={$a->id}, fullname={$a->fullname}).';
-$string['reverttodraft'] = 'Revert the submission to draft status. This allows further changes to the submission.';
+$string['reverttodraft'] = 'Revert the submission to draft status.';
 $string['reviewed'] = 'Reviewed';
 $string['savechanges'] = 'Save changes';
 $string['savecomments'] = 'Save submission comments';

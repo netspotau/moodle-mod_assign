@@ -1768,6 +1768,7 @@ class assignment {
     private function process_batch_grading_operation() {
         global $CFG;
         require_once($CFG->dirroot . '/mod/assign/grading_batch_operations_form.php');
+        require_sesskey();
 
         $gradingbatchoperationsform = new mod_assign_grading_batch_operations_form(null, 
                                                                   array('cm'=>$this->get_course_module()->id, 
@@ -2349,6 +2350,7 @@ class assignment {
 
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
+        require_sesskey();
       
         $data = new stdClass();
         $mform = new mod_assign_submission_form(null, array($this, $data));
@@ -2650,6 +2652,7 @@ class assignment {
         
         // Need grade permission
         require_capability('mod/assign:grade', $this->context);
+        require_sesskey();
 
         if (!$userid) {
             $userid = required_param('userid', PARAM_INT);
@@ -2684,6 +2687,7 @@ class assignment {
         
         // Need grade permission
         require_capability('mod/assign:grade', $this->context);
+        require_sesskey();
 
         if (!$userid) {
             $userid = required_param('userid', PARAM_INT);
@@ -2711,6 +2715,7 @@ class assignment {
 
         // Need grade permission
         require_capability('mod/assign:grade', $this->context);
+        require_sesskey();
 
         if (!$userid) {
             $userid = required_param('userid', PARAM_INT);
@@ -2742,6 +2747,7 @@ class assignment {
         
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
+        require_sesskey();
 
         $rownum = required_param('rownum', PARAM_INT);
         $useridlist = optional_param('useridlist', '', PARAM_TEXT);

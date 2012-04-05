@@ -462,7 +462,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         }
 
         if ($status->cansubmit) {
-            // submission.php test
+            // submission.php 
             $o .= $this->output->single_button(new moodle_url('/mod/assign/view.php',
                     array('id' => $status->coursemoduleid, 'action'=>'submit')), get_string('submitassignment', 'assign'), 'get');
             $o .= $this->output->box_start('boxaligncenter submithelp');

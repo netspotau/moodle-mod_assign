@@ -362,7 +362,7 @@ class grading_table extends table_sql implements renderable {
 
         $edit .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
                                             array('id' => $this->assignment->get_course_module()->id, 
-                                                  'rownum'=>$this->rownum,'action'=>'grade')),
+                                                  'rownum'=>$this->rownum,'action'=>'grade','sesskey'=>sesskey())),
                                             $this->output->pix_icon('grade_feedback', get_string('grade'), 'assign'), null);
 
 
@@ -372,6 +372,7 @@ class grading_table extends table_sql implements renderable {
                                                                    array('id' => $this->assignment->get_course_module()->id, 
                                                                          'userid'=>$row->id, 
                                                                          'action'=>'lock',
+                                                                         'sesskey'=>sesskey(),
                                                                          'page'=>$this->currpage)), 
                                                                    $this->output->pix_icon('t/lock', get_string('preventsubmissions', 'assign')));
 
@@ -380,6 +381,7 @@ class grading_table extends table_sql implements renderable {
                                                                    array('id' => $this->assignment->get_course_module()->id, 
                                                                          'userid'=>$row->id, 
                                                                          'action'=>'unlock',
+                                                                         'sesskey'=>sesskey(),
                                                                          'page'=>$this->currpage)), 
                                                                    $this->output->pix_icon('t/unlock', get_string('allowsubmissions', 'assign')));
             }
@@ -389,6 +391,7 @@ class grading_table extends table_sql implements renderable {
                                                                array('id' => $this->assignment->get_course_module()->id, 
                                                                      'userid'=>$row->id, 
                                                                      'action'=>'reverttodraft',
+                                                                     'sesskey'=>sesskey(),
                                                                      'page'=>$this->currpage)), 
                                                                $this->output->pix_icon('t/left', get_string('reverttodraft', 'assign')));
         }
