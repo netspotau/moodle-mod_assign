@@ -394,3 +394,11 @@ function assign_cron() {
         }
     }
 }
+
+/**
+ * Returns all other capabilities used by this module.
+ * @return array Array of capability strings
+ */
+function assign_get_extra_capabilities() {
+    return array('gradereport/grader:view', 'moodle/grade:viewall', 'moodle/site:viewfullnames', 'moodle/site:config');
+}
