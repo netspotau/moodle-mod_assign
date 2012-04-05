@@ -89,6 +89,7 @@ class assignment_submission_file extends assignment_submission_plugin {
         }
         
         $mform->addElement('select', 'assignsubmission_file_maxfiles', get_string('maxfilessubmission', 'assignsubmission_file'), $options);
+         $mform->addHelpButton('assignsubmission_file_maxfiles', 'maxfilessubmission', 'assignsubmission_file');
         $mform->setDefault('assignsubmission_file_maxfiles', $defaultmaxfilesubmissions);
         $mform->disabledIf('assignsubmission_file_maxfiles', 'assignsubmission_file_enabled', 'eq', 0);
 
@@ -101,6 +102,7 @@ class assignment_submission_file extends assignment_submission_plugin {
                             'default'=>$defaultmaxsubmissionsizebytes);
         
         $mform->addElement('select', 'assignsubmission_file_maxsizebytes', get_string('maximumsubmissionsize', 'assignsubmission_file'), $choices);
+        $mform->addHelpButton('assignsubmission_file_maxsizebytes', 'maximumsubmissionsize', 'assignsubmission_file');
         $mform->setDefault('assignsubmission_file_maxsizebytes', $defaultmaxsubmissionsizebytes);
         $mform->disabledIf('assignsubmission_file_maxsizebytes', 'assignsubmission_file_enabled', 'eq', 0);
     }
