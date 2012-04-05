@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -16,31 +15,27 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the definition for the library class for online comment
- *  feedback plugin 
+ * This file contains the definition for the library class for comment feedback plugin 
  * 
  *
- * @package   mod_assign
- * @subpackage assignfeedback_comments
+ * @package   assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
  
  defined('MOODLE_INTERNAL') || die();
  
- /*
- * library class for comment feedback plugin extending feedback plugin
- * base class
+/**
+ * library class for comment feedback plugin extending feedback plugin base class
  * 
- * @package   mod_assign
- * @subpackage assignfeedback_comments
+ * @package   assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class assignment_feedback_comments extends assignment_feedback_plugin {
 
    /**
-    * get the name of the online comment feedback plugin
+    * Get the name of the online comment feedback plugin
     * @return string 
     */  
     public function get_name() {
@@ -48,11 +43,11 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
     }
     
     /**
-     * get the feedback comment from the database
+     * Get the feedback comment from the database
      *  
      * @global moodle_database $DB
      * @param int $gradeid
-     * @return stdClass or false 
+     * @return stdClass|false The feedback comments for the given grade if it exists. False if it doesn't.
      */
     public function get_feedback_comments($gradeid) {
         global $DB;
@@ -60,12 +55,12 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
     }
     
     /**
-     * get form elements for the grading page
+     * Get form elements for the grading page
      * 
-     * @param mixed stdClass|null $grade
+     * @param stdClass|null $grade
      * @param MoodleQuickForm $mform
      * @param stdClass $data
-     * @return bool (true if elements were added to the form) 
+     * @return bool true if elements were added to the form
      */
     public function get_form_elements($grade, MoodleQuickForm $mform, stdClass $data) {
         if ($grade) {
@@ -81,7 +76,7 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
     }
 
     /**
-     * saving the comment content into dtabase 
+     * Saving the comment content into dtabase
      * 
      * @global moodle_database $DB
      * @param stdClass $grade
@@ -199,8 +194,9 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
     }
     
     /**
-     * No text is set for this plugin
-     * 
+     * Returns true if there are no feedback comments for the given grade
+     *
+     * @param stdClass $grade
      * @return bool
      */
     public function is_empty(stdClass $grade) {

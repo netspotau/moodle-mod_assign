@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -18,14 +17,13 @@
 /**
  * Upgrade code for the feedback_comments module.
  *
- * @package   mod_assign
- * @subpackage   feedback_comments
+ * @package   assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
- * stub for upgrade code
+ * Stub for upgrade code
  * @param int $oldversion
  * @return bool
  */

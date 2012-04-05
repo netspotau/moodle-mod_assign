@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -18,12 +17,13 @@
 /**
  * Strings for component 'assignfeedback_comments', language 'en'
  *
- * @package   mod_assign
  * @package   assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+
 $string['pluginname'] = 'Feedback comments';
 $string['enabled'] = 'Feedback comments';
 $string['enabled_help'] = 'If enabled, the marker can leave feedback comments for each submission. ';
+

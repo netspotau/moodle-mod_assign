@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -18,22 +17,19 @@
 /**
  * This file contains the class for backup of this feedback plugin
  * 
- * @package   mod_assign
- * @subpackage feedback_comments
+ * @package   assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-
 /**
  * Provides the information to backup comments feedback
  *
  * This just records the text and format
  *
- * @package   mod_assign
- * @subpackage feedback_comments
+ * @package   assignfeedback_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -41,6 +37,7 @@ class backup_assignfeedback_comments_subplugin extends backup_subplugin {
 
     /**
      * Returns the subplugin information to attach to submission element
+     * @return backup_subplugin_element
      */
     protected function define_grade_subplugin_structure() {
 
