@@ -25,3 +25,5 @@
  */
 
 $string['pluginname'] = 'Feedback comments';
+$string['enabled'] = 'Feedback comments';
+$string['enabled_help'] = 'If enabled, the marker can leave feedback comments for each submission. ';

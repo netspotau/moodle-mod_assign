@@ -27,6 +27,8 @@
 
 $string['allowfilesubmissions'] = 'Enabled';
 $string['configmaxbytes'] = 'Maximum file size';
+$string['enabled'] = 'File submissions';
+$string['enabled_help'] = 'If enabled, students are able to upload one or more files as their submission.';
 $string['file'] = 'File submissions';
 $string['maxbytes'] = 'Maximum file size';
 $string['maxfilessubmission'] = 'Maximum number of uploaded files';
