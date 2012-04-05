@@ -50,7 +50,7 @@ class mod_assign_grading_options_form extends moodleform {
         $mform->addElement('select', 'perpage', get_string('assignmentsperpage', 'assign'), $options, $autosubmit);
         $options = array(''=>get_string('filternone', 'assign'), ASSIGN_FILTER_SUBMITTED=>get_string('filtersubmitted', 'assign'), ASSIGN_FILTER_REQUIRE_GRADING=>get_string('filterrequiregrading', 'assign'));
         $mform->addElement('select', 'filter', get_string('filter', 'assign'), $options, $autosubmit);
-    
+
         // hidden params
         $mform->addElement('hidden', 'contextid', $instance['contextid']);
         $mform->setType('contextid', PARAM_INT);

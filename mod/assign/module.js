@@ -12,7 +12,7 @@ M.mod_assign.init_tree = function(Y, expand_all, htmlid) {
         if (expand_all) {
             tree.expandAll();
         }
-
         tree.render();
     });
 };
+

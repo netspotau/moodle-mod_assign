@@ -65,39 +65,21 @@ class users_submissions_table implements renderable {
 /*
  * Implements a renderable grading options form
  */
-class grading_options_form implements renderable {
+class assign_form implements renderable {
     /** @var moodleform $form is the edit submission form */
-    protected $form = null;
+    var $form = null;
+    /** @var string $classname is the name of the class to assign to the container */
+    var $classname = '';
     
     /*
      * Constructor
      * @param moodleform $form
      */
-    public function __construct(moodleform $form) {
-        $this->set_form($form);
-    }
-    
-    /**
-     * Returns form
-     *
-     * @return moodleform $form
-     */
-    public function get_form() {
-        return $this->form;
-    }
-
-    /**
-     * Set the form
-     *
-     * @param moodleform $form
-     * @return void
-     */
-    public function set_form(moodleform $form) {
-        if (!$form) {
-            throw new coding_exception('Form may not be null');
-        }
+    public function __construct($classname, moodleform $form) {
+        $this->classname = $classname;
         $this->form = $form;
     }
+    
 }
 
 

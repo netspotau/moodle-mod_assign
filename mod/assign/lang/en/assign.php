@@ -99,6 +99,7 @@ $string['gradestudent'] = 'Grade student: (id={$a->id}, fullname={$a->fullname})
 $string['grading'] = 'Grading';
 $string['gradingoptions'] = 'Display options';
 $string['gradingstatus'] = 'Grading status';
+$string['gradingstudentprogress'] = 'Grading student {$a->index} of {$a->count}';
 $string['gradingsummary'] = 'Grading summary';
 $string['hideshow'] = 'Hide/Show';
 $string['instructionfiles'] = 'Instruction files';
@@ -138,6 +139,7 @@ $string['pluginadministration'] = 'Assignment administration';
 $string['pluginname'] = 'Assignment';
 $string['preventlatesubmissions'] = 'Prevent late submissions';
 $string['preventsubmissions'] = 'Prevent the user from making any more submissions to this assignment.';
+$string['previous'] = 'Previous';
 $string['reverttodraftforstudent'] = 'Revert submission to draft for student: (id={$a->id}, fullname={$a->fullname}).';
 $string['reverttodraft'] = 'Revert the submission to draft status. This allows further changes to the submission.';
 $string['reviewed'] = 'Reviewed';
@@ -184,6 +186,7 @@ $string['upgradenotimplemented'] = 'Upgrade not implemented in plugin ({$a->type
 $string['uploadfiles'] = 'Upload files';
 $string['viewfeedback'] = 'View feedback';
 $string['viewfeedbackforuser'] = 'View feedback for user: {$a}';
+$string['viewfullgradingpage'] = 'Open the full grading page to provide feedback';
 $string['viewgradebook'] = 'View gradebook';
 $string['viewgradingformforstudent'] = 'View grading page for student: (id={$a->id}, fullname={$a->fullname}).';
 $string['viewgrading'] = 'Grade assignment';
