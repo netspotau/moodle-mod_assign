@@ -17,8 +17,7 @@
 /**
  * Post-install code for the submission_onlinetext module.
  *
- * @package    mod_assign
- * @subpackage assignsubmission_onlinetext
+ * @package assignsubmission_onlinetext
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -45,6 +44,9 @@ function xmldb_assignsubmission_onlinetext_install() {
         
     // do the upgrades
     return true;
+
+
+   
 }
 
 

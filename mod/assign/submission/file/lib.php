@@ -1,5 +1,4 @@
 <?php 
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -16,13 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the definition for the library class for file
- *  submission plugin 
+ * This file contains the definition for the library class for file submission plugin
  * 
  * This class provides all the functionality for the new assign module.
  *
- * @package   mod_assign
- * @subpackage assignsubmission_file
+ * @package assignsubmission_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -39,8 +36,7 @@ define('ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES', 5);
 define('ASSIGN_FILEAREA_SUBMISSION_FILES', 'submission_files');
 
 /*
- * library class for file submission plugin extending submission plugin
- * base class
+ * library class for file submission plugin extending submission plugin base class
  * 
  * @package   mod_assign
  * @subpackage submission_file
@@ -50,7 +46,7 @@ define('ASSIGN_FILEAREA_SUBMISSION_FILES', 'submission_files');
 class assignment_submission_file extends assignment_submission_plugin {
     
     /**
-     * get the name of the file submission plugin
+     * Get the name of the file submission plugin
      * @return string 
      */
     public function get_name() {
@@ -58,7 +54,7 @@ class assignment_submission_file extends assignment_submission_plugin {
     }
     
     /**
-     * get file submission information from the database  
+     * Get file submission information from the database
      * 
      * @global moodle_database $DB
      * @param int $submissionid
@@ -70,7 +66,8 @@ class assignment_submission_file extends assignment_submission_plugin {
     }
     
     /**
-     * get the default setting for file submission plugin
+     * Get the default setting for file submission plugin
+     *
      * @global stdClass $CFG
      * @global stdClass $COURSE
      * @param MoodleQuickForm $mform The form to add elements to
@@ -108,7 +105,8 @@ class assignment_submission_file extends assignment_submission_plugin {
     }
     
     /**
-     * save the settings for file submission plugin 
+     * Save the settings for file submission plugin
+     *
      * @param stdClass $data
      * @return bool 
      */
@@ -119,7 +117,7 @@ class assignment_submission_file extends assignment_submission_plugin {
     }
 
     /**
-     * file format options 
+     * File format options
      * 
      * @return array
      */
@@ -133,7 +131,7 @@ class assignment_submission_file extends assignment_submission_plugin {
     }
    
     /**
-     * add elements to submission form
+     * Add elements to submission form
      * 
      * @param mixed stdClass|null $submission
      * @param MoodleQuickForm $submission
@@ -156,7 +154,7 @@ class assignment_submission_file extends assignment_submission_plugin {
     }
 
     /**
-     * count the number of files
+     * Count the number of files
      * 
      * @param int $submissionid
      * @param string $area
@@ -171,7 +169,7 @@ class assignment_submission_file extends assignment_submission_plugin {
     }
 
     /**
-     * save the files and trigger plagiarism plugin, if enabled, to scan the uploaded files via events trigger
+     * Save the files and trigger plagiarism plugin, if enabled, to scan the uploaded files via events trigger
      *
      * @global stdClass $USER
      * @global moodle_database $DB
@@ -241,7 +239,8 @@ class assignment_submission_file extends assignment_submission_plugin {
     }
     
     /**
-     * display the list of files  in the submission status table 
+     * Display the list of files  in the submission status table
+     *
      * @param stdClass $submission
      * @return string
      */
@@ -383,7 +382,8 @@ class assignment_submission_file extends assignment_submission_plugin {
     }
     
     /**
-     * formatting for log info    
+     * Formatting for log info
+     * 
      * @param stdClass $submission The submission
      * 
      * @return string

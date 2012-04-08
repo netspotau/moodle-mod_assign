@@ -1,5 +1,4 @@
 <?php 
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -16,13 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the definition for the library class for onlinetext
- *  submission plugin 
+ * This file contains the definition for the library class for onlinetext submission plugin
  * 
  * This class provides all the functionality for the new assign module.
  *
- * @package   mod_assign
- * @subpackage submission_onlinetext
+ * @package assignsubmission_onlinetext
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -34,18 +31,16 @@ defined('MOODLE_INTERNAL') || die();
 define('ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT', 'submissions_onlinetext');
 
 /*
- * library class for onlinetext submission plugin extending submission plugin
- * base class
+ * library class for onlinetext submission plugin extending submission plugin base class
  * 
- * @package   mod_assign
- * @subpackage assignsubmission_onlinetext
+ * @package assignsubmission_onlinetext
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class assignment_submission_onlinetext extends assignment_submission_plugin {
     
     /**
-     * get the name of the online text submission plugin
+     * Get the name of the online text submission plugin
      * @return string 
      */
     public function get_name() {
@@ -54,7 +49,7 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
 
 
    /**
-    * get onlinetext submission information from the database   
+    * Get onlinetext submission information from the database
     * 
     * @global moodle_database $DB
     * @param  int $submissionid
@@ -67,7 +62,7 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     }
     
     /**
-     * add form elements for settings
+     * Add form elements for settings
      * 
      * @param mixed $submission|null
      * @param MoodleQuickForm $mform
@@ -103,7 +98,7 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     }
     
     /**
-     * editor format options
+     * Editor format options
      * 
      * @return array
      */
@@ -118,7 +113,8 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     }
 
      /**
-      * save data to the database
+      * Save data to the database
+      *
       * @global moodle_database $DB
       * @param object $submission
       * @param object $data
@@ -154,7 +150,8 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     }
     
     /**
-     * get the saved text content from the editor
+     * Get the saved text content from the editor
+     *
      * @param string $name
      * @param int $submissionid
      * @return string 
@@ -171,7 +168,8 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     }
     
     /**
-     * get the content format for the editor 
+     * Get the content format for the editor
+     *
      * @param string $name
      * @param int $submissionid
      * @return int
@@ -190,7 +188,8 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     
     
      /**
-      * display onlinetext word count in the submission status table 
+      * Display onlinetext word count in the submission status table
+      *
       * @param stdClass $submission
       * @return string 
       */
@@ -228,7 +227,8 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     }
 
     /**
-     * display the saved text content from the editor in the view table 
+     * Display the saved text content from the editor in the view table
+     *
      * @param stdClass $submission
      * @return string  
      */
@@ -249,8 +249,7 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     }
     
      /**
-     * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type
-     * and version.
+     * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type and version.
      * 
      * @param string old assignment subtype
      * @param int old assignment version
@@ -265,8 +264,7 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
   
     
     /**
-     * Upgrade the settings from the old assignment 
-     * to the new plugin based one
+     * Upgrade the settings from the old assignment to the new plugin based one
      * 
      * @param context $oldcontext - the database for the old assignment context
      * @param stdClass $oldassignment - the database for the old assignment instance
@@ -317,7 +315,7 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     }
     
     /**
-     * formatting for log info    
+     * Formatting for log info
      *
      * @param stdClass $submission The new submission 
      * @return string

@@ -18,8 +18,7 @@
 /**
  * This file contains the backup code for the feedback_file plugin.
  *
- * @package    mod_assign
- * @subpackage feedback_file
+ * @package   assignfeedback_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -28,11 +27,9 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Provides the information to backup feedback files
  *
- * This just adds its filearea to the annotations
- * and records the number of files
+ * This just adds its filearea to the annotations and records the number of files
  *
- * @package    mod_assign
- * @subpackage feedback_file
+ * @package   assignfeedback_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -40,6 +37,7 @@ class backup_assignfeedback_file_subplugin extends backup_subplugin {
 
     /**
      * Returns the subplugin information to attach to feedback element
+     * @return backup_subplugin_element
      */
     protected function define_grade_subplugin_structure() {
 
@@ -58,4 +56,5 @@ class backup_assignfeedback_file_subplugin extends backup_subplugin {
         $subpluginelement->annotate_files('mod_assign', 'feedback_files', 'grade');// The parent is the grade
         return $subplugin;
     }
+
 }

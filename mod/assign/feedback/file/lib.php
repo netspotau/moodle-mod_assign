@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -16,13 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the definition for the library class for file
- *  feedback plugin 
+ * This file contains the definition for the library class for file feedback plugin
  * 
- * This class provides all the functionality for the new assign module.
  *
- * @package   mod_assign
- * @subpackage   assignfeedback_file
+ * @package   assignfeedback_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -35,19 +31,17 @@ define('ASSIGN_MAX_FEEDBACK_FILES', 20);
 define('ASSIGN_FILEAREA_FEEDBACK_FILES', 'feedback_files');
 define('ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES', 5);
 
-/*
- * library class for file feedback plugin extending feedback plugin
- * base class
+/**
+ * library class for file feedback plugin extending feedback plugin base class
  * 
- * @package   mod_assign
- * @subpackage   feedback_file
+ * @package   asignfeedback_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class assignment_feedback_file extends assignment_feedback_plugin {
     
     /**
-     * get the name of the file feedback plugin
+     * Get the name of the file feedback plugin
      * @return string 
      */
     public function get_name() {
@@ -55,7 +49,7 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     }
     
     /**
-     * get file feedback information from the database  
+     * Get file feedback information from the database
      *  
      * @global moodle_database $DB
      * @param int $gradeid
@@ -67,7 +61,7 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     }
     
     /**
-     * file format options 
+     * File format options
      * @global stdClass $COURSE
      * @return array
      */
@@ -82,12 +76,12 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     }
    
     /**
-     * get form elements for grading form
+     * Get form elements for grading form
      * 
-     * @param mixed stdClass | null $grade
+     * @param stdClass | null $grade
      * @param MoodleQuickForm $mform
      * @param stdClass $data
-     * @return mixed 
+     * @return bool true if elements were added to the form
      */
     public function get_form_elements($grade, MoodleQuickForm $mform, stdClass $data) {
 
@@ -103,7 +97,7 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     }
 
     /**
-     * count the number of files
+     * Count the number of files
      * 
      * @global object $USER
      * @param int $gradeid
@@ -120,7 +114,7 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     }
 
     /**
-     * save the feedback files
+     * Save the feedback files
      * 
      * @global moodle_database $DB
      * @param stdClass $grade
@@ -151,7 +145,7 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     }
     
     /**
-     * display the list of files  in the feedback status table 
+     * Display the list of files  in the feedback status table
      *
      * @param stdClass $grade
      * @return string
@@ -177,7 +171,7 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     }
     
     /**
-     * display the list of files  in the feedback status table 
+     * Display the list of files  in the feedback status table
      * @param stdClass $grade
      * @return string 
      */

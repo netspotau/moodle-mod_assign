@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -18,8 +17,7 @@
 /**
  * Post-install code for the assignfeedback_file module.
  *
- * @package    assign
- * @subpackage assignfeedback_file
+ * @package assignfeedback_file
  * @copyright  1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -48,6 +46,9 @@ function xmldb_assignfeedback_file_install() {
         
     // do the upgrades
     return true;
+
+
+    
 }
 
 

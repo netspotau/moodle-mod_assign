@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -18,18 +17,15 @@
 /**
  * This file contains the class for restore of this submission plugin
  * 
- * @package   mod_assign
- * @subpackage assignsubmission_onlinetext
+ * @package assignsubmission_onlinetext
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
- * restore subplugin class that provides the necessary information
- * needed to restore one assign_submission subplugin.
+ * restore subplugin class that provides the necessary information needed to restore one assign_submission subplugin.
  *
- * @package   mod_assign
- * @subpackage submission_onlinetext
+ * @package assignsubmission_onlinetext
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -41,7 +37,8 @@ class restore_assignsubmission_onlinetext_subplugin extends restore_subplugin {
 
     /**
      * 
-     * Returns array the paths to be handled by the subplugin at assignment level     
+     * Returns array the paths to be handled by the subplugin at assignment level
+     * @return array
      */
     protected function define_submission_subplugin_structure() {
 
@@ -64,7 +61,7 @@ class restore_assignsubmission_onlinetext_subplugin extends restore_subplugin {
      * Processes one assignsubmission_onlinetext element
      * 
      * @global moodle_database $DB
-     * @param object $data 
+     * @param mixed $data
      */
     public function process_assignsubmission_onlinetext_submission($data) {
         global $DB;

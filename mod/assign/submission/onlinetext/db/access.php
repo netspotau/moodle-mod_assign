@@ -17,14 +17,13 @@
 /**
  * Capability definitions for this module.
  *
- * @package   mod_assign
- * @subpackage   submission_onlinetext
+ * @package   assignsubmission_onlinetext
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 $capabilities = array(
 
+
+
 );
-
-

@@ -18,8 +18,7 @@
 /**
  * This file contains the restore code for the feedback_file plugin.
  *
- * @package    mod_assign
- * @subpackage assignfeedback_file
+ * @package   assignfeedback_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,8 +28,7 @@ defined('MOODLE_INTERNAL') || die();
  * restore subplugin class that provides the necessary information
  * needed to restore one assign_feedback subplugin.
  *
- * @package    mod_assign
- * @subpackage assignfeedback_file
+ * @package   assignfeedback_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -42,6 +40,7 @@ class restore_assignfeedback_file_subplugin extends restore_subplugin {
 
     /**
      * Returns the paths to be handled by the subplugin at assignment level
+     * @return array
      */
     protected function define_grade_subplugin_structure() {
 
@@ -60,7 +59,7 @@ class restore_assignfeedback_file_subplugin extends restore_subplugin {
 
     /**
      * Processes one feedback_file element
-     * @param object $data
+     * @param mixed $data
      */
     public function process_assignfeedback_file_grade($data) {
         global $DB;
@@ -75,4 +74,5 @@ class restore_assignfeedback_file_subplugin extends restore_subplugin {
         
         $this->add_related_files('mod_assign', 'feedback_files', 'grade', null, $oldgradeid);
     }
+    
 }

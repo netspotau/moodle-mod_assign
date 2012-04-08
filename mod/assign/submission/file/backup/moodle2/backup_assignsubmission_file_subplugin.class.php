@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -18,8 +17,7 @@
 /**
  * This file contains the class for backup of this submission plugin
  * 
- * @package   mod_assign
- * @subpackage assignsubmission_file
+ * @package assignsubmission_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,11 +27,9 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Provides the information to backup submission files
  *
- * This just adds its filearea to the annotations
- * and records the number of files
+ * This just adds its filearea to the annotations and records the number of files
  *
- * @package   mod_assign
- * @subpackage assignsubmission_file
+ * @package assignsubmission_file
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -42,7 +38,7 @@ class backup_assignsubmission_file_subplugin extends backup_subplugin {
     /**
      * 
      * Returns the subplugin information to attach to submission element
-     * 
+     * @return backup_subplugin_element
      */
     protected function define_submission_subplugin_structure() {
 
@@ -61,4 +57,5 @@ class backup_assignsubmission_file_subplugin extends backup_subplugin {
         $subpluginelement->annotate_files('mod_assign', 'submission_files', 'submission');// The parent is the submission
         return $subplugin;
     }
+    
 }

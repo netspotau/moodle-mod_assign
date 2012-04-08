@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -16,12 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the definition for the library class for online comment
- *  submission plugin 
+ * This file contains the definition for the library class for online comment submission plugin 
  * 
- *
- * @package   mod_assign
- * @subpackage submission_comments
+ * @package assignsubmission_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -34,11 +30,9 @@
  require_once($CFG->dirroot . '/mod/assign/submission_plugin.php');
  
 /*
- * library class for comment submission plugin extending submission plugin
- * base class
+ * library class for comment submission plugin extending submission plugin base class
  * 
- * @package   mod_assign
- * @subpackage submission_comments
+ * @package assignsubmission_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -106,8 +100,7 @@ class assignment_submission_comments extends assignment_submission_plugin {
   
     
      /**
-     * Upgrade the settings from the old assignment 
-     * to the new plugin based one
+     * Upgrade the settings from the old assignment to the new plugin based one
      * 
      * @param context $oldcontext - the context for the old assignment
      * @param stdClass $oldassignment - the data for the old assignment
@@ -178,8 +171,7 @@ class assignment_submission_comments extends assignment_submission_plugin {
 
 /**
  *
- * callback method for data validation---- required method 
- * for AJAXmoodle based comment API
+ * Callback method for data validation---- required method for AJAXmoodle based comment API
  * 
  * @param stdClass $options
  * @return bool
@@ -190,8 +182,7 @@ function assignsubmission_comments_comment_validate(stdClass $options) {
 }
 
 /**
- * permission control method for submission plugin ---- required method 
- * for AJAXmoodle based comment API
+ * Permission control method for submission plugin ---- required method for AJAXmoodle based comment API
  * 
  * @param stdClass $options
  * @return array
@@ -202,10 +193,8 @@ function assignsubmission_comments_comment_permissions(stdClass $options) {
 }
 
 /**
- * Callback to force the userid for all comments to be the userid of
- * the submission and NOT the global $USER->id. This
- * is required by the upgrade code. Note the comment area
- * is used to identify upgrades.
+ * Callback to force the userid for all comments to be the userid of the submission and NOT the global $USER->id. This
+ * is required by the upgrade code. Note the comment area is used to identify upgrades.
  * 
  * @global moodle_database $DB
  * @param stdClass $comment
