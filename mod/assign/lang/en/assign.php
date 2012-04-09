@@ -174,6 +174,7 @@ $string['submissiondrafts'] = 'Require students click submit button';
 $string['submissiondrafts_help'] = 'If enabled, students will have to click a Submit button to declare their submission as final. This allows students to keep a draft version of the submission on the system.';
 $string['submissionfiles'] = 'Submission files';
 $string['assignsubmissionpluginname'] = 'Submission plugin';
+$string['submissionnotready'] = 'This assignment is not ready to submit:';
 $string['submissionplugins'] = 'Submission plugins';
 $string['submissionreceipts'] = 'Send submission receipts';
 $string['submissionslocked'] = 'This assignment is not accepting submissions';

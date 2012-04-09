@@ -1800,14 +1800,35 @@ class assignment {
      * @return string
      */
     private function check_submit_for_grading() {
-        $continueurl = new moodle_url('/mod/assign/view.php', array('id' => $this->coursemodule->id,
-                                                                    'action' => 'confirmsubmit',
-                                                                    'sesskey' => sesskey()));
+        // Check that all of the submission plugins are ready for this submission
+        $msg = '';
+        $allok = true;
+        $plugins = $this->get_submission_plugins();
+        foreach ($plugins as $plugin) {
+            $check = $plugin->precheck_submission();
+            if ($check !== true) {
+                $msg = $check.html_writer::empty_tag('br');
+                $allok = false;
+            }
+        }
+
         $cancelurl = new moodle_url('/mod/assign/view.php', array('id' => $this->coursemodule->id));
+        if (!$allok) {
+            // At least one of the submission plugins is not ready for submission
+            $msg = html_writer::tag('p', get_string('submissionnotready', 'mod_assign').html_writer::empty_tag('br').$msg);
+            $msg .= $this->output->continue_button($cancelurl);
+            $confirm = $this->output->box($msg, 'generalbox', 'notice');
+        } else {
+            // All submission plugins ready - confirm the student really does want to submit for marking
+            $continueurl = new moodle_url('/mod/assign/view.php', array('id' => $this->coursemodule->id,
+                                                                        'action' => 'confirmsubmit',
+                                                                        'sesskey' => sesskey()));
+            $confirm = $this->output->confirm(get_string('confirmsubmission', 'mod_assign'), $continueurl, $cancelurl);
+        }
 
         $o = '';
         $o .= $this->output->header();
-        $o .= $this->output->confirm(get_string('confirmsubmission', 'mod_assign'), $continueurl, $cancelurl);
+        $o .= $confirm;
         $o .= $this->view_footer();
         return $o;
     }
@@ -2249,8 +2270,13 @@ class assignment {
         
         $submission = $this->get_user_submission($USER->id,true);
         if ($submission->status != ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
-            $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+            // Give each submission plugin a chance to process the submission
+            $plugins = $this->get_submission_plugins();
+            foreach ($plugins as $plugin) {
+                $plugin->submit_for_grading();
+            }
 
+            $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
             $this->update_submission($submission);
             $this->add_to_log('submit for grading', $this->format_submission_for_log($submission));
             $this->email_graders($submission);

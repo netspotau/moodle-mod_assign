@@ -57,4 +57,21 @@ abstract class assignment_submission_plugin extends assignment_plugin {
         return true;
     }
      
+
+    /**
+     * Check if the submission plugin has all the required data to allow the work
+     * to be submitted for grading
+     * @return bool|string 'true' if OK to proceed with submission, otherwise a
+     *                        a message to display to the user
+     */
+    public function precheck_submission() {
+        return true;
+    }
+
+    /**
+     * Carry out any extra processing required when the work is submitted for grading
+     * @return void
+     */
+    public function submit_for_grading() {
+    }
 }
