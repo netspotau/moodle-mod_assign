@@ -151,6 +151,43 @@ class mod_assign_renderer extends plugin_renderer_base {
         
         return $o;
     }
+    
+    /**
+     * Render the submit for grading page
+     * 
+     * @param submit_for_grading_page $submit_for_grading_page 
+     * @return string
+     */
+    public function render_submit_for_grading_page($page) {
+        $o = '';
+
+        $o .= $this->output->container_start('submitforgrading');
+        $o .= $this->output->heading(get_string('submitassignment', 'assign'), 3);
+        $o .= $this->output->spacer(array('height'=>30));
+
+        $cancelurl = new moodle_url('/mod/assign/view.php', array('id' => $page->coursemoduleid));
+        if (count($page->notifications)) {
+            // At least one of the submission plugins is not ready for submission
+
+            $o .= $this->output->heading(get_string('submissionnotready', 'assign'), 4);
+
+            foreach ($page->notifications as $notification) {
+                $o .= $this->output->notification($notification);
+            }
+            
+            $o .= $this->output->continue_button($cancelurl);
+        } else {
+            // All submission plugins ready - confirm the student really does want to submit for marking
+            $continueurl = new moodle_url('/mod/assign/view.php', array('id' => $page->coursemoduleid,
+                                                                        'action' => 'confirmsubmit',
+                                                                        'sesskey' => sesskey()));
+            $o .= $this->output->confirm(get_string('confirmsubmission', 'mod_assign'), $continueurl, $cancelurl);
+        }
+        $o .= $this->output->container_end();
+
+
+        return $o;
+    }
 
     /**
      * Page is done - render the footer

@@ -63,6 +63,25 @@ class users_submissions_table implements renderable {
 }
 
 /*
+ * 
+ */
+class submit_for_grading_page implements renderable {
+    /** @var array $notifications is a list of notification messages returned from the plugins*/
+    var $notifications = array();
+    var $coursemoduleid = 0;
+    
+    /*
+     * Constructor
+     * @param moodleform $form
+     */
+    public function __construct($notifications, $coursemoduleid) {
+        $this->notifications = $notifications;
+        $this->coursemoduleid = $coursemoduleid;
+    }
+    
+}
+
+/*
  * Implements a renderable grading options form
  */
 class assign_form implements renderable {

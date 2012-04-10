@@ -1797,38 +1797,27 @@ class assignment {
 
     /**
      * Ask the user to confirm they want to submit their work for grading
+     * @global stdClass $USER
      * @return string
      */
     private function check_submit_for_grading() {
+        global $USER;
         // Check that all of the submission plugins are ready for this submission
-        $msg = '';
-        $allok = true;
+        $notifications = array();
+        $submission = $this->get_user_submission($USER->id, false);
         $plugins = $this->get_submission_plugins();
         foreach ($plugins as $plugin) {
-            $check = $plugin->precheck_submission();
-            if ($check !== true) {
-                $msg = $check.html_writer::empty_tag('br');
-                $allok = false;
+            if ($plugin->is_enabled() && $plugin->is_visible()) {
+                $check = $plugin->precheck_submission($submission);
+                if ($check !== true) {
+                    $notifications[] = $check;
+                }
             }
-        }
-
-        $cancelurl = new moodle_url('/mod/assign/view.php', array('id' => $this->coursemodule->id));
-        if (!$allok) {
-            // At least one of the submission plugins is not ready for submission
-            $msg = html_writer::tag('p', get_string('submissionnotready', 'mod_assign').html_writer::empty_tag('br').$msg);
-            $msg .= $this->output->continue_button($cancelurl);
-            $confirm = $this->output->box($msg, 'generalbox', 'notice');
-        } else {
-            // All submission plugins ready - confirm the student really does want to submit for marking
-            $continueurl = new moodle_url('/mod/assign/view.php', array('id' => $this->coursemodule->id,
-                                                                        'action' => 'confirmsubmit',
-                                                                        'sesskey' => sesskey()));
-            $confirm = $this->output->confirm(get_string('confirmsubmission', 'mod_assign'), $continueurl, $cancelurl);
         }
 
         $o = '';
         $o .= $this->output->header();
-        $o .= $confirm;
+        $o .= $this->output->render(new submit_for_grading_page($notifications, $this->get_course_module()->id));
         $o .= $this->view_footer();
         return $o;
     }
