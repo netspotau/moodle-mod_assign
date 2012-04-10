@@ -106,6 +106,8 @@ $string['grade'] = 'Grade';
 $string['gradebelowzero'] = 'Grade must be greater than or equal to zero.';
 $string['gradeabovemaximum'] = 'Grade must be less than or equal to {$a}.';
 $string['gradeoutof'] = 'Grade out of {$a}';
+$string['gradeoutofhelp'] = 'Grade';
+$string['gradeoutofhelp_help'] = 'Enter the grade for the student\'s submission here. You may include decimals.';
 $string['gradestudent'] = 'Grade student: (id={$a->id}, fullname={$a->fullname}). ';
 $string['grading'] = 'Grading';
 $string['gradingoptions'] = 'Grade listing options';
