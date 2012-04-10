@@ -2508,6 +2508,7 @@ class assignment {
             // use simple direct grading                       
             if ($this->get_instance()->grade > 0) {                        
                 $mform->addElement('text', 'grade', get_string('gradeoutof', 'assign',$this->get_instance()->grade));
+                $mform->addHelpButton('grade', 'gradeoutofhelp', 'assign');
                 $mform->setType('grade', PARAM_TEXT);
             } else {
                 $grademenu = make_grades_menu($this->get_instance()->grade);
