@@ -1716,7 +1716,7 @@ class assignment {
             $mform = new mod_assign_submission_form(null, array($this, $data));
         }
 
-        $o .= $this->output->render(new edit_submission_form($mform));
+        $o .= $this->output->render(new assign_form('editsubmissionform',$mform));
     
         $o .= $this->view_footer();
         $this->add_to_log('view submit assignment form', get_string('viewownsubmissionform', 'assign'));
