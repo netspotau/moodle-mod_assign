@@ -45,7 +45,7 @@ function assignfeedback_file_pluginfile($course, $cm, context $context, $fileare
 
     require_login($course, false, $cm);
     $itemid = (int)array_shift($args);
-    $record = $DB->get_record('assign_feedback', array('id'=>$itemid), 'userid', MUST_EXIST);
+    $record = $DB->get_record('assign_grades', array('id'=>$itemid), 'userid', MUST_EXIST);
     $userid = $record->userid;
 
     // check is users feedback or has grading permission
