@@ -2822,6 +2822,18 @@ class assignment {
     }
 
     /**
+     * This function is a static wrapper around can_upgrade
+     *
+     * @param string $type The plugin type
+     * @param int $version The plugin version
+     * @return bool
+     */
+    public static function can_upgrade_assignment($type, $version) {
+        $assignment = new assignment(null, null, null);
+        return $assignment->can_upgrade($type, $version);
+    }
+
+    /**
      * This function returns true if it can upgrade an assignment from the 2.2
      * module.
      * @param string $type The plugin type

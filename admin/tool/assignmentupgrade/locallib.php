@@ -110,8 +110,7 @@ class tool_assignmentupgrade_assignment_list {
             
         global $CFG;
         require_once($CFG->dirroot . '/mod/assign/locallib.php');
-        $assignment = new assignment();
-        return $assignment->can_upgrade($type, $version);
+        return assignment::can_upgrade_assignment($type, $version);
     }
 
     protected function build_sql() {

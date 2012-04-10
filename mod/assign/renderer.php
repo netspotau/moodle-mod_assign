@@ -243,6 +243,7 @@ class mod_assign_renderer extends plugin_renderer_base {
             $o .= format_module_intro('assign', $header->assign, $header->coursemoduleid);
             $o .= $this->output->box_end();
         }
+
         return $o;
     }
     
