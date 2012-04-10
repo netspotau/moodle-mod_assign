@@ -99,33 +99,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         $o .= $this->output->box_end();
         return $o;
     }
-
-    /**
-     * Render the grading actions form
-     * @param grading_actions_form $form The grading actions form to render
-     * @return string
-     */
-    public function render_grading_actions_form(grading_actions_form $form) {
-        $o = '';
-        $o .= $this->output->box_start('boxaligncenter gradingactionsform');
-        $o .= $this->moodleform($form->get_form());
-        $o .= $this->output->box_end();
-        return $o;
-    }
-
-    /**
-     * Render the grading form
-     * @param grading_form $form The grading form to render
-     * @return string
-     */
-    public function render_grading_form(grading_form $form) {
-        $o = '';
-        $o .= $this->output->box_start('boxaligncenter gradingform');
-        $o .= $this->moodleform($form->get_form());
-        $o .= $this->output->box_end();
-        return $o;
-    }
-    
+  
     /**
      * Render the user summary
      * 
@@ -197,28 +171,7 @@ class mod_assign_renderer extends plugin_renderer_base {
     public function render_footer() {
         return $this->output->footer();
     }
-
-    /**
-     * render the edit submission form
-     *
-     * @param edit_submission_form $form
-     * @return string
-     */
-    public function render_edit_submission_form(edit_submission_form $editform) {
-        $o = '';
-    
-        $o .= $this->output->container_start('editsubmission');
-        $o .= $this->output->heading(get_string('submission', 'assign'), 3);
-        $o .= $this->output->box_start('boxaligncenter editsubmissionform');
-
-        $o .= $this->moodleform($editform->get_form());
-        
-        $o .= $this->output->box_end();
-        $o .= $this->output->container_end();
-
-        return $o;
-    }
-
+  
     /**
      * render the header
      * 

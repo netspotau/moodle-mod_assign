@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the moodle hooks for the submission file plugin
+ * This file contains the moodle hooks for the submission comments plugin
  *
  * @package   assignsubmission_comments
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}

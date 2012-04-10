@@ -1523,7 +1523,7 @@ class assignment {
         if (!$mform) {
             $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum, 'useridlist'=>$useridlist)), 'post', '', array('class'=>'gradeform'));
         }
-        $o .= $this->output->render(new grading_form($mform));
+        $o .= $this->output->render(new assign_form('gradingform',$mform));
 
         $this->add_to_log('view grading form', get_string('viewgradingformforstudent', 'assign', array('id'=>$user->id, 'fullname'=>fullname($user))));
         
@@ -1716,7 +1716,7 @@ class assignment {
             $mform = new mod_assign_submission_form(null, array($this, $data));
         }
 
-        $o .= $this->output->render(new edit_submission_form($mform));
+        $o .= $this->output->render(new assign_form('editsubmissionform',$mform));
     
         $o .= $this->view_footer();
         $this->add_to_log('view submit assignment form', get_string('viewownsubmissionform', 'assign'));
