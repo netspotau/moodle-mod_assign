@@ -171,28 +171,7 @@ class mod_assign_renderer extends plugin_renderer_base {
     public function render_footer() {
         return $this->output->footer();
     }
-
-    /**
-     * render the edit submission form
-     *
-     * @param edit_submission_form $form
-     * @return string
-     */
-    public function render_edit_submission_form(assign_form $form) {
-        $o = '';
-    
-        $o .= $this->output->container_start('editsubmission');
-        $o .= $this->output->heading(get_string('submission', 'assign'), 3);
-        $o .= $this->output->box_start('boxaligncenter editsubmissionform');
-
-        $o .= $this->moodleform($form->form);
-        
-        $o .= $this->output->box_end();
-        $o .= $this->output->container_end();
-
-        return $o;
-    }
-
+  
     /**
      * render the header
      * 
