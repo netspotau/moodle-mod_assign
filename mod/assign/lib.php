@@ -145,50 +145,6 @@ function assign_extend_settings_navigation(settings_navigation $settings, naviga
 
 }
 
-/**
- * Serves assignment submissions and other files.
- *
- * @global stdClass USER
- * @param mixed $course course or id of the course
- * @param mixed $cm course module or id of the course module
- * @param context $context
- * @param string $filearea
- * @param array $args
- * @param bool $forcedownload
- * @return bool false if file not found, does not return if found - just send the file
- */
-function assign_pluginfile($course, $cm, context $context, $filearea, $args, $forcedownload) {
-    global $USER, $DB;
-    
-    if ($context->contextlevel != CONTEXT_MODULE) {
-        return false;
-    }
-
-    require_login($course, false, $cm);
-    $itemid = (int)array_shift($args);
-    if (strpos($filearea, "submission") === 0) {
-        $record = $DB->get_record('assign_submission', array('id'=>$itemid), 'userid', MUST_EXIST);
-        $userid = $record->userid;
-    } else if (strpos($filearea, "feedback") === 0) {
-        $record = $DB->get_record('assign_grades', array('id'=>$itemid), 'userid', MUST_EXIST);
-        $userid = $record->userid;
-    }
-    // check is users submission or has grading permission
-    if ($USER->id != $userid and !has_capability('mod/assign:grade', $context)) {
-        return false;
-    }
-
-    $relativepath = implode('/', $args);
-
-    $fullpath = "/{$context->id}/mod_assign/$filearea/$itemid/$relativepath";
-
-    $fs = get_file_storage();
-    if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
-        return false;
-    }
-    send_stored_file($file, 0, 0, true); // download MUST be forced - security!
-}
-
 
 /**
  * Add a get_coursemodule_info function in case any assignment type wants to add 'extra' information
