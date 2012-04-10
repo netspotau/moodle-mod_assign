@@ -53,7 +53,7 @@ class backup_assignfeedback_file_subplugin extends backup_subplugin {
         // set source to populate the data
         $subpluginelement->set_source_table('assign_feedback_file', array('grade' => backup::VAR_PARENTID));
 
-        $subpluginelement->annotate_files('mod_assign', 'feedback_files', 'grade');// The parent is the grade
+        $subpluginelement->annotate_files('assignfeedback_file', 'feedback_files', 'grade');// The parent is the grade
         return $subplugin;
     }
 

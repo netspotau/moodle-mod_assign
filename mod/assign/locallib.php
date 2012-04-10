@@ -276,8 +276,8 @@ class assignment {
         $names = get_plugin_list($subtype);
 
         foreach ($names as $name => $path) {
-            if (file_exists($path . '/lib.php')) {
-                require_once($path . '/lib.php');
+            if (file_exists($path . '/locallib.php')) {
+                require_once($path . '/locallib.php');
 
                 $shortsubtype = substr($subtype, strlen('assign'));
                 $pluginclass = 'assignment_' . $shortsubtype . '_' . $name;
@@ -1180,7 +1180,7 @@ class assignment {
      * @param string $editor
      * @return string
      */
-    public function render_editor_content($filearea, $submissionid, $plugintype, $editor) {
+    public function render_editor_content($filearea, $submissionid, $plugintype, $editor, $component) {
         global $CFG;
         
         $result = '';
@@ -1190,7 +1190,7 @@ class assignment {
         $text = $plugin->get_editor_text($editor, $submissionid);
         $format = $plugin->get_editor_format($editor, $submissionid);
         
-        $finaltext = file_rewrite_pluginfile_urls($text, 'pluginfile.php', $this->get_context()->id, 'mod_assign', $filearea, $submissionid);
+        $finaltext = file_rewrite_pluginfile_urls($text, 'pluginfile.php', $this->get_context()->id, $component, $filearea, $submissionid);
         $result .= format_text($finaltext, $format, array('overflowdiv' => true, 'context' => $this->get_context()));
 
         
@@ -1202,7 +1202,7 @@ class assignment {
             $button->set_callback_options('assign_portfolio_caller', array('cmid' => $this->get_course_module()->id, 'sid' => $submissionid, 'plugin' => $plugintype, 'editor' => $editor, 'area'=>$filearea), '/mod/assign/portfolio_callback.php');
             $fs = get_file_storage();
 
-            if ($files = $fs->get_area_files($this->context->id, 'mod_assign',$filearea, $submissionid, "timemodified", false)) {
+            if ($files = $fs->get_area_files($this->context->id, $component,$filearea, $submissionid, "timemodified", false)) {
                 $button->set_formats(PORTFOLIO_FORMAT_RICHHTML);
             } else {
                 $button->set_formats(PORTFOLIO_FORMAT_PLAINHTML);
@@ -2090,7 +2090,7 @@ class assignment {
      * @param int $submissionid
      * @return string 
      */
-    public function render_area_files($area, $submissionid) {
+    public function render_area_files($component, $area, $submissionid) {
         global $USER;
 
         if (!$submissionid) {
@@ -2102,8 +2102,8 @@ class assignment {
         
         $fs = get_file_storage();
         $browser = get_file_browser();
-        $files = $fs->get_area_files($this->get_context()->id, 'mod_assign', $area , $submissionid , "timemodified", false);              
-        return $this->output->assign_files($this->context, $submissionid, $area);
+        $files = $fs->get_area_files($this->get_context()->id, $component, $area , $submissionid , "timemodified", false);              
+        return $this->output->assign_files($this->context, $submissionid, $area, $component);
         
     }
 

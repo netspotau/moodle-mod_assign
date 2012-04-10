@@ -72,7 +72,7 @@ class restore_assignfeedback_file_subplugin extends restore_subplugin {
 
         $DB->insert_record('assign_feedback_file', $data);
         
-        $this->add_related_files('mod_assign', 'feedback_files', 'grade', null, $oldgradeid);
+        $this->add_related_files('assignfeedback_file', 'feedback_files', 'grade', null, $oldgradeid);
     }
     
 }

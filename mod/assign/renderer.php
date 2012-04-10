@@ -47,8 +47,8 @@ class mod_assign_renderer extends plugin_renderer_base {
      * @param string $filearea
      * @return string
      */
-    public function assign_files(context $context, $userid, $filearea) {
-        return $this->render(new assign_files($context, $userid, $filearea));
+    public function assign_files(context $context, $userid, $filearea, $component) {
+        return $this->render(new assign_files($context, $userid, $filearea, $component));
     }
 
     /**

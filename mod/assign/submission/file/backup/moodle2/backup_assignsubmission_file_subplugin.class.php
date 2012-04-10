@@ -54,7 +54,7 @@ class backup_assignsubmission_file_subplugin extends backup_subplugin {
         // set source to populate the data
         $subpluginelement->set_source_table('assign_submission_file', array('submission' => backup::VAR_PARENTID));
 
-        $subpluginelement->annotate_files('mod_assign', 'submission_files', 'submission');// The parent is the submission
+        $subpluginelement->annotate_files('assignsubmission_file', 'submission_files', 'submission');// The parent is the submission
         return $subplugin;
     }
     

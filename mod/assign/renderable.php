@@ -524,20 +524,19 @@ class assign_files implements renderable {
      * @param int $sid
      * @param string $filearea 
      */
-    public function __construct(context $context, $sid, $filearea) {
+    public function __construct(context $context, $sid, $filearea, $component) {
         global $CFG;
         $this->context = $context;
         list($context, $course, $cm) = get_context_info_array($context->id);
         $this->cm = $cm;
         $this->course = $course;
         $fs = get_file_storage();
-        $this->dir = $fs->get_area_tree($this->context->id, 'mod_assign', $filearea, $sid);
+        $this->dir = $fs->get_area_tree($this->context->id, $component, $filearea, $sid);
         
-         $files = $fs->get_area_files($this->context->id, 'mod_assign', $filearea, $sid, "timemodified", false);
+        $files = $fs->get_area_files($this->context->id, $component, $filearea, $sid, "timemodified", false);
         
         if (!empty($CFG->enableportfolios)) {
             require_once($CFG->libdir . '/portfoliolib.php');
-           // $files = $fs->get_area_files($this->context->id, 'mod_assign', $filearea, $sid, "timemodified", false);
             if (count($files) >= 1 && has_capability('mod/assign:exportownsubmission', $this->context)) {
                 $button = new portfolio_add_button();
                 $button->set_callback_options('assign_portfolio_caller', array('cmid' => $this->cm->id, 'sid'=>$sid, 'area'=>$filearea), '/mod/assign/portfolio_callback.php');
@@ -566,7 +565,7 @@ class assign_files implements renderable {
             }
         }
         
-       $this->preprocess($this->dir, $filearea);
+       $this->preprocess($this->dir, $filearea, $component);
     }
     
     /**
@@ -577,7 +576,7 @@ class assign_files implements renderable {
      * @param string $filearea 
      * @return void
      */
-    public function preprocess($dir, $filearea) {
+    public function preprocess($dir, $filearea, $component) {
         global $CFG;
         foreach ($dir['subdirs'] as $subdir) {
             $this->preprocess($subdir, $filearea);
@@ -592,7 +591,7 @@ class assign_files implements renderable {
                     $file->portfoliobutton = $button->to_html(PORTFOLIO_ADD_ICON_LINK);
                 }
             }
-            $url = file_encode_url("$CFG->wwwroot/pluginfile.php", '/'.$this->context->id.'/mod_assign/'.$filearea.'/'.$file->get_itemid(). $file->get_filepath().$file->get_filename(), true);
+            $url = file_encode_url("$CFG->wwwroot/pluginfile.php", '/'.$this->context->id.'/'.$component.'/'.$filearea.'/'.$file->get_itemid(). $file->get_filepath().$file->get_filename(), true);
             $filename = $file->get_filename();
             $file->fileurl = html_writer::link($url, $filename);
         }

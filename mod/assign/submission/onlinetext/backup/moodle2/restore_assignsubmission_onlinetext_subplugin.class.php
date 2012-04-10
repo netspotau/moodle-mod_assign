@@ -74,7 +74,7 @@ class restore_assignsubmission_onlinetext_subplugin extends restore_subplugin {
 
         $DB->insert_record('assign_submission_onlinetext', $data);
         
-        $this->add_related_files('mod_assign', 'submissions_onlinetext', 'submission', null, $oldsubmissionid);
+        $this->add_related_files('assignsubmission_onlinetext', 'submissions_onlinetext', 'submission', null, $oldsubmissionid);
     }
 
 }
