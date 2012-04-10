@@ -102,44 +102,6 @@ class assign_form implements renderable {
 }
 
 /*
- * Implements a renderable grading options form
- */
-class grading_actions_form implements renderable {
-    /** @var moodleform $form is the edit submission form */
-    protected $form = null;
-
-    /*
-     * Constructor
-     * @param moodleform $form
-     */
-    public function __construct(moodleform $form) {
-        $this->set_form($form);
-    }
-
-    /**
-     * Returns form
-     *
-     * @return moodleform $form
-     */
-    public function get_form() {
-        return $this->form;
-    }
-
-    /**
-     * Set the form
-     *
-     * @param moodleform $form
-     * @return void
-     */
-    public function set_form(moodleform $form) {
-        if (!$form) {
-            throw new coding_exception('Form may not be null');
-        }
-        $this->form = $form;
-    }
-}
-
-/*
  * Implements a renderable edit submission form
  */
 class edit_submission_form implements renderable {
@@ -175,43 +137,6 @@ class edit_submission_form implements renderable {
         }
         $this->form = $form;
     }
-}
-
-/*
- * Implements a renderable grading form
- */
-class grading_form implements renderable {
-    /** @var moodleform $form */
-    protected $form = null;
-    
-    /**
-     * A grading form is a moodleform setup to grade a user submission
-     * @param moodleform $form
-     */
-    public function __construct(moodleform $form) {
-        $this->set_form($form);
-    }
-    
-    
-    /**
-     * Returns form
-     *
-     * @return moodleform
-     */
-    public function get_form() {
-        return $this->form;
-    }
-
-    /**
-     * Set the form
-     *
-     * @param moodleform $form
-     * @return void
-     */
-    public function set_form(moodleform $form) {
-        $this->form = $form;
-    }
-    
 }
 
 /*
