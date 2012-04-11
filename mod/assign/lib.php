@@ -335,7 +335,7 @@ function assign_cron() {
         $disabled = get_config('assignsubmission_' . $name, 'disabled');
         if (!$disabled) {
             $class = 'assignment_submission_' . $name;
-            require_once($CFG->dirroot . '/mod/assign/submission/' . $name . '/lib.php');
+            require_once($CFG->dirroot . '/mod/assign/submission/' . $name . '/locallib.php');
             $class::cron();
         }
     }
@@ -345,7 +345,7 @@ function assign_cron() {
         $disabled = get_config('assignfeedback_' . $name, 'disabled');
         if (!$disabled) {
             $class = 'assignment_feedback_' . $name;
-            require_once($CFG->dirroot . '/mod/assign/feedback/' . $name . '/lib.php');
+            require_once($CFG->dirroot . '/mod/assign/feedback/' . $name . '/locallib.php');
             $class::cron();
         }
     }
