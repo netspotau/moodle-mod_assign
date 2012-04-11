@@ -45,8 +45,16 @@ function assignsubmission_onlinetext_pluginfile($course, $cm, context $context, 
 
     require_login($course, false, $cm);
     $itemid = (int)array_shift($args);
-    $record = $DB->get_record('assign_submission', array('id'=>$itemid), 'userid', MUST_EXIST);
+    $record = $DB->get_record('assign_submission', array('id'=>$itemid), 'userid, assignment', MUST_EXIST);
     $userid = $record->userid;
+    
+    if (!$assign = $DB->get_record('assign', array('id'=>$cm->instance))) {
+        return false;
+    }
+
+    if ($assign->id != $record->assignment) {
+        return false;
+    }
 
     // check is users submission or has grading permission
     if ($USER->id != $userid and !has_capability('mod/assign:grade', $context)) {
