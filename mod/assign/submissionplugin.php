@@ -27,7 +27,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/assign/assignment_plugin.php');
+require_once($CFG->dirroot . '/mod/assign/assignmentplugin.php');
 
 /*
  * Abstract base class for submission plugin types.

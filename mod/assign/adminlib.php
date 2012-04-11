@@ -70,7 +70,7 @@ class admin_page_manage_assignment_plugins extends admin_externalpage {
     public function __construct($subtype) {
         $this->subtype = $subtype;
         parent::__construct('manage' . $subtype . 'plugins', get_string('manage' . $subtype . 'plugins', 'assign'),
-                new moodle_url('/mod/assign/admin_manage_plugins.php', array('subtype'=>$subtype)));
+                new moodle_url('/mod/assign/adminmanageplugins.php', array('subtype'=>$subtype)));
     }
 
     /**
@@ -128,7 +128,7 @@ class assignment_plugin_manager {
      * @param string $subtype - either assignsubmission or assignfeedback
      */
     public function __construct($subtype) {
-        $this->pageurl = new moodle_url('/mod/assign/admin_manage_plugins.php', array('subtype'=>$subtype));
+        $this->pageurl = new moodle_url('/mod/assign/adminmanageplugins.php', array('subtype'=>$subtype));
         $this->subtype = $subtype;
     }
 

@@ -26,8 +26,8 @@
  
  /** Include comment core lib.php */
  require_once($CFG->dirroot . '/comment/lib.php');
- /** Include submission_plugin.php */
- require_once($CFG->dirroot . '/mod/assign/submission_plugin.php');
+ /** Include submissionplugin.php */
+ require_once($CFG->dirroot . '/mod/assign/submissionplugin.php');
  
 /*
  * library class for comment submission plugin extending submission plugin base class

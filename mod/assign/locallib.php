@@ -66,14 +66,14 @@ require_once($CFG->libdir . '/portfoliolib.php');
 require_once($CFG->libdir.'/gradelib.php');
 /** grading lib.php */
 require_once($CFG->dirroot.'/grade/grading/lib.php');
-/** Include feedback_plugin.php */
-require_once($CFG->dirroot.'/mod/assign/feedback_plugin.php');
-/** Include submission_plugin.php */
-require_once($CFG->dirroot.'/mod/assign/submission_plugin.php');
+/** Include feedbackplugin.php */
+require_once($CFG->dirroot.'/mod/assign/feedbackplugin.php');
+/** Include submissionplugin.php */
+require_once($CFG->dirroot.'/mod/assign/submissionplugin.php');
 /** Include renderable.php */
 require_once($CFG->dirroot.'/mod/assign/renderable.php');
-/** Include grading_table.php */
-require_once($CFG->dirroot.'/mod/assign/grading_table.php');
+/** Include gradingtable.php */
+require_once($CFG->dirroot.'/mod/assign/gradingtable.php');
 
 //send files to event system for plagiarism detection 
 /** Include eventslib.php */
@@ -1459,7 +1459,7 @@ class assignment {
         $o = '';
 
         // Include grade form 
-        require_once($CFG->dirroot . '/mod/assign/grade_form.php');
+        require_once($CFG->dirroot . '/mod/assign/gradeform.php');
         
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
@@ -1561,9 +1561,9 @@ class assignment {
     private function view_grading_table() {
         global $USER, $CFG;
         // Include grading options form 
-        require_once($CFG->dirroot . '/mod/assign/grading_options_form.php');
-        require_once($CFG->dirroot . '/mod/assign/grading_actions_form.php');
-        require_once($CFG->dirroot . '/mod/assign/grading_batch_operations_form.php');
+        require_once($CFG->dirroot . '/mod/assign/gradingoptionsform.php');
+        require_once($CFG->dirroot . '/mod/assign/gradingactionsform.php');
+        require_once($CFG->dirroot . '/mod/assign/gradingbatchoperationsform.php');
         $o = '';
       
         $links = array();
@@ -1634,7 +1634,7 @@ class assignment {
         $o = '';
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
-        require_once($CFG->dirroot . '/mod/assign/grade_form.php');
+        require_once($CFG->dirroot . '/mod/assign/gradeform.php');
 
         // only load this if it is 
 
@@ -1767,7 +1767,7 @@ class assignment {
      */
     private function process_batch_grading_operation() {
         global $CFG;
-        require_once($CFG->dirroot . '/mod/assign/grading_batch_operations_form.php');
+        require_once($CFG->dirroot . '/mod/assign/gradingbatchoperationsform.php');
         require_sesskey();
 
         $gradingbatchoperationsform = new mod_assign_grading_batch_operations_form(null, 
@@ -2283,7 +2283,7 @@ class assignment {
         global $USER, $CFG;
 
         // Include grading options form 
-        require_once($CFG->dirroot . '/mod/assign/grading_options_form.php');
+        require_once($CFG->dirroot . '/mod/assign/gradingoptionsform.php');
         
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
@@ -2759,7 +2759,7 @@ class assignment {
     private function process_save_grade(&$mform) {
         global $USER, $DB, $CFG;
         // Include grade form 
-        require_once($CFG->dirroot . '/mod/assign/grade_form.php');
+        require_once($CFG->dirroot . '/mod/assign/gradeform.php');
         
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
