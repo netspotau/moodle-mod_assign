@@ -189,7 +189,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         $this->page->set_heading($header->assign->name);
 
         $o .= $this->output->header();
-        $o .= $this->output->heading($header->assign->name);
+        $o .= $this->output->heading(format_string($header->assign->name,false, array('context' => $header->context)));
 
         if ($header->showintro) {
             $o .= $this->output->box_start('generalbox boxaligncenter', 'intro');

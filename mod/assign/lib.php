@@ -253,7 +253,7 @@ function assign_print_overview($courses, &$htmlarray) {
                '<a '.($assignment->visible ? '':' class="dimmed"').
                'title="'.$strassignment.'" href="'.$CFG->wwwroot.
                '/mod/assign/view.php?id='.$assignment->coursemodule.'">'.
-               $assignment->name.'</a></div>';
+               format_string($assignment->name).'</a></div>';
         if ($assignment->duedate) {
             $str .= '<div class="info">'.$strduedate.': '.userdate($assignment->duedate).'</div>';
         } else {

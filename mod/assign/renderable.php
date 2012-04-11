@@ -285,6 +285,8 @@ class assign_submission_status implements renderable {
 class assign_header implements renderable {
     /** @var stdClass the assign record  */
     var $assign = null;
+    /** @var mixed context|null the context record  */
+    var $context = null;
     /** @var bool $showintro - show or hide the intro */
     var $showintro = false;
     /** @var int coursemoduleid - The course module id */
@@ -296,12 +298,14 @@ class assign_header implements renderable {
      * Constructor
      * 
      * @param stdClass $assignment  - the assign database record
+     * @param mixed context|null $context the course module context (or the course context if the coursemodule has not been created yet)
      * @param bool $showintro  - show or hide the intro
      * @param int $coursemoduleid  - the course module id
      * @param string $subpage  - an optional sub page in the navigation
      */
-    public function __construct(stdClass $assign, $showintro, $coursemoduleid, $subpage='') {
+    public function __construct(stdClass $assign,$context ,$showintro, $coursemoduleid, $subpage='') {
         $this->assign = $assign;
+        $this->context = $context;
         $this->showintro = $showintro;
         $this->coursemoduleid = $coursemoduleid;
         $this->subpage = $subpage;

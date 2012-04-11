@@ -1114,7 +1114,8 @@ class assignment {
             if ($item->userid != $USER->id) {
                 require_capability('mod/assign:grade', $this->context);
             }
-            $o .= $this->output->render(new assign_header($this->get_instance(), 
+            $o .= $this->output->render(new assign_header($this->get_instance(),
+                                                              $this->get_context(),
                                                               $this->show_intro(), 
                                                               $this->get_course_module()->id, 
                                                               $plugin->get_name()));
@@ -1136,7 +1137,8 @@ class assignment {
             if ($item->userid != $USER->id) {
                 require_capability('mod/assign:grade', $this->context);
             }
-            $o .= $this->output->render(new assign_header($this->get_instance(), 
+            $o .= $this->output->render(new assign_header($this->get_instance(),
+                                                              $this->get_context(),
                                                               $this->show_intro(), 
                                                               $this->get_course_module()->id, 
                                                               $plugin->get_name()));
@@ -1450,8 +1452,9 @@ class assignment {
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
 
-        $o .= $this->output->render(new assign_header($this->get_instance(), false, $this->get_course_module()->id, get_string('grading', 'assign')));
-       
+        $o .= $this->output->render(new assign_header($this->get_instance(), 
+                                                      $this->get_context(), false, $this->get_course_module()->id,get_string('grading', 'assign')));
+                                                            
         $rownum = required_param('rownum', PARAM_INT) + $offset;  
         $useridlist = optional_param('useridlist', '', PARAM_TEXT);
         if ($useridlist) {
@@ -1624,7 +1627,8 @@ class assignment {
 
         // only load this if it is 
 
-        $o .= $this->output->render(new assign_header($this->get_instance(), false, $this->get_course_module()->id, get_string('grading', 'assign')));
+        $o .= $this->output->render(new assign_header($this->get_instance(),
+                                                      $this->get_context(), false, $this->get_course_module()->id, get_string('grading', 'assign')));
         $o .= groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id.'&action=grading', true);
         
 
@@ -1663,7 +1667,11 @@ class assignment {
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
 
-        $o .= $this->output->render(new assign_header($this->get_instance(), $this->show_intro(), $this->get_course_module()->id, get_string('editsubmission', 'assign')));
+        $o .= $this->output->render(new assign_header($this->get_instance(),
+                                                      $this->get_context(),
+                                                      $this->show_intro(),
+                                                      $this->get_course_module()->id,
+                                                      get_string('editsubmission', 'assign')));
 
         $o .= $this->output->notification('This assignment is no longer accepting submissions');
 
@@ -1694,7 +1702,11 @@ class assignment {
             $subclosed .= $this->view_student_error_message();
             return $subclosed;
         }
-        $o .= $this->output->render(new assign_header($this->get_instance(), $this->show_intro(), $this->get_course_module()->id, get_string('editsubmission', 'assign')));
+        $o .= $this->output->render(new assign_header($this->get_instance(),
+                                                      $this->get_context(),
+                                                      $this->show_intro(),
+                                                      $this->get_course_module()->id,
+                                                      get_string('editsubmission', 'assign')));
         $o .= $this->plagiarism_print_disclosure();
         $data = new stdClass();
 
@@ -1821,7 +1833,10 @@ class assignment {
         global $CFG, $DB, $USER, $PAGE;
         
         $o = '';
-        $o .= $this->output->render(new assign_header($this->get_instance(), $this->show_intro(), $this->get_course_module()->id));
+        $o .= $this->output->render(new assign_header($this->get_instance(),
+                                                      $this->get_context(),
+                                                      $this->show_intro(),
+                                                      $this->get_course_module()->id));
 
         if ($this->can_grade()) {
             $o .= $this->output->render(new assign_grading_summary($this->count_participants(0),
