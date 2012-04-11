@@ -243,8 +243,11 @@ class assignment_submission_file extends assignment_submission_plugin {
      * @param stdClass $submission
      * @return string
      */
-    public function view_summary(stdClass $submission) {
+    public function view_summary(stdClass $submission, & $showviewlink) {
         $count = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
+
+        // show we show a link to view all files for this plugin?
+        $showviewlink = $count > ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES;
         if ($count <= ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES) {
             return $this->assignment->render_area_files('assignsubmission_file', ASSIGN_FILEAREA_SUBMISSION_FILES, $submission->id);
         } else {
@@ -252,17 +255,6 @@ class assignment_submission_file extends assignment_submission_plugin {
         }
     }
 
-    /**
-     * Should the assignment module show a link to view the full submission or feedback for this plugin?
-     *
-     * @param stdClass $submission
-     * @return bool
-     */
-    public function show_view_link(stdClass $submission) {
-        $count = $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES);
-        return $count > ASSIGN_SUBMISSION_FILE_MAX_SUMMARY_FILES;
-    }
-    
     /**
      * No full submission view - the summary contains the list of files and that is the whole submission
      * 

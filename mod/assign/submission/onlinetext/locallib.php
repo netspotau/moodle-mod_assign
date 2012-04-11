@@ -193,9 +193,11 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
       * @param stdClass $submission
       * @return string 
       */
-    public function view_summary(stdClass $submission) {
+    public function view_summary(stdClass $submission, & $showviewlink) {
          
         $onlinetextsubmission = $this->get_onlinetext_submission($submission->id);
+        // always show the view link
+        $showviewlink = true;
 
         if ($onlinetextsubmission) {
             $text = format_text($onlinetextsubmission->onlinetext, $onlinetextsubmission->onlineformat, array('context'=>$this->assignment->get_context()));

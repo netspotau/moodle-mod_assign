@@ -243,19 +243,6 @@ abstract class assignment_plugin {
     }
 
     /**
-     * Should the assignment module show a link to view the full submission or feedback for this plugin?
-     *
-     * @param mixed assignment_submission|assignment_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
-     * @return bool
-     */
-    public function show_view_link(stdClass $submissionorgrade) {
-        return true;
-    }
-
-    
-
-    
-    /**
      * Get the numerical sort order for this plugin
      *
      * @return int
@@ -354,9 +341,10 @@ abstract class assignment_plugin {
      * Should not output anything - return the result as a string so it can be consumed by webservices.
      * 
      * @param mixed assignment_submission| assignment_grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
+     * @param bool - modifed to return whether or not to show a link to the full submission/feedback
      * @return string - return a string representation of the submission in full
      */
-    public function view_summary(stdClass $submissionorgrade) {
+    public function view_summary(stdClass $submissionorgrade, & $showviewlink) {
         return '';
     }
     
