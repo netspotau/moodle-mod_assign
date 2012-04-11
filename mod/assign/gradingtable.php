@@ -36,7 +36,7 @@ require_once($CFG->dirroot.'/mod/assign/locallib.php');
  * @copyright 2012 NetSpot {@link http://www.netspot.com.au}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class grading_table extends table_sql implements renderable {
+class assign_grading_table extends table_sql implements renderable {
     /** @var assignment $assignment */
     private $assignment = null;
     /** @var int $perpage */

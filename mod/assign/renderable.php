@@ -26,46 +26,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 /*
- * Implements a renderable submissions table
- */
-class users_submissions_table implements renderable {
-    /** @var array of user submissions. Each data row contains user, submission and grade as stdClass objects */
-    protected $data = null;
-    
-    /**
-     * Constructor
-     * @param array of ('user'=>stdClass, 'grade'=>stdClass|null, 'submission'=>stdClass|null)
-     */
-    public function __construct(stdClass $data) {
-        $this->set_data($data);
-    }
-    
-    /**
-     * Returns data
-     *
-     * @return array
-     */
-    public function get_data() {
-        return $this->data;
-    }
-
-    /**
-     * Set the data
-     *
-     * @param array $data
-     */
-    public function set_data($data) {
-        if (!$data) {
-            throw new coding_exception('Data may not be null');
-        }
-        $this->data = $data;
-    }
-}
-
-/*
  * 
  */
-class submit_for_grading_page implements renderable {
+class assign_submit_for_grading_page implements renderable {
     /** @var array $notifications is a list of notification messages returned from the plugins*/
     var $notifications = array();
     var $coursemoduleid = 0;
@@ -104,7 +67,7 @@ class assign_form implements renderable {
 /*
  * Implements a renderable user summary
  */
-class user_summary implements renderable {
+class assign_user_summary implements renderable {
     /** @var stdClass $user suitable for rendering with user_picture and fullname(). Must contain firstname, lastname, id and picture fields */
     public $user = null;
     /** @var int $courseid */
@@ -128,7 +91,7 @@ class user_summary implements renderable {
 /*
  * Implements a renderable feedback plugin feedback
  */
-class feedback_plugin_feedback implements renderable {
+class assign_feedback_plugin_feedback implements renderable {
     const SUMMARY                = 10;
     const FULL                   = 20;
 
@@ -167,7 +130,7 @@ class feedback_plugin_feedback implements renderable {
 /*
  * Implements a renderable submission plugin submission
  */
-class submission_plugin_submission implements renderable {
+class assign_submission_plugin_submission implements renderable {
     const SUMMARY                = 10;
     const FULL                   = 20;
 
@@ -208,7 +171,7 @@ class submission_plugin_submission implements renderable {
 /**
  * Renderable feedback status
  */
-class feedback_status implements renderable {
+class assign_feedback_status implements renderable {
     
     /** @var stding $gradefordisplay the student grade rendered into a format suitable for display */
     var $gradefordisplay = '';
@@ -251,7 +214,7 @@ class feedback_status implements renderable {
 /**
  * Renderable submission status
  */
-class submission_status implements renderable {
+class assign_submission_status implements renderable {
     const STUDENT_VIEW     = 10;
     const GRADER_VIEW      = 20;
     
@@ -277,7 +240,7 @@ class submission_status implements renderable {
     var $returnparams = array();
     /** @var int coursemoduleid */
     var $coursemoduleid = 0;
-    /** @var int the view (submission_status::STUDENT_VIEW OR submission_status::GRADER_VIEW) */
+    /** @var int the view (assign_submission_status::STUDENT_VIEW OR assign_submission_status::GRADER_VIEW) */
     var $view = self::STUDENT_VIEW;
     /** @var bool canedit */
     var $canedit = false;
@@ -319,7 +282,7 @@ class submission_status implements renderable {
 /**
  * Renderable header
  */
-class assignment_header implements renderable {
+class assign_header implements renderable {
     /** @var stdClass the assign record  */
     var $assign = null;
     /** @var bool $showintro - show or hide the intro */
@@ -348,7 +311,7 @@ class assignment_header implements renderable {
 /**
  * Renderable grading summary
  */
-class grading_summary implements renderable {
+class assign_grading_summary implements renderable {
     /** @var int participantcount - The number of users who can submit to this assignment */
     var $participantcount = 0;
     /** @var bool submissiondraftsenabled - Allow submission drafts */

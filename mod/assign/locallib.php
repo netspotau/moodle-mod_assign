@@ -964,7 +964,7 @@ class assignment {
      */
     private function get_grading_userid_list(){
         $filter = get_user_preferences('assign_filter', '');
-        $table = new grading_table($this, 0, $filter);
+        $table = new assign_grading_table($this, 0, $filter);
 
         $useridlist = $table->get_column_data('userid');
      
@@ -989,7 +989,7 @@ class assignment {
         }
         
         $filter = get_user_preferences('assign_filter', '');
-        $table = new grading_table($this, 0, $filter);
+        $table = new assign_grading_table($this, 0, $filter);
 
         $userid = $table->get_cell_data($num, 'userid', $last);
      
@@ -1128,13 +1128,13 @@ class assignment {
             if ($item->userid != $USER->id) {
                 require_capability('mod/assign:grade', $this->context);
             }
-            $o .= $this->output->render(new assignment_header($this->get_instance(), 
+            $o .= $this->output->render(new assign_header($this->get_instance(), 
                                                               $this->show_intro(), 
                                                               $this->get_course_module()->id, 
                                                               $plugin->get_name()));
-            $o .= $this->output->render(new submission_plugin_submission($plugin, 
+            $o .= $this->output->render(new assign_submission_plugin_submission($plugin, 
                                                               $item, 
-                                                              submission_plugin_submission::FULL, 
+                                                              assign_submission_plugin_submission::FULL, 
                                                               $this->get_course_module()->id, 
                                                               $this->get_return_action(), 
                                                               $this->get_return_params()));
@@ -1150,13 +1150,13 @@ class assignment {
             if ($item->userid != $USER->id) {
                 require_capability('mod/assign:grade', $this->context);
             }
-            $o .= $this->output->render(new assignment_header($this->get_instance(), 
+            $o .= $this->output->render(new assign_header($this->get_instance(), 
                                                               $this->show_intro(), 
                                                               $this->get_course_module()->id, 
                                                               $plugin->get_name()));
-            $o .= $this->output->render(new feedback_plugin_feedback($plugin, 
+            $o .= $this->output->render(new assign_feedback_plugin_feedback($plugin, 
                                                               $item, 
-                                                              feedback_plugin_feedback::FULL, 
+                                                              assign_feedback_plugin_feedback::FULL, 
                                                               $this->get_course_module()->id, 
                                                               $this->get_return_action(), 
                                                               $this->get_return_params()));
@@ -1442,7 +1442,7 @@ class assignment {
     
         $o = '';
         $filter = ASSIGN_FILTER_SINGLE_USER . '=' . $userid;
-        $o .= $this->output->render(new grading_table($this, 1, $filter, $rownum));
+        $o .= $this->output->render(new assign_grading_table($this, 1, $filter, $rownum));
 
         return $o;
     }
@@ -1464,7 +1464,7 @@ class assignment {
         // Need submit permission to submit an assignment
         require_capability('mod/assign:grade', $this->context);
 
-        $o .= $this->output->render(new assignment_header($this->get_instance(), false, $this->get_course_module()->id, get_string('grading', 'assign')));
+        $o .= $this->output->render(new assign_header($this->get_instance(), false, $this->get_course_module()->id, get_string('grading', 'assign')));
        
         $rownum = required_param('rownum', PARAM_INT) + $offset;  
         $useridlist = optional_param('useridlist', '', PARAM_TEXT);
@@ -1487,14 +1487,14 @@ class assignment {
         }
         $user = $DB->get_record('user', array('id' => $userid));
         if ($user) {
-            $o .= $this->output->render(new user_summary($user, $this->get_course()->id, has_capability('moodle/site:viewfullnames', $this->get_course_context())));
+            $o .= $this->output->render(new assign_user_summary($user, $this->get_course()->id, has_capability('moodle/site:viewfullnames', $this->get_course_context())));
         }
         $submission = $this->get_user_submission($userid, false);
         // get the current grade
         $grade = $this->get_user_grade($userid, false);
         if ($this->can_view_submission($userid)) {
             $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($userid);
-            $o .= $this->output->render(new submission_status($this->get_instance()->allowsubmissionsfromdate,
+            $o .= $this->output->render(new assign_submission_status($this->get_instance()->allowsubmissionsfromdate,
                                                               $this->get_instance()->alwaysshowdescription,
                                                               $submission, 
                                                               $this->is_any_submission_plugin_enabled(),
@@ -1505,7 +1505,7 @@ class assignment {
                                                               $this->get_return_action(),
                                                               $this->get_return_params(),
                                                               $this->get_course_module()->id,
-                                                              submission_status::GRADER_VIEW, 
+                                                              assign_submission_status::GRADER_VIEW, 
                                                               false, 
                                                               false));
         }
@@ -1616,7 +1616,7 @@ class assignment {
         $o .= $this->output->render(new assign_form('gradingoptionsform', $gradingoptionsform));
        
         // load and print the table of submissions
-        $o .= $this->output->render(new grading_table($this, $perpage, $filter));
+        $o .= $this->output->render(new assign_grading_table($this, $perpage, $filter));
         $o .= $this->output->render(new assign_form('gradingbatchoperationsform', $gradingbatchoperationsform));
         return $o;
     }
@@ -1638,7 +1638,7 @@ class assignment {
 
         // only load this if it is 
 
-        $o .= $this->output->render(new assignment_header($this->get_instance(), false, $this->get_course_module()->id, get_string('grading', 'assign')));
+        $o .= $this->output->render(new assign_header($this->get_instance(), false, $this->get_course_module()->id, get_string('grading', 'assign')));
         $o .= groups_print_activity_menu($this->get_course_module(), $CFG->wwwroot . '/mod/assign/view.php?id=' . $this->get_course_module()->id.'&action=grading', true);
         
 
@@ -1677,7 +1677,7 @@ class assignment {
         // Need submit permission to submit an assignment
         require_capability('mod/assign:submit', $this->context);
 
-        $o .= $this->output->render(new assignment_header($this->get_instance(), $this->show_intro(), $this->get_course_module()->id, get_string('editsubmission', 'assign')));
+        $o .= $this->output->render(new assign_header($this->get_instance(), $this->show_intro(), $this->get_course_module()->id, get_string('editsubmission', 'assign')));
 
         $o .= $this->output->notification('This assignment is no longer accepting submissions');
 
@@ -1708,7 +1708,7 @@ class assignment {
             $subclosed .= $this->view_student_error_message();
             return $subclosed;
         }
-        $o .= $this->output->render(new assignment_header($this->get_instance(), $this->show_intro(), $this->get_course_module()->id, get_string('editsubmission', 'assign')));
+        $o .= $this->output->render(new assign_header($this->get_instance(), $this->show_intro(), $this->get_course_module()->id, get_string('editsubmission', 'assign')));
         $o .= $this->plagiarism_print_disclosure();
         $data = new stdClass();
 
@@ -1817,7 +1817,7 @@ class assignment {
 
         $o = '';
         $o .= $this->output->header();
-        $o .= $this->output->render(new submit_for_grading_page($notifications, $this->get_course_module()->id));
+        $o .= $this->output->render(new assign_submit_for_grading_page($notifications, $this->get_course_module()->id));
         $o .= $this->view_footer();
         return $o;
     }
@@ -1835,10 +1835,10 @@ class assignment {
         global $CFG, $DB, $USER, $PAGE;
         
         $o = '';
-        $o .= $this->output->render(new assignment_header($this->get_instance(), $this->show_intro(), $this->get_course_module()->id));
+        $o .= $this->output->render(new assign_header($this->get_instance(), $this->show_intro(), $this->get_course_module()->id));
 
         if ($this->can_grade()) {
-            $o .= $this->output->render(new grading_summary($this->count_participants(0),
+            $o .= $this->output->render(new assign_grading_summary($this->count_participants(0),
                                                             $this->get_instance()->submissiondrafts,
                                                             $this->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_DRAFT),
                                                             $this->is_any_submission_plugin_enabled(),
@@ -1856,7 +1856,7 @@ class assignment {
             $showsubmit = $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
             $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($USER->id);
 
-            $o .= $this->output->render(new submission_status($this->get_instance()->allowsubmissionsfromdate,
+            $o .= $this->output->render(new assign_submission_status($this->get_instance()->allowsubmissionsfromdate,
                                                               $this->get_instance()->alwaysshowdescription,
                                                               $submission, 
                                                               $this->is_any_submission_plugin_enabled(),
@@ -1867,7 +1867,7 @@ class assignment {
                                                               $this->get_return_action(),
                                                               $this->get_return_params(),
                                                               $this->get_course_module()->id,
-                                                              submission_status::STUDENT_VIEW, 
+                                                              assign_submission_status::STUDENT_VIEW, 
                                                               $showedit, 
                                                               $showsubmit));
 
@@ -1915,7 +1915,7 @@ class assignment {
                 $gradeddate = $gradebookgrade->dategraded;
                 $grader = $DB->get_record('user', array('id'=>$gradebookgrade->usermodified));
 
-                $feedbackstatus = new feedback_status($gradefordisplay,
+                $feedbackstatus = new assign_feedback_status($gradefordisplay,
                                                       $gradeddate,
                                                       $grader,  
                                                       $this->get_feedback_plugins(),

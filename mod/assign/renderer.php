@@ -103,10 +103,10 @@ class mod_assign_renderer extends plugin_renderer_base {
     /**
      * Render the user summary
      * 
-     * @param user_summary $summary The user summary to render
+     * @param assign_user_summary $summary The user summary to render
      * @return string
      */
-    public function render_user_summary(user_summary $summary) {
+    public function render_assign_user_summary(assign_user_summary $summary) {
         $o = '';
 
         if (!$summary->user) {
@@ -129,10 +129,10 @@ class mod_assign_renderer extends plugin_renderer_base {
     /**
      * Render the submit for grading page
      * 
-     * @param submit_for_grading_page $submit_for_grading_page 
+     * @param assign_submit_for_grading_page $assign_submit_for_grading_page 
      * @return string
      */
-    public function render_submit_for_grading_page($page) {
+    public function render_assign_submit_for_grading_page($page) {
         $o = '';
 
         $o .= $this->output->container_start('submitforgrading');
@@ -175,10 +175,10 @@ class mod_assign_renderer extends plugin_renderer_base {
     /**
      * render the header
      * 
-     * @param assignment_header $header
+     * @param assign_header $header
      * @return string
      */
-    public function render_assignment_header(assignment_header $header) {
+    public function render_assign_header(assign_header $header) {
         $o = '';
 
         if ($header->subpage) {
@@ -203,10 +203,10 @@ class mod_assign_renderer extends plugin_renderer_base {
     /**
      * render a table containing the current status of the grading process
      * 
-     * @param grading_summary $summary
+     * @param assign_grading_summary $summary
      * @return string
      */
-    public function render_grading_summary(grading_summary $summary) {
+    public function render_assign_grading_summary(assign_grading_summary $summary) {
         // create a table for the data
         $o = '';
         $o .= $this->output->container_start('gradingsummary');
@@ -270,10 +270,10 @@ class mod_assign_renderer extends plugin_renderer_base {
      * 
      * @global moodle_database $DB
      * @global stdClass $CFG
-     * @param feedback_status $status
+     * @param assign_feedback_status $status
      * @return string
      */
-    public function render_feedback_status(feedback_status $status) {
+    public function render_assign_feedback_status(assign_feedback_status $status) {
         global $DB, $CFG;
         $o = '';
 
@@ -306,7 +306,7 @@ class mod_assign_renderer extends plugin_renderer_base {
             if ($plugin->is_enabled() && $plugin->is_visible() && !$plugin->is_empty($status->grade)) {
                 $row = new html_table_row();
                 $cell1 = new html_table_cell($plugin->get_name());
-                $pluginfeedback = new feedback_plugin_feedback($plugin, $status->grade, feedback_plugin_feedback::SUMMARY, $status->coursemoduleid, $status->returnaction, $status->returnparams);
+                $pluginfeedback = new assign_feedback_plugin_feedback($plugin, $status->grade, assign_feedback_plugin_feedback::SUMMARY, $status->coursemoduleid, $status->returnaction, $status->returnparams);
                 $cell2 = new html_table_cell($this->render($pluginfeedback));
                 $row->cells = array($cell1, $cell2);
                 $t->data[] = $row;
@@ -324,10 +324,10 @@ class mod_assign_renderer extends plugin_renderer_base {
     /**
      * render a table containing the current status of the submission
      * 
-     * @param submission_status $status
+     * @param assign_submission_status $status
      * @return string
      */
-    public function render_submission_status(submission_status $status) {
+    public function render_assign_submission_status(assign_submission_status $status) {
         $o = '';
         $o .= $this->output->container_start('submissionstatus');
         $o .= $this->output->heading(get_string('submissionstatusheading', 'assign'), 3);
@@ -434,7 +434,7 @@ class mod_assign_renderer extends plugin_renderer_base {
                 if ($plugin->is_enabled() && $plugin->is_visible() && !$plugin->is_empty($status->submission)) {
                     $row = new html_table_row();
                     $cell1 = new html_table_cell($plugin->get_name());
-                    $pluginsubmission = new submission_plugin_submission($plugin, $status->submission, submission_plugin_submission::SUMMARY, $status->coursemoduleid, $status->returnaction, $status->returnparams);
+                    $pluginsubmission = new assign_submission_plugin_submission($plugin, $status->submission, assign_submission_plugin_submission::SUMMARY, $status->coursemoduleid, $status->returnaction, $status->returnparams);
                     $cell2 = new html_table_cell($this->render($pluginsubmission));
                     $row->cells = array($cell1, $cell2);
                     $t->data[] = $row;
@@ -468,13 +468,13 @@ class mod_assign_renderer extends plugin_renderer_base {
     /**
      * render a submission plugin submission
      * 
-     * @param submission_plugin_submission $submissionplugin
+     * @param assign_submission_plugin_submission $submissionplugin
      * @return string
      */
-    public function render_submission_plugin_submission(submission_plugin_submission $submissionplugin) {
+    public function render_assign_submission_plugin_submission(assign_submission_plugin_submission $submissionplugin) {
         $o = '';
 
-        if ($submissionplugin->view == submission_plugin_submission::SUMMARY) {
+        if ($submissionplugin->view == assign_submission_plugin_submission::SUMMARY) {
             $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($submissionplugin->plugin->get_subtype(), strlen('assign')), 'mod_assign'));
             $link = '';
             if ($submissionplugin->plugin->show_view_link($submissionplugin->submission)) {
@@ -493,7 +493,7 @@ class mod_assign_renderer extends plugin_renderer_base {
             
             $o .= $link . $submissionplugin->plugin->view_summary($submissionplugin->submission);
         }
-        if ($submissionplugin->view == submission_plugin_submission::FULL) {
+        if ($submissionplugin->view == assign_submission_plugin_submission::FULL) {
             $o .= $this->output->box_start('boxaligncenter submissionfull');
             $o .= $submissionplugin->plugin->view($submissionplugin->submission);
             $o .= $this->output->box_end();
@@ -505,10 +505,10 @@ class mod_assign_renderer extends plugin_renderer_base {
     /**
      * render the grading table
      * 
-     * @param grading_table $table
+     * @param assign_grading_table $table
      * @return string
      */
-    public function render_grading_table(grading_table $table) {
+    public function render_assign_grading_table(assign_grading_table $table) {
         $o = '';
         $o .= $this->output->box_start('boxaligncenter gradingtable');
         $this->page->requires->js_init_call('M.mod_assign.init_grading_table', array());
@@ -529,10 +529,10 @@ class mod_assign_renderer extends plugin_renderer_base {
      * @param feedback_plugin_feedback $feedbackplugin
      * @return string
      */
-    public function render_feedback_plugin_feedback(feedback_plugin_feedback $feedbackplugin) {
+    public function render_assign_feedback_plugin_feedback(assign_feedback_plugin_feedback $feedbackplugin) {
         $o = '';
 
-        if ($feedbackplugin->view == feedback_plugin_feedback::SUMMARY) {
+        if ($feedbackplugin->view == assign_feedback_plugin_feedback::SUMMARY) {
             $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($feedbackplugin->plugin->get_subtype(), strlen('assign')), 'mod_assign'));
             $link = '';
             if ($feedbackplugin->plugin->show_view_link($feedbackplugin->grade)) {
@@ -550,7 +550,7 @@ class mod_assign_renderer extends plugin_renderer_base {
             
             $o .= $link . $feedbackplugin->plugin->view_summary($feedbackplugin->grade);
         }
-        if ($feedbackplugin->view == feedback_plugin_feedback::FULL) {
+        if ($feedbackplugin->view == assign_feedback_plugin_feedback::FULL) {
             $o .= $this->output->box_start('boxaligncenter feedbackfull');
             $o .= $feedbackplugin->plugin->view($feedbackplugin->grade);
             $o .= $this->output->box_end();
