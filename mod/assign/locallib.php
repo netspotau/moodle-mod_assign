@@ -548,28 +548,14 @@ class assignment {
      * @return bool
      */
     public function update_gradebook($reset, $coursemoduleid) {
-        global $CFG;
-
-        $params = array('itemname'=>$this->get_instance()->name, 'idnumber'=>$coursemoduleid);
-
-        if ($this->get_instance()->grade > 0) {
-            $params['gradetype'] = GRADE_TYPE_VALUE;
-            $params['grademax']  = $this->get_instance()->grade;
-            $params['grademin']  = 0;
-
-        } else if ($assignment->grade < 0) {
-            $params['gradetype'] = GRADE_TYPE_SCALE;
-            $params['scaleid']   = -$this->get_instance()->grade;
-
-        } else {
-            $params['gradetype'] = GRADE_TYPE_TEXT; // allow text comments only
-        }
-
+        $assign = clone $this->get_instance();
+        $assign->cmidnumber = $coursemoduleid;
+        $param = null;
         if ($reset) {
-            $params['reset'] = true;
+            $param = 'reset';
         }
 
-        return grade_update('mod/assign', $this->get_course()->id, 'mod', 'assign', $this->get_instance()->id, 0, NULL, $params);
+        return assign_grade_item_update($assign, $param);
     }
 
 
@@ -1987,19 +1973,6 @@ class assignment {
      */
     private function gradebook_item_update($submission=NULL, $grade=NULL) {
 
-        $params = array('itemname' => $this->get_instance()->name, 'idnumber' => $this->get_course_module()->id);
-
-        if ($this->get_instance()->grade > 0) {
-            $params['gradetype'] = GRADE_TYPE_VALUE;
-            $params['grademax'] = $this->get_instance()->grade;
-            $params['grademin'] = 0;
-        } else if ($this->get_instance()->grade < 0) {
-            $params['gradetype'] = GRADE_TYPE_SCALE;
-            $params['scaleid'] = -$this->get_instance()->grade;
-        } else {
-            $params['gradetype'] = GRADE_TYPE_TEXT; // allow text comments only
-        }
-        
         if($submission != NULL){
             
             $gradebookgrade = $this->convert_submission_for_gradebook($submission);
@@ -2010,7 +1983,10 @@ class assignment {
         
             $gradebookgrade = $this->convert_grade_for_gradebook($grade);
         }
-        return grade_update('mod/assign', $this->get_course()->id, 'mod', 'assign', $this->get_instance()->id, 0, $gradebookgrade, $params);
+        $assign = clone $this->get_instance();
+        $assign->cmidnumber = $this->get_course_module()->id;
+
+        return assign_grade_item_update($assign, $gradebookgrade);
     }
 
     /**
@@ -2892,6 +2868,64 @@ class assignment {
         return $count;
     }
 
+    /**
+     * Get an upto date list of user grades and feedback for the gradebook
+     * 
+     * @global stdClass $CFG 
+     * @global moodle_database $DB 
+     * @param int userid int or 0 for all users
+     * @return array of grade data formated for the gradebook api
+     *         The data required by the gradebook api is userid, 
+     *                                                   rawgrade, 
+     *                                                   feedback, 
+     *                                                   feedbackformat, 
+     *                                                   usermodified, 
+     *                                                   dategraded, 
+     *                                                   datesubmitted
+     */
+    public function get_user_grades_for_gradebook($userid) {
+        global $DB, $CFG;
+        $grades = array();
+        $assignmentid = $this->get_instance()->id;
+        
+        $gradebookpluginname = $CFG->mod_assign_feedback_plugin_for_gradebook;
+        $gradebookplugin = null;
+
+        // find the gradebook plugin
+        foreach ($this->feedbackplugins as $plugin) {
+            if ($plugin->is_enabled() && $plugin->is_visible()) {
+                if (('assignfeedback_' . $plugin->get_type()) == $gradebookpluginname) {
+                    $gradebookplugin = $plugin;
+                }
+            }
+        }
+        if ($userid) {
+            $where = ' WHERE u.id = ? ';
+        } else {
+            $where = ' WHERE u.id != ? ';
+        }
+
+        $graderesults = $DB->get_recordset_sql('SELECT u.id as userid, s.timemodified as datesubmitted, g.grade as rawgrade, g.timemodified as dategraded, g.grader as usermodified
+                            FROM {user} u 
+                            LEFT JOIN {assign_submission} s ON u.id = s.userid and s.assignment = ?
+                            LEFT JOIN {assign_grades} g ON u.id = g.userid and g.assignment = ?
+                            ' . $where, array($assignmentid, $assignmentid, $userid));
+            
+
+        foreach ($graderesults as $result) {
+            $gradebookgrade = clone $result;
+            // now get the feedback
+            if ($gradebookplugin) {
+                $grade = $this->get_user_grade($grade->userid, false);
+                $gradebookgrade->feedbacktext = $gradebookplugin->text_for_gradebook($grade);
+                $gradebookgrade->feedbackformat = $gradebookplugin->format_for_gradebook($grade);
+            }
+            $grades[$gradebookgrade->userid] = $gradebookgrade;
+        }
+
+        $graderesults->close();
+        return $grades;
+    }
 
 }
 

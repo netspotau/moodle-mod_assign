@@ -358,3 +358,85 @@ function assign_cron() {
 function assign_get_extra_capabilities() {
     return array('gradereport/grader:view', 'moodle/grade:viewall', 'moodle/site:viewfullnames', 'moodle/site:config');
 }
+
+/**
+ * Create grade item for given assignment
+ *
+ * @param object $assign record with extra cmidnumber
+ * @param mixed optional array/object of grade(s); 'reset' means reset grades in gradebook
+ * @return int 0 if ok, error code otherwise
+ */
+function assign_grade_item_update($assign, $grades=NULL) {
+    global $CFG;
+    require_once($CFG->libdir.'/gradelib.php');
+
+    if (!isset($assign->courseid)) {
+        $assign->courseid = $assign->course;
+    }
+
+    $params = array('itemname'=>$assign->name, 'idnumber'=>$assign->cmidnumber);
+
+    if ($assign->grade > 0) {
+        $params['gradetype'] = GRADE_TYPE_VALUE;
+        $params['grademax']  = $assign->grade;
+        $params['grademin']  = 0;
+
+    } else if ($assign->grade < 0) {
+        $params['gradetype'] = GRADE_TYPE_SCALE;
+        $params['scaleid']   = -$assign->grade;
+
+    } else {
+        $params['gradetype'] = GRADE_TYPE_TEXT; // allow text comments only
+    }
+
+    if ($grades  === 'reset') {
+        $params['reset'] = true;
+        $grades = NULL;
+    }
+
+    return grade_update('mod/assign', $assign->courseid, 'mod', 'assign', $assign->id, 0, $grades, $params);
+}
+
+/**
+ * Return grade for given user or all users.
+ *
+ * @param stdClass $assign record of assign with an additional cmidnumber
+ * @param int $userid optional user id, 0 means all users
+ * @return array array of grades, false if none
+ */
+function assign_get_user_grades($assign, $userid=0) {
+    global $CFG;
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
+
+    $context = context_module::instance($assign->cmidnumber);
+    $assignment = new assignment($context, null, null);
+    return $assignment->get_user_grades_for_gradebook($userid);
+}
+
+/**
+ * Update activity grades
+ *
+ * @global stdClass $CFG
+ * @param stdClass $assign database record 
+ * @param int $userid specific user only, 0 means all
+ * @param bool $nullifnone - not used
+ */
+function assign_update_grades($assign, $userid=0, $nullifnone=true) {
+    global $CFG;
+    require_once($CFG->libdir.'/gradelib.php');
+
+    if ($assign->grade == 0) {
+        assign_grade_item_update($assign);
+
+    } else if ($grades = assign_get_user_grades($assign, $userid)) {
+        foreach($grades as $k=>$v) {
+            if ($v->rawgrade == -1) {
+                $grades[$k]->rawgrade = null;
+            }
+        }
+        assign_grade_item_update($assign, $grades);
+
+    } else {
+        assign_grade_item_update($assign);
+    }
+}
