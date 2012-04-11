@@ -52,10 +52,12 @@ class assignment_submission_comments extends assignment_submission_plugin {
     * @param stdClass $submission
     * @return string 
     */
-   public function view_summary(stdClass $submission) {
-       
-       // need to used this innit() otherwise it shows up undefined !
-       // require js for commenting
+   public function view_summary(stdClass $submission, & $showviewlink) {
+        
+        // never show a link to view full submission
+        $showviewlink = false;
+        // need to used this init() otherwise it shows up undefined !
+        // require js for commenting
         comment::init();
        
         $options = new stdClass();       
@@ -150,17 +152,4 @@ class assignment_submission_comments extends assignment_submission_plugin {
         return true;
     }
     
-    /**
-     * Should the assignment module show a link to view the full submission or feedback for this plugin?
-     * Never do this.
-     *
-     * @return bool
-     */
-    public function show_view_link(stdClass $grade) {
-        return false;
-    }
-    
-    
-    
-   
 }

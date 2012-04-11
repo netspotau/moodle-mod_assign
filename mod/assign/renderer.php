@@ -477,7 +477,9 @@ class mod_assign_renderer extends plugin_renderer_base {
         if ($submissionplugin->view == assign_submission_plugin_submission::SUMMARY) {
             $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($submissionplugin->plugin->get_subtype(), strlen('assign')), 'mod_assign'));
             $link = '';
-            if ($submissionplugin->plugin->show_view_link($submissionplugin->submission)) {
+            $showviewlink = false;
+            $summary = $submissionplugin->plugin->view_summary($submissionplugin->submission, $showviewlink);
+            if ($showviewlink) {
                 $link = $this->output->action_link(
                                 new moodle_url('/mod/assign/view.php', 
                                                array('id' => $submissionplugin->coursemoduleid, 
@@ -491,9 +493,8 @@ class mod_assign_renderer extends plugin_renderer_base {
                 $link .= $this->output->spacer(array('width'=>15));
             }
             
-            $o .= $link . $submissionplugin->plugin->view_summary($submissionplugin->submission);
-        }
-        if ($submissionplugin->view == assign_submission_plugin_submission::FULL) {
+            $o .= $link . $summary;
+        } else if ($submissionplugin->view == assign_submission_plugin_submission::FULL) {
             $o .= $this->output->box_start('boxaligncenter submissionfull');
             $o .= $submissionplugin->plugin->view($submissionplugin->submission);
             $o .= $this->output->box_end();
@@ -535,7 +536,9 @@ class mod_assign_renderer extends plugin_renderer_base {
         if ($feedbackplugin->view == assign_feedback_plugin_feedback::SUMMARY) {
             $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($feedbackplugin->plugin->get_subtype(), strlen('assign')), 'mod_assign'));
             $link = '';
-            if ($feedbackplugin->plugin->show_view_link($feedbackplugin->grade)) {
+            $showviewlink = false;
+            $summary = $feedbackplugin->plugin->view_summary($feedbackplugin->grade, $showviewlink);
+            if ($showviewlink) {
                 $link = $this->output->action_link(
                                 new moodle_url('/mod/assign/view.php', 
                                                array('id' => $feedbackplugin->coursemoduleid, 
@@ -548,9 +551,8 @@ class mod_assign_renderer extends plugin_renderer_base {
                 $link .= $this->output->spacer(array('width'=>15));
             }
             
-            $o .= $link . $feedbackplugin->plugin->view_summary($feedbackplugin->grade);
-        }
-        if ($feedbackplugin->view == assign_feedback_plugin_feedback::FULL) {
+            $o .= $link . $summary;
+        } else if ($feedbackplugin->view == assign_feedback_plugin_feedback::FULL) {
             $o .= $this->output->box_start('boxaligncenter feedbackfull');
             $o .= $feedbackplugin->plugin->view($feedbackplugin->grade);
             $o .= $this->output->box_end();

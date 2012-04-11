@@ -411,8 +411,9 @@ class assign_grading_table extends table_sql implements renderable {
      */
     private function format_plugin_summary_with_link(assignment_plugin $plugin, stdClass $item, $returnaction, $returnparams) {
         $link = '';
-
-        if ($plugin->show_view_link($item)) {
+        $showviewlink = false;
+        $summary = $plugin->view_summary($item, $showviewlink);
+        if ($showviewlink) {
             $icon = $this->output->pix_icon('t/preview', get_string('view' . substr($plugin->get_subtype(), strlen('assign')), 'mod_assign'));
             $link = $this->output->action_link(
                                 new moodle_url('/mod/assign/view.php',
@@ -427,7 +428,7 @@ class assign_grading_table extends table_sql implements renderable {
             $link .= $this->output->spacer(array('width'=>15));
         }
 
-        return $link . $plugin->view_summary($item);
+        return $link . $summary;
     }
 
 

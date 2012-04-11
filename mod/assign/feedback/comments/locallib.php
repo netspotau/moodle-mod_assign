@@ -106,28 +106,17 @@ class assignment_feedback_comments extends assignment_feedback_plugin {
      * @param stdClass $grade
      * @return string 
      */
-    public function view_summary(stdClass $grade) {
+    public function view_summary(stdClass $grade, & $showviewlink) {
         $feedbackcomments = $this->get_feedback_comments($grade->id);
         if ($feedbackcomments) {
             $text = format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat, array('context' => $this->assignment->get_context()));
-            return shorten_text($text, 140);
+            $short = shorten_text($text, 140);
+
+            // show the view all link if the text has been shortened
+            $showviewlink = $short != $text;
+            return $short;
         }
         return '';
-    }
-    
-    /**
-     * Should the assignment module show a link to view the full submission or feedback for this plugin?
-     *
-     * @param stdClass $grade
-     * @return bool
-     */
-    public function show_view_link(stdClass $grade) {
-        $feedbackcomments = $this->get_feedback_comments($grade->id);
-        if ($feedbackcomments) {
-            $text = format_text($feedbackcomments->commenttext, $feedbackcomments->commentformat, array('context' => $this->assignment->get_context()));
-            return shorten_text($text, 140) != $text;
-        }
-        return false;
     }
     
     /**

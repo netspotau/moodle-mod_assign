@@ -150,24 +150,16 @@ class assignment_feedback_file extends assignment_feedback_plugin {
      * @param stdClass $grade
      * @return string
      */
-    public function view_summary(stdClass $grade) {
+    public function view_summary(stdClass $grade, & $showviewlink) {
         $count = $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES);
+        // show a view all link if the number of files is over this limit
+        $showviewlink = $count > ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES;
+
         if ($count <= ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES) {
             return $this->assignment->render_area_files('assignfeedback_file', ASSIGN_FILEAREA_FEEDBACK_FILES, $grade->id);
         } else {
             return get_string('countfiles', 'assignfeedback_file', $count);
         }
-    }
-    
-    /**
-     * Should the assignment module show a link to view the full submission or feedback for this plugin?
-     *
-     * @param stdClass $grade
-     * @return bool
-     */
-    public function show_view_link(stdClass $grade) {
-        $count = $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES);
-        return $count > ASSIGN_FEEDBACK_FILE_MAX_SUMMARY_FILES;
     }
     
     /**
