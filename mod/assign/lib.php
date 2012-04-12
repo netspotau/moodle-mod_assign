@@ -318,6 +318,279 @@ function assign_print_overview($courses, &$htmlarray) {
     }
 }
 
+/**
+ * Print recent activity from all assignments in a given course
+ *
+ * This is used by the recent activity block
+ */
+function assign_print_recent_activity($course, $viewfullnames, $timestart) {
+    global $CFG, $USER, $DB, $OUTPUT;
+   
+    // do not use log table if possible, it may be huge
+
+    if (!$submissions = $DB->get_records_sql("SELECT asb.id, asb.timemodified, cm.id AS cmid, asb.userid,
+                                                     u.firstname, u.lastname, u.email, u.picture
+                                                FROM {assign_submission} asb
+                                                     JOIN {assign} a      ON a.id = asb.assignment
+                                                     JOIN {course_modules} cm ON cm.instance = a.id
+                                                     JOIN {modules} md        ON md.id = cm.module
+                                                     JOIN {user} u            ON u.id = asb.userid
+                                               WHERE asb.timemodified > ? AND
+                                                     a.course = ? AND
+                                                     md.name = 'assign'
+                                            ORDER BY asb.timemodified ASC", array($timestart, $course->id))) {
+         return false;
+    }
+
+    $modinfo =& get_fast_modinfo($course); // reference needed because we might load the groups
+    $show    = array();
+    $grader  = array();
+
+    foreach($submissions as $submission) {
+        if (!array_key_exists($submission->cmid, $modinfo->cms)) {
+            continue;
+        }
+        $cm = $modinfo->cms[$submission->cmid];
+        if (!$cm->uservisible) {
+            continue;
+        }
+        if ($submission->userid == $USER->id) {
+            $show[] = $submission;
+            continue;
+        }
+
+        // the act of sumbitting of assignment may be considered private - only graders will see it if specified
+        if (empty($CFG->assign_showrecentsubmissions)) {
+            if (!array_key_exists($cm->id, $grader)) {
+                $grader[$cm->id] = has_capability('moodle/grade:viewall', get_context_instance(CONTEXT_MODULE, $cm->id));
+            }
+            if (!$grader[$cm->id]) {
+                continue;
+            }
+        }
+
+        $groupmode = groups_get_activity_groupmode($cm, $course);
+
+        if ($groupmode == SEPARATEGROUPS and !has_capability('moodle/site:accessallgroups', get_context_instance(CONTEXT_MODULE, $cm->id))) {
+            if (isguestuser()) {
+                // shortcut - guest user does not belong into any group
+                continue;
+            }
+
+            if (is_null($modinfo->groups)) {
+                $modinfo->groups = groups_get_user_groups($course->id); // load all my groups and cache it in modinfo
+            }
+
+            // this will be slow - show only users that share group with me in this cm
+            if (empty($modinfo->groups[$cm->id])) {
+                continue;
+            }
+            $usersgroups =  groups_get_all_groups($course->id, $submission->userid, $cm->groupingid);
+            if (is_array($usersgroups)) {
+                $usersgroups = array_keys($usersgroups);
+                $intersect = array_intersect($usersgroups, $modinfo->groups[$cm->id]);
+                if (empty($intersect)) {
+                    continue;
+                }
+            }
+        }
+        $show[] = $submission;
+    }
+
+    if (empty($show)) {
+        return false;
+    }
+
+    echo $OUTPUT->heading(get_string('newsubmissions', 'assign').':', 3);
+
+    foreach ($show as $submission) {
+        $cm = $modinfo->cms[$submission->cmid];
+        $link = $CFG->wwwroot.'/mod/assign/view.php?id='.$cm->id;
+        print_recent_activity_note($submission->timemodified, $submission, $cm->name, $link, false, $viewfullnames);
+    }
+
+    return true;
+}
+
+/**
+ * Returns all assignments since a given time in specified forum.
+ */
+function assign_get_recent_mod_activity(&$activities, &$index, $timestart, $courseid, $cmid, $userid=0, $groupid=0)  {
+    global $CFG, $COURSE, $USER, $DB;
+
+    if ($COURSE->id == $courseid) {
+        $course = $COURSE;
+    } else {
+        $course = $DB->get_record('course', array('id'=>$courseid));
+    }
+
+    $modinfo =& get_fast_modinfo($course);
+
+    $cm = $modinfo->cms[$cmid];
+
+    $params = array();
+    if ($userid) {
+        $userselect = "AND u.id = :userid";
+        $params['userid'] = $userid;
+    } else {
+        $userselect = "";
+    }
+
+    if ($groupid) {
+        $groupselect = "AND gm.groupid = :groupid";
+        $groupjoin   = "JOIN {groups_members} gm ON  gm.userid=u.id";
+        $params['groupid'] = $groupid;
+    } else {
+        $groupselect = "";
+        $groupjoin   = "";
+    }
+
+    $params['cminstance'] = $cm->instance;
+    $params['timestart'] = $timestart;
+
+    $userfields = user_picture::fields('u', null, 'userid');
+
+    if (!$submissions = $DB->get_records_sql("SELECT asb.id, asb.timemodified,
+                                                     $userfields
+                                                FROM {assign_submission} asb
+                                                JOIN {assign} a      ON a.id = asb.assignment
+                                                JOIN {user} u            ON u.id = asb.userid
+                                          $groupjoin
+                                               WHERE asb.timemodified > :timestart AND a.id = :cminstance
+                                                     $userselect $groupselect
+                                            ORDER BY asb.timemodified ASC", $params)) {
+         return;
+    }
+
+    $groupmode       = groups_get_activity_groupmode($cm, $course);
+    $cm_context      = get_context_instance(CONTEXT_MODULE, $cm->id);
+    $grader          = has_capability('moodle/grade:viewall', $cm_context);
+    $accessallgroups = has_capability('moodle/site:accessallgroups', $cm_context);
+    $viewfullnames   = has_capability('moodle/site:viewfullnames', $cm_context);
+
+    if (is_null($modinfo->groups)) {
+        $modinfo->groups = groups_get_user_groups($course->id); // load all my groups and cache it in modinfo
+    }
+
+    $show = array();
+
+    foreach($submissions as $submission) {
+        if ($submission->userid == $USER->id) {
+            $show[] = $submission;
+            continue;
+        }
+        // the act of submitting of assignment may be considered private - only graders will see it if specified
+        if (empty($CFG->assignment_showrecentsubmissions)) {
+            if (!$grader) {
+                continue;
+            }
+        }
+
+        if ($groupmode == SEPARATEGROUPS and !$accessallgroups) {
+            if (isguestuser()) {
+                // shortcut - guest user does not belong into any group
+                continue;
+            }
+
+            // this will be slow - show only users that share group with me in this cm
+            if (empty($modinfo->groups[$cm->id])) {
+                continue;
+            }
+            $usersgroups = groups_get_all_groups($course->id, $cm->userid, $cm->groupingid);
+            if (is_array($usersgroups)) {
+                $usersgroups = array_keys($usersgroups);
+                $intersect = array_intersect($usersgroups, $modinfo->groups[$cm->id]);
+                if (empty($intersect)) {
+                    continue;
+                }
+            }
+        }
+        $show[] = $submission;
+    }
+
+    if (empty($show)) {
+        return;
+    }
+
+    if ($grader) {
+        require_once($CFG->libdir.'/gradelib.php');
+        $userids = array();
+        foreach ($show as $id=>$submission) {
+            $userids[] = $submission->userid;
+
+        }
+        $grades = grade_get_grades($courseid, 'mod', 'assign', $cm->instance, $userids);
+    }
+
+    $aname = format_string($cm->name,true);
+    foreach ($show as $submission) {
+        $tmpactivity = new stdClass();
+
+        $tmpactivity->type         = 'assign';
+        $tmpactivity->cmid         = $cm->id;
+        $tmpactivity->name         = $aname;
+        $tmpactivity->sectionnum   = $cm->sectionnum;
+        $tmpactivity->timestamp    = $submission->timemodified;
+
+        if ($grader) {
+            $tmpactivity->grade = $grades->items[0]->grades[$submission->userid]->str_long_grade;
+        }
+
+        $userfields = explode(',', user_picture::fields());
+        foreach ($userfields as $userfield) {
+            if ($userfield == 'id') {
+                $tmpactivity->user->{$userfield} = $submission->userid; // aliased in SQL above
+            } else {
+                $tmpactivity->user->{$userfield} = $submission->{$userfield};
+            }
+        }
+        $tmpactivity->user->fullname = fullname($submission, $viewfullnames);
+
+        $activities[$index++] = $tmpactivity;
+    }
+
+    return;
+}
+
+/**
+ * Print recent activity from all assignments in a given course
+ *
+ * This is used by course/recent.php
+ */
+function assign_print_recent_mod_activity($activity, $courseid, $detail, $modnames)  {
+    global $CFG, $OUTPUT;
+
+    echo '<table border="0" cellpadding="3" cellspacing="0" class="assignment-recent">';
+
+    echo "<tr><td class=\"userpicture\" valign=\"top\">";
+    echo $OUTPUT->user_picture($activity->user);
+    echo "</td><td>";
+
+    if ($detail) {
+        $modname = $modnames[$activity->type];
+        echo '<div class="title">';
+        echo "<img src=\"" . $OUTPUT->pix_url('icon', 'assign') . "\" ".
+             "class=\"icon\" alt=\"$modname\">";
+        echo "<a href=\"$CFG->wwwroot/mod/assign/view.php?id={$activity->cmid}\">{$activity->name}</a>";
+        echo '</div>';
+    }
+
+    if (isset($activity->grade)) {
+        echo '<div class="grade">';
+        echo get_string('grade').': ';
+        echo $activity->grade;
+        echo '</div>';
+    }
+
+    echo '<div class="user">';
+    echo "<a href=\"$CFG->wwwroot/user/view.php?id={$activity->user->id}&amp;course=$courseid\">"
+         ."{$activity->user->fullname}</a>  - ".userdate($activity->timestamp);
+    echo '</div>';
+
+    echo "</td></tr></table>";
+}
+
+
 /** 
  * function to list the actions that correspond to a view of this module
  * This is used by the participation report

@@ -47,7 +47,10 @@ defined('MOODLE_INTERNAL') || die;
         }
     }
     if ($ADMIN->fulltree) {
-    $settings->add(new admin_setting_configselect('mod_assign_feedback_plugin_for_gradebook',
-                    new lang_string('feedbackpluginforgradebook', 'mod_assign'),
-                    new lang_string('feedbackplugin', 'mod_assign'), 'feedback_comments', $menu));
+        $settings->add(new admin_setting_configselect('mod_assign_feedback_plugin_for_gradebook',
+                       new lang_string('feedbackpluginforgradebook', 'mod_assign'),
+                       new lang_string('feedbackplugin', 'mod_assign'), 'feedback_comments', $menu));
+        $settings->add(new admin_setting_configcheckbox('assign_showrecentsubmissions',
+                       new lang_string('showrecentsubmissions', 'assign'),
+                       new lang_string('configshowrecentsubmissions', 'assign'), 0));       
     }
