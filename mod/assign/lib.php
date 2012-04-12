@@ -590,6 +590,43 @@ function assign_print_recent_mod_activity($activity, $courseid, $detail, $modnam
     echo "</td></tr></table>";
 }
 
+/**
+ * Checks if a scale is being used by an assignment
+ *
+ * This is used by the backup code to decide whether to back up a scale
+ * @param $assignmentid int
+ * @param $scaleid int
+ * @return boolean True if the scale is used by the assignment
+ */
+function assign_scale_used($assignmentid, $scaleid) {
+    global $DB;
+
+    $return = false;
+    $rec = $DB->get_record('assign', array('id'=>$assignmentid,'grade'=>-$scaleid));
+
+    if (!empty($rec) && !empty($scaleid)) {
+        $return = true;
+    }
+
+    return $return;
+}
+
+/**
+ * Checks if scale is being used by any instance of assignment
+ *
+ * This is used to find out if scale used anywhere
+ * @param $scaleid int
+ * @return boolean True if the scale is used by any assignment
+ */
+function assign_scale_used_anywhere($scaleid) {
+    global $DB;
+
+    if ($scaleid and $DB->record_exists('assign', array('grade'=>-$scaleid))) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
 /** 
  * function to list the actions that correspond to a view of this module
