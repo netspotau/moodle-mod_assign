@@ -455,3 +455,99 @@ function assign_update_grades($assign, $userid=0, $nullifnone=true) {
         assign_grade_item_update($assign);
     }
 }
+
+/**
+ * List the file areas that can be browsed
+ * 
+ * @global stdClass $CFG
+ * @param stdClass $course
+ * @param stdClass $cm
+ * @param stdClass $context
+ * @return array
+ */
+function mod_assign_get_file_areas($course, $cm, $context) {
+    global $CFG;
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
+    $areas = array();
+
+    $assignment = new assignment($context, $cm, $course);
+    foreach ($assignment->get_submission_plugins() as $plugin) {
+        if ($plugin->is_visible()) {
+            $pluginareas = $plugin->get_file_areas();
+
+            if ($pluginareas) {
+                $areas = array_merge($areas, $pluginareas);
+            }
+        }
+    }
+    foreach ($assignment->get_feedback_plugins() as $plugin) {
+        if ($plugin->is_visible()) {
+            $pluginareas = $plugin->get_file_areas();
+
+            if ($pluginareas) {
+                $areas = array_merge($areas, $pluginareas);
+            }
+        }
+    }
+        
+    return $areas;
+}
+
+/**
+ * File browsing support for assign module.
+ *
+ * @param file_browser $browser
+ * @param object $areas
+ * @param object $course
+ * @param object $cm
+ * @param object $context
+ * @param string $filearea
+ * @param int $itemid
+ * @param string $filepath
+ * @param string $filename
+ * @return object file_info instance or null if not found
+ */
+function mod_assign_get_file_info($browser, $areas, $course, $cm, $context, $filearea, $itemid, $filepath, $filename) {
+    global $CFG, $DB;
+
+    if ($context->contextlevel != CONTEXT_MODULE) {
+        return null;
+    }
+
+    $fs = get_file_storage();
+    $filepath = is_null($filepath) ? '/' : $filepath;
+    $filename = is_null($filename) ? '.' : $filename;
+
+    // need to find the plugin this belongs to
+    $assignment = new assignment($context, $cm, $course);
+    $pluginowner = null;
+    foreach ($assignment->get_submission_plugins() as $plugin) {
+        if ($plugin->is_visible()) {
+            $pluginareas = $plugin->get_file_areas();
+
+            if (array_key_exists($filearea, $pluginareas)) {
+                $pluginowner = $plugin;
+                break;
+            }
+        }
+    }
+    if (!$pluginowner) {
+        foreach ($assignment->get_feedback_plugins() as $plugin) {
+            if ($plugin->is_visible()) {
+                $pluginareas = $plugin->get_file_areas();
+
+                if (array_key_exists($filearea, $pluginareas)) {
+                    $pluginowner = $plugin;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!$pluginowner) {
+        return null;
+    }
+
+    $result = $pluginowner->get_file_info($browser, $filearea, $itemid, $filepath, $filename);
+    return $result;
+}

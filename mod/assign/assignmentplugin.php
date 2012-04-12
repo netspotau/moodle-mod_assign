@@ -285,7 +285,7 @@ abstract class assignment_plugin {
     public final function set_config($name, $value) {
         global $DB;
         
-        $current = $DB->get_record('assign_plugin_config', array('assignment'=>$this->assignment->get_instance()->id, 'subtype'=>$this->get_subtype(), 'plugin'=>$this->get_type(), 'name'=>$name));
+        $current = $DB->get_record('assign_plugin_config', array('assignment'=>$this->assignment->get_instance()->id, 'subtype'=>$this->get_subtype(), 'plugin'=>$this->get_type(), 'name'=>$name), '*', IGNORE_MISSING);
 
         if ($current) {
             $current->value = $value;
@@ -318,7 +318,7 @@ abstract class assignment_plugin {
             }
             $assignment = $this->assignment->get_instance();
             if ($assignment) {
-                $result = $DB->get_record('assign_plugin_config', array('assignment'=>$assignment->id, 'subtype'=>$this->get_subtype(), 'plugin'=>$this->get_type(), 'name'=>$setting));
+                $result = $DB->get_record('assign_plugin_config', array('assignment'=>$assignment->id, 'subtype'=>$this->get_subtype(), 'plugin'=>$this->get_type(), 'name'=>$setting), '*', IGNORE_MISSING);
                 if ($result) {
                     return $result->value;
                 }
@@ -455,4 +455,71 @@ abstract class assignment_plugin {
     public function is_empty(stdClass $submissionorgrade) {
         return true;
     }
+    
+    /**
+     * Get file areas returns a list of areas this plugin stores files
+     * @return array - An array of fileareas (keys) and descriptions (values)
+     */
+    public function get_file_areas() {
+        return array();
+    }
+
+
+    /**
+     * Default implementation of file_get_info for plugins. 
+     * This is used by the filebrowser to browse a plugins file areas.
+     * 
+     * This implementation should work for most plugins but can be overridden if required.
+     * @global stdClass $CFG
+     * @global moodle_database $DB
+     * @param file_browser $browser
+     * @param string filearea
+     * @param int itemid
+     * @param string filepath
+     * @param string filename
+     * @return file_info_stored
+     */
+    public function get_file_info($browser, $filearea, $itemid, $filepath, $filename) {
+        global $CFG, $DB, $USER;
+        $urlbase = $CFG->wwwroot.'/pluginfile.php';
+
+        // permission check on the itemid
+    
+        if ($this->get_subtype() == 'assignsubmission') {
+            if ($itemid) {
+                $record = $DB->get_record('assign_submission', array('id'=>$itemid), 'userid', IGNORE_MISSING);
+                if (!$record) {
+                    return null;
+                }
+                if (!$this->assignment->can_view_submission($record->userid)) {
+                    return null;
+                }
+            }
+        } else {
+            // not supported for feedback plugins
+            return null;
+        }
+
+        $fs = get_file_storage();
+        $filepath = is_null($filepath) ? '/' : $filepath;
+        $filename = is_null($filename) ? '.' : $filename;
+        if (!($storedfile = $fs->get_file($this->assignment->get_context()->id, 
+                                          $this->get_subtype() . '_' . $this->get_type(), 
+                                          $filearea, 
+                                          $itemid, 
+                                          $filepath, 
+                                          $filename))) {
+            return null;
+        }
+        return new file_info_stored($browser, 
+                                    $this->assignment->get_context(),
+                                    $storedfile,
+                                    $urlbase,
+                                    $filearea,
+                                    $itemid,
+                                    true,
+                                    true,
+                                    false);
+    }
+
 }

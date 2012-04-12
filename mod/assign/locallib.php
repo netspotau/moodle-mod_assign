@@ -1744,7 +1744,7 @@ class assignment {
      * @param int userid
      * @return bool
      */
-    private function can_view_submission($userid) {
+    public function can_view_submission($userid) {
         global $USER;
 
         if (!is_enrolled($this->get_course_context(), $userid)) {
