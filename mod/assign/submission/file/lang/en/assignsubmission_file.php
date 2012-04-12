@@ -34,5 +34,6 @@ $string['maxfilessubmission_help'] = 'If file submissions are enabled, each stud
 $string['maximumsubmissionsize'] = 'Maximum submission size';
 $string['maximumsubmissionsize_help'] = 'Files uploaded by students may be up to this size.';
 $string['pluginname'] = 'File submissions';
+$string['siteuploadlimit'] = 'Site upload limit';
 $string['submissionfilearea'] = 'Uploaded submission files';
 $string['countfiles'] = '{$a} files';

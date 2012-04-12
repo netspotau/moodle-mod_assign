@@ -77,7 +77,7 @@ class assignment_submission_file extends assignment_submission_plugin {
 
         $defaultmaxfilesubmissions = $this->get_config('maxfilesubmissions');
         $defaultmaxsubmissionsizebytes = $this->get_config('maxsubmissionsizebytes');
-
+        
         $settings = array();
         $options = array();
         for($i = 1; $i <= ASSIGN_MAX_SUBMISSION_FILES; $i++) {
@@ -85,17 +85,21 @@ class assignment_submission_file extends assignment_submission_plugin {
         }
         
         $mform->addElement('select', 'assignsubmission_file_maxfiles', get_string('maxfilessubmission', 'assignsubmission_file'), $options);
-         $mform->addHelpButton('assignsubmission_file_maxfiles', 'maxfilessubmission', 'assignsubmission_file');
+        $mform->addHelpButton('assignsubmission_file_maxfiles', 'maxfilessubmission', 'assignsubmission_file');
         $mform->setDefault('assignsubmission_file_maxfiles', $defaultmaxfilesubmissions);
         $mform->disabledIf('assignsubmission_file_maxfiles', 'assignsubmission_file_enabled', 'eq', 0);
 
-        $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
-        $choices[0] = get_string('courseuploadlimit') . ' ('.display_size($COURSE->maxbytes).')';
+        $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes, $CFG->assignsubmission_file_maxbytes);
+        if ($COURSE->maxbytes == 0) {
+            $choices[0] = get_string('siteuploadlimit', 'assignsubmission_file');
+        } else {
+            $choices[0] = get_string('courseuploadlimit') . ' (' . display_size($COURSE->maxbytes) . ')';
+        }
         $settings[] = array('type' => 'select', 
                             'name' => 'maxsubmissionsizebytes', 
                             'description' => get_string('maximumsubmissionsize', 'assignsubmission_file'), 
-                            'options'=>$choices,
-                            'default'=>$defaultmaxsubmissionsizebytes);
+                            'options'=> $choices,
+                            'default'=> $defaultmaxsubmissionsizebytes);
         
         $mform->addElement('select', 'assignsubmission_file_maxsizebytes', get_string('maximumsubmissionsize', 'assignsubmission_file'), $choices);
         $mform->addHelpButton('assignsubmission_file_maxsizebytes', 'maximumsubmissionsize', 'assignsubmission_file');
