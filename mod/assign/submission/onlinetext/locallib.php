@@ -356,6 +356,15 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
     public function is_empty(stdClass $submission) {
         return $this->view($submission) == '';
     }
+    
+    /**
+     * Get file areas returns a list of areas this plugin stores files
+     * @return array - An array of fileareas (keys) and descriptions (values)
+     */
+    public function get_file_areas() {
+        return array(ASSIGN_FILEAREA_SUBMISSION_ONLINETEXT=>$this->get_name());
+    }
+
 }
 
 

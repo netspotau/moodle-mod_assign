@@ -191,4 +191,12 @@ class assignment_feedback_file extends assignment_feedback_plugin {
     public function is_empty(stdClass $grade) {
         return $this->count_files($grade->id, ASSIGN_FILEAREA_FEEDBACK_FILES) == 0;
     }
+
+    /**
+     * Get file areas returns a list of areas this plugin stores files
+     * @return array - An array of fileareas (keys) and descriptions (values)
+     */
+    public function get_file_areas() {
+        return array(ASSIGN_FILEAREA_FEEDBACK_FILES=>$this->get_name());
+    }
 }

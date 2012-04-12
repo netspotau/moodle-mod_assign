@@ -74,4 +74,5 @@ abstract class assignment_submission_plugin extends assignment_plugin {
      */
     public function submit_for_grading() {
     }
+    
 }

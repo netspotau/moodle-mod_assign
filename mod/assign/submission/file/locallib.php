@@ -399,4 +399,12 @@ class assignment_submission_file extends assignment_submission_plugin {
         return $this->count_files($submission->id, ASSIGN_FILEAREA_SUBMISSION_FILES) == 0;
     }
 
+    /**
+     * Get file areas returns a list of areas this plugin stores files
+     * @return array - An array of fileareas (keys) and descriptions (values)
+     */
+    public function get_file_areas() {
+        return array(ASSIGN_FILEAREA_SUBMISSION_FILES=>$this->get_name());
+    }
+
 }
