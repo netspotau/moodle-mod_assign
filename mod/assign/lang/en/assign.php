@@ -151,6 +151,8 @@ $string['numberofparticipants'] = 'Participants';
 $string['numberofsubmittedassignments'] = 'Submitted';
 $string['offline'] = 'No online submissions required';
 $string['overdue'] = '<font color="red">Assignment is overdue by: {$a}</font>';
+$string['page-mod-assign-x'] = 'Any assignment module page';
+$string['page-mod-assign-view'] = 'Assignment module main and submission page';
 $string['pluginadministration'] = 'Assignment administration';
 $string['pluginname'] = 'Assignment';
 $string['preventlatesubmissions'] = 'Prevent late submissions';

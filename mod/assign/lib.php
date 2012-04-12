@@ -175,6 +175,21 @@ function assign_get_coursemodule_info($coursemodule) {
     return $result;
 }
 
+
+/**
+ * Return a list of page types
+ * @param string $pagetype current page type
+ * @param stdClass $parentcontext Block's parent context
+ * @param stdClass $currentcontext Current context of block
+ */
+function assign_page_type_list($pagetype, $parentcontext, $currentcontext) {
+    $module_pagetype = array(
+        'mod-assign-*' => get_string('page-mod-assign-x', 'assign'),
+        'mod-assign-view' => get_string('page-mod-assign-view', 'assign'),       
+    );
+    return $module_pagetype;
+}
+
 /**
  * Print an overview of all assignments
  * for the courses.
