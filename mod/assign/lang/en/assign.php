@@ -24,6 +24,7 @@
  */
 
 $string['allowsubmissions'] = 'Allow the user to continue making submissions to this assignment.';
+$string['allowsubmissionsshort'] = 'Allow submission changes';
 $string['allowsubmissionsfromdate'] = 'Allow submissions from';
 $string['allowsubmissionsfromdate_help'] = 'If enabled, students will not be able to submit before this date. If disabled, students will be able to start submitting right away.';
 $string['allowsubmissionsfromdatesummary'] = 'This assignment will accept submissions from <strong>{$a}</strong>';
@@ -153,6 +154,7 @@ $string['numberofparticipants'] = 'Participants';
 $string['numberofsubmittedassignments'] = 'Submitted';
 $string['offline'] = 'No online submissions required';
 $string['overdue'] = '<font color="red">Assignment is overdue by: {$a}</font>';
+$string['outlinegrade'] = 'Grade: {$a}';
 $string['page-mod-assign-x'] = 'Any assignment module page';
 $string['page-mod-assign-view'] = 'Assignment module main and submission page';
 $string['pluginadministration'] = 'Assignment administration';
@@ -160,6 +162,7 @@ $string['pluginname'] = 'Assignment';
 $string['preventlatesubmissions'] = 'Prevent late submissions';
 $string['preventlatesubmissions_help'] = 'If enabled, students will not be able submit after the Due Date. If disabled, students will be able to submit assignments after the due date and before the final date (if set).';
 $string['preventsubmissions'] = 'Prevent the user from making any more submissions to this assignment.';
+$string['preventsubmissionsshort'] = 'Prevent submission changes';
 $string['previous'] = 'Previous';
 $string['reverttodraftforstudent'] = 'Revert submission to draft for student: (id={$a->id}, fullname={$a->fullname}).';
 $string['reverttodraft'] = 'Revert the submission to draft status.';
@@ -185,6 +188,7 @@ $string['submissionnotready'] = 'This assignment is not ready to submit:';
 $string['submissionplugins'] = 'Submission plugins';
 $string['submissionreceipts'] = 'Send submission receipts';
 $string['submissionslocked'] = 'This assignment is not accepting submissions';
+$string['submissionslockedshort'] = 'Submission changes not allowed';
 $string['submissions'] = 'Submissions';
 $string['submissionsnotgraded'] = 'Submissions not graded: {$a}';
 $string['submissionsclosed'] = 'Submissions closed';
