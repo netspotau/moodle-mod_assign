@@ -809,6 +809,7 @@ function mod_assign_get_file_areas($course, $cm, $context) {
 /**
  * File browsing support for assign module.
  *
+ * @global stdClass $CFG
  * @param file_browser $browser
  * @param object $areas
  * @param object $course
@@ -821,7 +822,8 @@ function mod_assign_get_file_areas($course, $cm, $context) {
  * @return object file_info instance or null if not found
  */
 function mod_assign_get_file_info($browser, $areas, $course, $cm, $context, $filearea, $itemid, $filepath, $filename) {
-    global $CFG, $DB;
+    global $CFG;
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
     if ($context->contextlevel != CONTEXT_MODULE) {
         return null;
@@ -862,5 +864,53 @@ function mod_assign_get_file_info($browser, $areas, $course, $cm, $context, $fil
     }
 
     $result = $pluginowner->get_file_info($browser, $filearea, $itemid, $filepath, $filename);
+    return $result;
+}
+
+/**
+ * Prints the complete info about a user's interaction with an assignment
+ *
+ * @global stdClass $CFG
+ * @param stdClass $course
+ * @param stdClass $user
+ * @param stdClass $coursemodule
+ * @param stdClass $assign the database assign record 
+ * 
+ * This prints the submission summary and feedback summary for this student
+ */
+function assign_user_complete($course, $user, $coursemodule, $assign) {
+    global $CFG;
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
+    $context = context_module::instance($coursemodule->id);
+
+    $assignment = new assignment($context, $coursemodule, $course);
+
+    echo $assignment->view_student_summary($user, false);
+}
+
+/**
+ * Print the grade information for the assignment for this user
+ */
+function assign_user_outline($course, $user, $coursemodule, $assignment) {
+    global $CFG;
+    require_once($CFG->libdir.'/gradelib.php');
+    require_once($CFG->dirroot.'/grade/grading/lib.php');
+
+    $gradinginfo = grade_get_grades($course->id,
+                                        'mod',
+                                        'assign',
+                                        $assignment->id,
+                                        $user->id);
+
+    $gradingitem = $gradinginfo->items[0];
+    $gradebookgrade = $gradingitem->grades[$user->id];
+
+    if (!$gradebookgrade) {
+        return null;
+    }
+    $result = new stdClass();
+    $result->info = get_string('outlinegrade', 'assign', $gradebookgrade->grade);
+    $result->time = $gradebookgrade->dategraded;
+
     return $result;
 }

@@ -103,7 +103,7 @@ class assign_grading_table extends table_sql implements renderable {
     
         // Select
         $columns[] = 'select';
-        $headers[] = '<input type="checkbox" name="selectall" title="' . get_string('selectall') . '"/>';
+        $headers[] = get_string('select') . '<div class="selectall"><input type="checkbox" name="selectall" title="' . get_string('selectall') . '"/></div>';
         
         // User picture
         $columns[] = 'picture';
@@ -339,6 +339,9 @@ class assign_grading_table extends table_sql implements renderable {
             if ($this->assignment->get_instance()->duedate && $row->timesubmitted > $this->assignment->get_instance()->duedate) {
                 $o .= $this->output->container(get_string('submittedlateshort', 'assign', format_time($row->timesubmitted - $this->assignment->get_instance()->duedate)), 'latesubmission');
             }
+            if ($row->locked) {
+                $o .= $this->output->container(get_string('submissionslockedshort', 'assign'), 'lockedsubmission');
+            }
         } else {
             $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
                                                         array('id' => $this->assignment->get_course_module()->id, 
@@ -360,42 +363,44 @@ class assign_grading_table extends table_sql implements renderable {
     function col_edit(stdClass $row) {
         $edit = '';
 
-        $edit .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
-                                            array('id' => $this->assignment->get_course_module()->id,                                         
-                                                  'rownum'=>$this->rownum,'action'=>'grade')),
-                                            $this->output->pix_icon('gradefeedback', get_string('grade'), 'assign'));
+        $actions = array();
 
-
+        $url = new moodle_url('/mod/assign/view.php',
+                                            array('id' => $this->assignment->get_course_module()->id,
+                                                  'rownum'=>$this->rownum,'action'=>'grade'));
+        $description = get_string('grade');
+        $actions[$url->out(false)] = $description;
 
         if (!$row->status || $row->status == ASSIGN_SUBMISSION_STATUS_DRAFT || !$this->assignment->get_instance()->submissiondrafts) {
             if (!$row->locked) {
-                $edit .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
-                                                                   array('id' => $this->assignment->get_course_module()->id, 
-                                                                         'userid'=>$row->id, 
-                                                                         'action'=>'lock',
-                                                                         'sesskey'=>sesskey(),
-                                                                         'page'=>$this->currpage)), 
-                                                                   $this->output->pix_icon('t/lock', get_string('preventsubmissions', 'assign')));
-
+                $url = new moodle_url('/mod/assign/view.php', array('id' => $this->assignment->get_course_module()->id,
+                                                                    'userid'=>$row->id,
+                                                                    'action'=>'lock',
+                                                                    'sesskey'=>sesskey(),
+                                                                    'page'=>$this->currpage));
+                $description = get_string('preventsubmissionsshort', 'assign');
+                $actions[$url->out(false)] = $description;
             } else {
-                $edit .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
-                                                                   array('id' => $this->assignment->get_course_module()->id, 
-                                                                         'userid'=>$row->id, 
-                                                                         'action'=>'unlock',
-                                                                         'sesskey'=>sesskey(),
-                                                                         'page'=>$this->currpage)), 
-                                                                   $this->output->pix_icon('t/unlock', get_string('allowsubmissions', 'assign')));
+                $url = new moodle_url('/mod/assign/view.php', array('id' => $this->assignment->get_course_module()->id, 
+                                                                    'userid'=>$row->id, 
+                                                                    'action'=>'unlock',
+                                                                    'sesskey'=>sesskey(),
+                                                                    'page'=>$this->currpage));
+                $description = get_string('allowsubmissionsshort', 'assign'); 
+                $actions[$url->out(false)] = $description;
             }
         }
         if ($row->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED && $this->assignment->get_instance()->submissiondrafts) {
-            $edit .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
-                                                               array('id' => $this->assignment->get_course_module()->id, 
-                                                                     'userid'=>$row->id, 
-                                                                     'action'=>'reverttodraft',
-                                                                     'sesskey'=>sesskey(),
-                                                                     'page'=>$this->currpage)), 
-                                                               $this->output->pix_icon('t/left', get_string('reverttodraft', 'assign')));
+            $url = new moodle_url('/mod/assign/view.php', array('id' => $this->assignment->get_course_module()->id, 
+                                                                'userid'=>$row->id, 
+                                                                'action'=>'reverttodraft',
+                                                                'sesskey'=>sesskey(),
+                                                                'page'=>$this->currpage));
+            $description = get_string('reverttodraftshort', 'assign');
+            $actions[$url->out(false)] = $description;
         }
+
+        $edit .= $this->output->url_select($actions, null);
 
         return $edit;
     }
@@ -565,5 +570,19 @@ class assign_grading_table extends table_sql implements renderable {
      */
     function can_view_all_grades() {
         return has_capability('gradereport/grader:view', $this->assignment->get_course_context()) && has_capability('moodle/grade:viewall', $this->assignment->get_course_context());
+    }
+
+    /**
+     * Override the table show_hide_link to not show for select column
+     * 
+     * @param string $column the column name, index into various names.
+     * @param int $index numerical index of the column.
+     * @return string HTML fragment.
+     */
+    protected function show_hide_link($column, $index) {
+        if ($index > 0) {
+            return parent::show_hide_link($column, $index);
+        }
+        return '';
     }
 }

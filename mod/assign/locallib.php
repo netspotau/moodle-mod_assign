@@ -1409,28 +1409,6 @@ class assignment {
         return $DB->get_record('assign_grades', array('assignment'=>$this->get_instance()->id, 'id'=>$gradeid), '*', MUST_EXIST);
     }
     
-    private function view_single_grading_row() {
-        return $this->view_grading_table();
-        $rownum = required_param('rownum', PARAM_INT);
-        $useridlist = optional_param('useridlist', '', PARAM_TEXT);
-        if ($useridlist) {
-            $useridlist = explode(',', $useridlist);
-        } else {
-            $useridlist = $this->get_grading_userid_list();
-        }
-        $last = false;
-        $userid = $useridlist[$rownum];
-        if ($rownum == count($useridlist) - 1) {
-            $last = true;
-        }
-    
-        $o = '';
-        $filter = ASSIGN_FILTER_SINGLE_USER . '=' . $userid;
-        $o .= $this->output->render(new assign_grading_table($this, 1, $filter, $rownum));
-
-        return $o;
-    }
-    
     /**
      * Print the grading page for a single user submission
      *
@@ -1826,48 +1804,33 @@ class assignment {
     }
 
     /**
-     * View submissions page (contains details of current submission).
-     *
+     * Print 2 tables of information with no action links - 
+     * the submission summary and the grading summary
+     * 
      * @global stdClass $CFG
-     * @global stdClass $DB
-     * @global stdClass $USER
-     * @global stdClass $PAGE
-     * @return string
+     * @global moodle_database $DB
+     * @param stdClass $user the user to print the report for
+     * @return string - the html summary
      */
-    private function view_submission_page() {
-        global $CFG, $DB, $USER, $PAGE;
-        
+    public function view_student_summary($user, $showlinks) {
+        global $CFG, $DB;
+
+        $grade = $this->get_user_grade($user->id, false);
+        $submission = $this->get_user_submission($user->id, false);
         $o = '';
-        $o .= $this->output->render(new assign_header($this->get_instance(),
-                                                      $this->get_context(),
-                                                      $this->show_intro(),
-                                                      $this->get_course_module()->id));
 
-        if ($this->can_grade()) {
-            $o .= $this->output->render(new assign_grading_summary($this->count_participants(0),
-                                                            $this->get_instance()->submissiondrafts,
-                                                            $this->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_DRAFT),
-                                                            $this->is_any_submission_plugin_enabled(),
-                                                            $this->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_SUBMITTED),
-                                                            $this->get_instance()->duedate,
-                                                            $this->get_course_module()->id
-                                                            ));
-        }
-        $grade = $this->get_user_grade($USER->id, false);
-        $submission = $this->get_user_submission($USER->id, false);
-
-        if ($this->can_view_submission($USER->id)) {
+        if ($this->can_view_submission($user->id)) {
             $showedit = has_capability('mod/assign:submit', $this->context) &&
-                         $this->submissions_open() && ($this->is_any_submission_plugin_enabled());
-            $showsubmit = $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT);
-            $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($USER->id);
+                         $this->submissions_open() && ($this->is_any_submission_plugin_enabled()) && $showlinks;
+            $showsubmit = $submission && ($submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT) && $showlinks;
+            $gradelocked = ($grade && $grade->locked) || $this->grading_disabled($user->id);
 
             $o .= $this->output->render(new assign_submission_status($this->get_instance()->allowsubmissionsfromdate,
                                                               $this->get_instance()->alwaysshowdescription,
                                                               $submission, 
                                                               $this->is_any_submission_plugin_enabled(),
                                                               $gradelocked,
-                                                              $this->is_graded($USER->id),
+                                                              $this->is_graded($user->id),
                                                               $this->get_instance()->duedate,
                                                               $this->get_submission_plugins(),
                                                               $this->get_return_action(),
@@ -1876,7 +1839,6 @@ class assignment {
                                                               assign_submission_status::STUDENT_VIEW, 
                                                               $showedit, 
                                                               $showsubmit));
-
             require_once($CFG->libdir.'/gradelib.php');
             require_once($CFG->dirroot.'/grade/grading/lib.php');
 
@@ -1884,10 +1846,10 @@ class assignment {
                                         'mod',
                                         'assign',
                                         $this->get_instance()->id,
-                                        $USER->id);
+                                        $user->id);
 
             $gradingitem = $gradinginfo->items[0];
-            $gradebookgrade = $gradingitem->grades[$USER->id];
+            $gradebookgrade = $gradingitem->grades[$user->id];
 
             // check to see if all feedback plugins are empty 
             $emptyplugins = true;
@@ -1932,6 +1894,44 @@ class assignment {
 
                 $o .= $this->output->render($feedbackstatus);
             }
+            
+        }
+        return $o;
+    }
+
+    /**
+     * View submissions page (contains details of current submission).
+     *
+     * @global stdClass $CFG
+     * @global stdClass $DB
+     * @global stdClass $USER
+     * @global stdClass $PAGE
+     * @return string
+     */
+    private function view_submission_page() {
+        global $CFG, $DB, $USER, $PAGE;
+        
+        $o = '';
+        $o .= $this->output->render(new assign_header($this->get_instance(),
+                                                      $this->get_context(),
+                                                      $this->show_intro(),
+                                                      $this->get_course_module()->id));
+
+        if ($this->can_grade()) {
+            $o .= $this->output->render(new assign_grading_summary($this->count_participants(0),
+                                                            $this->get_instance()->submissiondrafts,
+                                                            $this->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_DRAFT),
+                                                            $this->is_any_submission_plugin_enabled(),
+                                                            $this->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_SUBMITTED),
+                                                            $this->get_instance()->duedate,
+                                                            $this->get_course_module()->id
+                                                            ));
+        }
+        $grade = $this->get_user_grade($USER->id, false);
+        $submission = $this->get_user_submission($USER->id, false);
+
+        if ($this->can_view_submission($USER->id)) {
+            $o .= $this->view_student_summary($USER, true);
         }
         
             

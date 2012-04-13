@@ -26,6 +26,7 @@ div.gradingsummary .generaltable {
 
 .gradingsummarytable,
 .feedbacktable,
+.lockedsubmission,
 .gradingbatchoperationsform,
 .submissionsummarytable {
     margin-top: 1em;
@@ -62,6 +63,7 @@ a:link.submissionstatussubmitted {
     background-color: #cfefcf;
 }
 
+
 td.submissionlocked {
     color: black;
     background-color: #efefcf;
@@ -96,3 +98,5 @@ td.earlysubmission {
 
 .gradingtable tr.selectedrow { background-color: #ffeecc; }
 .gradingtable tr.unselectedrow { background-color: white; }
+
+.gradingtable .c0 div.selectall {margin-left: 7px;}
