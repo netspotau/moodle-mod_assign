@@ -54,8 +54,6 @@ define('ASSIGN_FILEAREA_PORTFOLIO_FILES', 'portfolio_files');
 require_once($CFG->libdir.'/accesslib.php');
 /** Include formslib.php */
 require_once($CFG->libdir.'/formslib.php');
-/** Include plagiarismlib.php */
-require_once($CFG->libdir . '/plagiarismlib.php');
 /** Include repository/lib.php */
 require_once($CFG->dirroot . '/repository/lib.php');
 /** Include local mod_form.php */
@@ -74,8 +72,6 @@ require_once($CFG->dirroot.'/mod/assign/submissionplugin.php');
 require_once($CFG->dirroot.'/mod/assign/renderable.php');
 /** Include gradingtable.php */
 require_once($CFG->dirroot.'/mod/assign/gradingtable.php');
-
-//send files to event system for plagiarism detection 
 /** Include eventslib.php */
 require_once($CFG->libdir.'/eventslib.php');
 
@@ -1599,7 +1595,11 @@ class assignment {
         $gradingoptionsform->set_data($gradingoptionsdata);
         
         // plagiarism update status apearring in the grading book
-        plagiarism_update_status($this->get_course(), $this->get_course_module());
+        if (!empty($CFG->enableplagiarism)) {
+            /** Include plagiarismlib.php */
+            require_once($CFG->libdir . '/plagiarismlib.php');
+            plagiarism_update_status($this->get_course(), $this->get_course_module());
+        }
 
         $o .= $this->output->render(new assign_form('gradingactionsform', $gradingactionsform));        
         $o .= $this->output->render(new assign_form('gradingoptionsform', $gradingoptionsform));
@@ -1646,11 +1646,16 @@ class assignment {
      */
     private function plagiarism_print_disclosure() {
         $o = '';
-        ob_start();
+
+        if (!empty($CFG->enableplagiarism)) {
+            /** Include plagiarismlib.php */
+            require_once($CFG->libdir . '/plagiarismlib.php');
+            ob_start();
         
-        plagiarism_print_disclosure($this->get_course_module()->id);
-        $o = ob_get_contents();
-        ob_end_clean();
+            plagiarism_print_disclosure($this->get_course_module()->id);
+            $o = ob_get_contents();
+            ob_end_clean();
+        }
 
         return $o;
     }
