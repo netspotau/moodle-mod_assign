@@ -31,3 +31,5 @@ $string['onlinetext'] = 'Online text';
 $string['onlinetextfilename'] = 'onlinetext.html';
 $string['onlinetextsubmission'] = 'Allow online text submission';
 $string['pluginname'] = 'Online text submissions';
+$string['numwords'] = '({$a} words)';
+$string['numwordsforlog'] = 'Submission word count: {$a} words';

@@ -203,7 +203,7 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
             $text = format_text($onlinetextsubmission->onlinetext, $onlinetextsubmission->onlineformat, array('context'=>$this->assignment->get_context()));
             $shorttext = shorten_text($text, 140);
             if ($text != $shorttext) {  
-                return get_string('numwords', '', count_words($text));                    
+                return $shorttext . get_string('numwords', 'assignsubmission_onlinetext', count_words($text));                    
             } else {
                 return $shorttext;
             }
@@ -329,7 +329,7 @@ class assignment_submission_onlinetext extends assignment_submission_plugin {
         $text = format_text($onlinetextsubmission->onlinetext,
                             $onlinetextsubmission->onlineformat, 
                             array('context'=>$this->assignment->get_context()));
-        $onlinetextloginfo .= 'Onlinetext word count : ' . get_string('numwords', '', count_words($text)) . " <br>";
+        $onlinetextloginfo .= get_string('numwordsforlog', 'assignsubmission_onlinetext', count_words($text));
 
         return $onlinetextloginfo;
     }
