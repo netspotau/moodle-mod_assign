@@ -1606,7 +1606,13 @@ class assignment {
        
         // load and print the table of submissions
         $o .= $this->output->render(new assign_grading_table($this, $perpage, $filter));
-        $o .= $this->output->render(new assign_form('gradingbatchoperationsform', $gradingbatchoperationsform));
+
+        $currentgroup = groups_get_activity_group($this->get_course_module(), true);
+        $users = array_keys($this->list_participants($currentgroup, true));
+        if (count($users) != 0) {
+            // if no enrolled user in a course then don't display the batch operations feature
+            $o .= $this->output->render(new assign_form('gradingbatchoperationsform', $gradingbatchoperationsform));
+        }       
         return $o;
     }
   
