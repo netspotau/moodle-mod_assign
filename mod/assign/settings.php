@@ -25,32 +25,32 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-    require_once($CFG->dirroot . '/mod/assign/adminlib.php');
+require_once($CFG->dirroot . '/mod/assign/adminlib.php');
 
-    $ADMIN->add('modules', new admin_category('assignmentplugins',
-                    new lang_string('assignmentplugins', 'assign'), !$module->visible));
-    $ADMIN->add('assignmentplugins', new admin_category('assignsubmissionplugins',
-                    new lang_string('submissionplugins', 'assign'), !$module->visible));
-    $ADMIN->add('assignsubmissionplugins', new admin_page_manage_assignment_plugins('assignsubmission'));
-    $ADMIN->add('assignmentplugins', new admin_category('assignfeedbackplugins',
-                    new lang_string('feedbackplugins', 'assign'), !$module->visible));
-    $ADMIN->add('assignfeedbackplugins', new admin_page_manage_assignment_plugins('assignfeedback'));
+$ADMIN->add('modules', new admin_category('assignmentplugins',
+                new lang_string('assignmentplugins', 'assign'), !$module->visible));
+$ADMIN->add('assignmentplugins', new admin_category('assignsubmissionplugins',
+                new lang_string('submissionplugins', 'assign'), !$module->visible));
+$ADMIN->add('assignsubmissionplugins', new admin_page_manage_assignment_plugins('assignsubmission'));
+$ADMIN->add('assignmentplugins', new admin_category('assignfeedbackplugins',
+                new lang_string('feedbackplugins', 'assign'), !$module->visible));
+$ADMIN->add('assignfeedbackplugins', new admin_page_manage_assignment_plugins('assignfeedback'));
 
 
-    assignment_plugin_manager::add_admin_assignment_plugin_settings('assignsubmission', $ADMIN, $settings, $module);
-    assignment_plugin_manager::add_admin_assignment_plugin_settings('assignfeedback', $ADMIN, $settings, $module);
+assignment_plugin_manager::add_admin_assignment_plugin_settings('assignsubmission', $ADMIN, $settings, $module);
+assignment_plugin_manager::add_admin_assignment_plugin_settings('assignfeedback', $ADMIN, $settings, $module);
 
-    foreach (get_plugin_list('assignfeedback') as $type => $notused) {
-        $visible = !get_config('assignfeedback_' . $type, 'disabled');
-        if ($visible) {
-            $menu['assignfeedback_' . $type] = new lang_string('pluginname', 'assignfeedback_' . $type);
-        }
+foreach (get_plugin_list('assignfeedback') as $type => $notused) {
+    $visible = !get_config('assignfeedback_' . $type, 'disabled');
+    if ($visible) {
+        $menu['assignfeedback_' . $type] = new lang_string('pluginname', 'assignfeedback_' . $type);
     }
-    if ($ADMIN->fulltree) {
-        $settings->add(new admin_setting_configselect('mod_assign_feedback_plugin_for_gradebook',
-                       new lang_string('feedbackpluginforgradebook', 'mod_assign'),
-                       new lang_string('feedbackplugin', 'mod_assign'), 'feedback_comments', $menu));
-        $settings->add(new admin_setting_configcheckbox('assign_showrecentsubmissions',
-                       new lang_string('showrecentsubmissions', 'assign'),
-                       new lang_string('configshowrecentsubmissions', 'assign'), 0));       
-    }
+}
+if ($ADMIN->fulltree) {
+    $settings->add(new admin_setting_configselect('mod_assign_feedback_plugin_for_gradebook',
+                   new lang_string('feedbackpluginforgradebook', 'mod_assign'),
+                   new lang_string('feedbackplugin', 'mod_assign'), 'feedback_comments', $menu));
+    $settings->add(new admin_setting_configcheckbox('assign_showrecentsubmissions',
+                   new lang_string('showrecentsubmissions', 'assign'),
+                   new lang_string('configshowrecentsubmissions', 'assign'), 0));       
+}

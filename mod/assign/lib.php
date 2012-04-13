@@ -139,6 +139,9 @@ function assign_extend_settings_navigation(settings_navigation $settings, naviga
 
    // Link to download all submissions
    if (has_capability('mod/assign:grade', $context)) {
+       $link = new moodle_url('/mod/assign/view.php', array('id' => $cm->id,'action'=>'grading'));
+       $node = $navref->add(get_string('viewgrading', 'assign'), $link, navigation_node::TYPE_SETTING);
+
        $link = new moodle_url('/mod/assign/view.php', array('id' => $cm->id,'action'=>'downloadall'));
        $node = $navref->add(get_string('downloadall', 'assign'), $link, navigation_node::TYPE_SETTING);
    }
