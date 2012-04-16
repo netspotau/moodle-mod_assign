@@ -544,6 +544,9 @@ class assignment {
      * @return bool
      */
     public function update_gradebook($reset, $coursemoduleid) {
+         global $CFG;
+        /** Include lib.php */
+        require_once($CFG->dirroot.'/mod/assign/lib.php');
         $assign = clone $this->get_instance();
         $assign->cmidnumber = $coursemoduleid;
         $param = null;

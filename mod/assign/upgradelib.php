@@ -59,7 +59,10 @@ class assignment_upgrade_manager {
         if (!is_siteadmin($USER->id)) {
               return false;
         }
-        
+
+        // get the module details
+        $oldmodule = $DB->get_record('modules', array('name'=>'assignment'), '*', MUST_EXIST);
+        $oldcoursemodule = $DB->get_record('course_modules', array('module'=>$oldmodule->id, 'instance'=>$oldassignmentid), '*', MUST_EXIST);
         
         // first insert an assign instance to get the id
         $oldassignment = $DB->get_record('assignment', array('id'=>$oldassignmentid), '*', MUST_EXIST);
@@ -70,7 +73,8 @@ class assignment_upgrade_manager {
         $data->course = $oldassignment->course;
         $data->name = $oldassignment->name;
         $data->intro = $oldassignment->intro;
-        $data->introformat = $oldassignment->introformat;
+        $data->introformat = $oldassignment->introformat;        
+        $data->alwaysshowdescription = 1;
         $data->sendnotifications = $oldassignment->emailteachers;
         $data->duedate = $oldassignment->timedue;
         $data->allowsubmissionsfromdate = $oldassignment->timeavailable;
@@ -84,10 +88,7 @@ class assignment_upgrade_manager {
             $log = get_string('couldnotcreatenewassignmentinstance', 'mod_assign');
             return false;
         }
-
-        // get the module details
-        $oldmodule = $DB->get_record('modules', array('name'=>'assignment'), '*', MUST_EXIST);
-        $oldcoursemodule = $DB->get_record('course_modules', array('module'=>$oldmodule->id, 'instance'=>$oldassignmentid), '*', MUST_EXIST);
+       
         $oldcontext = context_module::instance($oldcoursemodule->id);
         
         $newmodule = $DB->get_record('modules', array('name'=>'assign'), '*', MUST_EXIST);
@@ -173,8 +174,8 @@ class assignment_upgrade_manager {
                 }
             }
 
-            $newassignment->update_calendar();
-            $newassignment->update_gradebook();
+            $newassignment->update_calendar($newcoursemodule->id);
+            $newassignment->update_gradebook(false,$newcoursemodule->id);
             
             // copy the grades from the old assignment to the new one
             $this->copy_grades_for_upgrade($oldassignment, $newassignment);
