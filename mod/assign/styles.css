@@ -4,7 +4,6 @@ div.gradingnavigation div {
 }
 
 
-div.submissionstatus,
 div.submissionfull,
 div.submissionlinks,
 div.usersummary,
@@ -44,37 +43,44 @@ div.submissionsummarytable table tbody tr td.c0 {
 
 .jsenabled .gradingactionsform .hidden {display: none;}
 .jsenabled .gradingoptionsform .hidden {display: none;}
+.jsenabled .gradingtable .c1 select {display: none;}
 
 td.submissionstatus, 
+div.submissionstatus, 
 a:link.submissionstatus {
     color: black;
     background-color: #efefef;
 }
 
 td.submissionstatusdraft,
+div.submissionstatusdraft,
 a:link.submissionstatusdraft {
     color: black;
     background-color: #efefcf;
 }
 
 td.submissionstatussubmitted,
+div.submissionstatussubmitted,
 a:link.submissionstatussubmitted {
     color: black;
     background-color: #cfefcf;
 }
 
 
-td.submissionlocked {
+td.submissionlocked,
+div.submissionlocked {
     color: black;
     background-color: #efefcf;
 }
 
-td.submissiongraded {
+td.submissiongraded,
+div.submissiongraded {
     color: black;
     background-color: #cfefcf;
 }
 
-td.submissionnotgraded {
+td.submissionnotgraded,
+div.submissionnotgraded {
     color: black;
     background-color: #efefef;
 }
@@ -86,7 +92,8 @@ div.latesubmission {
     background-color: #efcfcf;
 }
 
-td.earlysubmission {
+td.earlysubmission,
+div.earlysubmission {
     color: black;
     background-color: #cfefcf;
 }

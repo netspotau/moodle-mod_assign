@@ -43,6 +43,8 @@ $string['availability'] = 'Availability';
 $string['back'] = 'Back';
 $string['backtoassignment'] = 'Back to assignment';
 $string['batchoperations'] = 'Batch operations';
+$string['batchoperationsdescription'] = 'Perform action on selected row(s)';
+$string['batchoperationsdescription_help'] = 'The selected operation will be performed on all of the selected rows in the grading table. ';
 $string['batchoperationconfirmlock'] = 'Lock all selected submissions?';
 $string['batchoperationconfirmunlock'] = 'Unlock all selected submissions?';
 $string['batchoperationconfirmreverttodraft'] = 'Revert selected submissions to draft?';
@@ -73,6 +75,7 @@ $string['duedateno'] = 'No due date';
 $string['duedatereached'] = 'The due date for this assignment has now passed';
 $string['duedatevalidation'] = 'Due date must be after the allow submissions from date.';
 $string['editsubmission'] = 'Edit my submission';
+$string['editaction'] = 'Actions...';
 $string['emailgradermail'] = '{$a->username} has updated their assignment submission
 for \'{$a->assignment}\' at {$a->timeupdated}
 

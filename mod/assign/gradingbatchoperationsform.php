@@ -51,7 +51,8 @@ class mod_assign_grading_batch_operations_form extends moodleform {
         if ($instance['submissiondrafts']) {
             $options['reverttodraft'] = get_string('reverttodraft', 'assign');
         }
-        $mform->addElement('select', 'operation', '', $options, array('class'=>'operation'));
+        $mform->addElement('select', 'operation', get_string('batchoperationsdescription', 'assign'), $options, array('class'=>'operation'));
+        $mform->addHelpButton('operation', 'batchoperationsdescription', 'assign');
         $mform->addElement('hidden', 'action', 'batchgradingoperation');
         $mform->addElement('hidden', 'id', $instance['cm']);
         $mform->addElement('hidden', 'selectedusers', '', array('class'=>'selectedusers'));

@@ -105,23 +105,26 @@ class assign_grading_table extends table_sql implements renderable {
         $columns[] = 'select';
         $headers[] = get_string('select') . '<div class="selectall"><input type="checkbox" name="selectall" title="' . get_string('selectall') . '"/></div>';
         
+        // Edit links
+        if (!$this->is_downloading()) {
+            $columns[] = 'edit';
+            $headers[] = get_string('edit');
+        }
+        
         // User picture
         $columns[] = 'picture';
-        $headers[] = '';
+        $headers[] = get_string('pictureofuser');
         
         // Fullname
         $columns[] = 'fullname';
         $headers[] = get_string('fullname');
 
         // Submission status
-        $columns[] = 'status';
-        $headers[] = get_string('status');
-
-        // Edit links
-        if (!$this->is_downloading()) {
-            $columns[] = 'edit';
-            $headers[] = get_string('edit');
+        if ($assignment->is_any_submission_plugin_enabled()) {
+            $columns[] = 'status';
+            $headers[] = get_string('status');
         }
+
 
         // Grade 
         $columns[] = 'grade';
@@ -178,7 +181,7 @@ class assign_grading_table extends table_sql implements renderable {
         // load the grading info for all users
         $this->gradinginfo = grade_get_grades($this->assignment->get_course()->id, 'mod', 'assign', $this->assignment->get_instance()->id, $users);
     }
-    
+
     /**
      * Add the userid to the row class so it can be updated via ajax
      * 
@@ -217,16 +220,20 @@ class assign_grading_table extends table_sql implements renderable {
      * @return string
      */
     function col_picture(stdClass $row) {
-        global $PAGE;
-        if ($this->rownum < 0) {
-            $this->rownum = $this->currpage * $this->pagesize;
-        } else {
-            $this->rownum += 1;
-        }
         if ($row->picture) {
             return $this->output->user_picture($row);
         }
         return '';
+    }
+    
+    /**
+     * Format a user record for display (don't link to profile)
+     * 
+     * @param stdClass $row
+     * @return string
+     */
+    function col_fullname(stdClass $row) {
+        return fullname($row);
     }
     
     /**
@@ -325,16 +332,10 @@ class assign_grading_table extends table_sql implements renderable {
      */
     function col_status(stdClass $row) {
         $o = '';
-        $extraclass = '';
-        $extratext = '';
 
         if ($this->assignment->is_any_submission_plugin_enabled()) {
 
-            $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
-                                                        array('id' => $this->assignment->get_course_module()->id, 
-                                                              'rownum'=>$this->rownum,
-                                                              'action'=>'grade')), 
-                                         get_string('submissionstatus_' . $row->status, 'assign') . $extratext, null, array('class'=>'submissionstatus' .$row->status . $extraclass));
+            $o .= $this->output->container(get_string('submissionstatus_' . $row->status, 'assign'), array('class'=>'submissionstatus' .$row->status));
 
             if ($this->assignment->get_instance()->duedate && $row->timesubmitted > $this->assignment->get_instance()->duedate) {
                 $o .= $this->output->container(get_string('submittedlateshort', 'assign', format_time($row->timesubmitted - $this->assignment->get_instance()->duedate)), 'latesubmission');
@@ -342,13 +343,6 @@ class assign_grading_table extends table_sql implements renderable {
             if ($row->locked) {
                 $o .= $this->output->container(get_string('submissionslockedshort', 'assign'), 'lockedsubmission');
             }
-        } else {
-            $o .= $this->output->action_link(new moodle_url('/mod/assign/view.php', 
-                                                        array('id' => $this->assignment->get_course_module()->id, 
-                                                              'rownum'=>$this->rownum,
-                                                              'action'=>'grade')), 
-                                         get_string('grade', 'assign'), null, array('class'=>'submissionstatus'));
-            
         }
 
         return $o;
@@ -362,6 +356,11 @@ class assign_grading_table extends table_sql implements renderable {
      */
     function col_edit(stdClass $row) {
         $edit = '';
+        if ($this->rownum < 0) {
+            $this->rownum = $this->currpage * $this->pagesize;
+        } else {
+            $this->rownum += 1;
+        }
 
         $actions = array();
 
@@ -400,7 +399,8 @@ class assign_grading_table extends table_sql implements renderable {
             $actions[$url->out(false)] = $description;
         }
 
-        $edit .= $this->output->url_select($actions, null);
+        $edit .= $this->output->url_select($actions, null, null, 'select' . $row->id);
+        $edit .= '<div id="actionselect' . $row->id . '"></div>';
 
         return $edit;
     }

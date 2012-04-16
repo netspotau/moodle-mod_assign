@@ -79,6 +79,33 @@ M.mod_assign.init_grading_table = function(Y) {
                 }
             }
         });
+
+
+        Y.use('yui2-button', 'yui2-menu', function(Y) {
+            var containers = Y.all('.gradingtable .urlselect');
+
+            containers.each(function(c) {
+                var form = c.one('form');
+                var eleid = form.getAttribute('id');
+                var selectele = form.one('select');
+                var selectid = selectele.getAttribute('id');
+    
+                var buttonid = "button" + eleid;
+                
+                var menu = new YAHOO.widget.Button({ 
+                    type: "menu",
+                    menu: selectid,
+                    label: M.str.assign.editaction,
+                    id: buttonid,
+                    name: buttonid,
+                    container: "action" + eleid
+                });
+                menu.on("selectedMenuItemChange", function(e) {
+                    document.location = M.cfg.wwwroot + e.newValue.value;
+                });
+            });
+        });
+        
     });
 
     
