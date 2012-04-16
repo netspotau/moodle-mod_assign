@@ -699,12 +699,16 @@ class assignment {
      * @return void  
      */
     private function add_plugin_settings(assignment_plugin $plugin, MoodleQuickForm $mform) {
+        global $CFG;
         if ($plugin->is_visible()) {
             // enabled
             //tied disableIf rule to this select element
             $mform->addElement('selectyesno', $plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', $plugin->get_name());
             $mform->addHelpButton($plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', 'enabled', $plugin->get_subtype() . '_' . $plugin->get_type());
-            $mform->setDefault($plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', $plugin->is_enabled());
+
+            $setting = $plugin->get_subtype() . '_' . $plugin->get_type() . '_default';
+            $default = $CFG->$setting;
+            $mform->setDefault($plugin->get_subtype() . '_' . $plugin->get_type() . '_enabled', $default);
 
             $plugin->get_settings($mform);
 

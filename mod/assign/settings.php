@@ -53,4 +53,28 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_configcheckbox('assign_showrecentsubmissions',
                    new lang_string('showrecentsubmissions', 'assign'),
                    new lang_string('configshowrecentsubmissions', 'assign'), 0));       
+            
+
+    $settings->add(new admin_setting_heading('assign_defaultplugins',
+                   new lang_string('defaultplugins', 'assign'), ''));
+
+    foreach (get_plugin_list('assignsubmission') as $type => $notused) {
+        $visible = !get_config('assignsubmission_' . $type, 'disabled');
+        if ($visible) {
+            $settings->add(new admin_setting_configcheckbox('assignsubmission_' . $type . '_default',
+                   new lang_string('enabled', 'assignsubmission_' . $type),
+                   new lang_string('enabled_help', 'assignsubmission_' . $type), 0));
+                
+        }
+    }
+    foreach (get_plugin_list('assignfeedback') as $type => $notused) {
+        $visible = !get_config('assignfeedback_' . $type, 'disabled');
+        if ($visible) {
+            $settings->add(new admin_setting_configcheckbox('assignfeedback_' . $type . '_default',
+                   new lang_string('enabled', 'assignfeedback_' . $type),
+                   new lang_string('enabled_help', 'assignfeedback_' . $type), 0));
+                
+        }
+    }
+    
 }
