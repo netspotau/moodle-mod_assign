@@ -47,7 +47,7 @@ foreach (get_plugin_list('assignfeedback') as $type => $notused) {
     }
 }
 if ($ADMIN->fulltree) {
-    $settings->add(new admin_setting_configselect('mod_assign_feedback_plugin_for_gradebook',
+    $settings->add(new admin_setting_configselect('assign_feedback_plugin_for_gradebook',
                    new lang_string('feedbackpluginforgradebook', 'mod_assign'),
                    new lang_string('feedbackplugin', 'mod_assign'), 'feedback_comments', $menu));
     $settings->add(new admin_setting_configcheckbox('assign_showrecentsubmissions',

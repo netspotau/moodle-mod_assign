@@ -2803,7 +2803,7 @@ class assignment {
             }
             $grade->grader= $USER->id;
 
-            $gradebookplugin = $CFG->mod_assign_feedback_plugin_for_gradebook;
+            $gradebookplugin = $CFG->assign_feedback_plugin_for_gradebook;
 
             // call save in plugins
             foreach ($this->feedbackplugins as $plugin) {
@@ -2923,7 +2923,7 @@ class assignment {
         $grades = array();
         $assignmentid = $this->get_instance()->id;
         
-        $gradebookpluginname = $CFG->mod_assign_feedback_plugin_for_gradebook;
+        $gradebookpluginname = $CFG->assign_feedback_plugin_for_gradebook;
         $gradebookplugin = null;
 
         // find the gradebook plugin
