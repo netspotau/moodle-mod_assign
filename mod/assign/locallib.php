@@ -1491,7 +1491,7 @@ class assignment {
 
         // now show the grading form
         if (!$mform) {
-            $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum, 'useridlist'=>$useridlist)), 'post', '', array('class'=>'gradeform'));
+            $mform = new mod_assign_grade_form(null, array($this, $data, array('rownum'=>$rownum, 'useridlist'=>$useridlist, 'last'=>$last)), 'post', '', array('class'=>'gradeform'));
         }
         $o .= $this->output->render(new assign_form('gradingform',$mform));
 
@@ -2512,7 +2512,7 @@ class assignment {
         $settings = $this->get_instance();
 
         $rownum = $params['rownum'];
-        $last = false;
+        $last = $params['last'];
         $useridlist = $params['useridlist']; 
         $userid = $useridlist[$rownum];
         $grade = $this->get_user_grade($userid, false);
@@ -2563,8 +2563,10 @@ class assignment {
           
         $buttonarray=array();
         $buttonarray[] = $mform->createElement('submit', 'savegrade', get_string('savechanges', 'assign'));        
-        $buttonarray[] = $mform->createElement('submit', 'saveandshownext', get_string('savenext','assign')); 
-        $buttonarray[] = $mform->createElement('cancel', 'cancelbutton', get_string('cancel','assign'));     
+        if (!$last){
+            $buttonarray[] = $mform->createElement('submit', 'saveandshownext', get_string('savenext','assign'));
+        }
+        $buttonarray[] = $mform->createElement('cancel', 'cancelbutton', get_string('cancel','assign'));
         $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
         $mform->closeHeaderBefore('buttonar');            
         $buttonarray=array();
@@ -2572,7 +2574,7 @@ class assignment {
         if ($rownum > 0) {
             $buttonarray[] = $mform->createElement('submit', 'nosaveandprevious', get_string('previous','assign')); 
         }
-       
+
         if (!$last){
             $buttonarray[] = $mform->createElement('submit', 'nosaveandnext', get_string('nosavebutnext', 'assign'));
         }
