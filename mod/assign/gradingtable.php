@@ -91,9 +91,11 @@ class assign_grading_table extends table_sql implements renderable {
                         ' LEFT JOIN {assign_grades} g ON u.id = g.userid AND g.assignment = :assignmentid2';
 
         $userparams = array();
+        $userindex = 0;
         foreach ($users as $userid) {
-            $userparams[] = ':user' . $userid;
-            $params['user' . $userid] = $userid;
+            $userparams[] = ':user' . $userindex;
+            $params['user' . $userindex] = $userid;
+            $userindex += 1;
         }
 
         $where = 'u.id IN (' . implode(',', $userparams) . ')';
