@@ -58,7 +58,7 @@ class assign_grading_table extends table_sql implements renderable {
      * @param int $rowoffset For showing a subsequent page of results
      */
     function __construct(assign $assignment, $perpage, $filter, $rowoffset=0) {
-        global $CFG, $PAGE;
+        global $CFG, $PAGE, $DB;
         parent::__construct('mod_assign_grading');
         $this->assignment = $assignment;
         $this->perpage = $perpage;
@@ -92,13 +92,11 @@ class assign_grading_table extends table_sql implements renderable {
 
         $userparams = array();
         $userindex = 0;
-        foreach ($users as $userid) {
-            $userparams[] = ':user' . $userindex;
-            $params['user' . $userindex] = $userid;
-            $userindex += 1;
-        }
 
-        $where = 'u.id IN (' . implode(',', $userparams) . ')';
+        list($userwhere, $userparams) = $DB->get_in_or_equal($users, SQL_PARAMS_NAMED, 'user');
+        $where = 'u.id ' . $userwhere;
+        $params = array_merge($params, $userparams);
+
         if ($filter == ASSIGN_FILTER_SUBMITTED) {
             $where .= ' AND s.timecreated > 0 ';
         }
