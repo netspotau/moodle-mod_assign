@@ -671,7 +671,8 @@ function assign_cron() {
     global $CFG;
 
     require_once($CFG->dirroot . '/mod/assign/locallib.php');
-    //assignment::cron();
+    assign::cron();
+
     $plugins = get_plugin_list('assignsubmission');
 
     foreach ($plugins as $name => $plugin) {
