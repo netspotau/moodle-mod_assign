@@ -86,7 +86,7 @@ class assign_grading_table extends table_sql implements renderable {
 
         $fields = user_picture::fields('u') . ', u.id as userid, u.firstname as firstname, u.lastname as lastname, ';
         $fields .= 's.status as status, s.id as submissionid, s.timecreated as firstsubmission, s.timemodified as timesubmitted, ';
-        $fields .= 'g.id as gradeid, g.grade as grade, g.timemodified as timemarked, g.timecreated as firstmarked, g.mailed as mailed, g.locked as locked';
+        $fields .= 'g.id as gradeid, g.grade as grade, g.timemodified as timemarked, g.timecreated as firstmarked, g.mailed as mailed, g.locked as locked, g.extensionduedate as extensionduedate';
         $from = '{user} u LEFT JOIN {assign_submission} s ON u.id = s.userid AND s.assignment = :assignmentid1' .
                         ' LEFT JOIN {assign_grades} g ON u.id = g.userid AND g.assignment = :assignmentid2';
 
@@ -370,12 +370,35 @@ class assign_grading_table extends table_sql implements renderable {
 
             $o .= $this->output->container(get_string('submissionstatus_' . $row->status, 'assign'), array('class'=>'submissionstatus' .$row->status));
             if ($this->assignment->get_instance()->duedate && $row->timesubmitted > $this->assignment->get_instance()->duedate) {
-                $o .= $this->output->container(get_string('submittedlateshort', 'assign', format_time($row->timesubmitted - $this->assignment->get_instance()->duedate)), 'latesubmission');
+                // past standard duedate - check for extension date
+                if (!$row->extensionduedate || $row->timesubmitted > $row->extensionduedate) {
+                    // submitted - but it was late
+                    $o .= $this->output->container(get_string('submittedlateshort', 'assign', format_time($row->timesubmitted - $this->assignment->get_instance()->duedate)), 'latesubmission');
+                }
+            }
+
+            if (!$row->timesubmitted) {
+                $now = time();
+                $due = $this->assignment->get_instance()->duedate;
+                // check for extension date
+                if ($row->extensionduedate) {
+                    $due = $row->extensionduedate;
+                }
+                if ($due && ($now > $due)) {
+                    // no submission and it is late
+                    $o .= $this->output->container(get_string('overdue', 'assign', format_time($now - $due)), 'overduesubmission');
+                }
+            }
+            // print any current extension date
+            if ($row->extensionduedate) {
+                $o .= $this->output->container(get_string('userextensiondate', 'assign', userdate($row->extensionduedate)), 'extensiondate');
             }
             if ($row->locked) {
+                // the submission is locked
                 $o .= $this->output->container(get_string('submissionslockedshort', 'assign'), 'lockedsubmission');
             }
-            if ($row->grade) {
+            if ($row->grade !== null && $row->grade >= 0) {
+                // the submission has a grade
                 $o .= $this->output->container(get_string('graded', 'assign'), 'submissiongraded');
             }
         }
@@ -409,32 +432,42 @@ class assign_grading_table extends table_sql implements renderable {
         }
         $actions[$url->out(false)] = $description;
 
-        if (!$row->status || $row->status == ASSIGN_SUBMISSION_STATUS_DRAFT || !$this->assignment->get_instance()->submissiondrafts) {
-            if (!$row->locked) {
+        if ($this->assignment->is_any_submission_plugin_enabled()) {
+            if (!$row->status || $row->status == ASSIGN_SUBMISSION_STATUS_DRAFT || !$this->assignment->get_instance()->submissiondrafts) {
+                if (!$row->locked) {
+                    $url = new moodle_url('/mod/assign/view.php', array('id' => $this->assignment->get_course_module()->id,
+                                                                        'userid'=>$row->id,
+                                                                        'action'=>'lock',
+                                                                        'sesskey'=>sesskey(),
+                                                                        'page'=>$this->currpage));
+                    $description = get_string('preventsubmissionsshort', 'assign');
+                    $actions[$url->out(false)] = $description;
+                } else {
+                    $url = new moodle_url('/mod/assign/view.php', array('id' => $this->assignment->get_course_module()->id,
+                                                                        'userid'=>$row->id,
+                                                                        'action'=>'unlock',
+                                                                        'sesskey'=>sesskey(),
+                                                                        'page'=>$this->currpage));
+                    $description = get_string('allowsubmissionsshort', 'assign');
+                    $actions[$url->out(false)] = $description;
+                }
+            }
+            if ($row->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED && $this->assignment->get_instance()->submissiondrafts) {
                 $url = new moodle_url('/mod/assign/view.php', array('id' => $this->assignment->get_course_module()->id,
                                                                     'userid'=>$row->id,
-                                                                    'action'=>'lock',
+                                                                    'action'=>'reverttodraft',
                                                                     'sesskey'=>sesskey(),
                                                                     'page'=>$this->currpage));
-                $description = get_string('preventsubmissionsshort', 'assign');
-                $actions[$url->out(false)] = $description;
-            } else {
-                $url = new moodle_url('/mod/assign/view.php', array('id' => $this->assignment->get_course_module()->id,
-                                                                    'userid'=>$row->id,
-                                                                    'action'=>'unlock',
-                                                                    'sesskey'=>sesskey(),
-                                                                    'page'=>$this->currpage));
-                $description = get_string('allowsubmissionsshort', 'assign');
+                $description = get_string('reverttodraftshort', 'assign');
                 $actions[$url->out(false)] = $description;
             }
-        }
-        if ($row->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED && $this->assignment->get_instance()->submissiondrafts) {
             $url = new moodle_url('/mod/assign/view.php', array('id' => $this->assignment->get_course_module()->id,
                                                                 'userid'=>$row->id,
-                                                                'action'=>'reverttodraft',
+                                                                'action'=>'grantextension',
                                                                 'sesskey'=>sesskey(),
                                                                 'page'=>$this->currpage));
-            $description = get_string('reverttodraftshort', 'assign');
+
+            $description = get_string('grantextension', 'assign');
             $actions[$url->out(false)] = $description;
         }
 
