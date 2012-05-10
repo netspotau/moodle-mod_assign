@@ -217,7 +217,7 @@ class assign_upgrade_manager {
 
         } catch (Exception $exception) {
             $rollback = true;
-            $log .= get_string('conversionexception', 'mod_assign', $exception->getMessage());
+            $log .= get_string('conversionexception', 'mod_assign', $exception->error);
         }
 
         if ($rollback) {

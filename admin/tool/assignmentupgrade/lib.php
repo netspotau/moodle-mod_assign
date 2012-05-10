@@ -50,7 +50,7 @@ function tool_assignmentupgrade_cron() {
  */
 function tool_assignmentupgrade_process($settings) {
     global $CFG;
-    require_once(dirname(__FILE__) . '/locallib.php');
+    require_once($CFG->dirroot . '/admin/tool/assignmentupgrade/locallib.php');
 
     mtrace('assignmentupgrade: processing ...');
 

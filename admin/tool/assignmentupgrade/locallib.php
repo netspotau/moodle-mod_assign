@@ -179,54 +179,34 @@ function tool_assignmentupgrade_load_all_upgradable_assignmentids() {
 
 
 /**
- * Convert a list of assignments from the old format to the new one.
+ * Convert the next assignment in a list of assignments
  * @param bool $upgradeall - Upgrade all possible assignments
  * @param array $assignmentids An array of assignment ids to upgrade
- * @return array of $entry['assignmentsummary' => (result from tool_assignmentupgrade_get_assignment)
- *                  $entry['success'] => boolean
- *                  $entry['log'] => string - upgrade log
+ * @param current $index The index of the current assignment to upgrade
+ * @return array(assignmentsummary (result from tool_assignmentupgrade_get_assignment),
+ *                  success (boolean),
+ *                  log (string - upgrade log))
  */
-function tool_assignmentupgrade_upgrade_multiple_assignments($upgradeall, $assignmentids) {
+function tool_assignmentupgrade_upgrade_assignment($assignmentid) {
     global $CFG;
     require_once($CFG->dirroot . '/mod/assign/locallib.php');
     require_once($CFG->dirroot . '/mod/assign/upgradelib.php');
     $upgrades = array();
 
-    if ($upgradeall) {
-        $assignmentids = tool_assignmentupgrade_load_all_upgradable_assignmentids();
+    $assignment_upgrader = new assign_upgrade_manager();
+    $info = tool_assignmentupgrade_get_assignment($assignmentid);
+    if ($info) {
+        $log = '';
+        $success = $assignment_upgrader->upgrade_assignment($assignmentid, $log);
+    } else {
+        $success = false;
+        $log = get_string('assignmentnotfound', 'tool_assignmentupgrade', $assignmentid);
+        $info = new stdClass();
+        $info->name = get_string('unknown', 'tool_assignmentupgrade');
+        $info->shortname = get_string('unknown', 'tool_assignmentupgrade');
     }
 
-    $assignment_upgrader = new assign_upgrade_manager();
-    foreach ($assignmentids as $assignmentid) {
-        $info = tool_assignmentupgrade_get_assignment($assignmentid);
-        if ($info) {
-            $log = '';
-            $success = $assignment_upgrader->upgrade_assignment($assignmentid, $log);
-        } else {
-            $success = false;
-            $log = get_string('assignmentnotfound', 'tool_assignmentupgrade', $assignmentid);
-            $info = new stdClass();
-            $info->name = get_string('unknown', 'tool_assignmentupgrade');
-            $info->shortname = get_string('unknown', 'tool_assignmentupgrade');
-        }
-
-        $upgrades[] = array('assignmentsummary'=>$info, 'success'=>$success, 'log'=>$log);
-    }
-    return $upgrades;
-}
-
-/**
- * Convert a single assignment from the old format to the new one.
- * @param stdClass $assignmentinfo An object containing information about this class
- * @param string $log This gets appended to with the details of the conversion process
- * @return boolean This is the overall result (true/false)
- */
-function tool_assignmentupgrade_upgrade_assignment($assignmentinfo, &$log) {
-    global $CFG;
-    require_once($CFG->dirroot . '/mod/assign/locallib.php');
-    require_once($CFG->dirroot . '/mod/assign/upgradelib.php');
-    $assignment_upgrader = new assign_upgrade_manager();
-    return $assignment_upgrader->upgrade_assignment($assignmentinfo->id, $log);
+    return array($info, $success, $log);
 }
 
 /**

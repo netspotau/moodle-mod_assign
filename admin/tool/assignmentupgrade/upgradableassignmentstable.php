@@ -70,12 +70,13 @@ class tool_assignmentupgrade_assignments_table extends table_sql implements rend
         $from = '{assignment} a JOIN {course} c ON a.course = c.id ' .
                         ' LEFT JOIN {assignment_submissions} s ON a.id = s.assignment';
 
+        $countfrom = '{assignment} a JOIN {course} c ON a.course = c.id ';
 
         $where = '1 = 1';
         $where .= ' GROUP BY a.id, a.name, a.assignmenttype, c.shortname, c.id ';
 
         $this->set_sql($fields, $from, $where, array());
-        $this->set_count_sql('SELECT COUNT(*) FROM ' . $from, array());
+        $this->set_count_sql('SELECT COUNT(*) FROM ' . $countfrom, array());
 
         $columns = array();
         $headers = array();
