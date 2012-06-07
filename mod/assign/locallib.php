@@ -894,7 +894,7 @@ class assign {
 
         if ($this->get_instance()->grade >= 0) {
             // Normal number
-            if ($editing) {
+            if ($editing && $this->get_instance()->grade > 0) {
                 $o = '<input type="text" name="quickgrade_' . $userid . '" value="' . $grade . '" size="6" maxlength="10" class="quickgrade"/>';
                 $o .= '&nbsp;/&nbsp;' . format_float($this->get_instance()->grade,2);
                 $o .= '<input type="hidden" name="grademodified_' . $userid . '" value="' . $modified . '"/>';
