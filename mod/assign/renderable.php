@@ -299,6 +299,8 @@ class assign_submission_status implements renderable {
     var $graded = false;
     /** @var int duedate */
     var $duedate = 0;
+    /** @var int cutoffdate */
+    var $cutoffdate = 0;
     /** @var array submissionplugins - the list of submission plugins */
     var $submissionplugins = array();
     /** @var string returnaction */
@@ -313,6 +315,8 @@ class assign_submission_status implements renderable {
     var $canedit = false;
     /** @var bool cansubmit */
     var $cansubmit = false;
+    /** @var int extensionduedate */
+    var $extensionduedate = 0;
 
     /**
      * constructor
@@ -324,6 +328,7 @@ class assign_submission_status implements renderable {
      * @param bool $locked
      * @param bool $graded
      * @param int $duedate
+     * @param int $cutoffdate
      * @param array $submissionplugins
      * @param string $returnaction
      * @param array $returnparams
@@ -331,10 +336,11 @@ class assign_submission_status implements renderable {
      * @param string $view
      * @param bool $canedit
      * @param bool $cansubmit
+     * @param int $extensionduedate - Any extension to the due date granted for this user
      */
     public function __construct($allowsubmissionsfromdate, $alwaysshowdescription, $submission, $submissionsenabled,
-                                $locked, $graded, $duedate, $submissionplugins, $returnaction, $returnparams,
-                                $coursemoduleid, $view, $canedit, $cansubmit) {
+                                $locked, $graded, $duedate, $cutoffdate, $submissionplugins, $returnaction, $returnparams,
+                                $coursemoduleid, $view, $canedit, $cansubmit, $extensionduedate) {
         $this->allowsubmissionsfromdate = $allowsubmissionsfromdate;
         $this->alwaysshowdescription = $alwaysshowdescription;
         $this->submission = $submission;
@@ -342,6 +348,7 @@ class assign_submission_status implements renderable {
         $this->locked = $locked;
         $this->graded = $graded;
         $this->duedate = $duedate;
+        $this->cutoffdate = $cutoffdate;
         $this->submissionplugins = $submissionplugins;
         $this->returnaction = $returnaction;
         $this->returnparams = $returnparams;
@@ -349,6 +356,7 @@ class assign_submission_status implements renderable {
         $this->view = $view;
         $this->canedit = $canedit;
         $this->cansubmit = $cansubmit;
+        $this->extensionduedate = $extensionduedate;
     }
 
 }

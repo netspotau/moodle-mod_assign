@@ -89,7 +89,10 @@ class assign_upgrade_manager {
         $data->allowsubmissionsfromdate = $oldassignment->timeavailable;
         $data->grade = $oldassignment->grade;
         $data->submissiondrafts = $oldassignment->resubmit;
-        $data->preventlatesubmissions = $oldassignment->preventlate;
+        // new way to specify no late submissions
+        if ($oldassignment->preventlate) {
+            $data->cutoffdate = $data->duedate;
+        }
 
         $newassignment = new assign(null, null, null);
 

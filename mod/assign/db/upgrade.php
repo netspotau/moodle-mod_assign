@@ -60,6 +60,29 @@ function xmldb_assign_upgrade($oldversion) {
         // Assign savepoint reached.
         upgrade_mod_savepoint(true, 2012060600, 'assign');
     }
+    if ($oldversion < 2012060700) {
+
+        // Define field sendlatenotifications to be added to assign
+        $table = new xmldb_table('assign');
+        $field = new xmldb_field('cutoffdate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'requiresubmissionstatement');
+
+        // Conditionally launch add field sendlatenotifications
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $field = new xmldb_field('preventlatesubmissions', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'nosubmissions');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+        $table = new xmldb_table('assign_grades');
+        $field = new xmldb_field('extensionduedate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'mailed');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Assign savepoint reached.
+        upgrade_mod_savepoint(true, 2012060700, 'assign');
+    }
 
     return true;
 }
