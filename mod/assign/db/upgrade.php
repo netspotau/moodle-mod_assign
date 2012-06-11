@@ -34,11 +34,11 @@ function xmldb_assign_upgrade($oldversion) {
 
     if ($oldversion < 2012051700) {
 
-        // Define field sendlatenotifications to be added to assign
+        // Define field to be added to assign
         $table = new xmldb_table('assign');
         $field = new xmldb_field('sendlatenotifications', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'sendnotifications');
 
-        // Conditionally launch add field sendlatenotifications
+        // Conditionally launch add field
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
@@ -57,6 +57,7 @@ function xmldb_assign_upgrade($oldversion) {
         $field = new xmldb_field('requiresubmissionstatement', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'timemodified');
 
         // Conditionally launch add field requiresubmissionstatement
+
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
@@ -66,11 +67,11 @@ function xmldb_assign_upgrade($oldversion) {
     }
     if ($oldversion < 2012081000) {
 
-        // Define field sendlatenotifications to be added to assign
+        // Define field to be added to assign
         $table = new xmldb_table('assign');
         $field = new xmldb_field('cutoffdate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'requiresubmissionstatement');
 
-        // Conditionally launch add field sendlatenotifications
+        // Conditionally launch add field
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
@@ -87,6 +88,40 @@ function xmldb_assign_upgrade($oldversion) {
         // Assign savepoint reached.
         upgrade_mod_savepoint(true, 2012081000, 'assign');
     }
+    if ($oldversion < 2012081001) {
+
+        // Define field to be added to assign
+        $table = new xmldb_table('assign');
+        $field = new xmldb_field('teamsubmission', XMLDB_TYPE_INTEGER, '2', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'cutoffdate');
+
+        // Conditionally launch add field
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $field = new xmldb_field('requireallteammemberssubmit', XMLDB_TYPE_INTEGER, '2', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'teamsubmission');
+        // Conditionally launch add field
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $field = new xmldb_field('teamsubmissiongroupingid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'requireallteammemberssubmit');
+        // Conditionally launch add field
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $index = new xmldb_index('teamsubmissiongroupingid', XMLDB_INDEX_NOTUNIQUE, array('teamsubmissiongroupingid'));
+        // Conditionally launch add index
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        $table = new xmldb_table('assign_submission');
+        $field = new xmldb_field('groupid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'status');
+        // Conditionally launch add field
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_mod_savepoint(true, 2012081001, 'assign');
+    }
+
 
     return true;
 }

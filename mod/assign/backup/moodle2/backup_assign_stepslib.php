@@ -55,7 +55,11 @@ class backup_assign_activity_structure_step extends backup_activity_structure_st
                                                   'cutoffdate',
                                                   'allowsubmissionsfromdate',
                                                   'grade',
-                                                  'timemodified'));
+                                                  'timemodified',
+                                                  'requiresubmissionstatement',
+                                                  'teamsubmission',
+                                                  'requireallteammemberssubmit',
+                                                  'teamsubmissiongroupingid'));
 
         $submissions = new backup_nested_element('submissions');
 
@@ -63,7 +67,8 @@ class backup_assign_activity_structure_step extends backup_activity_structure_st
                                                 array('userid',
                                                       'timecreated',
                                                       'timemodified',
-                                                      'status'));
+                                                      'status',
+                                                      'groupid'));
 
         $grades = new backup_nested_element('grades');
 
@@ -115,8 +120,10 @@ class backup_assign_activity_structure_step extends backup_activity_structure_st
 
         // Define id annotations
         $submission->annotate_ids('user', 'userid');
+        $submission->annotate_ids('group', 'groupid');
         $grade->annotate_ids('user', 'userid');
         $grade->annotate_ids('user', 'grader');
+        $assign->annotate_ids('grouping', 'teamsubmissiongroupingid');
 
         // Define file annotations
         $assign->annotate_files('mod_assign', 'intro', null); // This file area hasn't itemid
