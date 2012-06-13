@@ -215,6 +215,28 @@ class assign {
         return $this->submissionplugins;
     }
 
+    /**
+     * Is blind marking enabled and reveal identities not set yet?
+     *
+     * @return bool
+     */
+    public function is_blind_marking() {
+        return $this->get_instance()->blindmarking && !$this->get_instance()->revealidentities;
+    }
+
+    /**
+     * Does an assignment have submission(s) or grade(s) already?
+     *
+     * @return bool
+     */
+    public function has_submissions_or_grades() {
+        $allgrades = $this->count_grades();
+        $allsubmissions = $this->count_submissions();
+        if (($allgrades == 0) && ($allsubmissions == 0)) {
+            return false;
+        }
+        return true;
+    }
 
     /**
      * get a specific submission plugin by its type
@@ -353,6 +375,9 @@ class assign {
             if ($this->process_save_extension($mform)) {
                 $action = 'grading';
             }
+        } else if ($action == 'revealidentitiesconfirm') {
+            $this->process_reveal_identities();
+            $action = 'grading';
         }
 
         $returnparams = array('rownum'=>optional_param('rownum', 0, PARAM_INT));
@@ -384,6 +409,8 @@ class assign {
             $o .= $this->check_submit_for_grading($mform);
         } else if ($action == 'grantextension') {
             $o .= $this->view_grant_extension($mform);
+        } else if ($action == 'revealidentities') {
+            $o .= $this->view_reveal_identities_confirm($mform);
         } else {
             $o .= $this->view_submission_page();
         }
@@ -426,6 +453,7 @@ class assign {
         $update->teamsubmission = $formdata->teamsubmission;
         $update->requireallteammemberssubmit = $formdata->requireallteammemberssubmit;
         $update->teamsubmissiongroupingid = $formdata->teamsubmissiongroupingid;
+        $update->blindmarking = $formdata->blindmarking;
 
         $returnid = $DB->insert_record('assign', $update);
         $this->instance = $DB->get_record('assign', array('id'=>$returnid), '*', MUST_EXIST);
@@ -649,6 +677,7 @@ class assign {
         $update->teamsubmission = $formdata->teamsubmission;
         $update->requireallteammemberssubmit = $formdata->requireallteammemberssubmit;
         $update->teamsubmissiongroupingid = $formdata->teamsubmissiongroupingid;
+        $update->blindmarking = $formdata->blindmarking;
 
 
         $result = $DB->update_record('assign', $update);
@@ -1026,7 +1055,48 @@ class assign {
     }
 
     /**
-     * Load a count of users enrolled in the current course with the specified permission and group (optional)
+     * Load a count of grades
+     *
+     * @return int number of grades
+     */
+    public function count_grades() {
+        global $DB;
+
+        if (!$this->has_instance()) {
+            return 0;
+        }
+
+        $sql = 'SELECT COUNT(id) FROM {assign_grades} WHERE assignment = ?';
+        $params = array($this->get_course_module()->instance);
+
+        return $DB->count_records_sql($sql, $params);
+    }
+
+    /**
+     * Load a count of submissions
+     *
+     * @return int number of submissions
+     */
+    public function count_submissions() {
+        global $DB;
+
+        if (!$this->has_instance()) {
+            return 0;
+        }
+
+        $sql = 'SELECT COUNT(id) FROM {assign_submission} WHERE assignment = ?';
+        $params = array($this->get_course_module()->instance);
+
+        if ($this->get_instance()->teamsubmission) {
+            // only look at team submissions
+            $sql .= ' AND userid = ?';
+            $params[] = 0;
+        }
+        return $DB->count_records_sql($sql, $params);
+    }
+
+    /**
+     * Load a count of submissions with a specified status
      *
      * @param string $status The submission status - should match one of the constants
      * @return int number of matching submissions
@@ -1145,7 +1215,8 @@ class assign {
         $timenow   = time();
 
         // Collect all submissions from the past 24 hours that require mailing.
-        $sql = "SELECT s.*, a.course, a.name, g.*, g.id as gradeid, g.timemodified as lastmodified
+        $sql = "SELECT s.*, a.course, a.name, a.blindmarking, a.revealidentities,
+                       g.*, g.id as gradeid, g.timemodified as lastmodified
                  FROM {assign} a
                  JOIN {assign_grades} g ON g.assignment = a.id
             LEFT JOIN {assign_submission} s ON s.assignment = a.id AND s.userid = g.userid
@@ -1247,7 +1318,15 @@ class assign {
             $eventtype = 'assign_notification';
             $updatetime = $submission->lastmodified;
             $modulename = get_string('modulename', 'assign');
-            self::send_assignment_notification($grader, $user, $messagetype, $eventtype, $updatetime, $mod, $contextmodule, $course, $modulename, $submission->name);
+
+            $uniqueid = 0;
+            if ($submission->blindmarking && !$submission->revealidentities) {
+                $uniqueid = self::get_uniqueid_for_user_static($submission->assignment, $user->id);
+            }
+            self::send_assignment_notification($grader, $user, $messagetype, $eventtype, $updatetime,
+                                               $mod, $contextmodule, $course, $modulename, $submission->name,
+                                               $submission->blindmarking && !$submission->revealidentities,
+                                               $uniqueid);
 
             $grade = new stdClass();
             $grade->id = $submission->gradeid;
@@ -1304,6 +1383,7 @@ class assign {
         }
         return $result;
     }
+
 
     /**
      * View the grant extension date page
@@ -1683,7 +1763,11 @@ class assign {
 
                 $user = $DB->get_record("user", array("id"=>$userid),'id,username,firstname,lastname', MUST_EXIST);
 
-                $prefix = clean_filename(fullname($user) . "_" .$userid . "_");
+                if ($this->is_blind_marking()) {
+                    $prefix = clean_filename(get_string('participant', 'assign') . "_" . $this->get_uniqueid_for_user($userid) . "_");
+                } else {
+                    $prefix = clean_filename(fullname($user) . "_" . $this->get_uniqueid_for_user($userid) . "_");
+                }
 
                 foreach ($this->submissionplugins as $plugin) {
                     if ($plugin->is_enabled() && $plugin->is_visible()) {
@@ -1867,7 +1951,12 @@ class assign {
         }
         $user = $DB->get_record('user', array('id' => $userid));
         if ($user) {
-            $o .= $this->output->render(new assign_user_summary($user, $this->get_course()->id, has_capability('moodle/site:viewfullnames', $this->get_course_context())));
+            $o .= $this->output->render(new assign_user_summary($user,
+                                                                $this->get_course()->id,
+                                                                has_capability('moodle/site:viewfullnames',
+                                                                $this->get_course_context()),
+                                                                $this->is_blind_marking(),
+                                                                $this->get_uniqueid_for_user($user->id)));
         }
         $submission = $this->get_user_submission($userid, false);
         $submissiongroup = null;
@@ -1949,6 +2038,34 @@ class assign {
         return $o;
     }
 
+    /**
+     * Show a confirmation page to make sure they want to release student identities
+     *
+     * @return string
+     */
+    private function view_reveal_identities_confirm() {
+        global $CFG, $USER;
+
+        require_capability('mod/assign:revealidentities', $this->get_context());
+
+        $o = '';
+        $o .= $this->output->render(new assign_header($this->get_instance(),
+                                                      $this->get_context(), false, $this->get_course_module()->id));
+
+        $confirmurl = new moodle_url('/mod/assign/view.php', array('id'=>$this->get_course_module()->id,
+                                                                    'action'=>'revealidentitiesconfirm',
+                                                                    'sesskey'=>sesskey()));
+
+        $cancelurl = new moodle_url('/mod/assign/view.php', array('id'=>$this->get_course_module()->id,
+                                                                    'action'=>'grading'));
+
+        $o .= $this->output->confirm(get_string('revealidentitiesconfirm', 'assign'), $confirmurl, $cancelurl);
+        $o .= $this->view_footer();
+        $this->add_to_log('view', get_string('viewrevealidentitiesconfirm', 'assign'));
+        return $o;
+    }
+
+
 
 
     /**
@@ -1991,6 +2108,10 @@ class assign {
         if ($this->is_any_submission_plugin_enabled()) {
             $downloadurl = '/mod/assign/view.php?id=' . $this->get_course_module()->id . '&action=downloadall';
             $links[$downloadurl] = get_string('downloadall', 'assign');
+        }
+        if ($this->is_blind_marking() && has_capability('mod/assign:revealidentities', $this->get_context())) {
+            $revealidentitiesurl = '/mod/assign/view.php?id=' . $this->get_course_module()->id . '&action=revealidentities';
+            $links[$revealidentitiesurl] = get_string('revealidentities', 'assign');
         }
 
         $gradingactions = new url_select($links);
@@ -2527,6 +2648,10 @@ class assign {
      */
     private function gradebook_item_update($submission=NULL, $grade=NULL) {
 
+        // Do not push grade to gradebook if blind marking is active as the gradebook would reveal the students
+        if ($this->is_blind_marking()) {
+            return false;
+        }
         if ($submission != NULL) {
             if ($submission->userid == 0) {
                 // this is a group submission update
@@ -2831,11 +2956,16 @@ class assign {
      */
     public static function send_assignment_notification($userfrom, $userto, $messagetype, $eventtype,
                                                         $updatetime, $coursemodule, $context, $course,
-                                                        $modulename, $assignmentname) {
+                                                        $modulename, $assignmentname, $blindmarking,
+                                                        $uniqueidforuser) {
         global $CFG;
 
         $info = new stdClass();
-        $info->username = fullname($userfrom, true);
+        if ($blindmarking) {
+            $info->username = get_string('participant', 'assign') . ' ' . $uniqueidforuser;
+        } else {
+            $info->username = fullname($userfrom, true);
+        }
         $info->assignment = format_string($assignmentname,true, array('context'=>$context));
         $info->url = $CFG->wwwroot.'/mod/assign/view.php?id='.$coursemodule->id;
         $info->timeupdated = strftime('%c',$updatetime);
@@ -2874,7 +3004,11 @@ class assign {
      * @return void
      */
     public function send_notification($userfrom, $userto, $messagetype, $eventtype, $updatetime) {
-        self::send_assignment_notification($userfrom, $userto, $messagetype, $eventtype, $updatetime, $this->get_course_module(), $this->get_context(), $this->get_course(), $this->get_module_name(), $this->get_instance()->name);
+        self::send_assignment_notification($userfrom, $userto, $messagetype, $eventtype,
+                                           $updatetime, $this->get_course_module(), $this->get_context(),
+                                           $this->get_course(), $this->get_module_name(),
+                                           $this->get_instance()->name, $this->is_blind_marking(),
+                                           $this->get_uniqueid_for_user($userfrom->id));
     }
 
     /**
@@ -3192,6 +3326,53 @@ class assign {
 
         return get_string('quickgradingchangessaved', 'assign');
     }
+
+    /**
+     * Reveal student identities to markers (and the gradebook)
+     *
+     * @return void
+     */
+    private function process_reveal_identities() {
+        global $DB, $CFG;
+
+        require_capability('mod/assign:revealidentities', $this->context);
+        if (!confirm_sesskey()) {
+            return false;
+        }
+
+        // update the assignment record
+        $update = new stdClass();
+        $update->id = $this->get_instance()->id;
+        $update->revealidentities = 1;
+        $DB->update_record('assign', $update);
+
+        // refresh the instance data
+        $this->instance = null;
+
+        // release the grades to the gradebook
+        // first create the column in the gradebook
+        $this->update_gradebook(false, $this->get_course_module()->id);
+
+        // now release all grades
+
+        $adminconfig = $this->get_admin_config();
+        $gradebookplugin = $adminconfig->feedback_plugin_for_gradebook;
+        $grades = $DB->get_records('assign_grades', array('assignment'=>$this->get_instance()->id));
+
+        $plugin = $this->get_feedback_plugin_by_type($gradebookplugin);
+
+        foreach ($grades as $grade) {
+            // fetch any comments for this student
+            if ($plugin && $plugin->is_enabled() && $plugin->is_visible()) {
+                $grade->feedbacktext = $plugin->text_for_gradebook($grade);
+                $grade->feedbackformat = $plugin->format_for_gradebook($grade);
+            }
+            $this->gradebook_item_update(NULL, $grade);
+        }
+
+        $this->add_to_log('reveal identities', get_string('revealidentities', 'assign'));
+    }
+
 
     /**
      * save grading options
@@ -3994,5 +4175,36 @@ class assign {
         return $grades;
     }
 
+    /**
+     * Call the static version of this function
+     *
+     * @param int $userid The userid to lookup
+     * @return int The unique id
+     */
+    public function get_uniqueid_for_user($userid) {
+        return self::get_uniqueid_for_user_static($this->get_instance()->id, $userid);
+    }
+
+    /**
+     * Lookup this user id and return the unique id for this assignment
+     *
+     * @param int $userid The userid to lookup
+     * @return int The unique id
+     */
+    public static function get_uniqueid_for_user_static($assignid, $userid) {
+        global $DB;
+
+        // search for a record
+        if ($record = $DB->get_record('assign_user_mapping', array('assignment'=>$assignid, 'userid'=>$userid), 'id')) {
+            return $record->id;
+        }
+
+        // create a record
+        $record = new stdClass();
+        $record->assignment = $assignid;
+        $record->userid = $userid;
+
+        return $DB->insert_record('assign_user_mapping', $record);
+    }
 }
 
