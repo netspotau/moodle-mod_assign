@@ -118,6 +118,10 @@ class assign_user_summary implements renderable {
     public $courseid;
     /** @var bool $viewfullnames */
     public $viewfullnames = false;
+    /** @var bool $blindmarking */
+    public $blindmarking = false;
+    /** @var int $uniqueidforuser */
+    public $uniqueidforuser;
 
     /**
      * Constructor
@@ -125,10 +129,12 @@ class assign_user_summary implements renderable {
      * @param int $courseid
      * @param bool $viewfullnames
      */
-    public function __construct(stdClass $user, $courseid, $viewfullnames) {
+    public function __construct(stdClass $user, $courseid, $viewfullnames, $blindmarking, $uniqueidforuser) {
         $this->user = $user;
         $this->courseid = $courseid;
         $this->viewfullnames = $viewfullnames;
+        $this->blindmarking = $blindmarking;
+        $this->uniqueidforuser = $uniqueidforuser;
     }
 }
 

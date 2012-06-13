@@ -131,12 +131,18 @@ class assign_grading_table extends table_sql implements renderable {
         }
 
         // User picture
-        $columns[] = 'picture';
-        $headers[] = get_string('pictureofuser');
+        if (!$this->assignment->is_blind_marking()) {
+            $columns[] = 'picture';
+            $headers[] = get_string('pictureofuser');
 
-        // Fullname
-        $columns[] = 'fullname';
-        $headers[] = get_string('fullname');
+            // Fullname
+            $columns[] = 'fullname';
+            $headers[] = get_string('fullname');
+        } else {
+            // Record ID
+            $columns[] = 'recordid';
+            $headers[] = get_string('recordid', 'assign');
+        }
 
         // Submission status
         if ($assignment->is_any_submission_plugin_enabled()) {
@@ -221,6 +227,16 @@ class assign_grading_table extends table_sql implements renderable {
         }
 
     }
+
+    /**
+     * Add a column with an ID that uniquely identifies this user in this assignment
+     *
+     * @return string
+     */
+     function col_recordid(stdClass $row) {
+         return get_string('hiddenuser', 'assign', $this->assignment->get_uniqueid_for_user($row->userid));
+     }
+
 
     /**
      * Add the userid to the row class so it can be updated via ajax
