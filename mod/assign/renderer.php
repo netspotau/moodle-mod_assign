@@ -534,7 +534,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         $this->page->requires->string_for_js('batchoperationconfirmreverttodraft', 'assign');
         $this->page->requires->string_for_js('editaction', 'assign');
         // need to get from prefs
-        $o .= $this->flexible_table($table, $table->get_rows_per_page(), true);
+        $o .= $this->flexible_table($table, $table->get_rows_per_page(), false);
         $o .= $this->output->box_end();
 
         return $o;
@@ -623,7 +623,8 @@ class mod_assign_renderer extends plugin_renderer_base {
      *
      * @param flexible_table $table The table to render
      * @param int $rowsperpage How many assignments to render in a page
-     * @param bool $displaylinks - Whether to render links in the table (e.g. downloads would not enable this)
+     * @param bool $displaylinks - If true, the table will determine whether to show an initials bar based on the number of rows
+     *                             If false, it will use the value of any initialbars() call to the table.
      * @return string HTML
      */
     protected function flexible_table(flexible_table $table, $rowsperpage, $displaylinks) {
