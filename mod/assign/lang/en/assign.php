@@ -38,8 +38,10 @@ $string['assign:grantextension'] = 'Grant extension';
 $string['assign:revealidentities'] = 'Reveal student identities';
 $string['assign:submit'] = 'Submit assignment';
 $string['assign:view'] = 'View assignment';
+$string['assigngrading'] = 'Grading plugin';
 $string['assignfeedback'] = 'Feedback plugin';
 $string['assignfeedbackpluginname'] = 'Feedback plugin';
+$string['assigngradingpluginname'] = 'Grading plugin';
 $string['assignmentisdue'] = 'Assignment is due';
 $string['assignmentmail'] = '{$a->grader} has posted some feedback on your
 assignment submission for \'{$a->assignment}\'
@@ -151,6 +153,8 @@ $string['gradeoutofhelp_help'] = 'Enter the grade for the student\'s submission 
 $string['gradestudent'] = 'Grade student: (id={$a->id}, fullname={$a->fullname}). ';
 $string['grading'] = 'Grading';
 $string['gradingoptions'] = 'Options';
+$string['gradingplugins'] = 'Grading plugins';
+$string['gradingsettings'] = 'Grading settings';
 $string['gradingstatus'] = 'Grading status';
 $string['gradingstudentprogress'] = 'Grading student {$a->index} of {$a->count}';
 $string['gradingsummary'] = 'Grading summary';
@@ -166,6 +170,7 @@ $string['latesubmissionsaccepted'] = 'Only student(s) having been granted extens
 $string['locksubmissionforstudent'] = 'Prevent any more submissions for student: (id={$a->id}, fullname={$a->fullname}).';
 $string['locksubmissions'] = 'Lock submissions';
 $string['manageassignfeedbackplugins'] = 'Manage assignment feedback plugins';
+$string['manageassigngradingplugins'] = 'Manage assignment grading plugins';
 $string['manageassignsubmissionplugins'] = 'Manage assignment submission plugins';
 $string['messageprovider:assign_notification'] = 'Assignment notifications';
 $string['modulename'] = 'Assignment';

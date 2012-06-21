@@ -566,6 +566,22 @@ class mod_assign_renderer extends plugin_renderer_base {
                 }
             }
         }
+        $gradingstatusmessage = '';
+        foreach ($status->gradingplugins as $plugin) {
+            if ($plugin->is_enabled() && $plugin->is_visible()) {
+                $status = $plugin->get_status_message($submission->userid);
+                if ($status) {
+                    $gradingstatusmessage .= $this->output->container($status);
+                }
+            }
+        }
+        if ($gradingstatusmessage) {
+            $row = new html_table_row();
+            $cell1 = new html_table_cell('');
+            $cell2 = new html_table_cell($gradingstatusmessage);
+            $row->cells = array($cell1, $cell2);
+            $t->data[] = $row;
+        }
 
 
         $o .= html_writer::table($t);

@@ -47,14 +47,20 @@ class mod_assign_grading_batch_operations_form extends moodleform {
 
         // visible elements
         $options = array();
-        $options['lock'] = get_string('locksubmissions', 'assign');
-        $options['unlock'] = get_string('unlocksubmissions', 'assign');
+        $options['assign_lock'] = get_string('locksubmissions', 'assign');
+        $options['assign_unlock'] = get_string('unlocksubmissions', 'assign');
         if ($instance['submissiondrafts']) {
-            $options['reverttodraft'] = get_string('reverttodraft', 'assign');
+            $options['assign_reverttodraft'] = get_string('reverttodraft', 'assign');
         }
         if ($instance['duedate']) {
-            $options['grantextension'] = get_string('grantextension', 'assign');
+            $options['assign_grantextension'] = get_string('grantextension', 'assign');
         }
+        foreach ($instance['gradingplugins'] as $plugin) {
+            foreach ($plugin->get_batch_operations() as $operation => $description) {
+                $options[$plugin->get_type() . '_' . $operation] = $description;
+            }
+        }
+
         $mform->addElement('hidden', 'action', 'batchgradingoperation');
         $mform->addElement('hidden', 'id', $instance['cm']);
         $mform->addElement('hidden', 'selectedusers', '', array('class'=>'selectedusers'));

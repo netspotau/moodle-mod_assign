@@ -55,6 +55,8 @@ require_once($CFG->dirroot.'/grade/grading/lib.php');
 require_once($CFG->dirroot.'/mod/assign/feedbackplugin.php');
 /** Include submissionplugin.php */
 require_once($CFG->dirroot.'/mod/assign/submissionplugin.php');
+/** Include gradingplugin.php */
+require_once($CFG->dirroot.'/mod/assign/gradingplugin.php');
 /** Include renderable.php */
 require_once($CFG->dirroot.'/mod/assign/renderable.php');
 /** Include gradingtable.php */
@@ -132,6 +134,7 @@ class assign {
 
         $this->submissionplugins = $this->load_plugins('assignsubmission');
         $this->feedbackplugins = $this->load_plugins('assignfeedback');
+        $this->gradingplugins = $this->load_plugins('assigngrading');
         $this->output = $PAGE->get_renderer('mod_assign');
     }
 
@@ -200,6 +203,14 @@ class assign {
     }
 
     /**
+     * get list of grading plugins installed
+     * @return array
+     */
+    public function get_grading_plugins() {
+        return $this->gradingplugins;
+    }
+
+    /**
      * get list of feedback plugins installed
      * @return array
      */
@@ -254,6 +265,15 @@ class assign {
             }
         }
         return null;
+    }
+
+    /**
+     * Get a grading plugin by type
+     * @param string $type - The type of plugin e.g comments
+     * @return mixed assign_grading_plugin|null
+     */
+    public function get_grading_plugin_by_type($type) {
+        return $this->get_plugin_by_type('assigngrading', $type);
     }
 
     /**
@@ -341,7 +361,7 @@ class assign {
             }
             // save and show next button
          } else if ($action == 'batchgradingoperation') {
-            $action = $this->process_batch_grading_operation();
+            $action = $this->process_batch_grading_operation($mform);
          } else if ($action == 'submitgrade') {
             if (optional_param('saveandshownext', null, PARAM_ALPHA)) {
                 //save and show next
@@ -411,6 +431,12 @@ class assign {
             $o .= $this->view_grant_extension($mform);
         } else if ($action == 'revealidentities') {
             $o .= $this->view_reveal_identities_confirm($mform);
+        } else if ($action == 'gradingplugin') {
+            $o .= $this->view_grading_plugin();
+        } else if ($action == 'gradingpluginsingleoperation') {
+            $o .= $this->view_grading_plugin_single_operation();
+        } else if ($action == 'gradingpluginbatchoperation') {
+            $o .= $this->view_grading_plugin_batch_operation($mform);
         } else {
             $o .= $this->view_submission_page();
         }
@@ -469,6 +495,12 @@ class assign {
                 }
             }
             foreach ($this->feedbackplugins as $plugin) {
+                if (!$this->update_plugin_instance($plugin, $formdata)) {
+                    print_error($plugin->get_error());
+                    return false;
+                }
+            }
+            foreach ($this->gradingplugins as $plugin) {
                 if (!$this->update_plugin_instance($plugin, $formdata)) {
                     print_error($plugin->get_error());
                     return false;
@@ -698,6 +730,12 @@ class assign {
                 return false;
             }
         }
+        foreach ($this->gradingplugins as $plugin) {
+            if (!$this->update_plugin_instance($plugin, $formdata)) {
+                print_error($plugin->get_error());
+                return false;
+            }
+        }
 
 
         // update the database record
@@ -786,6 +824,12 @@ class assign {
         $mform->addElement('header', 'general', get_string('feedbacksettings', 'assign'));
         foreach ($this->feedbackplugins as $plugin) {
             $this->add_plugin_settings($plugin, $mform);
+        }
+        if (count($this->gradingplugins) > 0) {
+            $mform->addElement('header', 'general', get_string('gradingsettings', 'assign'));
+            foreach ($this->gradingplugins as $plugin) {
+                $this->add_plugin_settings($plugin, $mform);
+            }
         }
     }
 
@@ -1984,6 +2028,7 @@ class assign {
                                                               $this->get_instance()->duedate,
                                                               $this->get_instance()->cutoffdate,
                                                               $this->get_submission_plugins(),
+                                                              $this->get_grading_plugins(),
                                                               $this->get_return_action(),
                                                               $this->get_return_params(),
                                                               $this->get_course_module()->id,
@@ -2093,6 +2138,15 @@ class assign {
             $links[$revealidentitiesurl] = get_string('revealidentities', 'assign');
         }
 
+        foreach ($this->get_grading_plugins() as $plugin) {
+            if ($plugin->is_enabled() && $plugin->is_visible()) {
+                foreach ($plugin->get_grading_actions() as $action => $name) {
+                    $url = '/mod/assign/view.php?id=' . $this->get_course_module()->id . '&plugin=' . $plugin->get_type() . '&action=gradingplugin&gradingaction=' . $action;
+                    $links[$url] = $name;
+                }
+            }
+        }
+
         $gradingactions = new url_select($links);
 
         $gradingmanager = get_grading_manager($this->get_context(), 'mod_assign', 'submissions');
@@ -2120,7 +2174,8 @@ class assign {
         $gradingbatchoperationsform = new mod_assign_grading_batch_operations_form(null,
                                                                   array('cm'=>$this->get_course_module()->id,
                                                                         'submissiondrafts'=>$this->get_instance()->submissiondrafts,
-                                                                        'duedate'=>$this->get_instance()->duedate),
+                                                                        'duedate'=>$this->get_instance()->duedate,
+                                                                        'gradingplugins'=>$this->get_grading_plugins()),
                                                                   'post', '',
                                                                   array('class'=>'gradingbatchoperationsform'));
 
@@ -2308,10 +2363,32 @@ class assign {
     }
 
     /**
-     * Ask the user to confirm they want to perform this batch operation
-     * @return string - the page to view after processing these actions
+     * Allow a plugin to do single operations on grades
+     *
+     * @return string - the output
      */
-    private function process_batch_grading_operation() {
+    private function view_grading_plugin_single_operation() {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/assign/gradingbatchoperationsform.php');
+        require_sesskey();
+
+        $userid = required_param('userid', PARAM_INT);
+        $gradingaction = required_param('gradingaction', PARAM_ALPHA);
+        $plugintype = required_param('plugin', PARAM_ALPHA);
+
+        $plugin = $this->get_grading_plugin_by_type($plugintype);
+        if ($plugin) {
+            return $plugin->batch_operation($gradingaction, $userid);
+        }
+        print_error('invalidrequest');
+    }
+
+    /**
+     * Allow a plugin to do batch operations on grades
+     *
+     * @return string - the output
+     */
+    private function view_grading_plugin_batch_operation($mform) {
         global $CFG;
         require_once($CFG->dirroot . '/mod/assign/gradingbatchoperationsform.php');
         require_sesskey();
@@ -2319,7 +2396,8 @@ class assign {
         $gradingbatchoperationsform = new mod_assign_grading_batch_operations_form(null,
                                                                   array('cm'=>$this->get_course_module()->id,
                                                                         'submissiondrafts'=>$this->get_instance()->submissiondrafts,
-                                                                        'duedate'=>$this->get_instance()->duedate),
+                                                                        'duedate'=>$this->get_instance()->duedate,
+                                                                        'gradingplugins'=>$this->get_grading_plugins()),
                                                                   'post', '',
                                                                   array('class'=>'gradingbatchoperationsform'));
 
@@ -2328,20 +2406,72 @@ class assign {
             $users = $data->selectedusers;
             $userlist = explode(',', $users);
 
+            list($plugintype, $pluginoperation) = explode('_', $data->operation, 2);
+
+            $plugin = $this->get_grading_plugin_by_type($plugintype);
+            if ($plugin) {
+                return $plugin->batch_operation($pluginoperation, $userlist);
+            }
+        }
+        print_error('invalidrequest');
+    }
+
+    /**
+     * Ask the user to confirm they want to perform this batch operation
+     * @return string - the page to view after processing these actions
+     */
+    private function process_batch_grading_operation($mform) {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/assign/gradingbatchoperationsform.php');
+        require_sesskey();
+
+        $gradingbatchoperationsform = new mod_assign_grading_batch_operations_form(null,
+                                                                  array('cm'=>$this->get_course_module()->id,
+                                                                        'submissiondrafts'=>$this->get_instance()->submissiondrafts,
+                                                                        'duedate'=>$this->get_instance()->duedate,
+                                                                        'gradingplugins'=>$this->get_grading_plugins()),
+                                                                  'post', '',
+                                                                  array('class'=>'gradingbatchoperationsform'));
+
+        if ($data = $gradingbatchoperationsform->get_data()) {
+            // get the list of users
+            $users = $data->selectedusers;
+            $userlist = explode(',', $users);
+
+            list($plugin, $pluginoperation) = explode('_', $data->operation, 2);
+
             foreach ($userlist as $userid) {
-                if ($data->operation == 'lock') {
+                if ($data->operation == 'assign_lock') {
                     $this->process_lock($userid);
-                } else if ($data->operation == 'unlock') {
+                } else if ($data->operation == 'assign_unlock') {
                     $this->process_unlock($userid);
-                } else if ($data->operation == 'reverttodraft') {
+                } else if ($data->operation == 'assign_reverttodraft') {
                     $this->process_revert_to_draft($userid);
-                } else if ($data->operation == 'grantextension') {
+                } else if ($data->operation == 'assign_grantextension') {
                     return 'grantextension';
+                } else {
+                    return 'gradingpluginbatchoperation';
                 }
             }
         }
 
         return 'grading';
+    }
+
+    /**
+     * View the selected plugin global action page
+     *
+     * @return string
+     */
+    private function view_grading_plugin() {
+        $plugintype = required_param('plugin', PARAM_ALPHA);
+        $pluginaction = required_param('gradingaction', PARAM_ALPHA);
+
+        require_capability('mod/assign:grade', $this->context);
+
+        $plugin = $this->get_grading_plugin_by_type($plugintype);
+
+        return $plugin->grading_action($pluginaction);
     }
 
     /**
@@ -2446,6 +2576,7 @@ class assign {
                                                               $this->get_instance()->duedate,
                                                               $this->get_instance()->cutoffdate,
                                                               $this->get_submission_plugins(),
+                                                              $this->get_grading_plugins(),
                                                               $this->get_return_action(),
                                                               $this->get_return_params(),
                                                               $this->get_course_module()->id,
@@ -2504,6 +2635,7 @@ class assign {
                                                       $gradeddate,
                                                       $grader,
                                                       $this->get_feedback_plugins(),
+                                                      $this->get_grading_plugins(),
                                                       $grade,
                                                       $this->get_course_module()->id,
                                                       $this->get_return_action(),

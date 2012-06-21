@@ -317,6 +317,8 @@ class assign_submission_status implements renderable {
     var $cutoffdate = 0;
     /** @var array submissionplugins - the list of submission plugins */
     var $submissionplugins = array();
+    /** @var array gradingplugins - the list of grading plugins */
+    var $gradingplugins = array();
     /** @var string returnaction */
     var $returnaction = '';
     /** @var string returnparams */
@@ -354,6 +356,7 @@ class assign_submission_status implements renderable {
      * @param int $duedate
      * @param int $cutoffdate
      * @param array $submissionplugins
+     * @param array $gradingplugins
      * @param string $returnaction
      * @param array $returnparams
      * @param int $coursemoduleid
@@ -368,7 +371,8 @@ class assign_submission_status implements renderable {
     public function __construct($allowsubmissionsfromdate, $alwaysshowdescription, $submission,
                                 $teamsubmissionenabled, $teamsubmission, $submissiongroup,
                                 $submissiongroupmemberswhoneedtosubmit, $submissionsenabled,
-                                $locked, $graded, $duedate, $cutoffdate, $submissionplugins, $returnaction, $returnparams,
+                                $locked, $graded, $duedate, $cutoffdate, $submissionplugins,
+                                $gradingplugins, $returnaction, $returnparams,
                                 $coursemoduleid, $courseid, $view, $canedit, $cansubmit, $canviewfullnames, $extensionduedate, $context) {
         $this->allowsubmissionsfromdate = $allowsubmissionsfromdate;
         $this->alwaysshowdescription = $alwaysshowdescription;
@@ -383,6 +387,7 @@ class assign_submission_status implements renderable {
         $this->duedate = $duedate;
         $this->cutoffdate = $cutoffdate;
         $this->submissionplugins = $submissionplugins;
+        $this->gradingplugins = $gradingplugins;
         $this->returnaction = $returnaction;
         $this->returnparams = $returnparams;
         $this->coursemoduleid = $coursemoduleid;

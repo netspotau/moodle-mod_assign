@@ -76,7 +76,8 @@ M.mod_assign.init_grading_table = function(Y) {
                 alert(M.str.assign.nousersselected);
                 e.preventDefault();
             } else {
-                if (!confirm(eval('M.str.assign.batchoperationconfirm' + operation.get('value')))) {
+                message = eval('M.str.assign.batchoperationconfirm' + operation.get('value'));
+                if (message && !confirm(eval('M.str.assign.batchoperationconfirm' + operation.get('value')))) {
                     e.preventDefault();
                 }
             }

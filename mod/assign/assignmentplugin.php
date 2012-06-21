@@ -140,7 +140,7 @@ abstract class assign_plugin {
     /**
      * Should return the subtype of this plugin.
      *
-     * @return string - either 'assignsubmission' or 'feedback'
+     * @return string - either 'assignsubmission' or 'assignfeedback' or 'assigngrading'
      */
     public abstract function get_subtype();
 
@@ -182,18 +182,6 @@ abstract class assign_plugin {
     }
 
     /**
-     * Save any custom data for this form submission
-     *
-     * @param stdClass $submissionorgrade - assign_submission or assign_grade
-     *              For submission plugins this is the submission data, for feedback plugins it is the grade data
-     * @param stdClass $data - the data submitted from the form
-     * @return bool - on error the subtype should call set_error and return false.
-     */
-    public function save(stdClass $submissionorgrade, stdClass $data) {
-        return true;
-    }
-
-    /**
      * Set this plugin to enabled
      *
      * @return bool
@@ -218,29 +206,6 @@ abstract class assign_plugin {
      */
     public function is_enabled() {
         return $this->get_config('enabled');
-    }
-
-    /**
-     * Get any additional fields for the submission/grading form for this assignment.
-     *
-     * @param mixed $submissionorgrade submission|grade - For submission plugins this is the submission data, for feedback plugins it is the grade data
-     * @param MoodleQuickForm $mform - This is the form
-     * @param stdClass $data - This is the form data that can be modified for example by a filemanager element
-     * @return boolean - true if we added anything to the form
-     */
-    public function get_form_elements($submissionorgrade, MoodleQuickForm $mform, stdClass $data) {
-        return false;
-    }
-
-    /**
-     * Should not output anything - return the result as a string so it can be consumed by webservices.
-     *
-     * @param stdClass $submissionorgrade assign_submission or assign_grade
-     *                 For submission plugins this is the submission data, for feedback plugins it is the grade data
-     * @return string - return a string representation of the submission in full
-     */
-    public function view(stdClass $submissionorgrade) {
-        return '';
     }
 
     /**
@@ -337,104 +302,6 @@ abstract class assign_plugin {
     }
 
     /**
-     * Should not output anything - return the result as a string so it can be consumed by webservices.
-     *
-     * @param stdClass $submissionorgrade assign_submission or assign_grade
-     *                 For submission plugins this is the submission data, for feedback plugins it is the grade data
-     * @param bool $showviewlink Modifed to return whether or not to show a link to the full submission/feedback
-     * @return string - return a string representation of the submission in full
-     */
-    public function view_summary(stdClass $submissionorgrade, & $showviewlink) {
-        return '';
-    }
-
-    /**
-     * Given a field name, should return the text of an editor field that is part of
-     * this plugin. This is used when exporting to portfolio.
-     *
-     * @param string $name Name of the field.
-     * @param int $submissionid The id of the submission
-     * @return string - The text for the editor field
-     */
-    public function get_editor_text($name, $submissionid) {
-        return '';
-    }
-
-    /**
-     * Produce a list of files suitable for export that represent this feedback or submission
-     *
-     * @param stdClass $submissionorgrade assign_submission or assign_grade
-     *                 For submission plugins this is the submission data, for feedback plugins it is the grade data
-     * @return array - return an array of files indexed by filename
-     */
-    public function get_files(stdClass $submissionorgrade) {
-        return array();
-    }
-
-     /**
-     * Given a field name, should return the format of an editor field that is part of
-     * this plugin. This is used when exporting to portfolio.
-     *
-     * @param string $name Name of the field.
-     * @param int $submissionid The id of the submission
-     * @return int - The format for the editor field
-     */
-    public function get_editor_format($name, $submissionid) {
-        return 0;
-    }
-
-     /**
-     * Return true if this plugin can upgrade an old Moodle 2.2 assignment of this type
-     * and version.
-     *
-     * @param string $type The old assignment subtype
-     * @param int $version The old assignment version
-     * @return bool True if upgrade is possible
-     */
-    public function can_upgrade($type, $version) {
-        return false;
-    }
-
-     /**
-     * Upgrade the settings from the old assignment to the new one
-     *
-     * @param context $oldcontext The context for the old assignment module
-     * @param stdClass $oldassignment The data record for the old assignment
-     * @param string $log Record upgrade messages in the log
-     * @return bool true or false - false will trigger a rollback
-     */
-    public function upgrade_settings(context $oldcontext, stdClass $oldassignment, & $log) {
-        $log = $log . ' ' . get_string('upgradenotimplemented', 'mod_assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));
-        return false;
-    }
-
-    /**
-     * Upgrade the submission from the old assignment to the new one
-     *
-     * @param context $oldcontext The data record for the old context
-     * @param stdClass $oldassignment The data record for the old assignment
-     * @param stdClass $oldsubmissionorgrade The data record for the old submission
-     * @param stdClass $submissionorgrade assign_submission or assign_grade The new submission or grade
-     * @param string $log Record upgrade messages in the log
-     * @return boolean true or false - false will trigger a rollback
-     */
-    public function upgrade(context $oldcontext, stdClass $oldassignment, stdClass $oldsubmissionorgrade, stdClass $submissionorgrade, & $log) {
-        $log = $log . ' ' . get_string('upgradenotimplemented', 'mod_assign', array('type'=>$this->type, 'subtype'=>$this->get_subtype()));
-        return false;
-    }
-
-    /**
-     * Formatting for log info
-     *
-     * @param stdClass $submissionorgrade assign_submission or assign_grade The new submission or grade
-     * @return string
-     */
-    public function format_for_log(stdClass $submissionorgrade) {
-        // format the info for each submission plugin add_to_log
-        return '';
-    }
-
-    /**
      * The assignment has been deleted - remove the plugin specific data
      *
      * @return bool
@@ -447,15 +314,6 @@ abstract class assign_plugin {
      * Run cron for this plugin
      */
     public static function cron() {
-    }
-
-    /**
-     * Is this assignment plugin empty? (ie no submission or feedback)
-     * @param stdClass $submissionorgrade assign_submission or assign_grade
-     * @return bool
-     */
-    public function is_empty(stdClass $submissionorgrade) {
-        return true;
     }
 
     /**

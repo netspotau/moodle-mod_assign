@@ -497,6 +497,15 @@ class assign_grading_table extends table_sql implements renderable {
             }
         }
 
+        foreach ($this->assignment->get_grading_plugins() as $plugin) {
+            if ($plugin->is_visible() && $plugin->is_enabled()) {
+                $status = $plugin->get_status_message($row->userid);
+                if ($status) {
+                    $o .= $this->output->container($status, 'assigngrading_' . $plugin->get_type() . '_status');
+                }
+            }
+        }
+
         return $o;
     }
 
@@ -569,6 +578,20 @@ class assign_grading_table extends table_sql implements renderable {
                                                                 'page'=>$this->currpage));
             $description = get_string('reverttodraftshort', 'assign');
             $actions[$url->out(false)] = $description;
+        }
+        foreach ($this->assignment->get_grading_plugins() as $plugin) {
+            if ($plugin->is_enabled() && $plugin->is_visible()) {
+                foreach ($plugin->get_single_operations() as $action=>$description) {
+                    $url = new moodle_url('/mod/assign/view.php', array('id' => $this->assignment->get_course_module()->id,
+                                                                        'userid'=>$row->id,
+                                                                        'action'=>'gradingpluginsingleoperation',
+                                                                        'plugin'=>$plugin->get_type(),
+                                                                        'gradingaction'=>$action,
+                                                                        'sesskey'=>sesskey(),
+                                                                        'page'=>$this->currpage));
+                    $actions[$url->out(false)] = $description;
+                }
+            }
         }
 
         $edit .= $this->output->container_start(array('yui3-menu', 'actionmenu'), 'actionselect' . $row->id);

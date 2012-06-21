@@ -34,10 +34,14 @@ $ADMIN->add('assignsubmissionplugins', new assign_admin_page_manage_assign_plugi
 $ADMIN->add('assignmentplugins', new admin_category('assignfeedbackplugins',
                 new lang_string('feedbackplugins', 'assign'), !$module->visible));
 $ADMIN->add('assignfeedbackplugins', new assign_admin_page_manage_assign_plugins('assignfeedback'));
+$ADMIN->add('assignmentplugins', new admin_category('assigngradingplugins',
+                new lang_string('gradingplugins', 'assign'), !$module->visible));
+$ADMIN->add('assigngradingplugins', new assign_admin_page_manage_assign_plugins('assigngrading'));
 
 
 assign_plugin_manager::add_admin_assign_plugin_settings('assignsubmission', $ADMIN, $settings, $module);
 assign_plugin_manager::add_admin_assign_plugin_settings('assignfeedback', $ADMIN, $settings, $module);
+assign_plugin_manager::add_admin_assign_plugin_settings('assigngrading', $ADMIN, $settings, $module);
 
 if ($ADMIN->fulltree) {
     $menu = array();
