@@ -93,11 +93,61 @@ class restore_assignment_activity_structure_step extends restore_activity_struct
         $this->set_mapping(restore_gradingform_plugin::itemid_mapping('submission'), $oldid, $newitemid);
     }
 
+    /**
+     * This function will attempt to upgrade the newly restored assignment to an instance of mod_assign if
+     * mod_assignment is currently disabled and mod_assign is enabled and mod_assign says it can upgrade this assignment.
+     *
+     * @return none
+     */
+    private function attempt_upgrade_mod_assign() {
+        global $DB, $CFG;
+
+        if (empty($CFG->assignment_convertmodassignonrestore)) {
+            return;
+        }
+
+        $record = $DB->get_record('modules', array('name'=>'assignment'), 'visible,version', MUST_EXIST);
+        if ($record->visible) {
+            return;
+        }
+        $version = $record->version;
+        // The current module must exist
+        $record = $DB->get_record('modules', array('name'=>'assign'), 'version', IGNORE_MISSING);
+        // check that the assignment module is installed
+        if ($record && $record->version) {
+            // Include the require mod assign upgrade code
+            require_once($CFG->dirroot . '/mod/assign/upgradelib.php');
+            require_once($CFG->dirroot . '/mod/assign/locallib.php');
+
+            // Get the id and type of this assignment
+            $newinstance = $this->task->get_activityid();
+
+            $record = $DB->get_record('assignment', array('id'=>$newinstance), 'assignmenttype', MUST_EXIST);
+            $type = $record->assignmenttype;
+
+            // See if it is possible to upgrade
+            if (assign::can_upgrade_assignment($type, $version)) {
+                $assignment_upgrader = new assign_upgrade_manager();
+                $log = '';
+                $success = $assignment_upgrader->upgrade_assignment($newinstance, $log);
+                if (!$success) {
+                    throw new restore_step_exception('mod_assign_upgrade_failed', $log);
+                }
+            }
+        }
+    }
+
     protected function after_execute() {
         // Add assignment related files, no need to match by itemname (just internally handled context)
         $this->add_related_files('mod_assignment', 'intro', null);
         // Add assignment submission files, matching by assignment_submission itemname
         $this->add_related_files('mod_assignment', 'submission', 'assignment_submission');
         $this->add_related_files('mod_assignment', 'response', 'assignment_submission');
+    }
+
+    protected function after_restore() {
+
+        // Moodle 2.3 assignment upgrade
+        $this->attempt_upgrade_mod_assign();
     }
 }

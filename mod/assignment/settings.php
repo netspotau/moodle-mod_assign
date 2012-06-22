@@ -17,4 +17,7 @@ if ($ADMIN->fulltree) {
 
     $settings->add(new admin_setting_configcheckbox('assignment_showrecentsubmissions', get_string('showrecentsubmissions', 'assignment'),
                        get_string('configshowrecentsubmissions', 'assignment'), 1));
+
+    $settings->add(new admin_setting_configcheckbox('assignment_convertmodassignonrestore', get_string('convertmodassignonrestore', 'assignment'),
+                       get_string('configconvertmodassignonrestore', 'assignment'), 0));
 }
