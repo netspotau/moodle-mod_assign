@@ -38,26 +38,54 @@ class csv_import_reader {
     /**
      * @var int import identifier
      */
-    var $_iid;
+    private $_iid;
     /**
      * @var string which script imports?
      */
-    var $_type;
+    private $_type;
     /**
      * @var string|null Null if ok, error msg otherwise
      */
-    var $_error;
+    private $_error;
+    /**
+     * @var string csvencode - encoded delimiter
+     */
+    private $_csvencode;
+    /**
+     * @var string enclosure - string delimiter
+     */
+    private $_enclosure;
+    /**
+     * @var string csvdelimiter - delimiter character
+     */
+    private $_csvdelimiter;
     /**
      * @var array cached columns
      */
-    var $_columns;
+    private $_columns;
+
+    /**
+     * @var int number of columns
+     */
+    private $_colcount;
+
+    /**
+     * @var function user function for validating columns
+     */
+    private $_columnvalidation;
+
     /**
      * @var object file handle used during import
      */
-    var $_fp;
+    private $_fpin;
 
     /**
-     * Contructor
+     * @var object file handle used during export
+     */
+    private $_fpout;
+
+    /**
+     * Constructor
      *
      * @param int $iid import identifier
      * @param string $type which script imports?
@@ -68,10 +96,299 @@ class csv_import_reader {
     }
 
     /**
+     * Check for delimiter, end of line or end of file
+     *
+     * @param string $content passed by ref for memory reasons, unset after return
+     * @param string $index character index into content
+     * @return bool true if end of string
+     */
+    private function parse_csv_is_end_of_raw_string(&$content, &$index) {
+        if (strlen($content) <= $index
+            || substr($content, $index, 1) === "\n"
+            || substr($content, $index, 1) === $this->_csvdelimiter) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * This (should) be faster than strtok for parsing tokens. It also does will correctly
+     * return empty strings instead of skipping them.
+     *
+     * @param string $content passed by ref for memory reasons, unset after return
+     * @param string $delimiter separator character
+     * @param string $index character index into content
+     * @return string the input string up until one of the delimiters or end of string
+     */
+    private function get_string_until(&$content, $delimiters, $index) {
+        $i = $index;
+        while ($i < strlen($content) && strpos($delimiters, substr($content, $i, 1)) === false) {
+            $i+=1;
+        }
+        return substr($content, $index, $i - $index);
+    }
+
+    /**
+     * Break this csv string into
+     * subField ::= (any char except double quote or EOF)*
+     *
+     * @param string $content passed by ref for memory reasons, unset after return
+     * @param string $index character index into content
+     * @param string $field the field to return
+     * @return bool false if error, length of field if ok; use get_error() to get error string
+     */
+    private function parse_csv_sub_field(&$content, &$index, &$field) {
+        $field = $this->get_string_until($content, '"', $index);
+        $index += strlen($field);
+        return strlen($field);
+    }
+
+    /**
+     * Break this csv string into
+     * escapedField ::= subField ('"' '"' subField)*
+     *
+     * @param string $content passed by ref for memory reasons, unset after return
+     * @param string $index character index into content
+     * @param string $field the field to return
+     * @return bool false if error, length of field if ok; use get_error() to get error string
+     */
+    private function parse_csv_escaped_field(&$content, &$index, &$field) {
+
+        $unescapedfield = '';
+        if ($this->parse_csv_sub_field($content, $index, $unescapedfield) === false) {
+            return false;
+        }
+        $field .= $unescapedfield;
+
+        while ((strlen($content) > ($index + 1)) && (substr($content, $index, 2) == '""')) {
+            $field .= '"';
+            $index += 2;
+
+            $unescapedfield = '';
+            if ($this->parse_csv_sub_field($content, $index, $unescapedfield) === false) {
+                return false;
+            }
+            $field .= $unescapedfield;
+        }
+        return strlen($field);
+    }
+
+    /**
+     * Break this csv string into
+     * quotedField ::= '"' escapedField '"'
+     *
+     * @param string $content passed by ref for memory reasons, unset after return
+     * @param string $index character index into content
+     * @param string $field the field to return
+     * @return bool false if error, length of field if ok; use get_error() to get error string
+     */
+    private function parse_csv_quoted_field(&$content, &$index, &$field) {
+        // Skip the opening double quote.
+        $index += 1;
+        if ($this->parse_csv_escaped_field($content, $index, $field) === false) {
+            return false;
+        }
+
+        // Check for incorrect termination of quoted string.
+        if (strlen($content) <= $index || substr($content, $index, 1) !== $this->_enclosure) {
+            die("incorrect termination of quoted string:" . strlen($content) . " => " . $index . " => " . substr($content, $index) . " => " . $field);
+            $this->_error = get_string('csvloaderror', 'error');
+            return false;
+        }
+        // Move past the ending quote.
+        $index += 1;
+
+        return strlen($field);
+    }
+
+
+    /**
+     * Break this csv string into
+     * simpleField ::= (any char except \n, EOF, delimiter or double quote)+
+     *
+     * @param string $content passed by ref for memory reasons, unset after return
+     * @param string $index character index into content
+     * @param string $field the field to return
+     * @return bool false if error, length of field if ok; use get_error() to get error string
+     */
+    private function parse_csv_simple_field(&$content, &$index, &$field) {
+        // Check for empty.
+        if ($this->parse_csv_is_end_of_raw_string($content, $index)) {
+            $field = '';
+            return strlen($field);
+        }
+
+        $field = $this->get_string_until($content, "\n" . $this->_csvdelimiter . $this->_enclosure, $index);
+        $index += strlen($field);
+
+        // Check for double quote (error state).
+        if (substr($content, $index, 1) === $this->_enclosure) {
+            die("found quote in simple string");
+            $this->_error = get_string('csvloaderror', 'error');
+            return false;
+        }
+        return strlen($field);
+    }
+
+    /**
+     * Break this csv string into
+     * rawString ::= simpleField | quotedField
+     *
+     * @param string $content passed by ref for memory reasons, unset after return
+     * @param string $index character index into content
+     * @param string $field the field to return
+     * @return bool false if error, length of field if ok; use get_error() to get error string
+     */
+    private function parse_csv_raw_string(&$content, &$index, &$field) {
+        // Check for empty.
+        if ($this->parse_csv_is_end_of_raw_string($content, $index)) {
+            $field = '';
+            return strlen($field);
+        }
+        if (substr($content, $index, 1) === '"') {
+            return $this->parse_csv_quoted_field($content, $index, $field);
+        } else {
+            return $this->parse_csv_simple_field($content, $index, $field);
+        }
+    }
+
+    /**
+     * Break this csv string list into
+     * csvStringList ::= rawString (',' rawString)*
+     *
+     * @param string $content passed by ref for memory reasons, unset after return
+     * @param string $index character index into content
+     * @param string $fields list of parsed fields to return
+     * @return bool false if error, count of fields if ok; use get_error() to get error string
+     */
+    private function parse_csv_string_list(&$content, &$index, &$fields) {
+        $morestrings = true;
+        do {
+            $rawstring = '';
+            if ($this->parse_csv_raw_string($content, $index, $rawstring) === false) {
+                return false;
+            }
+            $fields[] = $rawstring;
+
+            // Move past the delimiter if more strings to parse.
+            if ((strlen($content) > $index) && (substr($content, $index, 1) === $this->_csvdelimiter)) {
+                $index += 1;
+            } else {
+                $morestrings = false;
+            }
+        } while ($morestrings);
+
+        return count($fields);
+    }
+
+    /**
+     * Break this csv line into a stringlist and end of line
+     * This is more complicated than just splitting on delimiter because a field can contain escaped delimiters
+     * csvRecord ::= csvStringList ("\n" | 'EOF')
+     *
+     * @param string $content passed by ref for memory reasons, unset after return
+     * @param string $index character index into content
+     * @param string $fields list of parsed fields to return
+     * @return bool false if error, count of fields if ok; use get_error() to get error string
+     */
+    private function parse_csv_record(&$content, &$index, &$fields) {
+        if ($this->parse_csv_string_list($content, $index, $fields) === false) {
+            return false;
+        }
+        if (!strlen($content) <= $index) {
+            if (substr($content, $index, 1) == "\n") {
+                // Move to next record.
+                $index += 1;
+            }
+        }
+        return count($fields);
+    }
+
+
+    /**
+     * Break this csv content into records
+     * This is more complicated than just splitting on lines because a field can contain new line characters
+     * csvFile ::= (csvRecord)* 'EOF'
+     *
+     * @param string $content passed by ref for memory reasons, unset after return
+     * @param string $index character index into content
+     * @param string $lines list of parsed records to return
+     * @return bool false if error, count of data lines if ok; use get_error() to get error string
+     */
+    private function parse_csv_content(&$content) {
+        $index = 0;
+        $linenum = 0;
+        if (strlen($content) < 1) {
+            $this->_error = get_string('csvloaderror', 'error');
+            return false;
+        }
+
+        while ($index < strlen($content)) {
+            $line = array();
+            if ($this->parse_csv_record($content, $index, $line) === false) {
+                return false;
+            }
+            // Ignore blank lines.
+            if (count($line) > 1 || $line[0] != "") {
+                if ($linenum == 0) {
+                    if ($this->columns_read($line) === false) {
+                        return false;
+                    }
+                } else {
+                    if ($this->line_read($line) === false) {
+                        return false;
+                    }
+                }
+            }
+            $linenum += 1;
+        }
+
+        return $linenum - 1;
+    }
+
+    /**
+     * Called after the first line is read to save the list of column headers
+     *
+     * @param array $columns The list of column names
+     */
+    private function columns_read($columns) {
+        $this->_colcount = count($columns);
+        if ($this->_colcount < 1) {
+            $this->_error = get_string('csvloaderror', 'error');
+            return false;
+        }
+        if ($this->_columnvalidation) {
+            $result = $this->_columnvalidation($columns);
+            if ($result !== true) {
+                $this->_error = $result;
+                return false;
+            }
+        }
+        $this->_columns = $columns; // cached columns
+        fwrite($this->_fpout, rawurlencode(serialize($columns))."\n");
+    }
+
+    /**
+     * Called after the each line is read to save the list of column data
+     *
+     * @param array $columns The list of column data
+     */
+    private function line_read($line) {
+        foreach ($line as $key=>$value) {
+            $line[$key] = str_replace($this->_csvencode, $this->_csvdelimiter, trim($value));
+        }
+        if (count($line) !== $this->_colcount) {
+            // This is critical.
+            $this->_error = get_string('csvweirdcolumns', 'error');
+            $this->cleanup();
+            return false;
+        }
+        fwrite($this->_fpout, rawurlencode(serialize($line))."\n");
+    }
+
+    /**
      * Parse this content
      *
-     * @global object
-     * @global object
      * @param string $content passed by ref for memory reasons, unset after return
      * @param string $encoding content encoding
      * @param string $delimiter_name separator (comma, semicolon, colon, cfg)
@@ -84,6 +401,7 @@ class csv_import_reader {
 
         $this->close();
         $this->_error = null;
+        $this->_columnvalidation = $columnvalidation;
 
         $content = textlib::convert($content, $encoding, 'utf-8');
         // remove Unicode BOM from first line
@@ -91,64 +409,36 @@ class csv_import_reader {
         // Fix mac/dos newlines
         $content = preg_replace('!\r\n?!', "\n", $content);
 
-        $csv_delimiter = csv_import_reader::get_delimiter($delimiter_name);
-        // $csv_encode    = csv_import_reader::get_encoded_delimiter($delimiter_name);
+        // Ok ready to begin, first look at CSV grammar.
+        //
+        // csvRecord ::= csvStringList ("\n" | 'EOF')
+        // csvStringList ::= rawString (',' rawString)*
+        // rawString ::= simpleField | quotedField
+        // simpleField ::= (any char except \n, EOF, comma or double quote)+
+        // quotedField ::= '"' escapedField '"'
+        // escapedField ::= subField ('"' '"' subField)*
+        // subField ::= (any char except double quote or EOF)*
 
-        // create a temporary file and store the csv file there.
-        $fp = tmpfile();
-        fwrite($fp, $content);
-        fseek($fp, 0);
-        // Create an array to store the imported data for error checking.
-        $columns = array();
-        // str_getcsv doesn't iterate through the csv data properly. It has
-        // problems with line returns.
-        while ($fgetdata = fgetcsv($fp, 0, $csv_delimiter, $enclosure)) {
-            $columns[] = $fgetdata;
-        }
-        $col_count = 0;
+        $this->_csvdelimiter = self::get_delimiter($delimitername);
+        $this->_csvencode    = self::get_encoded_delimiter($delimitername);
+        $this->_enclosure = $enclosure;
 
-        // process header - list of columns
-        if (!isset($columns[0])) {
-            $this->_error = get_string('csvemptyfile', 'error');
-            fclose($fp);
-            return false;
-        } else {
-            $col_count = count($columns[0]);
-        }
-
-        // Column validation.
-        if ($column_validation) {
-            $result = $column_validation($columns[0]);
-            if ($result !== true) {
-                $this->_error = $result;
-                fclose($fp);
-                return false;
-            }
-        }
-
-        $this->_columns = $columns[0]; // cached columns
-        // check to make sure that the data columns match up with the headers.
-        foreach ($columns as $rowdata) {
-            if (count($rowdata) !== $col_count) {
-                $this->_error = get_string('csvweirdcolumns', 'error');
-                fclose($fp);
-                $this->cleanup();
-                return false;
-            }
-        }
-
+        // Open file for writing.
         $filename = $CFG->tempdir.'/csvimport/'.$this->_type.'/'.$USER->id.'/'.$this->_iid;
-        $filepointer = fopen($filename, "w");
-        // The information has been stored in csv format, as serialized data has issues
-        // with special characters and line returns.
-        $storedata = csv_export_writer::print_array($columns, ',', '"', true);
-        fwrite($filepointer, $storedata);
+        $this->_fpout = fopen($filename, "w");
 
-        fclose($fp);
-        fclose($filepointer);
+        $numlines = $this->parse_csv_content($content);
+        if ($numlines === false) {
+            $this->cleanup();
+            return false;
+        }
 
-        $datacount = count($columns);
-        return $datacount;
+        // Close the export file.
+        if (!empty($this->_fpout)) {
+            fclose($this->_fpout);
+            $this->_fpout = null;
+        }
+        return $numlines;
     }
 
     /**
@@ -173,32 +463,30 @@ class csv_import_reader {
         if ($line === false) {
             return false;
         }
-        $this->_columns = $line;
+        $this->_columns = unserialize(rawurldecode($line));
         return $this->_columns;
     }
 
     /**
      * Init iterator.
      *
-     * @global object
-     * @global object
      * @return bool Success
      */
     function init() {
         global $CFG, $USER;
 
-        if (!empty($this->_fp)) {
+        if (!empty($this->_fpin)) {
             $this->close();
         }
         $filename = $CFG->tempdir.'/csvimport/'.$this->_type.'/'.$USER->id.'/'.$this->_iid;
         if (!file_exists($filename)) {
             return false;
         }
-        if (!$this->_fp = fopen($filename, "r")) {
+        if (!$this->_fpin = fopen($filename, "r")) {
             return false;
         }
-        //skip header
-        return (fgetcsv($this->_fp) !== false);
+        // Skip header.
+        return (fgets($this->_fpin) !== false);
     }
 
     /**
@@ -207,11 +495,12 @@ class csv_import_reader {
      * @return mixed false, or an array of values
      */
     function next() {
-        if (empty($this->_fp) or feof($this->_fp)) {
+        if (empty($this->_fpin) or feof($this->_fpin)) {
             return false;
         }
-        if ($ser = fgetcsv($this->_fp)) {
-            return $ser;
+        if ($ser = fgets($this->_fpin)) {
+            $r = unserialize(rawurldecode($ser));
+            return $r;
         } else {
             return false;
         }
@@ -223,9 +512,9 @@ class csv_import_reader {
      * @return void
      */
     function close() {
-        if (!empty($this->_fp)) {
-            fclose($this->_fp);
-            $this->_fp = null;
+        if (!empty($this->_fpin)) {
+            fclose($this->_fpin);
+            $this->_fpin = null;
         }
     }
 
@@ -241,8 +530,6 @@ class csv_import_reader {
     /**
      * Cleanup temporary data
      *
-     * @global object
-     * @global object
      * @param boolean $full true means do a full cleanup - all sessions for current user, false only the active iid
      */
     function cleanup($full=false) {
@@ -275,9 +562,9 @@ class csv_import_reader {
      * @param string separator name
      * @return string delimiter char
      */
-    static function get_delimiter($delimiter_name) {
+    static function get_delimiter($delimitername) {
         global $CFG;
-        switch ($delimiter_name) {
+        switch ($delimitername) {
             case 'colon':     return ':';
             case 'semicolon': return ';';
             case 'tab':       return "\t";
@@ -285,37 +572,37 @@ class csv_import_reader {
             case 'comma':     return ',';
             default :         return ',';  // If anything else comes in, default to comma.
         }
+        // This is the default.
+        return ',';
     }
 
     /**
      * Get encoded delimiter character
      *
-     * @global object
      * @param string separator name
      * @return string encoded delimiter char
      */
-    static function get_encoded_delimiter($delimiter_name) {
+    function get_encoded_delimiter($delimitername) {
         global $CFG;
-        if ($delimiter_name == 'cfg' and isset($CFG->CSV_ENCODE)) {
+        if ($delimitername == 'cfg' and isset($CFG->CSV_ENCODE)) {
             return $CFG->CSV_ENCODE;
         }
-        $delimiter = csv_import_reader::get_delimiter($delimiter_name);
+        $delimiter = self::get_delimiter($delimitername);
         return '&#'.ord($delimiter);
     }
 
     /**
      * Create new import id
      *
-     * @global object
      * @param string who imports?
      * @return int iid
      */
     static function get_new_iid($type) {
         global $USER;
 
-        $filename = make_temp_directory('csvimport/'.$type.'/'.$USER->id);
+        $filename = make_temp_directory('temp/csvimport/'.$type.'/'.$USER->id);
 
-        // use current (non-conflicting) time stamp
+        // Use current (non-conflicting) time stamp.
         $iiid = time();
         while (file_exists($filename.'/'.$iiid)) {
             $iiid--;
@@ -326,7 +613,7 @@ class csv_import_reader {
 }
 
 /**
- * Utitily class for exporting of CSV files.
+ * Utility class for exporting of CSV files.
  * @copyright 2012 Adrian Greeve
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @package   core
