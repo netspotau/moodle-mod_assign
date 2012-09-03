@@ -598,9 +598,10 @@ class csv_import_reader {
      * @return int iid
      */
     static function get_new_iid($type) {
-        global $USER;
+        global $USER, $CFG;
 
-        $filename = make_temp_directory('temp/csvimport/'.$type.'/'.$USER->id);
+        $path = 'csvimport/' . $type . '/' . $USER->id;
+        $filename = make_temp_directory($path);
 
         // Use current (non-conflicting) time stamp.
         $iiid = time();
