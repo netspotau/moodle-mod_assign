@@ -261,4 +261,6 @@ $string['viewownsubmissionform'] = 'View own submit assignment page.';
 $string['viewownsubmissionstatus'] = 'View own submission status page.';
 $string['viewsubmissionforuser'] = 'View submission for user: {$a}';
 $string['viewsubmission'] = 'View submission';
+$string['viewfull'] = 'View full';
+$string['viewsummary'] = 'View summary';
 $string['viewsubmissiongradingtable'] = 'View submission grading table.';
