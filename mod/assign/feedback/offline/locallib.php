@@ -116,8 +116,25 @@ class assign_feedback_offline extends assign_feedback_plugin {
         $adminconfig = $this->assignment->get_admin_config();
         $gradebookplugin = $adminconfig->feedback_plugin_for_gradebook;
 
+        $checkduplicateuserids = array();
+        $noduplicateuserids = array();
+        $idsandrecords = array();
         $updatecount = 0;
-        while ($record = $gradeimporter->next()) {
+        $updates = array();
+        while ($rawrecord = $gradeimporter->next()) {
+            if (in_array($rawrecord->user->id, $checkduplicateuserids)) {
+                // Remove all users if they are found duplicate to avoid ambiguity.
+                unset($idsandrecords[$rawrecord->user->id]);
+            } else {
+                array_push($noduplicateuserids, $rawrecord->user->id);
+                array_push($updates, $rawrecord);
+                $idsandrecords= array_combine($noduplicateuserids, $updates);
+            }
+            array_push($checkduplicateuserids, $rawrecord->user->id);
+        }
+        $gradeimporter->close(true);
+
+        foreach ($idsandrecords as $record) {
             $user = $record->user;
             $modified = $record->modified;
             $userdesc = fullname($user);
@@ -197,7 +214,6 @@ class assign_feedback_offline extends assign_feedback_plugin {
                 }
             }
         }
-        $gradeimporter->close(true);
 
         $renderer = $this->assignment->get_renderer();
         $o = '';

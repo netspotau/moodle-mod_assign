@@ -85,6 +85,7 @@ class assignfeedback_offline_import_grades_form extends moodleform implements re
         $mform->addElement('header', 'importgrades', get_string('importgrades', 'assignfeedback_offline'));
 
         $updates = array();
+        $checkduplicateuserids = array();
         while ($record = $gradeimporter->next()) {
             $user = $record->user;
             $grade = $record->grade;
@@ -111,6 +112,7 @@ class assignfeedback_offline_import_grades_form extends moodleform implements re
                 }
             }
 
+            $duplicate = false;
             if ($usergrade && $usergrade->grade == $grade) {
                 // Skip - grade not modified.
                 $skip = true;
@@ -128,15 +130,25 @@ class assignfeedback_offline_import_grades_form extends moodleform implements re
             } else if (($assignment->get_instance()->grade > -1) &&
                       (($gradedesc < 0) || ($gradedesc > $assignment->get_instance()->grade))) {
                 $skip = true;
+            } else if (in_array($user->id, $checkduplicateuserids)) {
+                // Skip duplicate user.
+                $skip = true;
+                $duplicate = true;
+                // Remove all users if they are found duplicate to avoid ambiguity.
+                unset($updates['grade_' . $user->id]);
+                foreach ($record->feedback as $feedback) {
+                    $plugin = $feedback['plugin'];
+                    unset($updates['feedback_' . $user->id . '_' . $plugin->get_type()]);
+                }
             }
 
             if (!$skip) {
                 $update = true;
-                $updates[] = get_string('gradeupdate', 'assignfeedback_offline',
-                                            array('grade'=>$gradedesc, 'student'=>$userdesc));
+                $updates['grade_' . $user->id] = get_string('gradeupdate', 'assignfeedback_offline',
+                                                array('grade'=>$gradedesc, 'student'=>$userdesc));
             }
 
-            if ($ignoremodified || !$stalemodificationdate) {
+            if (!$duplicate && ($ignoremodified || !$stalemodificationdate)) {
                 foreach ($record->feedback as $feedback) {
                     $plugin = $feedback['plugin'];
                     $field = $feedback['field'];
@@ -148,12 +160,12 @@ class assignfeedback_offline_import_grades_form extends moodleform implements re
                     }
                     if ($newvalue != $oldvalue) {
                         $update = true;
-                        $updates[] = get_string('feedbackupdate', 'assignfeedback_offline',
+                        $updates['feedback_' . $user->id . '_' . $plugin->get_type()] = get_string('feedbackupdate', 'assignfeedback_offline',
                                                     array('text'=>$newvalue, 'field'=>$description, 'student'=>$userdesc));
                     }
                 }
             }
-
+            array_push($checkduplicateuserids, $user->id);
         }
         $gradeimporter->close(false);
 
