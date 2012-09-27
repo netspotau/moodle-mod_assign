@@ -706,6 +706,7 @@ class mod_assign_renderer extends plugin_renderer_base {
         $this->page->requires->string_for_js('batchoperationconfirmlock', 'assign');
         $this->page->requires->string_for_js('batchoperationconfirmreverttodraft', 'assign');
         $this->page->requires->string_for_js('batchoperationconfirmunlock', 'assign');
+        $this->page->requires->string_for_js('batchoperationconfirmsetmarkingworkflowstate', 'assign');
         $this->page->requires->string_for_js('editaction', 'assign');
         foreach ($table->plugingradingbatchoperations as $plugin => $operations) {
             foreach ($operations as $operation => $description) {

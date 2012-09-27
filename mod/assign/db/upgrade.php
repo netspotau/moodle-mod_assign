@@ -195,6 +195,30 @@ function xmldb_assign_upgrade($oldversion) {
         // assign savepoint reached
         upgrade_mod_savepoint(true, 2012082400, 'assign');
     }
+    if ($oldversion < 2012092600) {
+
+        // Define field markingworkflow to be added to assign
+        $table = new xmldb_table('assign');
+        $field = new xmldb_field('markingworkflow', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'revealidentities');
+
+        // Conditionally launch add field markingworkflow
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field workflowstate to be added to assign_grades
+        $table = new xmldb_table('assign_grades');
+        $field = new xmldb_field('workflowstate', XMLDB_TYPE_CHAR, '20', null, null, null, null, 'extensionduedate');
+
+        // Conditionally launch add field workflowstate
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // assign savepoint reached
+        upgrade_mod_savepoint(true, 2012092600, 'assign');
+    }
+
 
 
     return true;

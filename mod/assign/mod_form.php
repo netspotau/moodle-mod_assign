@@ -134,6 +134,9 @@ class mod_assign_mod_form extends moodleform_mod {
             $mform->freeze('blindmarking');
         }
 
+        $mform->addElement('selectyesno', 'markingworkflow', get_string('markingworkflow', 'assign'));
+        $mform->addHelpButton('markingworkflow', 'markingworkflow', 'assign');
+        $mform->setDefault('markingworkflow', 0);
 
         // plagiarism enabling form
         if (!empty($CFG->enableplagiarism)) {

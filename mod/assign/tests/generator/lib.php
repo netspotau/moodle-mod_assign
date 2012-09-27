@@ -114,6 +114,9 @@ class mod_assign_generator extends phpunit_module_generator {
         if (!isset($record->blindmarking)) {
             $record->blindmarking = 0;
         }
+        if (!isset($record->markingworkflow)) {
+            $record->markingworkflow = 0;
+        }
         if (isset($options['idnumber'])) {
             $record->cmidnumber = $options['idnumber'];
         } else {
