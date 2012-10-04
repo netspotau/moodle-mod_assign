@@ -56,6 +56,7 @@ a.dimmed_text:visited,
 .sitetopic .section li.activity,
 .course-content .section li.activity,
 .tabtree li {list-style: none;margin:0;padding:0;}
+#page .formtab {margin: 0px; padding: 0px;}
 
 .course-content .current {background:#E3E3E3;}
 
