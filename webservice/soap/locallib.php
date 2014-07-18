@@ -290,8 +290,10 @@ class webservice_soap_server extends webservice_zend_server {
 /**
  * Virtual struct class for web services for user id '.$USER->id.' in context '.$this->restricted_context->id.'.
  */
+if (!class_exists('.$classname.')){
 class '.$classname.' {
 '.implode("\n", $fields).'
+}
 }
 ';
         eval($code);
